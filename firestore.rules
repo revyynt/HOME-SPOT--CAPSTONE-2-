@@ -1,0 +1,14 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // This rule allows anyone with your Firestore database reference to view, edit,
+    // and delete all data in your Firestore database. It is useful for getting
+    // started in development. Replace this with proper security rules before
+    // deploying to production.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

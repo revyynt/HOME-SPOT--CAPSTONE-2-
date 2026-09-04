@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - HomeSpot - AR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body class="bg-gray-50">
+  <!-- Top Navigation -->
+  <header class="bg-white border-b sticky top-0 z-50">
+    <div class="px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h1 class="text-2xl font-bold">HomeSpot Admin</h1>
+          <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">Admin</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="./index.html" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            View Website
+          </a>
+          <button onclick="logoutAdmin(); return false;" ontouchend="logoutAdmin(); return false;" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg active:bg-gray-200 cursor-pointer" style="border: none; background: none;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-6 max-w-7xl mx-auto">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold mb-2">Welcome back, Admin!</h2>
+      <p class="text-gray-600">Manage your dorm listings and reservations</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Total Listings</p>
+            <p class="text-3xl font-bold">4</p>
+          </div>
+          <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Active Bookings</p>
+            <p class="text-3xl font-bold">12</p>
+          </div>
+          <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Pending Requests</p>
+            <p id="pendingRequestsCount" class="text-3xl font-bold">5</p>
+          </div>
+          <div class="bg-yellow-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Unread Messages</p>
+            <p id="unreadMessagesCount" class="text-3xl font-bold">3</p>
+          </div>
+          <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow mb-6">
+      <div class="flex border-b overflow-x-auto">
+        <button data-tab-button="overview" class="tab-button active px-6 py-3 font-medium">Overview</button>
+        <button data-tab-button="listings" class="tab-button px-6 py-3 font-medium">My Listings</button>
+        <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium">Reservations</button>
+        <button data-tab-button="tenant-payments" class="tab-button px-6 py-3 font-medium">Tenant Payments</button>
+        <button data-tab-button="messages" class="tab-button px-6 py-3 font-medium">Messages</button>
+        <button data-tab-button="reviews" class="tab-button px-6 py-3 font-medium">Reviews</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        <!-- Overview Tab -->
+        <div data-tab-content="overview">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Activity -->
+            <div class="bg-white border rounded-lg p-6">
+              <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
+              <div class="space-y-4">
+                <div class="flex items-start gap-3 pb-4 border-b">
+                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">New booking confirmed</p>
+                    <p class="text-xs text-gray-500">Single Occupancy Room - 2 hours ago</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 pb-4 border-b">
+                  <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">New reservation request</p>
+                    <p class="text-xs text-gray-500">Double Occupancy Room - 5 hours ago</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">New message received</p>
+                    <p class="text-xs text-gray-500">From John Reyes - 10 mins ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white border rounded-lg p-6">
+              <h3 class="text-xl font-bold mb-4">Quick Actions</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                  <span class="text-sm font-medium">Add New Listing</span>
+                </button>
+                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                  <span class="text-sm font-medium">Manage Calendar</span>
+                </button>
+                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                  <span class="text-sm font-medium">View Messages</span>
+                </button>
+                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                  <span class="text-sm font-medium">View Reports</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Listings Tab -->
+        <div data-tab-content="listings" class="hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold">My Dorm Listings</h3>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Add New Listing
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Listing 1 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
+                  <div>
+                    <h4 class="text-lg font-bold mb-1">Single Occupancy Room</h4>
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                      <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                      <span>Occupancy: 2/4</span>
+                      <span class="text-green-600 font-medium">₱5,500/mo</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit
+                  </button>
+                  <button class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    View
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Listing 2 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
+                  <div>
+                    <h4 class="text-lg font-bold mb-1">Double Occupancy Room</h4>
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                      <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                      <span>Occupancy: 3/6</span>
+                      <span class="text-green-600 font-medium">₱4,000/mo</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit
+                  </button>
+                  <button class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    View
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Listing 3 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
+                  <div>
+                    <h4 class="text-lg font-bold mb-1">Triple Occupancy Room</h4>
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                      <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
+                      <span>Occupancy: 4/12</span>
+                      <span class="text-green-600 font-medium">₱3,200/mo</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    Edit
+                  </button>
+                  <button class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    View
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservations Tab -->
+        <div data-tab-content="reservations" class="hidden">
+          <h3 class="text-xl font-bold mb-6">Reservation Requests</h3>
+          <div id="firestoreStatus" class="text-sm text-gray-500 mb-4">Connecting to Firestore...</div>
+
+          <div id="reservationRequestsContainer" class="space-y-4">
+            <!-- Reservation 1 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h4 class="text-lg font-bold">Maria Santos</h4>
+                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">Pending</span>
+                  </div>
+                  <div class="text-sm text-gray-600 space-y-1">
+                    <div>Property: Single Occupancy Room</div>
+                    <div>Move-in Date: Mar 15, 2026</div>
+                    <div class="text-green-600 font-medium">Amount: ₱5,500</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="approveReservation(1)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    Approve
+                  </button>
+                  <button onclick="declineReservation(1)" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reservation 2 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h4 class="text-lg font-bold">Juan Dela Cruz</h4>
+                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">Pending</span>
+                  </div>
+                  <div class="text-sm text-gray-600 space-y-1">
+                    <div>Property: Double Occupancy Room</div>
+                    <div>Move-in Date: Mar 20, 2026</div>
+                    <div class="text-green-600 font-medium">Amount: ₱4,000</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="approveReservation(2)" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    Approve
+                  </button>
+                  <button onclick="declineReservation(2)" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    Decline
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reservation 3 - Approved -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h4 class="text-lg font-bold">Ana Garcia</h4>
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">  d</span>
+                  </div>
+                  <div class="text-sm text-gray-600 space-y-1">
+                    <div>Property: Single Occupancy Room</div>
+                    <div>Move-in Date: Mar 10, 2026</div>
+                    <div class="text-green-600 font-medium">Amount: ₱5,500</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages Tab -->
+        <div data-tab-content="messages" class="hidden">
+          <h3 class="text-xl font-bold mb-6">Messages (Real-time Updates)</h3>
+
+          <div id="messagesContainer" class="space-y-4">
+            <!-- Message 1 -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <h4 class="text-lg font-bold">John Reyes</h4>
+                      <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">New</span>
+                    </div>
+                    <p class="text-gray-700 mb-1">Is the room still available?</p>
+                    <p class="text-sm text-gray-500">10 mins ago</p>
+                  </div>
+                </div>
+                <button onclick="replyToMessage(1)" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Reply</button>
+              </div>
+            </div>
+
+            <!-- Message 2 -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <h4 class="text-lg font-bold">Lisa Tan</h4>
+                      <span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">New</span>
+                    </div>
+                    <p class="text-gray-700 mb-1">Can I schedule a visit this weekend?</p>
+                    <p class="text-sm text-gray-500">1 hour ago</p>
+                  </div>
+                </div>
+                <button onclick="replyToMessage(2)" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Reply</button>
+              </div>
+            </div>
+
+            <!-- Message 3 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <h4 class="text-lg font-bold">Mark Lopez</h4>
+                    </div>
+                    <p class="text-gray-700 mb-1">Thank you for the quick response!</p>
+                    <p class="text-sm text-gray-500">3 hours ago</p>
+                  </div>
+                </div>
+                <button onclick="replyToMessage(3)" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Reply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tenant Payments Tab -->
+        <div data-tab-content="tenant-payments" class="hidden">
+          <h3 class="text-xl font-bold mb-6">Tenant Payment Management</h3>
+
+          <!-- Payment Summary Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white border rounded-lg p-4">
+              <div class="text-sm text-gray-600 mb-1">Total Expected This Month</div>
+              <div class="text-2xl font-bold text-gray-900">₱60,000</div>
+            </div>
+            <div class="bg-white border rounded-lg p-4">
+              <div class="text-sm text-gray-600 mb-1">Paid This Month</div>
+              <div class="text-2xl font-bold text-green-600">₱45,000</div>
+            </div>
+            <div class="bg-white border rounded-lg p-4">
+              <div class="text-sm text-gray-600 mb-1">Overdue Payments</div>
+              <div class="text-2xl font-bold text-red-600">₱5,000</div>
+            </div>
+          </div>
+
+          <!-- Payment Due Dates Table -->
+          <div class="bg-white border rounded-lg">
+            <div class="p-6 border-b">
+              <h4 class="text-lg font-bold">Payment Due Dates</h4>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tenant Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">JD</div>
+                        <div class="text-sm font-medium text-gray-900">Juan Dela Cruz</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 201</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱5,000</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 5, 2026</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <button onclick="viewTenantPayment('Juan Dela Cruz', 'Room 201', 5000, 'May 5, 2026', 'Pending')" class="text-blue-600 hover:text-blue-800 mr-3">View Payment</button>
+                      <button onclick="viewDueDate('Juan Dela Cruz', 'Room 201', 'May 5, 2026')" class="text-green-600 hover:text-green-800">View Due Date</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-semibold text-sm mr-3">MS</div>
+                        <div class="text-sm font-medium text-gray-900">Maria Santos</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 105</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱4,500</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 3, 2026</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Paid</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <button onclick="viewTenantPayment('Maria Santos', 'Room 105', 4500, 'May 3, 2026', 'Paid')" class="text-blue-600 hover:text-blue-800 mr-3">View Payment</button>
+                      <button onclick="viewDueDate('Maria Santos', 'Room 105', 'May 3, 2026')" class="text-green-600 hover:text-green-800">View Due Date</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm mr-3">AR</div>
+                        <div class="text-sm font-medium text-gray-900">Anna Reyes</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 302</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱5,500</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 1, 2026</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Paid</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <button onclick="viewTenantPayment('Anna Reyes', 'Room 302', 5500, 'May 1, 2026', 'Paid')" class="text-blue-600 hover:text-blue-800 mr-3">View Payment</button>
+                      <button onclick="viewDueDate('Anna Reyes', 'Room 302', 'May 1, 2026')" class="text-green-600 hover:text-green-800">View Due Date</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-semibold text-sm mr-3">PT</div>
+                        <div class="text-sm font-medium text-gray-900">Pedro Torres</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 410</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱5,000</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Apr 25, 2026</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Overdue</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <button onclick="viewTenantPayment('Pedro Torres', 'Room 410', 5000, 'Apr 25, 2026', 'Overdue')" class="text-blue-600 hover:text-blue-800 mr-3">View Payment</button>
+                      <button onclick="viewDueDate('Pedro Torres', 'Room 410', 'Apr 25, 2026')" class="text-green-600 hover:text-green-800">View Due Date</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold text-sm mr-3">LG</div>
+                        <div class="text-sm font-medium text-gray-900">Lisa Garcia</div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 208</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">₱4,000</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 8, 2026</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                      <button onclick="viewTenantPayment('Lisa Garcia', 'Room 208', 4000, 'May 8, 2026', 'Pending')" class="text-blue-600 hover:text-blue-800 mr-3">View Payment</button>
+                      <button onclick="viewDueDate('Lisa Garcia', 'Room 208', 'May 8, 2026')" class="text-green-600 hover:text-green-800">View Due Date</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reviews Tab -->
+        <div data-tab-content="reviews" class="hidden">
+          <h3 class="text-xl font-bold mb-6">Tenant Reviews</h3>
+
+          <div class="bg-white border rounded-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <div class="text-4xl font-bold mb-1">4.8</div>
+                <div class="flex items-center gap-1 text-yellow-500 mb-1">
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                </div>
+                <p class="text-sm text-gray-600">Based on 24 reviews</p>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="border-t pt-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2 mb-1">
+                      <h5 class="font-bold">Sarah Martinez</h5>
+                      <div class="flex text-yellow-500">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                        </svg>
+                      </div>
+                    </div>
+                    <p class="text-sm text-gray-700">Great location near campus! The owner is very responsive and the facilities are well-maintained.</p>
+                    <p class="text-xs text-gray-500 mt-1">2 days ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Payment Modal -->
+  <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-xl font-bold">Tenant Payment Details</h3>
+        <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 mb-6">
+            <div id="modalAvatar" class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl"></div>
+            <div>
+              <div id="modalTenantName" class="text-xl font-bold"></div>
+              <div id="modalRoom" class="text-sm text-gray-600"></div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payment Amount:</span>
+              <span id="modalAmount" class="font-semibold text-lg"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Due Date:</span>
+              <span id="modalDueDate" class="font-medium"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payment Status:</span>
+              <span id="modalStatus"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payment Method:</span>
+              <span class="font-medium">GCash</span>
+            </div>
+          </div>
+
+          <div class="border-t pt-4">
+            <h4 class="font-semibold mb-3">Payment History</h4>
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">April 2026</span>
+                <span class="text-green-600 font-medium">✓ Paid on Apr 3, 2026</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">March 2026</span>
+                <span class="text-green-600 font-medium">✓ Paid on Mar 5, 2026</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">February 2026</span>
+                <span class="text-green-600 font-medium">✓ Paid on Feb 2, 2026</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t pt-4">
+            <h4 class="font-semibold mb-2">Tenant Contact Information</h4>
+            <div class="space-y-1 text-sm">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                <span class="text-gray-600">Email: tenant@example.com</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                <span class="text-gray-600">Phone: +63 912 345 6789</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
+        <button onclick="closePaymentModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Close</button>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Send Reminder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Due Date Modal -->
+  <div id="dueDateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full">
+      <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-xl font-bold">Payment Due Date Details</h3>
+        <button onclick="closeDueDateModal()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div id="dueDateModalAvatar" class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold"></div>
+            <div>
+              <div id="dueDateModalTenantName" class="font-bold"></div>
+              <div id="dueDateModalRoom" class="text-sm text-gray-600"></div>
+            </div>
+          </div>
+
+          <div class="bg-blue-50 border-l-4 border-blue-600 rounded p-4">
+            <div class="flex items-center gap-3">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+              <div>
+                <div class="text-sm text-blue-800 font-medium">Payment Due Date</div>
+                <div id="dueDateModalDate" class="text-xl font-bold text-blue-900"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Monthly Rent:</span>
+              <span class="font-semibold">₱5,000.00</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Payment Cycle:</span>
+              <span class="font-medium">Monthly (5th of each month)</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Next Due Date:</span>
+              <span class="font-medium">June 5, 2026</span>
+            </div>
+          </div>
+
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+            <div class="flex gap-2">
+              <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+              </svg>
+              <div>
+                <div class="font-semibold text-yellow-800 mb-1">Reminder Settings</div>
+                <div class="text-yellow-700">Automatic payment reminder will be sent 3 days before due date.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
+        <button onclick="closeDueDateModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-100">Close</button>
+        <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Update Due Date</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./assets/js/firebase-service.js"></script>
+  <script type="module">
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // Initialize Firebase Auth
+    const auth = getAuth();
+
+    // Mobile-optimized logout function
+    window.logoutAdmin = async function(e) {
+      // Prevent default click/touch behavior
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      // Disable button to prevent double-clicks
+      const logoutBtn = document.querySelector('[onclick*="logoutAdmin"]') || document.querySelector('button[ontouchend*="logoutAdmin"]');
+      if (logoutBtn) {
+        logoutBtn.disabled = true;
+        logoutBtn.style.opacity = '0.6';
+        logoutBtn.style.pointerEvents = 'none';
+      }
+      
+      try {
+        // Sign out from Firebase
+        const signOutPromise = signOut(auth);
+        
+        // Set a timeout to ensure redirect happens even if signOut is slow
+        const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
+        
+        await Promise.race([signOutPromise, timeoutPromise]);
+        
+        // Clear session storage and local storage
+        sessionStorage.clear();
+        localStorage.removeItem('adminSession');
+        
+        // Navigate to login
+        window.location.href = './admin-login.html';
+        
+      } catch (error) {
+        console.error('Error signing out:', error);
+        // Clear storage anyway
+        sessionStorage.clear();
+        localStorage.removeItem('adminSession');
+        // Redirect to login page
+        window.location.href = './admin-login.html';
+      }
+    };
+    
+    // Make logout work on both click and touch for mobile
+    document.addEventListener('DOMContentLoaded', function() {
+      const logoutButtons = document.querySelectorAll('[onclick*="logoutAdmin"]');
+      logoutButtons.forEach(btn => {
+        btn.addEventListener('touchstart', function(e) {
+          // Add touch feedback
+          this.style.opacity = '0.7';
+        }, false);
+        
+        btn.addEventListener('touchend', function(e) {
+          // Reset opacity
+          this.style.opacity = '1';
+          // Trigger logout
+          window.logoutAdmin(e);
+        }, false);
+        
+        btn.addEventListener('click', function(e) {
+          // Trigger logout on click
+          window.logoutAdmin(e);
+        }, false);
+      });
+    });
+  </script>
+  <script src="./assets/js/main.js" defer></script>
+  <script>
+    // Mobile-optimized back button disabling
+    (function() {
+      // Initial push state
+      window.history.pushState({page: 'admin'}, null, window.location.href);
+      
+      // Handle pop state (back button)
+      window.onpopstate = function(event) {
+        window.history.pushState({page: 'admin'}, null, window.location.href);
+      };
+      
+      // Additional protection for mobile
+      document.addEventListener('touchmove', function(e) {
+        // Prevent swipe-back gesture on iOS
+        if (e.touches.length > 1 || e.scale !== 1) {
+          return;
+        }
+      }, false);
+      
+      // Prevent iOS swipe-to-go-back
+      let lastX = 0;
+      document.addEventListener('touchstart', function(e) {
+        lastX = e.touches[0].clientX;
+      }, false);
+      
+      document.addEventListener('touchend', function(e) {
+        // Check if swipe-back gesture was attempted
+        if (e.changedTouches[0].clientX > lastX + 100) {
+          e.preventDefault();
+          window.history.pushState({page: 'admin'}, null, window.location.href);
+        }
+      }, false);
+    })();
+
+    // View Tenant Payment Modal
+    function viewTenantPayment(name, room, amount, dueDate, status) {
+      const modal = document.getElementById('paymentModal');
+      const initials = name.split(' ').map(n => n[0]).join('');
+
+      document.getElementById('modalAvatar').textContent = initials;
+      document.getElementById('modalTenantName').textContent = name;
+      document.getElementById('modalRoom').textContent = room;
+      document.getElementById('modalAmount').textContent = '₱' + amount.toLocaleString() + '.00';
+      document.getElementById('modalDueDate').textContent = dueDate;
+
+      let statusClass = '';
+      if (status === 'Paid') statusClass = 'px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
+      else if (status === 'Pending') statusClass = 'px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800';
+      else if (status === 'Overdue') statusClass = 'px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
+
+      document.getElementById('modalStatus').innerHTML = '<span class="' + statusClass + '">' + status + '</span>';
+
+      modal.classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.add('hidden');
+    }
+
+    // View Due Date Modal
+    function viewDueDate(name, room, dueDate) {
+      const modal = document.getElementById('dueDateModal');
+      const initials = name.split(' ').map(n => n[0]).join('');
+
+      document.getElementById('dueDateModalAvatar').textContent = initials;
+      document.getElementById('dueDateModalTenantName').textContent = name;
+      document.getElementById('dueDateModalRoom').textContent = room;
+      document.getElementById('dueDateModalDate').textContent = dueDate;
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeDueDateModal() {
+      document.getElementById('dueDateModal').classList.add('hidden');
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+      const paymentModal = document.getElementById('paymentModal');
+      const dueDateModal = document.getElementById('dueDateModal');
+
+      if (event.target === paymentModal) {
+        closePaymentModal();
+      }
+      if (event.target === dueDateModal) {
+        closeDueDateModal();
+      }
+    }
+  </script>
+</body>
+</html>

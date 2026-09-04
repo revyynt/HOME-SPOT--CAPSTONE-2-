@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - MJP Residences</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex items-center justify-center py-12 px-4" style="background-color: #F5F5F5;">
+    <div class="max-w-md w-full">
+      <!-- Logo/Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-1">MJP Residences</h1>
+        <p class="text-sm text-gray-600">Admin Portal Login</p>
+      </div>
+
+      <!-- Login Card -->
+      <div class="bg-white rounded-lg shadow-md p-8">
+        <form id="loginForm">
+          <div class="space-y-5">
+            <!-- Email -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <input type="email" name="email" class="form-input" placeholder="admin@mjpresidence.com" required style="border-color: #E5E7EB;">
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <input type="password" name="password" class="form-input" placeholder="••••••••" required style="border-color: #E5E7EB;">
+            </div>
+
+            <!-- Remember Me -->
+            <div class="flex items-center">
+              <input type="checkbox" id="remember" class="w-4 h-4 text-blue-600 border-gray-300 rounded">
+              <label for="remember" class="ml-2 text-sm text-gray-700">Remember me</label>
+            </div>
+
+            <div id="loginError" class="mt-4 hidden"></div>
+
+            <!-- Login Button -->
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors">
+              Sign In
+            </button>
+
+            <!-- Demo Credentials -->
+            <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+              <p class="text-xs text-gray-700 font-semibold mb-2">Demo Credentials:</p>
+              <p class="text-xs text-blue-700 mb-1">Admin: admin@mjpresidence.com / admin123</p>
+              <p class="text-xs text-blue-700">Super Admin: super@mjpresidence.com / super123</p>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Back to Website -->
+      <div class="text-center mt-6">
+        <a href="./index.html" class="text-blue-600 hover:text-blue-700 text-sm">
+          ← Back to Website
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    window.disableMainLoginHandler = true;
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      setPersistence,
+      browserLocalPersistence,
+      browserSessionPersistence,
+      onAuthStateChanged,
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM",
+      authDomain: "capstoneapt-b5681.firebaseapp.com",
+      projectId: "capstoneapt-b5681",
+      storageBucket: "capstoneapt-b5681.firebasestorage.app",
+      messagingSenderId: "192229736140",
+      appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69",
+      measurementId: "G-FPCHCDJQ9J"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Check if user is already logged in and redirect accordingly
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const role = userDoc.exists() ? userDoc.data().role : null;
+
+          if (role === 'superadmin') {
+            window.location.href = './super-admin-dashboard.html';
+          } else if (role === 'admin') {
+            window.location.href = './admin-dashboard.html';
+          }
+        } catch (error) {
+          console.error('Error checking user role:', error);
+        }
+      }
+    });
+
+    const loginForm = document.getElementById('loginForm');
+    const rememberCheckbox = document.getElementById('remember');
+    const loginErrorContainer = document.getElementById('loginError');
+
+    const showError = (msg) => {
+      if (!loginErrorContainer) return;
+      loginErrorContainer.className = 'mt-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200';
+      loginErrorContainer.textContent = msg;
+      loginErrorContainer.classList.remove('hidden');
+    };
+
+    const clearError = () => {
+      if (!loginErrorContainer) return;
+      loginErrorContainer.textContent = '';
+      loginErrorContainer.classList.add('hidden');
+    };
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        clearError();
+
+        const formData = new FormData(loginForm);
+        const email = formData.get('email');
+        const password = formData.get('password');
+        const remember = rememberCheckbox && rememberCheckbox.checked;
+
+        if (!email || !password) {
+          showError('Please enter both email and password.');
+          return;
+        }
+
+        try {
+          await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          const role = userDoc.exists() ? userDoc.data().role : null;
+
+          if (role === 'superadmin') {
+            window.location.href = './super-admin-dashboard.html';
+          } else if (role === 'admin') {
+            window.location.href = './admin-dashboard.html';
+          } else {
+            await auth.signOut();
+            showError('Your account does not have a role assigned. Please contact support.');
+          }
+        } catch (error) {
+          console.error(error);
+          const messageMap = {
+            'auth/invalid-email': 'Invalid email address.',
+            'auth/user-disabled': 'This user has been disabled.',
+            'auth/user-not-found': 'No account found with these credentials.',
+            'auth/wrong-password': 'Incorrect password. Please try again.',
+            'auth/too-many-requests': 'Too many attempts. Try again later.',
+          };
+          showError(messageMap[error.code] || 'Login failed. Please check your email and password.');
+        }
+      });
+    }
+  </script>
+  <script src="./assets/js/main.js"></script>   
+</body>
+</html>

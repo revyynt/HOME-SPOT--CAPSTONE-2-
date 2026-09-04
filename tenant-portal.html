@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenant Portal - MJP Residences</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #F5F5F5;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        .logo p {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background-color: #f3f4f6;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #e5e7eb;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        .tabs {
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: #10B981;
+            color: white;
+        }
+
+        .tab:hover:not(.active) {
+            background: #f3f4f6;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .messages-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .owner-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .owner-info {
+            flex: 1;
+        }
+
+        .owner-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .owner-status {
+            font-size: 13px;
+            color: #10B981;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .message-bubble.sent {
+            align-self: flex-end;
+            background-color: #10B981;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-bubble.received {
+            align-self: flex-start;
+            background-color: #f3f4f6;
+            color: #1a1a1a;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time-stamp {
+            font-size: 11px;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+
+        .chat-input-area {
+            padding: 16px 24px;
+            border-top: 1px solid #e5e5e5;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .chat-input:focus {
+            border-color: #10B981;
+        }
+
+        .send-button {
+            width: 40px;
+            height: 40px;
+            background-color: #10B981;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: #059669;
+        }
+
+        .send-button svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+        .payment-container {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        .payment-summary {
+            background: #f9fafb;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .payment-summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .payment-summary-item:last-child {
+            margin-bottom: 0;
+            padding-top: 12px;
+            border-top: 1px solid #e5e5e5;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .payment-summary-label {
+            color: #666;
+        }
+
+        .payment-summary-value {
+            color: #1a1a1a;
+            font-weight: 500;
+        }
+
+        .payment-section {
+            margin-bottom: 28px;
+        }
+
+        .payment-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .payment-methods {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .payment-method-card {
+            border: 2px solid #e5e5e5;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .payment-method-card:hover {
+            border-color: #10B981;
+        }
+
+        .payment-method-card.selected {
+            border-color: #10B981;
+            background-color: #f0fdf4;
+        }
+
+        .payment-method-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            background-color: #0066FF;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .payment-method-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .payment-method-desc {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .payment-field {
+            margin-bottom: 16px;
+        }
+
+        .payment-field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .payment-field input,
+        .payment-field select {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .payment-field input:focus,
+        .payment-field select:focus {
+            outline: none;
+            border-color: #10B981;
+        }
+
+        .submit-payment-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #10B981;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .submit-payment-btn:hover {
+            background-color: #059669;
+        }
+
+        .submit-payment-btn:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .payment-note {
+            background-color: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #92400e;
+        }
+
+        .profile-container {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+        }
+
+        .profile-section {
+            margin-bottom: 32px;
+        }
+
+        .profile-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 16px;
+        }
+
+        .profile-field {
+            margin-bottom: 16px;
+        }
+
+        .profile-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .profile-field input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .profile-field input:focus {
+            outline: none;
+            border-color: #10B981;
+        }
+
+        .save-profile-btn {
+            padding: 12px 24px;
+            background-color: #10B981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .save-profile-btn:hover {
+            background-color: #059669;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+
+            .payment-container {
+                padding: 20px;
+            }
+
+            .messages-container {
+                height: 500px;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+            }
+
+            .chat-header {
+                padding: 12px 16px;
+            }
+
+            .chat-messages {
+                padding: 16px;
+            }
+
+            .chat-input-area {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <h1>MJP Residences</h1>
+            <p>homespot AR</p>
+        </div>
+        <div class="user-info">
+            <span class="user-email" id="userEmail">tenant@example.com</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('messages')">Messages</button>
+            <button class="tab" onclick="switchTab('payment')">Make a Payment</button>
+            <button class="tab" onclick="switchTab('profile')">Profile</button>
+        </div>
+
+        <div id="messages-tab" class="tab-content active">
+            <div class="messages-container">
+                <div class="chat-header">
+                    <div class="owner-avatar">MJ</div>
+                    <div class="owner-info">
+                        <div class="owner-name">Maria Santos (Owner)</div>
+                        <div class="owner-status">● Online</div>
+                    </div>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message-bubble received">
+                        <div>Hi Juan! Welcome to Triple Occupancy Room. Your reservation for the Room  has been confirmed.</div>
+                        <div class="message-time-stamp">Today, 9:30 AM</div>
+                    </div>
+                    <div class="message-bubble received">
+                        <div>Check-in is available starting May 1, 2026. Please bring a valid ID and your payment confirmation.</div>
+                        <div class="message-time-stamp">Today, 9:32 AM</div>
+                    </div>
+                    <div class="message-bubble sent">
+                        <div>Thank you! What time can I check in on May 1?</div>
+                        <div class="message-time-stamp">Today, 10:15 AM</div>
+                    </div>
+                    <div class="message-bubble received">
+                        <div>Check-in is available anytime from 9:00 AM to 6:00 PM. Just let me know when you're coming so I can prepare the keys.</div>
+                        <div class="message-time-stamp">Today, 10:20 AM</div>
+                    </div>
+                    <div class="message-bubble sent">
+                        <div>Perfect! I'll arrive around 2:00 PM. Is parking available?</div>
+                        <div class="message-time-stamp">Today, 10:45 AM</div>
+                    </div>
+                    <div class="message-bubble received">
+                        <div>Yes, we have parking space. It's ₱500/month additional. Let me know if you need it.</div>
+                        <div class="message-time-stamp">Today, 11:00 AM</div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input
+                        type="text"
+                        class="chat-input"
+                        id="messageInput"
+                        placeholder="Type your message..."
+                        onkeypress="handleMessageKeyPress(event)"
+                    >
+                    <button class="send-button" onclick="sendMessage()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="payment-tab" class="tab-content">
+            <div class="payment-container">
+                <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">Make a Payment</h2>
+                <div class="payment-summary">
+                    <div class="payment-summary-item">
+                        <span class="payment-summary-label">Current Residence:</span>
+                        <span class="payment-summary-value">Triple  Occupancy Room  </span>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span class="payment-summary-label">Monthly Rent:</span>
+                        <span class="payment-summary-value">₱10,000.00</span>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span class="payment-summary-label">Due Date:</span>
+                        <span class="payment-summary-value">May 5, 2026</span>
+                    </div>
+                    <div class="payment-summary-item">
+                        <span class="payment-summary-label">Amount Due:</span>
+                        <span class="payment-summary-value">₱10,000.00</span>
+                    </div>
+                </div>
+
+                <div class="payment-section">
+                    <h3>Select Payment Method</h3>
+                    <div class="payment-methods">
+                        <div class="payment-method-card" id="gcash-link" onclick="selectPaymentMethod('gcash-link')">
+                            <div class="payment-method-icon">G</div>
+                            <div class="payment-method-name">GCash Link</div>
+                            <div class="payment-method-desc">Pay via GCash link</div>
+                        </div>
+                        <div class="payment-method-card" id="gcash-qr" onclick="selectPaymentMethod('gcash-qr')">
+                            <div class="payment-method-icon">QR</div>
+                            <div class="payment-method-name">GCash QR</div>
+                            <div class="payment-method-desc">Scan QR code to pay</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="paymentForm">
+                    <div class="payment-field">
+                        <label for="paymentPurpose">Payment Purpose</label>
+                        <select id="paymentPurpose" required>
+                            <option value="">Select payment purpose</option>
+                            <option value="monthly-rent" selected>Monthly Rent</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="payment-field">
+                        <label for="paymentAmount">Amount (₱)</label>
+                        <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required>
+                    </div>
+
+                    <div class="payment-field">
+                        <label for="paymentNotes">Notes (Optional)</label>
+                        <input type="text" id="paymentNotes" placeholder="Add any notes for this payment">
+                    </div>
+
+                    <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" disabled>
+                        Select a Payment Method
+                    </button>
+
+                    <div class="payment-note">
+                        <strong>Note:</strong> After clicking "Proceed to Payment", you will be presented with GCash payment options. For GCash Link, you'll be redirected to the payment gateway. For GCash QR, scan the generated QR code with your GCash app.
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="profile-tab" class="tab-content">
+            <div class="profile-container">
+                <div class="profile-section">
+                    <h3>Personal Information</h3>
+                    <div class="profile-field">
+                        <label>Full Name</label>
+                        <input type="text" id="fullName" value="Juan Dela Cruz">
+                    </div>
+                    <div class="profile-field">
+                        <label>Email Address</label>
+                        <input type="email" id="email" value="juan.delacruz@email.com">
+                    </div>
+                    <div class="profile-field">
+                        <label>Phone Number</label>
+                        <input type="tel" id="phone" value="+63 912 345 6789">
+                    </div>
+                    <div class="profile-field">
+                        <label>Emergency Contact</label>
+                        <input type="tel" id="emergencyContact" value="+63 923 456 7890">
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Current Residence</h3>
+                    <div class="profile-field">
+                        <label>Dorm Name</label>
+                        <input type="text" value="Triple Occupancy Room " disabled>
+                    </div>
+                    <div class="profile-field">
+                        <label>Room Number</label>
+                        <input type="text" value="Room 201      " disabled>
+                    </div>
+                    <div class="profile-field">
+                        <label>Move-in Date</label>
+                        <input type="text" value="January 10, 2026" disabled>
+                    </div>
+                </div>
+
+                <button class="save-profile-btn" onclick="saveProfile()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./assets/js/firebase-service.js"></script>
+    <script>
+        if (!sessionStorage.getItem('tenantLoggedIn')) {
+            window.location.href = 'tenant-login.html';
+        }
+
+        const userEmail = sessionStorage.getItem('tenantEmail');
+        if (userEmail) {
+            document.getElementById('userEmail').textContent = userEmail;
+            document.getElementById('email').value = userEmail;
+        }
+
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            const tabButtons = document.querySelectorAll('.tab');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            if (tabName === 'messages') {
+                setTimeout(() => {
+                    const chatMessages = document.getElementById('chatMessages');
+                    if (chatMessages) {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+                }, 100);
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('tenantLoggedIn');
+            sessionStorage.removeItem('tenantEmail');
+            window.location.href = 'tenant-login.html';
+        }
+
+        function saveProfile() {
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const emergencyContact = document.getElementById('emergencyContact').value;
+            alert('Profile updated successfully!');
+        }
+
+        let selectedPaymentMethod = null;
+
+        function selectPaymentMethod(method) {
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.getElementById(method).classList.add('selected');
+            selectedPaymentMethod = method;
+            const submitBtn = document.getElementById('submitPaymentBtn');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Proceed to Payment';
+        }
+
+        document.getElementById('paymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!selectedPaymentMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+            const purpose = document.getElementById('paymentPurpose').value;
+            const amount = document.getElementById('paymentAmount').value;
+            const notes = document.getElementById('paymentNotes').value;
+            const submitBtn = document.getElementById('submitPaymentBtn');
+            submitBtn.textContent = 'Processing...';
+            submitBtn.disabled = true;
+            setTimeout(() => {
+                if (selectedPaymentMethod === 'gcash-link') {
+                    // GCash payment link for presentation
+                    const gcashPhoneNumber = '09171234567'; // Demo GCash number
+                    const gcashLink = `https://gcash.app/pay?phoneNumber=${gcashPhoneNumber}&amount=${amount}&reference=${purpose}`;
+                    
+                    // Display GCash link in a modal
+                    const linkModal = document.createElement('div');
+                    const linkModalId = 'gcash-link-modal-' + Date.now();
+                    linkModal.id = linkModalId;
+                    linkModal.innerHTML = `
+                        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                            <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 450px; word-wrap: break-word;">
+                                <h2 style="margin-top: 0; color: #333;">GCash Payment Link</h2>
+                                <p style="color: #666; margin: 10px 0;"><strong>Amount:</strong> ₱${amount}</p>
+                                <p style="color: #666; margin: 10px 0;"><strong>Purpose:</strong> ${purpose}</p>
+                                <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; overflow-wrap: break-word;">
+                                    <p style="color: #333; font-size: 12px; margin: 0 0 10px 0;"><strong>Payment Link (Presentation):</strong></p>
+                                    <span style="color: #666; text-decoration: none; word-break: break-all; font-size: 13px; user-select: all; pointer-events: none; display: block;">${gcashLink}</span>
+                                </div>
+                                <p style="color: #999; font-size: 12px; margin: 15px 0;">This link is for presentation purposes only</p>
+                                <button onclick="document.getElementById('${linkModalId}').remove(); alert('Payment completed successfully!');" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">Close</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(linkModal);
+                    alert(`GCash Payment Link Ready\n\nPayment Details:\nPurpose: ${purpose}\nAmount: ₱${amount}\nMethod: GCash Link\n\nClick "OK" to view the payment link`);
+                } else if (selectedPaymentMethod === 'gcash-qr') {
+                    // Generate QR code for payment details
+                    const qrData = JSON.stringify({
+                        phone: '09171234567',
+                        amount: amount,
+                        purpose: purpose,
+                        timestamp: new Date().toISOString()
+                    });
+                    const encodedData = encodeURIComponent(qrData);
+                    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}`;
+                    
+                    const qrModal = document.createElement('div');
+                    qrModal.innerHTML = `
+                        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                            <div style="background: white; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px;">
+                                <h2 style="margin-top: 0; color: #333;">GCash Payment QR Code</h2>
+                                <p style="color: #666; margin: 10px 0;"><strong>Amount:</strong> ₱${amount}</p>
+                                <p style="color: #666; margin: 10px 0;"><strong>Purpose:</strong> ${purpose}</p>
+                                <img src="${qrCodeUrl}" alt="GCash QR Code" style="width: 250px; height: 250px; margin: 20px 0; border: 2px solid #ddd; padding: 10px;">
+                                <p style="color: #999; font-size: 12px; margin: 15px 0 0 0;">Scan this QR code with your GCash app to complete payment</p>
+                                <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px;">Close</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(qrModal);
+                    alert(`Please scan the generated GCash QR code to complete payment\n\nPayment Details:\nPurpose: ${purpose}\nAmount: ₱${amount}\nMethod: GCash QR Code`);
+                }
+                submitBtn.textContent = 'Select a Payment Method';
+                submitBtn.disabled = true;
+                selectedPaymentMethod = null;
+                document.querySelectorAll('.payment-method-card').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                document.getElementById('paymentNotes').value = '';
+            }, 1500);
+        });
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const messageText = input.value.trim();
+            if (!messageText) return;
+
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message-bubble sent';
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            messageDiv.innerHTML = `
+                <div>${messageText}</div>
+                <div class="message-time-stamp">Today, ${timeStr}</div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            input.value = '';
+
+            const userEmail = sessionStorage.getItem('tenantEmail') || document.getElementById('userEmail')?.textContent || 'tenant@example.com';
+            const tenantName = sessionStorage.getItem('tenantName') || userEmail.split('@')[0] || 'Tenant';
+
+            if (window.firebaseDb && window.firebaseFirestore) {
+                try {
+                    const messagesRef = window.firebaseFirestore.collection(window.firebaseDb, 'messages');
+                    window.firebaseFirestore.addDoc(messagesRef, {
+                        name: tenantName,
+                        email: userEmail,
+                        message: messageText,
+                        status: 'Unread',
+                        sender: 'tenant',
+                        createdAt: window.firebaseFirestore.serverTimestamp(),
+                        reply: null
+                    });
+                } catch (error) {
+                    console.error('Firestore send message failed:', error);
+                }
+            }
+        }
+
+        function handleMessageKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        window.addEventListener('load', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

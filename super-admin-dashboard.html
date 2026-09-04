@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Super Admin Dashboard - HomeSpot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css">
+</head>
+<body class="bg-gray-50">
+  <!-- Top Navigation -->
+  <header class="bg-white border-b sticky top-0 z-50">
+    <div class="px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h1 class="text-2xl font-bold">HomeSpot Platform</h1>
+          <span class="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-medium">Super Admin</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="./index.html" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            View Website
+          </a>
+          <button onclick="logoutAdmin(); return false;" ontouchend="logoutAdmin(); return false;" class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg active:bg-gray-200 cursor-pointer" style="border: none; background: none;">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-6 max-w-7xl mx-auto">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold mb-2">Platform Management</h2>
+      <p class="text-gray-600">Oversee the entire HomeSpot system</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Total Admins</p>
+            <p class="text-3xl font-bold">8</p>
+          </div>
+          <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Total Listings</p>
+            <p class="text-3xl font-bold">24</p>
+          </div>
+          <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Total Tenants</p>
+            <p class="text-3xl font-bold">156</p>
+          </div>
+          <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Platform Issues</p>
+            <p class="text-3xl font-bold">2</p>
+          </div>
+          <div class="bg-red-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow mb-6">
+      <div class="flex border-b overflow-x-auto">
+        <button data-tab-button="overview" class="tab-button active px-6 py-3 font-medium">Overview</button>
+        <button data-tab-button="users" class="tab-button px-6 py-3 font-medium">User Management</button>
+        <button data-tab-button="system" class="tab-button px-6 py-3 font-medium">System Settings</button>
+              
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        <!-- Overview Tab -->
+        <div data-tab-content="overview">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Platform Activity -->
+            <div class="bg-white border rounded-lg p-6">
+              <h3 class="text-xl font-bold mb-4">Recent Platform Activity</h3>
+              <div class="space-y-4">
+                <div class="flex items-start gap-3 pb-4 border-b">
+                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">New admin registered</p>
+                    <p class="text-xs text-gray-500">Admin: Maria Santos - 1 hour ago</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3 pb-4 border-b">
+                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">New listing approved</p>
+                    <p class="text-xs text-gray-500">Listing ID: #1234 - 3 hours ago</p>
+                  </div>
+                </div>
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium">Dispute reported</p>
+                    <p class="text-xs text-gray-500">Case #5678 - 5 hours ago</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="bg-white border rounded-lg p-6">
+              <h3 class="text-xl font-bold mb-4">System Status</h3>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between py-2">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span class="text-sm">Database</span>
+                  </div>
+                  <span class="text-sm text-green-600 font-medium">Online</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span class="text-sm">API Server</span>
+                  </div>
+                  <span class="text-sm text-green-600 font-medium">Online</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span class="text-sm">Payment Gateway</span>
+                  </div>
+                  <span class="text-sm text-green-600 font-medium">Online</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span class="text-sm">Email Service</span>
+                  </div>
+                  <span class="text-sm text-green-600 font-medium">Online</span>
+                </div>
+                <div class="border-t pt-4 mt-4">
+                  <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Create System Backup
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Management Tab -->
+        <div data-tab-content="users" class="hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold">Admin Users</h3>
+            <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Add New Admin
+            </button>
+          </div>
+
+          <div class="bg-white border rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">Maria Santos</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">maria@homespot.com</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                    <button class="text-red-600 hover:text-red-900">Suspend</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">Juan Dela Cruz</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">juan@homespot.com</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                    <button class="text-red-600 hover:text-red-900">Suspend</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">Ana Garcia</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">ana@homespot.com</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Admin</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Suspended</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                    <button class="text-green-600 hover:text-green-900">Activate</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- System Settings Tab -->
+        <div data-tab-content="system" class="hidden">
+          <h3 class="text-xl font-bold mb-6">System Settings</h3>
+
+          <div class="space-y-6">
+            <!-- Maintenance Mode -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="text-lg font-bold mb-1">Maintenance Mode</h4>
+                  <p class="text-sm text-gray-600">Put the platform in maintenance mode for updates</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer">
+                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Platform Rules -->
+            <div class="bg-white border rounded-lg p-6">
+              <h4 class="text-lg font-bold mb-4">Platform Rules</h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Booking Duration (months)</label>
+                  <input type="number" value="1" class="form-input w-32" min="1">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Maximum Booking Duration (months)</label>
+                  <input type="number" value="12" class="form-input w-32" min="1">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Cancellation Policy (days before check-in)</label>
+                  <input type="number" value="7" class="form-input w-32" min="0">
+                </div>
+                <div class="pt-4">
+                  <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg">
+                    Save Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="bg-white border rounded-lg p-6">
+              <h4 class="text-lg font-bold mb-4">Backup & Restore</h4>
+              <div class="space-y-4">
+                <div>
+                  <p class="text-sm text-gray-600 mb-4">Last backup: March 8, 2026 at 11:30 PM</p>
+                  <div class="flex gap-3">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                      </svg>
+                      Create Backup Now
+                    </button>
+                    <button class="border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-lg flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                      </svg>
+                      Restore from Backup
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Templates Tab -->
+        <div data-tab-content="templates" class="hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold">Message Templates</h3>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Add New Template
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Template 1 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h4 class="text-lg font-bold mb-1">Booking Confirmation</h4>
+                  <p class="text-sm text-gray-600">Sent when a booking is confirmed</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-sm">Edit</button>
+                  <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-sm">Preview</button>
+                </div>
+              </div>
+              <div class="bg-gray-50 rounded p-4 text-sm">
+                <p class="text-gray-700">Dear [TENANT_NAME],</p>
+                <p class="text-gray-700 mt-2">Your booking for [ROOM_NAME] has been confirmed for [MOVE_IN_DATE]...</p>
+              </div>
+            </div>
+
+            <!-- Template 2 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h4 class="text-lg font-bold mb-1">Booking Declined</h4>
+                  <p class="text-sm text-gray-600">Sent when a booking request is declined</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-sm">Edit</button>
+                  <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-sm">Preview</button>
+                </div>
+              </div>
+              <div class="bg-gray-50 rounded p-4 text-sm">
+                <p class="text-gray-700">Dear [TENANT_NAME],</p>
+                <p class="text-gray-700 mt-2">We regret to inform you that your booking request for [ROOM_NAME]...</p>
+              </div>
+            </div>
+
+            <!-- Template 3 -->
+            <div class="bg-white border rounded-lg p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h4 class="text-lg font-bold mb-1">Payment Reminder</h4>
+                  <p class="text-sm text-gray-600">Sent before payment due date</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-sm">Edit</button>
+                  <button class="px-3 py-1 border rounded-lg hover:bg-gray-50 text-sm">Preview</button>
+                </div>
+              </div>
+              <div class="bg-gray-50 rounded p-4 text-sm">
+                <p class="text-gray-700">Dear [TENANT_NAME],</p>
+                <p class="text-gray-700 mt-2">This is a reminder that your payment of [AMOUNT] is due on [DUE_DATE]...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Escalations Tab -->
+        <div data-tab-content="escalations" class="hidden">
+          <h3 class="text-xl font-bold mb-6">Escalated Issues</h3>
+
+          <div class="space-y-4">
+            <!-- Issue 1 -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-medium">High Priority</span>
+                    <span class="text-sm text-gray-600">Case #5678</span>
+                  </div>
+                  <h4 class="text-lg font-bold mb-1">Payment Dispute</h4>
+                  <p class="text-sm text-gray-600">Reported by: John Reyes</p>
+                  <p class="text-sm text-gray-600">Against: Maria Santos (Admin)</p>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                  Review Case
+                </button>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">
+                Tenant claims double payment charge for the month of February.
+              </p>
+              <p class="text-xs text-gray-500">Escalated: 2 hours ago</p>
+            </div>
+
+            <!-- Issue 2 -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-yellow-600 text-white px-2 py-1 rounded text-xs font-medium">Medium Priority</span>
+                    <span class="text-sm text-gray-600">Case #5679</span>
+                  </div>
+                  <h4 class="text-lg font-bold mb-1">Maintenance Issue</h4>
+                  <p class="text-sm text-gray-600">Reported by: Lisa Tan</p>
+                  <p class="text-sm text-gray-600">Property: Single Occupancy Room #12</p>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                  Review Case
+                </button>
+              </div>
+              <p class="text-sm text-gray-700 mb-2">
+                Air conditioning not working for 3 days. Admin unresponsive.
+              </p>
+              <p class="text-xs text-gray-500">Escalated: 1 day ago</p>
+            </div>
+
+            <!-- No More Issues -->
+            <div class="bg-white border rounded-lg p-8 text-center">
+              <svg class="w-16 h-16 mx-auto mb-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <p class="text-gray-600">All other cases have been resolved</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./assets/js/firebase-service.js"></script>
+  <script type="module">
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    // Initialize Firebase Auth
+    const auth = getAuth();
+
+    // Mobile-optimized logout function
+    window.logoutAdmin = async function(e) {
+      // Prevent default click/touch behavior
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      // Disable button to prevent double-clicks
+      const logoutBtn = document.querySelector('[onclick*="logoutAdmin"]') || document.querySelector('button[ontouchend*="logoutAdmin"]');
+      if (logoutBtn) {
+        logoutBtn.disabled = true;
+        logoutBtn.style.opacity = '0.6';
+        logoutBtn.style.pointerEvents = 'none';
+      }
+      
+      try {
+        // Sign out from Firebase
+        const signOutPromise = signOut(auth);
+        
+        // Set a timeout to ensure redirect happens even if signOut is slow
+        const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
+        
+        await Promise.race([signOutPromise, timeoutPromise]);
+        
+        // Clear session storage and local storage
+        sessionStorage.clear();
+        localStorage.removeItem('adminSession');
+        
+        // Navigate to login
+        window.location.href = './admin-login.html';
+        
+      } catch (error) {
+        console.error('Error signing out:', error);
+        // Clear storage anyway
+        sessionStorage.clear();
+        localStorage.removeItem('adminSession');
+        // Redirect to login page
+        window.location.href = './admin-login.html';
+      }
+    };
+    
+    // Make logout work on both click and touch for mobile
+    document.addEventListener('DOMContentLoaded', function() {
+      const logoutButtons = document.querySelectorAll('[onclick*="logoutAdmin"]');
+      logoutButtons.forEach(btn => {
+        btn.addEventListener('touchstart', function(e) {
+          // Add touch feedback
+          this.style.opacity = '0.7';
+        }, false);
+        
+        btn.addEventListener('touchend', function(e) {
+          // Reset opacity
+          this.style.opacity = '1';
+          // Trigger logout
+          window.logoutAdmin(e);
+        }, false);
+        
+        btn.addEventListener('click', function(e) {
+          // Trigger logout on click
+          window.logoutAdmin(e);
+        }, false);
+      });
+    });
+  </script>
+  <script src="./assets/js/main.js"></script>
+  <script>
+    // Mobile-optimized back button disabling
+    (function() {
+      // Initial push state
+      window.history.pushState({page: 'admin'}, null, window.location.href);
+      
+      // Handle pop state (back button)
+      window.onpopstate = function(event) {
+        window.history.pushState({page: 'admin'}, null, window.location.href);
+      };
+      
+      // Additional protection for mobile
+      document.addEventListener('touchmove', function(e) {
+        // Prevent swipe-back gesture on iOS
+        if (e.touches.length > 1 || e.scale !== 1) {
+          return;
+        }
+      }, false);
+      
+      // Prevent iOS swipe-to-go-back
+      let lastX = 0;
+      document.addEventListener('touchstart', function(e) {
+        lastX = e.touches[0].clientX;
+      }, false);
+      
+      document.addEventListener('touchend', function(e) {
+        // Check if swipe-back gesture was attempted
+        if (e.changedTouches[0].clientX > lastX + 100) {
+          e.preventDefault();
+          window.history.pushState({page: 'admin'}, null, window.location.href);
+        }
+      }, false);
+    })();
+  </script>
+</body>
+</html>
