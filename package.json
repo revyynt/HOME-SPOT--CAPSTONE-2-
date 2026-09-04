@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start": "node paymongo-api-server.js 5050"
+  },
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "firebase": "^12.10.0"
