@@ -889,7 +889,7 @@
                         <span class="paymongo-live-dot"></span>
                         <span>Secured by <strong>PayMongo</strong></span>
                     </div>
-                    <span class="paymongo-tag">Live Gateway</span>
+                    <span class="paymongo-tag">Test Gateway</span>
                 </div>
 
                 <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px;">Make a Payment</h2>
@@ -1345,7 +1345,7 @@
 
                     submitBtn.innerHTML = 'Tokenizing with PayMongo...';
 
-                    // Call PayMongo API with Live Public Key
+                    // Call PayMongo API with Test Public Key
                     let pmToken = 'pm_' + Math.random().toString(36).substring(2, 15);
                     try {
                         if (window.PayMongoService) {
@@ -1367,9 +1367,8 @@
                         }
                     } catch (cardErr) {
                         console.warn('PayMongo card notice:', cardErr.message);
-                        // If live card requires 3DS or demo card validation, inform user clearly
-                        if (cardErr.message.includes('test card') || cardErr.message.includes('livemode')) {
-                            alert('PayMongo Notice: Live account active. Please use a valid Philippine credit or debit card.');
+                        if (cardErr.message) {
+                            alert('PayMongo Notice: ' + cardErr.message);
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalBtnText;
                             return;
@@ -1403,7 +1402,7 @@
 
         // Initiate QR Ph flow with PayMongo
         async function initiateQrPhFlow(amountVal, purpose, tenantName, tenantPhone) {
-            let pmToken = 'pm_live_' + Date.now().toString(36);
+            let pmToken = 'pm_test_' + Date.now().toString(36);
             try {
                 if (window.PayMongoService) {
                     const pmRes = await window.PayMongoService.createPaymentMethod({

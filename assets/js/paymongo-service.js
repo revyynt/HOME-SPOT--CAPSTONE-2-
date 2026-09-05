@@ -1,11 +1,11 @@
 /**
  * PayMongo Payment Service for HomeSpot MJP Residences
- * Configured with Live PayMongo API Credentials
+ * Configured with Test PayMongo API Credentials
  */
 
 export const PAYMONGO_CONFIG = {
-  publicKey: 'pk_live_1tUJHsmunCfXY5QPMzRiwR6f',
-  secretKey: 'sk_live_aqrKyvmfTu8h6JPQeXt8iUmH',
+  publicKey: 'pk_test_gsoWoMD6Ww41rrbHmYz1Jm8n',
+  secretKey: 'sk_test_W88PSSzUqwSr3hobvsUyaZK5',
   apiBaseUrl: 'https://api.paymongo.com/v1',
   merchantName: 'MJP Residences (GAVIÑO, RENZ ALEX ZANDER ENRIQUEZ)',
   currency: 'PHP',

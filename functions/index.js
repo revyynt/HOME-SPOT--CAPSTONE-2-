@@ -28,7 +28,7 @@ exports.notifyAdminNewInquiry = functions.firestore
 });
 
 // PayMongo Secret Key & Helper
-const PAYMONGO_SECRET_KEY = process.env.PAYMONGO_SECRET_KEY || "sk_live_aqrKyvmfTu8h6JPQeXt8iUmH";
+const PAYMONGO_SECRET_KEY = process.env.PAYMONGO_SECRET_KEY || "sk_test_W88PSSzUqwSr3hobvsUyaZK5";
 const PAYMONGO_AUTH = "Basic " + Buffer.from(PAYMONGO_SECRET_KEY + ":").toString("base64");
 
 /**
