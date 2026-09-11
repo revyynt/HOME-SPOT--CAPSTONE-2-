@@ -1,7 +1,7 @@
 # Home-Spot - HTML/CSS/JavaScript Version
 <<<<<<< HEAD
 
-This is the converted HTML version of the DORMKAYA Dorm Booking & Management System for client delivery.
+This is the converted HTML version of the Home-Spot Dorm Booking & Management System for client delivery.
 =======
 >>>>>>> d16b89af355bed0e0bdd799cae10c68365b947bf
 
