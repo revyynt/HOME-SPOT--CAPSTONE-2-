@@ -407,3 +407,17 @@ function loadRoomData(room) {
     document.head.appendChild(s);
   }
 }
+
+// Close inquiry and reservation modals on Escape key press
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const inquiryModal = document.getElementById('inquiryForm');
+    const reservationModal = document.getElementById('reservationForm');
+    if (inquiryModal && !inquiryModal.classList.contains('hidden')) {
+      inquiryModal.classList.add('hidden');
+    }
+    if (reservationModal && !reservationModal.classList.contains('hidden')) {
+      reservationModal.classList.add('hidden');
+    }
+  }
+});
