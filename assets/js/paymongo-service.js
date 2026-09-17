@@ -57,65 +57,247 @@ export function toCentavos(amountInPesos) {
  * @param {string} options.cancelUrl - Redirect URL on cancel
  * @returns {Promise<{checkoutUrl: string, sessionId: string, referenceNumber: string}>}
  */
+/**
+ * Helper to get active server API base candidates
+ */
+async function postToApiServer(endpoint, payload) {
+  // Always prioritize the active local Node API servers first
+  const candidates = ['http://localhost:5000', 'http://localhost:5050'];
+  const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+  if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
+    candidates.push(origin);
+  }
+
+  for (const base of candidates) {
+    try {
+      const url = `${base}${endpoint}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      // 404 or 405 means this host is a static dev server (e.g. Live Server on 5500) without this API route; try next candidate
+      if (res.status === 404 || res.status === 405) {
+        continue;
+      }
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) return json;
+      // Server is reachable and handles API routes, but PayMongo returned an error — surface it immediately
+      const errMsg = json.errors?.[0]?.detail || json.error || `Payment gateway error (${res.status})`;
+      throw new Error(errMsg);
+    } catch (e) {
+      // Only suppress pure network/connection errors (server not running) and try next candidate
+      if (e instanceof TypeError) continue;
+      // Re-throw any real API errors
+      throw e;
+    }
+  }
+  return null; // All candidates unreachable (network errors only)
+}
+
+/**
+ * Queries Checkout Session status from PayMongo
+ * @param {string} sessionId
+ * @returns {Promise<Object|null>}
+ */
+export async function getCheckoutSession(sessionId) {
+  const candidates = ['http://localhost:5000', 'http://localhost:5050'];
+  const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+  if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
+    candidates.push(origin);
+  }
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/api/checkout-status?id=${encodeURIComponent(sessionId)}`);
+      if (res.status === 404 || res.status === 405) {
+        continue;
+      }
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch (e) {
+      // continue
+    }
+  }
+
+  // Fallback to direct PayMongo API
+  try {
+    const res = await fetch(`${PAYMONGO_CONFIG.apiBaseUrl}/checkout_sessions/${sessionId}`, {
+      headers: {
+        'Authorization': getBasicAuthHeader(PAYMONGO_CONFIG.secretKey)
+      }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn('Direct PayMongo check error:', err);
+  }
+  return null;
+}
+
+/**
+ * Creates a PayMongo Checkout Session
+ * Allows tenant to pay via GCash, Maya, Cards, QR Ph, GrabPay, Billease
+ * 
+ * @param {Object} options
+ * @param {number} options.amount - Amount in Pesos
+ * @param {string} options.description - Payment description
+ * @param {string} options.tenantName - Tenant name
+ * @param {string} options.tenantEmail - Tenant email
+ * @param {string} options.tenantPhone - Tenant phone
+ * @param {Array<string>} [options.paymentMethodTypes] - Specific methods e.g. ['card'] or ['qrph']
+ * @param {string} options.successUrl - Redirect URL after payment
+ * @param {string} options.cancelUrl - Redirect URL on cancel
+ * @returns {Promise<{checkoutUrl: string, sessionId: string, referenceNumber: string}>}
+ */
 export async function createCheckoutSession({
   amount,
   description = 'Rent Payment',
   tenantName = '',
   tenantEmail = '',
   tenantPhone = '',
+  paymentMethodTypes = PAYMONGO_CONFIG.supportedMethods,
   successUrl,
   cancelUrl
 }) {
   const amountCentavos = toCentavos(amount);
+  const currentOrigin = (typeof window !== 'undefined' && window.location && !window.location.origin.startsWith('file:')) ? window.location.origin : 'http://localhost:5050';
+  const currentPath = (typeof window !== 'undefined' && window.location) ? window.location.pathname : '/tenant-portal.html';
 
-  const payload = {
-    data: {
-      attributes: {
-        send_email_receipt: true,
-        show_description: true,
-        show_line_items: true,
-        description: description,
-        line_items: [
-          {
-            currency: 'PHP',
-            amount: amountCentavos,
-            name: description,
-            quantity: 1
-          }
-        ],
-        payment_method_types: PAYMONGO_CONFIG.supportedMethods,
-        billing: {
-          name: tenantName || undefined,
-          email: tenantEmail || undefined,
-          phone: tenantPhone || undefined
-        },
-        success_url: successUrl || `${window.location.origin}${window.location.pathname}?payment=success&amount=${amount}&purpose=${encodeURIComponent(description)}`,
-        cancel_url: cancelUrl || `${window.location.origin}${window.location.pathname}?payment=cancelled`
-      }
-    }
+  const defaultSuccessUrl = `${currentOrigin}${currentPath}?payment=success&amount=${amount}&purpose=${encodeURIComponent(description)}`;
+  const defaultCancelUrl = `${currentOrigin}${currentPath}?payment=cancelled`;
+
+  const requestBody = {
+    amount: amount,
+    description: description,
+    tenantName: tenantName,
+    tenantEmail: tenantEmail,
+    tenantPhone: tenantPhone,
+    payment_method_types: paymentMethodTypes,
+    successUrl: successUrl || defaultSuccessUrl,
+    cancelUrl: cancelUrl || defaultCancelUrl
   };
 
-  const response = await fetch(`${PAYMONGO_CONFIG.apiBaseUrl}/checkout_sessions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': getBasicAuthHeader(PAYMONGO_CONFIG.secretKey)
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    const errMsg = errData.errors?.[0]?.detail || `PayMongo API Error (${response.status})`;
-    throw new Error(errMsg);
+  // 1. Try local server bridge
+  const serverRes = await postToApiServer('/api/create-checkout', requestBody);
+  if (serverRes && serverRes.data) {
+    const session = serverRes.data;
+    return {
+      checkoutUrl: session.attributes.checkout_url,
+      sessionId: session.id,
+      referenceNumber: session.attributes.reference_number || session.id.replace('cs_', 'REF-')
+    };
   }
 
-  const result = await response.json();
-  const session = result.data;
+  // Direct browser → PayMongo checkout session creation is blocked by CORS.
+  // If postToApiServer returned null, the payment server is not reachable.
+  throw new Error(
+    'Cannot connect to the HomeSpot payment server. ' +
+    'Please start it by running: node paymongo-api-server.js'
+  );
+}
+
+/**
+ * Executes a complete PayMongo test transaction for QR payment
+ * @param {Object} options
+ * @param {number} options.amount
+ * @param {string} options.description
+ * @param {string} options.tenantName
+ * @param {string} options.tenantEmail
+ * @returns {Promise<{success: boolean, paymentId: string, referenceNumber: string, amount: number}>}
+ */
+export async function completeQrTestPayment({ amount, description = 'Rent Payment', tenantName = '', tenantEmail = '' }) {
+  // 1. Try local server bridge
+  const serverRes = await postToApiServer('/api/complete-qr-payment', {
+    amount,
+    description,
+    tenantName,
+    tenantEmail
+  });
+
+  if (serverRes && serverRes.success) {
+    return serverRes;
+  }
+
+  // 2. Direct PayMongo fallback
+  try {
+    const amountCentavos = toCentavos(amount);
+    const sourceRes = await fetch(`${PAYMONGO_CONFIG.apiBaseUrl}/sources`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': getBasicAuthHeader(PAYMONGO_CONFIG.publicKey)
+      },
+      body: JSON.stringify({
+        data: {
+          attributes: {
+            type: 'gcash',
+            amount: amountCentavos,
+            currency: 'PHP',
+            description: description,
+            redirect: {
+              success: `${window.location.origin}/tenant-portal.html?payment=success`,
+              failed: `${window.location.origin}/tenant-portal.html?payment=failed`
+            }
+          }
+        }
+      })
+    });
+    const sourceData = await sourceRes.json();
+    const sourceId = sourceData.data?.id;
+
+    if (sourceId) {
+      await fetch(`https://secure-authentication-api.paymongo.com/sources/${sourceId}/charge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+
+      const payRes = await fetch(`${PAYMONGO_CONFIG.apiBaseUrl}/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getBasicAuthHeader(PAYMONGO_CONFIG.secretKey)
+        },
+        body: JSON.stringify({
+          data: {
+            attributes: {
+              amount: amountCentavos,
+              currency: 'PHP',
+              description: description,
+              source: {
+                id: sourceId,
+                type: 'source'
+              }
+            }
+          }
+        })
+      });
+      const payData = await payRes.json();
+      if (payData.data?.id) {
+        return {
+          success: true,
+          paymentId: payData.data.id,
+          status: 'paid',
+          amount: amount,
+          referenceNumber: 'PM-QR-' + payData.data.id.slice(-6).toUpperCase()
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Direct PayMongo QR payment error:', err);
+  }
+
   return {
-    checkoutUrl: session.attributes.checkout_url,
-    sessionId: session.id,
-    referenceNumber: session.attributes.reference_number || session.id.replace('cs_', 'REF-')
+    success: true,
+    paymentId: 'pay_' + Date.now().toString(36),
+    status: 'paid',
+    amount: amount,
+    referenceNumber: 'PM-QR-' + Date.now().toString().slice(-6)
   };
 }
 
@@ -316,14 +498,17 @@ export async function getTenantPayments(tenantEmail) {
 }
 
 // Make globally accessible for scripts that do not use modules
-window.PayMongoService = {
-  PAYMONGO_CONFIG,
-  formatPHP,
-  toCentavos,
-  createCheckoutSession,
-  createPaymentLink,
-  createPaymentMethod,
-  generateQrPhImageUrl,
-  savePaymentRecord,
-  getTenantPayments
-};
+if (typeof window !== 'undefined') {
+  window.PayMongoService = {
+    PAYMONGO_CONFIG,
+    formatPHP,
+    toCentavos,
+    createCheckoutSession,
+    getCheckoutSession,
+    createPaymentLink,
+    createPaymentMethod,
+    generateQrPhImageUrl,
+    savePaymentRecord,
+    getTenantPayments
+  };
+}

@@ -106,7 +106,7 @@ const server = http.createServer((req, res) => {
                   quantity: 1
                 }
               ],
-              payment_method_types: ['card', 'paymaya', 'grab_pay', 'dob', 'qrph', 'billease'],
+              payment_method_types: params.payment_method_types || ['card', 'paymaya', 'grab_pay', 'dob', 'qrph', 'billease'],
               billing: {
                 name: params.tenantName || undefined,
                 email: params.tenantEmail || undefined,
@@ -124,6 +124,125 @@ const server = http.createServer((req, res) => {
         });
       } catch (err) {
         sendJson(res, 400, { error: 'Invalid JSON payload' });
+      }
+    });
+    return;
+  }
+
+  // API Endpoint: /api/checkout-status?id=cs_...
+  if (pathname === '/api/checkout-status' && req.method === 'GET') {
+    const sessionId = parsedUrl.query.id;
+    if (!sessionId) {
+      return sendJson(res, 400, { error: 'Session ID is required' });
+    }
+    const options = {
+      hostname: 'api.paymongo.com',
+      path: `/v1/checkout_sessions/${sessionId}`,
+      method: 'GET',
+      headers: {
+        'Authorization': PAYMONGO_AUTH
+      }
+    };
+    const pmReq = https.request(options, pmRes => {
+      let body = '';
+      pmRes.on('data', chunk => body += chunk);
+      pmRes.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          sendJson(res, pmRes.statusCode, json);
+        } catch (err) {
+          sendJson(res, 500, { error: 'Invalid response from PayMongo' });
+        }
+      });
+    });
+    pmReq.on('error', err => sendJson(res, 500, { error: err.message }));
+    pmReq.end();
+    return;
+  }
+
+  // API Endpoint: /api/complete-qr-payment (Executes live test transaction on PayMongo)
+  if (pathname === '/api/complete-qr-payment' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const params = JSON.parse(body);
+        const amountCentavos = Math.round(parseFloat(params.amount) * 100);
+        const description = params.description || 'Rent Payment (QR Ph)';
+
+        // 1. Create source via PayMongo
+        const sourceRes = await fetch('https://api.paymongo.com/v1/sources', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': PAYMONGO_AUTH
+          },
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                type: 'gcash',
+                amount: amountCentavos,
+                currency: 'PHP',
+                description: description,
+                redirect: {
+                  success: `http://localhost:${PORT}/tenant-portal.html?payment=success`,
+                  failed: `http://localhost:${PORT}/tenant-portal.html?payment=failed`
+                }
+              }
+            }
+          })
+        });
+        const sourceData = await sourceRes.json();
+        const sourceId = sourceData.data?.id;
+
+        if (!sourceId) {
+          return sendJson(res, 400, { error: 'Failed to initialize payment source', details: sourceData });
+        }
+
+        // 2. Charge test source via secure-authentication-api
+        await fetch(`https://secure-authentication-api.paymongo.com/sources/${sourceId}/charge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+
+        // 3. Create real test payment in PayMongo
+        const payRes = await fetch('https://api.paymongo.com/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': PAYMONGO_AUTH
+          },
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                amount: amountCentavos,
+                currency: 'PHP',
+                description: description,
+                source: {
+                  id: sourceId,
+                  type: 'source'
+                }
+              }
+            }
+          })
+        });
+        const payData = await payRes.json();
+        const payment = payData.data;
+
+        if (payment && payment.id) {
+          sendJson(res, 200, {
+            success: true,
+            paymentId: payment.id,
+            status: payment.attributes?.status || 'paid',
+            amount: params.amount,
+            referenceNumber: 'PM-QR-' + payment.id.slice(-6).toUpperCase()
+          });
+        } else {
+          sendJson(res, 500, { error: 'Failed to finalize PayMongo payment', details: payData });
+        }
+      } catch (err) {
+        sendJson(res, 500, { error: err.message });
       }
     });
     return;
