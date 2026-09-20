@@ -111,9 +111,18 @@ async function updateIndexRoomAvailability() {
   if (!hasFirestore()) return;
 
   const rooms = [
-    { name: 'Triple Occupancy Room', badgeId: 'tripleAvailabilityBadge', defaultAvailable: 4 },
+    { name: 'Triple Occupancy Room', badgeId: 'tripleAvailabilityBadge', defaultAvailable: 3 },
     { name: 'Commercial Space', badgeId: 'commercialAvailabilityBadge', defaultAvailable: 1 },
   ];
+
+  function renderBadge(badgeElement, availableCount) {
+    if (!badgeElement) return;
+    badgeElement.innerHTML = `
+      <span class="w-2 h-2 bg-white rounded-full animate-ping absolute"></span>
+      <span class="w-2 h-2 bg-white rounded-full relative"></span>
+      ${availableCount} Available
+    `;
+  }
 
   for (const { name, badgeId, defaultAvailable } of rooms) {
     const badge = document.getElementById(badgeId);
@@ -135,7 +144,7 @@ async function updateIndexRoomAvailability() {
       if (roomSnap.exists()) {
         const data = roomSnap.data();
         if (typeof data.available === 'number') {
-          badge.textContent = `${data.available} Available`;
+          renderBadge(badge, data.available);
         }
       }
 
@@ -143,7 +152,7 @@ async function updateIndexRoomAvailability() {
         if (!snapshot.exists()) return;
         const data = snapshot.data();
         if (typeof data.available === 'number') {
-          badge.textContent = `${data.available} Available`;
+          renderBadge(badge, data.available);
         }
       });
     } catch (error) {
@@ -151,6 +160,46 @@ async function updateIndexRoomAvailability() {
     }
   }
 }
+
+// Global presentation helper to change room availability live
+window.setRoomAvailability = async function(roomNameOrCount, maybeCount) {
+  let roomName = 'Triple Occupancy Room';
+  let count = roomNameOrCount;
+
+  if (typeof roomNameOrCount === 'string') {
+    roomName = roomNameOrCount;
+    count = maybeCount;
+  }
+
+  if (typeof count !== 'number') {
+    count = parseInt(count, 10);
+  }
+
+  if (isNaN(count)) {
+    console.error('Invalid count provided. Usage: setRoomAvailability(3) or setRoomAvailability("Triple Occupancy Room", 3)');
+    return false;
+  }
+
+  await waitForFirebaseReady();
+  if (!hasFirestore()) {
+    console.error('Firestore not initialized');
+    return false;
+  }
+
+  const roomRef = getRoomRef(roomName);
+  if (!roomRef) {
+    console.error('Room ref not found for:', roomName);
+    return false;
+  }
+
+  await FirestoreHelpers.api.setDoc(roomRef, {
+    name: roomName,
+    available: count
+  }, { merge: true });
+
+  console.log(`✅ Updated "${roomName}" availability to ${count} rooms.`);
+  return true;
+};
 
 async function decrementRoomAvailability(roomName) {
   if (!hasFirestore() || !roomName) return;
@@ -223,14 +272,21 @@ function renderReservationRequests(docs) {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <button onclick="approveReservation('${doc.id}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"/></svg>
-              Approve
-            </button>
-            <button onclick="declineReservation('${doc.id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10 7.293 11.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg>
-              Decline
-            </button>
+            ${status === 'Approved' ? `
+              <button onclick="window.openCreateTenantModalFromData && window.openCreateTenantModalFromData('${escapeHtml(data.name || '')}', '${escapeHtml(data.email || '')}', '${escapeHtml(data.phone || '')}', '', '${escapeHtml(data.room || '')}', '${escapeHtml(requestDate)}', '${data.amount || 5000}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                Create Tenant Account
+              </button>
+            ` : `
+              <button onclick="approveReservation('${doc.id}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"/></svg>
+                Approve
+              </button>
+              <button onclick="declineReservation('${doc.id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10 7.293 11.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg>
+                Decline
+              </button>
+            `}
           </div>
         </div>
       </div>`;

@@ -1056,15 +1056,15 @@
                     <h3>Current Residence</h3>
                     <div class="profile-field">
                         <label>Dorm Name</label>
-                        <input type="text" value="Triple Occupancy Room " disabled>
+                        <input type="text" id="tenantProfileDorm" value="Triple Occupancy Room" disabled>
                     </div>
                     <div class="profile-field">
                         <label>Room Number</label>
-                        <input type="text" value="Room 201      " disabled>
+                        <input type="text" id="tenantProfileRoom" value="Room 201" disabled>
                     </div>
                     <div class="profile-field">
                         <label>Move-in Date</label>
-                        <input type="text" value="January 10, 2026" disabled>
+                        <input type="text" id="tenantProfileMoveIn" value="January 10, 2026" disabled>
                     </div>
                 </div>
 
@@ -1187,19 +1187,118 @@
         }
 
         const userEmail = sessionStorage.getItem('tenantEmail') || 'tenant@example.com';
-        if (userEmail) {
-            const userEmailEl = document.getElementById('userEmail');
-            if (userEmailEl) userEmailEl.textContent = userEmail;
-            const emailInput = document.getElementById('email');
-            if (emailInput) emailInput.value = userEmail;
-        }
+        let tenantName = sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
+        let tenantPhone = sessionStorage.getItem('tenantPhone') || '+63 912 345 6789';
+        let tenantRoom = sessionStorage.getItem('tenantRoom') || 'Room 201';
+        let tenantDorm = sessionStorage.getItem('tenantDorm') || 'Triple Occupancy Room';
+        let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 2026';
+        let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
+        let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
 
         // Global State
         let selectedPaymentMethod = null;
         let activeQrPaymentData = null;
         let qrTimerInterval = null;
         let qrStatusPollInterval = null;
-        let currentRemainingDue = 10000;
+        let currentRemainingDue = tenantRent;
+
+        function populateTenantUI() {
+            const userEmailEl = document.getElementById('userEmail');
+            if (userEmailEl) userEmailEl.textContent = userEmail;
+
+            const emailInput = document.getElementById('email');
+            if (emailInput) emailInput.value = userEmail;
+
+            const nameInput = document.getElementById('fullName');
+            if (nameInput) nameInput.value = tenantName;
+
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput) phoneInput.value = tenantPhone;
+
+            const emergencyInput = document.getElementById('emergencyContact');
+            if (emergencyInput) emergencyInput.value = tenantEmergency;
+
+            const dormInput = document.getElementById('tenantProfileDorm');
+            if (dormInput) dormInput.value = tenantDorm;
+
+            const roomInput = document.getElementById('tenantProfileRoom');
+            if (roomInput) roomInput.value = tenantRoom;
+
+            const moveInInput = document.getElementById('tenantProfileMoveIn');
+            if (moveInInput) moveInInput.value = tenantMoveIn;
+
+            const summaryResidence = document.getElementById('summaryResidence');
+            if (summaryResidence) summaryResidence.textContent = `${tenantDorm} (${tenantRoom})`;
+
+            const summaryRent = document.getElementById('summaryRent');
+            if (summaryRent) summaryRent.textContent = '₱' + tenantRent.toLocaleString() + '.00';
+
+            const summaryAmountDue = document.getElementById('summaryAmountDue');
+            if (summaryAmountDue) summaryAmountDue.textContent = '₱' + currentRemainingDue.toLocaleString() + '.00';
+
+            const receiptTenantName = document.getElementById('receiptTenantName');
+            if (receiptTenantName) receiptTenantName.textContent = tenantName;
+
+            const paymentAmountInput = document.getElementById('paymentAmount');
+            if (paymentAmountInput && !paymentAmountInput.value) {
+                paymentAmountInput.value = tenantRent.toLocaleString();
+            }
+        }
+
+        // Apply immediately from session storage
+        populateTenantUI();
+
+        // Also fetch up-to-date tenant profile from Firestore when ready
+        async function fetchTenantFirestoreProfile() {
+            if (!window.firebaseDb || !window.firebaseFirestore) {
+                window.addEventListener('firebase-ready', fetchTenantFirestoreProfile, { once: true });
+                return;
+            }
+            try {
+                const tenantsRef = window.firebaseFirestore.collection(window.firebaseDb, 'tenants');
+                const q = window.firebaseFirestore.query(tenantsRef, window.firebaseFirestore.where('email', '==', userEmail));
+                
+                window.firebaseFirestore.onSnapshot(q, (snapshot) => {
+                    if (!snapshot.empty) {
+                        const docData = snapshot.docs[0].data();
+                        if (docData.name) {
+                            tenantName = docData.name;
+                            sessionStorage.setItem('tenantName', docData.name);
+                        }
+                        if (docData.phone) {
+                            tenantPhone = docData.phone;
+                            sessionStorage.setItem('tenantPhone', docData.phone);
+                        }
+                        if (docData.room) {
+                            tenantRoom = docData.room;
+                            sessionStorage.setItem('tenantRoom', docData.room);
+                        }
+                        if (docData.dormName) {
+                            tenantDorm = docData.dormName;
+                            sessionStorage.setItem('tenantDorm', docData.dormName);
+                        }
+                        if (docData.moveInDate) {
+                            tenantMoveIn = docData.moveInDate;
+                            sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
+                        }
+                        if (docData.monthlyRent) {
+                            tenantRent = parseFloat(docData.monthlyRent);
+                            currentRemainingDue = tenantRent;
+                            sessionStorage.setItem('tenantMonthlyRent', tenantRent);
+                        }
+                        if (docData.emergencyContact) {
+                            tenantEmergency = docData.emergencyContact;
+                            sessionStorage.setItem('tenantEmergencyContact', docData.emergencyContact);
+                        }
+                        populateTenantUI();
+                    }
+                });
+            } catch (err) {
+                console.warn('Could not sync tenant profile from Firestore:', err);
+            }
+        }
+
+        fetchTenantFirestoreProfile();
 
         function switchTab(tabName) {
             const tabs = document.querySelectorAll('.tab-content');

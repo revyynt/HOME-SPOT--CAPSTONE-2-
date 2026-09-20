@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "start": "node paymongo-api-server.js 5050"
+    "start": "node paymongo-api-server.js 5050",
+    "set-room": "node set-room.js"
   },
   "dependencies": {
     "@dataconnect/generated": "file:src/dataconnect-generated",

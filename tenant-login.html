@@ -240,6 +240,8 @@
 
         <h2 class="login-title">Tenant Login</h2>
 
+        <div id="loginAlert" style="display: none; margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; font-size: 14px; text-align: left; line-height: 1.4;"></div>
+
         <form id="tenantLoginForm">
             <div class="form-group">
                 <label for="email">Email Address</label>
@@ -252,10 +254,10 @@
             </div>
 
             <div class="forgot-password">
-                <a href="#">Forgot Password?</a>
+                <a href="#" onclick="alert('Please contact the building administrator or front desk to reset your tenant password.'); return false;">Forgot Password?</a>
             </div>
 
-            <button type="submit" class="login-button">Sign In</button>
+            <button type="submit" id="loginSubmitBtn" class="login-button">Sign In</button>
         </form>
 
         <div class="divider">
@@ -263,7 +265,7 @@
         </div>
 
         <div class="signup-link">
-            Don't have an account? <a href="#" id="signupLink">Sign Up</a>
+            Moving in? <a href="#" id="signupLink">Need an account?</a>
         </div>
 
         <div class="back-home">
@@ -271,121 +273,186 @@
         </div>
     </div>
 
-    <!-- Signup Modal -->
+    <!-- Signup Info Modal -->
     <div id="signupModal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Create Account</h2>
+                <h2>Tenant Account Notice</h2>
                 <button class="close-modal">&times;</button>
             </div>
-            <form id="tenantSignupForm">
-                <div class="form-group">
-                    <label for="signupName">Full Name</label>
-                    <input type="text" id="signupName" name="name" required placeholder="Enter your full name">
+            <div style="padding: 24px 32px; color: #374151; font-size: 15px; line-height: 1.6;">
+                <div style="width: 48px; height: 48px; background: #ecfdf5; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+                    <svg width="24" height="24" fill="none" stroke="#059669" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <div class="form-group">
-                    <label for="signupEmail">Email Address</label>
-                    <input type="email" id="signupEmail" name="email" required placeholder="Enter your email">
-                </div>
-                <div class="form-group">
-                    <label for="signupPhone">Phone Number</label>
-                    <input type="tel" id="signupPhone" name="phone" required placeholder="Enter your phone number">
-                </div>
-                <div class="form-group">
-                    <label for="signupPassword">Password</label>
-                    <input type="password" id="signupPassword" name="password" required placeholder="Create a password">
-                </div>
-                <div class="form-group">
-                    <label for="signupConfirmPassword">Confirm Password</label>
-                    <input type="password" id="signupConfirmPassword" name="confirmPassword" required placeholder="Confirm your password">
-                </div>
-                <button type="submit" class="login-button">Create Account</button>
-            </form>
+                <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px;">Moving into MJP Residences?</h3>
+                <p style="margin-bottom: 16px;">
+                    Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in to link your assigned room, lease term, and monthly rent schedule.
+                </p>
+                <p style="margin-bottom: 24px; font-size: 14px; color: #6b7280;">
+                    If you have moved in or finalized your reservation, please ask the admin for your official login credentials.
+                </p>
+                <button type="button" class="login-button" onclick="document.getElementById('signupModal').style.display = 'none';">Understood</button>
+            </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithEmailAndPassword 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            query, 
+            where, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM",
+            authDomain: "capstoneapt-b5681.firebaseapp.com",
+            projectId: "capstoneapt-b5681",
+            storageBucket: "capstoneapt-b5681.appspot.com",
+            messagingSenderId: "192229736140",
+            appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         // Modal functionality
         const signupModal = document.getElementById('signupModal');
         const signupLink = document.getElementById('signupLink');
         const closeModalBtn = document.querySelector('.close-modal');
 
-        // Open signup modal
-        signupLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            signupModal.style.display = 'flex';
-        });
+        if (signupLink) {
+            signupLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                signupModal.style.display = 'flex';
+            });
+        }
 
-        // Close modal when clicking X
-        closeModalBtn.addEventListener('click', function() {
-            signupModal.style.display = 'none';
-        });
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', function() {
+                signupModal.style.display = 'none';
+            });
+        }
 
-        // Close modal when clicking outside
         signupModal.addEventListener('click', function(e) {
             if (e.target === signupModal) {
                 signupModal.style.display = 'none';
             }
         });
 
-        // Login form handler
-        document.getElementById('tenantLoginForm').addEventListener('submit', function(e) {
+        const alertBox = document.getElementById('loginAlert');
+        function showAlert(msg, isSuccess = false) {
+            if (!alertBox) return;
+            alertBox.style.display = 'block';
+            if (isSuccess) {
+                alertBox.style.background = '#ecfdf5';
+                alertBox.style.color = '#065f46';
+                alertBox.style.border = '1px solid #a7f3d0';
+            } else {
+                alertBox.style.background = '#fef2f2';
+                alertBox.style.color = '#991b1b';
+                alertBox.style.border = '1px solid #fecaca';
+            }
+            alertBox.textContent = msg;
+        }
+
+        function clearAlert() {
+            if (!alertBox) return;
+            alertBox.style.display = 'none';
+            alertBox.textContent = '';
+        }
+
+        // Login form handler connected to Firebase Firestore & Auth
+        document.getElementById('tenantLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            clearAlert();
 
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('loginSubmitBtn');
 
-            // Simple validation (in production, this would authenticate with backend)
-            if (email && password) {
-                // Store login state
-                sessionStorage.setItem('tenantLoggedIn', 'true');
-                sessionStorage.setItem('tenantEmail', email);
+            const email = emailInput.value.trim().toLowerCase();
+            const password = passwordInput.value;
 
-                // Redirect to tenant portal
-                window.location.href = 'tenant-portal.html';
-            }
-        });
-
-        // Signup form handler
-        document.getElementById('tenantSignupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const phone = document.getElementById('signupPhone').value;
-            const password = document.getElementById('signupPassword').value;
-            const confirmPassword = document.getElementById('signupConfirmPassword').value;
-
-            // Validation
-            if (!name || !email || !phone || !password || !confirmPassword) {
-                alert('Please fill in all fields');
+            if (!email || !password) {
+                showAlert('Please enter both your email address and password.');
                 return;
             }
 
-            if (password !== confirmPassword) {
-                alert('Passwords do not match');
-                return;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Verifying Credentials...';
+            submitBtn.style.opacity = '0.7';
+
+            try {
+                // 1. Look up tenant account in Firestore 'tenants' collection
+                const tenantsRef = collection(db, 'tenants');
+                const q = query(tenantsRef, where('email', '==', email));
+                const querySnapshot = await getDocs(q);
+
+                let matchedTenant = null;
+                let tenantDocId = null;
+
+                if (!querySnapshot.empty) {
+                    querySnapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        // Verify password matches stored credential
+                        if (data.password === password) {
+                            matchedTenant = data;
+                            tenantDocId = docSnap.id;
+                        }
+                    });
+                }
+
+                // 2. Also attempt Firebase Auth in parallel
+                let authUser = null;
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    authUser = userCredential.user;
+                } catch (authError) {
+                    console.warn('Firebase Auth sign-in note:', authError.code);
+                }
+
+                // If credentials matched Firestore or Firebase Auth
+                if (matchedTenant || authUser) {
+                    const tenantData = matchedTenant || {};
+
+                    // Save session details for Tenant Portal
+                    sessionStorage.setItem('tenantLoggedIn', 'true');
+                    sessionStorage.setItem('tenantEmail', email);
+                    sessionStorage.setItem('tenantName', tenantData.name || authUser?.displayName || email.split('@')[0]);
+                    sessionStorage.setItem('tenantPhone', tenantData.phone || '');
+                    sessionStorage.setItem('tenantRoom', tenantData.room || 'Room 201');
+                    sessionStorage.setItem('tenantDorm', tenantData.dormName || 'Triple Occupancy Room');
+                    sessionStorage.setItem('tenantMoveInDate', tenantData.moveInDate || 'May 1, 2026');
+                    sessionStorage.setItem('tenantMonthlyRent', tenantData.monthlyRent || '5000');
+                    sessionStorage.setItem('tenantEmergencyContact', tenantData.emergencyContact || '');
+                    if (tenantDocId) sessionStorage.setItem('tenantDocId', tenantDocId);
+
+                    showAlert('Login successful! Redirecting to your Tenant Portal...', true);
+
+                    setTimeout(() => {
+                        window.location.href = 'tenant-portal.html';
+                    }, 600);
+                } else {
+                    showAlert('Account not found or password incorrect. Please contact the administrator to create your tenant account upon move-in.');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Sign In';
+                    submitBtn.style.opacity = '1';
+                }
+            } catch (err) {
+                console.error('Tenant login error:', err);
+                showAlert('Login error: ' + (err.message || 'Please check your connection and try again.'));
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Sign In';
+                submitBtn.style.opacity = '1';
             }
-
-            if (password.length < 6) {
-                alert('Password must be at least 6 characters long');
-                return;
-            }
-
-            // Simple email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                alert('Please enter a valid email address');
-                return;
-            }
-
-            // In production, this would send data to backend
-            // For now, simulate successful registration
-            alert('Account created successfully! You can now log in.');
-
-            // Close modal and reset form
-            signupModal.style.display = 'none';
-            this.reset();
         });
     </script>
 </body>

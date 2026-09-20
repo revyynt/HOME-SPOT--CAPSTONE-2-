@@ -121,6 +121,10 @@
         <button data-tab-button="overview" class="tab-button active px-6 py-3 font-medium">Overview</button>
         <button data-tab-button="listings" class="tab-button px-6 py-3 font-medium">My Listings</button>
         <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium">Reservations</button>
+        <button data-tab-button="tenants" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
+          <span>Tenants</span>
+          <span id="tenantsCountBadge" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+        </button>
         <button data-tab-button="tenant-payments" class="tab-button px-6 py-3 font-medium">Tenant Payments</button>
         <button data-tab-button="messages" class="tab-button px-6 py-3 font-medium">Inquiries</button>
         <button data-tab-button="reviews" class="tab-button px-6 py-3 font-medium">Reviews</button>
@@ -426,7 +430,7 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
                     <h4 class="text-lg font-bold">Ana Garcia</h4>
-                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm"> d</span>
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded text-sm font-semibold">Approved</span>
                   </div>
                   <div class="text-sm text-gray-600 space-y-1">
                     <div>Property: Single Occupancy Room</div>
@@ -434,7 +438,119 @@
                     <div class="text-green-600 font-medium">Amount: ₱5,500</div>
                   </div>
                 </div>
+                <div>
+                  <button onclick="openCreateTenantModalFromData('Ana Garcia', 'ana.garcia@example.com', '+63 917 123 4567', 'Room 101', 'Single Occupancy Room', '2026-03-10', 5500)"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    Create Tenant Account
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tenants Tab -->
+        <div data-tab-content="tenants" class="hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-2xl font-bold text-gray-900">Tenant Management</h3>
+              <p class="text-sm text-gray-500 mt-0.5">Create and manage accounts for tenants moving into MJP Residences</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="openCreateTenantModal()"
+                class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Create Tenant Account
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Stats Banner -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
+              <div class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-blue-900 uppercase tracking-wider">Total Enrolled Tenants</div>
+                <div id="tenantsStatTotal" class="text-2xl font-bold text-blue-950">0</div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
+              <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-emerald-900 uppercase tracking-wider">Active Moved-In</div>
+                <div id="tenantsStatActive" class="text-2xl font-bold text-emerald-950">0</div>
+              </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 flex items-center gap-4">
+              <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-purple-900 uppercase tracking-wider">Monthly Rent Receivable</div>
+                <div id="tenantsStatRent" class="text-2xl font-bold text-purple-950">₱0.00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="relative w-full sm:w-80">
+              <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" id="tenantSearchInput" oninput="filterTenantsList()" placeholder="Search tenant name, email, room..."
+                class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <select id="tenantRoomFilter" onchange="filterTenantsList()" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
+                <option value="">All Rooms & Units</option>
+                <option value="Room 101">Room 101</option>
+                <option value="Room 105">Room 105</option>
+                <option value="Room 201">Room 201</option>
+                <option value="Room 208">Room 208</option>
+                <option value="Room 302">Room 302</option>
+                <option value="Room 410">Room 410</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+              <span id="tenantsFirestoreStatus" class="text-xs text-gray-500 hidden sm:inline-block">Syncing...</span>
+            </div>
+          </div>
+
+          <!-- Tenants Table Container -->
+          <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50/80 border-b text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <tr>
+                    <th class="px-6 py-3.5">Tenant</th>
+                    <th class="px-6 py-3.5">Assigned Room</th>
+                    <th class="px-6 py-3.5">Contact</th>
+                    <th class="px-6 py-3.5">Move-in Date</th>
+                    <th class="px-6 py-3.5">Monthly Rent</th>
+                    <th class="px-6 py-3.5">Status</th>
+                    <th class="px-6 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tenantsTableBody" class="divide-y divide-gray-100 text-sm">
+                  <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                      <div class="flex flex-col items-center justify-center gap-2">
+                        <div class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                        <span>Loading tenants from Firestore...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -912,22 +1028,748 @@
     </div>
   </div>
 
+  <!-- Create Tenant Account Modal -->
+  <div id="createTenantModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full my-8 shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+      <div class="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-5 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold">Create Tenant Account</h3>
+            <p class="text-blue-100 text-xs">Enroll tenant moving into the apartment & set up their Tenant Portal login</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeCreateTenantModal()" class="text-white/80 hover:text-white rounded-lg p-1 hover:bg-white/10 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="createTenantForm" class="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
+        <div id="createTenantAlert" class="hidden p-3 rounded-lg text-sm"></div>
+
+        <!-- Section 1: Tenant Personal Info -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            Personal & Contact Information
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name <span class="text-red-500">*</span></label>
+              <input type="text" id="tenantFullName" required placeholder="e.g. Juan Dela Cruz" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address (Login ID) <span class="text-red-500">*</span></label>
+              <input type="email" id="tenantEmail" required placeholder="e.g. juan.delacruz@example.com" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number <span class="text-red-500">*</span></label>
+              <input type="tel" id="tenantPhone" required placeholder="e.g. +63 912 345 6789" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Emergency Contact</label>
+              <input type="text" id="tenantEmergency" placeholder="e.g. Maria (+63 923 456 7890)" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: Account Security / Portal Password -->
+        <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              Portal Login Password
+            </h4>
+            <button type="button" onclick="generateRandomPassword()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              Generate Password
+            </button>
+          </div>
+          <div class="relative">
+            <input type="text" id="tenantPassword" required placeholder="Minimum 6 characters" minlength="6" class="w-full px-3 py-2 pr-10 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono">
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-2 top-2 text-gray-400 hover:text-gray-600 p-1" title="Toggle visibility">
+              <svg id="pwdEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+          <p class="text-xs text-blue-700 mt-1">Tenant will use their email and this password to sign into the Tenant Portal.</p>
+        </div>
+
+        <!-- Section 3: Room & Residence Assignment -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            Room Assignment & Lease Details
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Assigned Room / Unit <span class="text-red-500">*</span></label>
+              <input type="text" id="tenantRoom" list="roomSuggestionList" required placeholder="e.g. Room 201" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <datalist id="roomSuggestionList">
+                <option value="Room 101">
+                <option value="Room 105">
+                <option value="Room 201">
+                <option value="Room 208">
+                <option value="Room 302">
+                <option value="Room 410">
+                <option value="Commercial Space 1">
+              </datalist>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Residence Type</label>
+              <select id="tenantDorm" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="Triple Occupancy Room">Triple Occupancy Room</option>
+                <option value="Single Occupancy Room">Single Occupancy Room</option>
+                <option value="Double Occupancy Room">Double Occupancy Room</option>
+                <option value="Commercial Space">Commercial Space</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Move-in Date <span class="text-red-500">*</span></label>
+              <input type="date" id="tenantMoveInDate" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Monthly Rent (₱) <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500 text-sm font-medium">₱</span>
+                <input type="number" id="tenantMonthlyRent" required min="0" step="100" placeholder="5000" class="w-full pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Payment Due Day</label>
+              <select id="tenantDueDay" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="1">1st of each month</option>
+                <option value="5" selected>5th of each month</option>
+                <option value="10">10th of each month</option>
+                <option value="15">15th of each month</option>
+                <option value="20">20th of each month</option>
+                <option value="25">25th of each month</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Lease Term</label>
+              <select id="tenantLeaseTerm" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="6 Months">6 Months</option>
+                <option value="1 Year" selected>1 Year</option>
+                <option value="2 Years">2 Years</option>
+                <option value="Month-to-Month">Month-to-Month</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4: Notes -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Remarks / Notes (Optional)</label>
+          <textarea id="tenantNotes" rows="2" placeholder="e.g. Paid 1-month advance deposit. Keycard #12 issued." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"></textarea>
+        </div>
+
+        <!-- Modal Footer Buttons -->
+        <div class="pt-4 border-t flex items-center justify-end gap-3">
+          <button type="button" onclick="closeCreateTenantModal()" class="px-5 py-2.5 border rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium transition-colors">Cancel</button>
+          <button type="submit" id="submitTenantBtn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+            <span id="submitTenantSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+            <span id="submitTenantText">Create Account & Save to Firestore</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Tenant Details Modal -->
+  <div id="viewTenantModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+      <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-xl font-bold text-gray-900">Tenant Profile</h3>
+        <button onclick="closeViewTenantModal()" class="text-gray-400 hover:text-gray-600 p-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center gap-4 pb-4 border-b">
+          <div id="viewTenantAvatar" class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-xl font-bold shadow-md">JD</div>
+          <div>
+            <h4 id="viewTenantName" class="text-lg font-bold text-gray-900">Juan Dela Cruz</h4>
+            <p id="viewTenantEmail" class="text-sm text-gray-500 font-mono">juan@example.com</p>
+            <span id="viewTenantStatus" class="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800">Active Tenant</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Assigned Unit</div>
+            <div id="viewTenantRoom" class="font-bold text-gray-800 text-base">Room 201</div>
+            <div id="viewTenantDorm" class="text-xs text-gray-500">Triple Occupancy</div>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Monthly Rent</div>
+            <div id="viewTenantRent" class="font-bold text-emerald-600 text-base">₱5,000.00</div>
+            <div id="viewTenantDue" class="text-xs text-gray-500">Due every 5th</div>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Move-in Date</div>
+            <div id="viewTenantMoveIn" class="font-semibold text-gray-800">May 1, 2026</div>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Phone Number</div>
+            <div id="viewTenantPhone" class="font-semibold text-gray-800">+63 912 345 6789</div>
+          </div>
+        </div>
+        <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 text-xs text-blue-950 space-y-1.5">
+          <div class="font-bold text-blue-900 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            Tenant Portal Credentials
+          </div>
+          <div>Login Email: <span id="viewTenantLoginEmail" class="font-mono font-semibold text-blue-900"></span></div>
+          <div>Password: <span id="viewTenantLoginPassword" class="font-mono font-semibold text-blue-900">••••••••</span></div>
+        </div>
+        <div id="viewTenantNotesSection" class="hidden text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border">
+          <div class="font-semibold text-gray-700 mb-0.5">Notes:</div>
+          <p id="viewTenantNotes"></p>
+        </div>
+      </div>
+      <div class="p-6 border-t bg-gray-50 flex justify-between items-center">
+        <button onclick="copyCurrentTenantCredentials()" class="px-4 py-2 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          Copy Login Info
+        </button>
+        <button onclick="closeViewTenantModal()" class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors">Done</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./assets/js/firebase-service.js"></script>
   <script type="module">
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, 
+      signOut, 
+      createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      orderBy,
+      onSnapshot,
+      addDoc,
+      updateDoc,
+      deleteDoc,
+      doc,
+      getDoc,
+      setDoc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    // Initialize Firebase Auth
-    const auth = getAuth();
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM",
+      authDomain: "capstoneapt-b5681.firebaseapp.com",
+      projectId: "capstoneapt-b5681",
+      storageBucket: "capstoneapt-b5681.appspot.com",
+      messagingSenderId: "192229736140",
+      appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69"
+    };
+
+    // Primary Auth & Firestore (Admin session)
+    const primaryApp = initializeApp(firebaseConfig);
+    const auth = getAuth(primaryApp);
+    const db = getFirestore(primaryApp);
+
+    // Secondary Firebase Auth instance dedicated to tenant registration
+    // This CRITICALLY ensures creating a tenant in Firebase Auth never logs out the active admin!
+    let secondaryAuth = null;
+    try {
+      const secondaryApp = initializeApp(firebaseConfig, "TenantAccountCreationApp");
+      secondaryAuth = getAuth(secondaryApp);
+    } catch (e) {
+      console.warn("Secondary auth initialization note:", e);
+    }
+
+    // In-memory tenant collection
+    let loadedTenants = [];
+    let currentViewingTenant = null;
+
+    // Helper: Generate readable, secure password
+    window.generateRandomPassword = function() {
+      const prefix = ["Home", "Spot", "Dorm", "MJP", "Stay"];
+      const randWord = prefix[Math.floor(Math.random() * prefix.length)];
+      const randNum = Math.floor(1000 + Math.random() * 9000);
+      const generated = `${randWord}@${randNum}!`;
+      const pwdInput = document.getElementById('tenantPassword');
+      if (pwdInput) {
+        pwdInput.value = generated;
+        pwdInput.type = 'text';
+      }
+    };
+
+    // Helper: Toggle Password Visibility
+    window.togglePasswordVisibility = function() {
+      const pwdInput = document.getElementById('tenantPassword');
+      if (!pwdInput) return;
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+      } else {
+        pwdInput.type = 'password';
+      }
+    };
+
+    // Modal Controls
+    window.openCreateTenantModal = function() {
+      const modal = document.getElementById('createTenantModal');
+      const form = document.getElementById('createTenantForm');
+      const alertBox = document.getElementById('createTenantAlert');
+      if (alertBox) alertBox.classList.add('hidden');
+      if (form) form.reset();
+
+      // Set default move-in date to today
+      const moveInInput = document.getElementById('tenantMoveInDate');
+      if (moveInInput && !moveInInput.value) {
+        moveInInput.value = new Date().toISOString().split('T')[0];
+      }
+
+      // Generate initial default password
+      window.generateRandomPassword();
+
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeCreateTenantModal = function() {
+      const modal = document.getElementById('createTenantModal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.openCreateTenantModalFromData = function(name, email, phone, room, dorm, moveInDate, rent) {
+      window.openCreateTenantModal();
+      if (name) document.getElementById('tenantFullName').value = name;
+      if (email) document.getElementById('tenantEmail').value = email;
+      if (phone) document.getElementById('tenantPhone').value = phone;
+      if (room) document.getElementById('tenantRoom').value = room;
+      if (dorm) document.getElementById('tenantDorm').value = dorm;
+      if (moveInDate) {
+        // Handle formats like "Mar 10, 2026" or "2026-03-10"
+        try {
+          const d = new Date(moveInDate);
+          if (!isNaN(d.getTime())) {
+            document.getElementById('tenantMoveInDate').value = d.toISOString().split('T')[0];
+          }
+        } catch (_) {}
+      }
+      if (rent) document.getElementById('tenantMonthlyRent').value = rent;
+    };
+
+    window.viewTenantDetails = function(tenantId) {
+      const tenant = loadedTenants.find(t => t.id === tenantId);
+      if (!tenant) return;
+      currentViewingTenant = tenant;
+
+      const modal = document.getElementById('viewTenantModal');
+      document.getElementById('viewTenantName').textContent = tenant.name || 'Tenant';
+      document.getElementById('viewTenantEmail').textContent = tenant.email || '—';
+      document.getElementById('viewTenantRoom').textContent = tenant.room || '—';
+      document.getElementById('viewTenantDorm').textContent = tenant.dormName || 'Dormitory Unit';
+      document.getElementById('viewTenantRent').textContent = '₱' + Number(tenant.monthlyRent || 0).toLocaleString() + '.00';
+      document.getElementById('viewTenantDue').textContent = 'Due every ' + (tenant.dueDay || 5) + 'th';
+      document.getElementById('viewTenantMoveIn').textContent = tenant.moveInDate || '—';
+      document.getElementById('viewTenantPhone').textContent = tenant.phone || '—';
+      document.getElementById('viewTenantLoginEmail').textContent = tenant.email || '—';
+      document.getElementById('viewTenantLoginPassword').textContent = tenant.password || '••••••••';
+
+      const initials = (tenant.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+      document.getElementById('viewTenantAvatar').textContent = initials;
+
+      const notesSection = document.getElementById('viewTenantNotesSection');
+      const notesEl = document.getElementById('viewTenantNotes');
+      if (tenant.notes) {
+        notesEl.textContent = tenant.notes;
+        notesSection.classList.remove('hidden');
+      } else {
+        notesSection.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    };
+
+    window.closeViewTenantModal = function() {
+      const modal = document.getElementById('viewTenantModal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.copyTenantLoginInfo = function(email, password, name, room) {
+      const text = `MJP Residences - Tenant Portal Access\nTenant: ${name}\nRoom: ${room}\nPortal URL: ${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}tenant-login.html\nEmail: ${email}\nPassword: ${password}`;
+      navigator.clipboard.writeText(text).then(() => {
+        if (window.Toast) {
+          window.Toast.success('Login credentials copied to clipboard!');
+        } else {
+          alert('Tenant login credentials copied to clipboard!');
+        }
+      }).catch(() => {
+        alert(`Tenant Login:\nEmail: ${email}\nPassword: ${password}`);
+      });
+    };
+
+    window.copyCurrentTenantCredentials = function() {
+      if (!currentViewingTenant) return;
+      window.copyTenantLoginInfo(
+        currentViewingTenant.email, 
+        currentViewingTenant.password, 
+        currentViewingTenant.name, 
+        currentViewingTenant.room
+      );
+    };
+
+    window.deleteTenantAccount = async function(tenantId, tenantName) {
+      if (!confirm(`Are you sure you want to remove the tenant account for "${tenantName}"? This tenant will no longer be able to log in.`)) {
+        return;
+      }
+      try {
+        await deleteDoc(doc(db, 'tenants', tenantId));
+        if (window.Toast) {
+          window.Toast.success(`Tenant ${tenantName} removed successfully.`);
+        }
+      } catch (err) {
+        console.error('Failed to remove tenant:', err);
+        alert('Could not remove tenant. Error: ' + err.message);
+      }
+    };
+
+    // Avatar color generator
+    function getAvatarGradient(name) {
+      const gradients = [
+        'from-blue-600 to-indigo-600',
+        'from-emerald-600 to-teal-600',
+        'from-purple-600 to-pink-600',
+        'from-amber-600 to-orange-600',
+        'from-rose-600 to-red-600',
+        'from-cyan-600 to-blue-600'
+      ];
+      let hash = 0;
+      for (let i = 0; i < (name || '').length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return gradients[Math.abs(hash) % gradients.length];
+    }
+
+    // Render Tenants List in Table
+    function renderTenantsTable(tenants) {
+      const tbody = document.getElementById('tenantsTableBody');
+      if (!tbody) return;
+
+      if (!tenants.length) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="px-6 py-16 text-center text-gray-500">
+              <div class="max-w-sm mx-auto flex flex-col items-center">
+                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-3">
+                  <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h4 class="text-base font-bold text-gray-900 mb-1">No Tenant Accounts Found</h4>
+                <p class="text-xs text-gray-500 mb-4">When residents move in, create their account so they can log into the Tenant Portal.</p>
+                <button onclick="openCreateTenantModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  Create First Tenant Account
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = tenants.map(t => {
+        const initials = (t.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        const gradient = getAvatarGradient(t.name);
+        const rentFormatted = '₱' + Number(t.monthlyRent || 0).toLocaleString() + '.00';
+        const escapedName = (t.name || '').replace(/'/g, "\\'");
+        const escapedEmail = (t.email || '').replace(/'/g, "\\'");
+        const escapedPassword = (t.password || '').replace(/'/g, "\\'");
+        const escapedRoom = (t.room || '').replace(/'/g, "\\'");
+
+        return `
+          <tr class="hover:bg-gray-50/70 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr ${gradient} text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
+                  ${initials}
+                </div>
+                <div>
+                  <div class="font-bold text-gray-900">${t.name || 'Tenant'}</div>
+                  <div class="text-xs text-gray-500 font-mono">${t.email || '—'}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                ${t.room || 'Unassigned'}
+              </span>
+              <div class="text-xs text-gray-500 mt-0.5">${t.dormName || ''}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-800">${t.phone || '—'}</div>
+              ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${t.emergencyContact}</div>` : ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+              ${t.moveInDate || '—'}
+              <div class="text-xs text-gray-400">${t.leaseTerm || '1 Year'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="font-bold text-gray-900">${rentFormatted}</div>
+              <div class="text-xs text-gray-500">Due every ${t.dueDay || 5}th</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                ● Active
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+              <div class="flex items-center justify-end gap-2">
+                <button onclick="viewTenantDetails('${t.id}')" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+                <button onclick="copyTenantLoginInfo('${escapedEmail}', '${escapedPassword}', '${escapedName}', '${escapedRoom}')" title="Copy Login Credentials" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                </button>
+                <button onclick="deleteTenantAccount('${t.id}', '${escapedName}')" title="Deactivate / Remove Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Filter Tenants List
+    window.filterTenantsList = function() {
+      const search = (document.getElementById('tenantSearchInput')?.value || '').toLowerCase().trim();
+      const roomFilter = (document.getElementById('tenantRoomFilter')?.value || '').toLowerCase().trim();
+
+      const filtered = loadedTenants.filter(t => {
+        const matchesSearch = !search || 
+          (t.name && t.name.toLowerCase().includes(search)) ||
+          (t.email && t.email.toLowerCase().includes(search)) ||
+          (t.room && t.room.toLowerCase().includes(search)) ||
+          (t.phone && t.phone.toLowerCase().includes(search));
+
+        const matchesRoom = !roomFilter || (t.room && t.room.toLowerCase().includes(roomFilter));
+
+        return matchesSearch && matchesRoom;
+      });
+
+      renderTenantsTable(filtered);
+    };
+
+    // Update Tenant Statistics
+    function updateTenantStats(tenants) {
+      const totalCount = tenants.length;
+      const activeCount = tenants.filter(t => (t.status || 'Active') === 'Active').length;
+      const totalRent = tenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
+
+      const totalBadge = document.getElementById('tenantsCountBadge');
+      if (totalBadge) totalBadge.textContent = totalCount;
+
+      const statTotal = document.getElementById('tenantsStatTotal');
+      if (statTotal) statTotal.textContent = totalCount;
+
+      const statActive = document.getElementById('tenantsStatActive');
+      if (statActive) statActive.textContent = activeCount;
+
+      const statRent = document.getElementById('tenantsStatRent');
+      if (statRent) statRent.textContent = '₱' + totalRent.toLocaleString() + '.00';
+    }
+
+    // Listen to Firestore 'tenants' collection in Real Time
+    function listenToTenantsCollection() {
+      const tenantsRef = collection(db, 'tenants');
+      const statusEl = document.getElementById('tenantsFirestoreStatus');
+
+      try {
+        const q = query(tenantsRef, orderBy('createdAt', 'desc'));
+        onSnapshot(q, (snapshot) => {
+          loadedTenants = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          if (statusEl) {
+            statusEl.textContent = `✓ Synced with Firestore (${loadedTenants.length} tenants)`;
+            statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
+          }
+          filterTenantsList();
+          updateTenantStats(loadedTenants);
+        }, (error) => {
+          console.warn('OrderBy query fallback on tenants:', error);
+          // Fallback in case composite index is not set
+          onSnapshot(tenantsRef, (snapshot) => {
+            loadedTenants = snapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+            }));
+            if (statusEl) {
+              statusEl.textContent = `✓ Synced (${loadedTenants.length} tenants)`;
+              statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
+            }
+            filterTenantsList();
+            updateTenantStats(loadedTenants);
+          });
+        });
+      } catch (err) {
+        console.error('Firestore tenants listener setup failed:', err);
+      }
+    }
+
+    // Initialize Tenant Firestore Listener on load
+    listenToTenantsCollection();
+
+    // Form Submit Handler: Create Tenant Account
+    const createTenantForm = document.getElementById('createTenantForm');
+    if (createTenantForm) {
+      createTenantForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const alertBox = document.getElementById('createTenantAlert');
+        const submitBtn = document.getElementById('submitTenantBtn');
+        const spinner = document.getElementById('submitTenantSpinner');
+        const submitText = document.getElementById('submitTenantText');
+
+        const fullName = document.getElementById('tenantFullName').value.trim();
+        const email = document.getElementById('tenantEmail').value.trim().toLowerCase();
+        const password = document.getElementById('tenantPassword').value;
+        const phone = document.getElementById('tenantPhone').value.trim();
+        const emergencyContact = document.getElementById('tenantEmergency').value.trim();
+        const room = document.getElementById('tenantRoom').value.trim();
+        const dormName = document.getElementById('tenantDorm').value;
+        const moveInDate = document.getElementById('tenantMoveInDate').value;
+        const monthlyRent = parseFloat(document.getElementById('tenantMonthlyRent').value) || 0;
+        const dueDay = parseInt(document.getElementById('tenantDueDay').value) || 5;
+        const leaseTerm = document.getElementById('tenantLeaseTerm').value;
+        const notes = document.getElementById('tenantNotes').value.trim();
+
+        if (!fullName || !email || !password || !phone || !room || !moveInDate || !monthlyRent) {
+          alertBox.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+          alertBox.textContent = 'Please fill out all required fields.';
+          alertBox.classList.remove('hidden');
+          return;
+        }
+
+        if (password.length < 6) {
+          alertBox.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+          alertBox.textContent = 'Password must be at least 6 characters.';
+          alertBox.classList.remove('hidden');
+          return;
+        }
+
+        // Set Loading State
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+        submitText.textContent = 'Creating Account...';
+        alertBox.classList.add('hidden');
+
+        try {
+          let tenantUid = null;
+
+          // 1. Attempt creating user in Firebase Auth via Secondary Auth
+          // (Does NOT log out the current admin session!)
+          if (secondaryAuth) {
+            try {
+              const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+              tenantUid = userCred.user.uid;
+              // Cleanly sign out secondary auth so it remains fresh
+              await signOut(secondaryAuth);
+            } catch (authErr) {
+              console.warn('Firebase Auth user creation notice:', authErr);
+              if (authErr.code === 'auth/email-already-in-use') {
+                // Email is already in Auth; proceed to create/update Firestore record
+              } else if (authErr.code === 'auth/weak-password') {
+                throw new Error('Password should be at least 6 characters.');
+              } else if (authErr.code === 'auth/invalid-email') {
+                throw new Error('Please enter a valid email address.');
+              }
+            }
+          }
+
+          // 2. Prepare Tenant Record for Firestore
+          const tenantPayload = {
+            name: fullName,
+            email: email,
+            password: password, // preserved so admin can retrieve/copy login details
+            phone: phone,
+            emergencyContact: emergencyContact,
+            room: room,
+            dormName: dormName,
+            moveInDate: moveInDate,
+            monthlyRent: monthlyRent,
+            dueDay: dueDay,
+            leaseTerm: leaseTerm,
+            notes: notes,
+            status: 'Active',
+            role: 'tenant',
+            uid: tenantUid || null,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          };
+
+          // 3. Save to Firestore 'tenants' collection
+          const docRef = await addDoc(collection(db, 'tenants'), tenantPayload);
+
+          // 4. Also register in 'users' collection with role: 'tenant' for unified access
+          if (tenantUid) {
+            try {
+              await setDoc(doc(db, 'users', tenantUid), {
+                name: fullName,
+                email: email,
+                role: 'tenant',
+                room: room,
+                phone: phone,
+                dormName: dormName,
+                createdAt: serverTimestamp()
+              }, { merge: true });
+            } catch (uErr) {
+              console.warn('Users collection sync notice:', uErr);
+            }
+          }
+
+          // Success feedback
+          alertBox.className = 'p-3 rounded-lg text-sm bg-emerald-50 text-emerald-800 border border-emerald-200';
+          alertBox.textContent = `Tenant account for "${fullName}" created successfully! They can now log in at the Tenant Portal.`;
+          alertBox.classList.remove('hidden');
+
+          if (window.Toast) {
+            window.Toast.success(`Tenant account created for ${fullName}!`);
+          }
+
+          setTimeout(() => {
+            closeCreateTenantModal();
+            // Switch to Tenants tab if not already on it
+            const tenantsTabBtn = document.querySelector('[data-tab-button="tenants"]');
+            if (tenantsTabBtn) tenantsTabBtn.click();
+          }, 1200);
+
+        } catch (err) {
+          console.error('Tenant account creation failed:', err);
+          alertBox.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+          alertBox.textContent = 'Failed to create account: ' + (err.message || 'Unknown error');
+          alertBox.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
+          spinner.classList.add('hidden');
+          submitText.textContent = 'Create Account & Save to Firestore';
+        }
+      });
+    }
 
     // Mobile-optimized logout function
     window.logoutAdmin = async function (e) {
-      // Prevent default click/touch behavior
       if (e) {
         e.preventDefault();
         e.stopPropagation();
       }
 
-      // Disable button to prevent double-clicks
       const logoutBtn = document.querySelector('[onclick*="logoutAdmin"]') || document.querySelector('button[ontouchend*="logoutAdmin"]');
       if (logoutBtn) {
         logoutBtn.disabled = true;
@@ -936,27 +1778,17 @@
       }
 
       try {
-        // Sign out from Firebase
         const signOutPromise = signOut(auth);
-
-        // Set a timeout to ensure redirect happens even if signOut is slow
         const timeoutPromise = new Promise(resolve => setTimeout(resolve, 2000));
-
         await Promise.race([signOutPromise, timeoutPromise]);
 
-        // Clear session storage and local storage
         sessionStorage.clear();
         localStorage.removeItem('adminSession');
-
-        // Navigate to login
         window.location.href = './admin-login.html';
-
       } catch (error) {
         console.error('Error signing out:', error);
-        // Clear storage anyway
         sessionStorage.clear();
         localStorage.removeItem('adminSession');
-        // Redirect to login page
         window.location.href = './admin-login.html';
       }
     };
@@ -966,19 +1798,15 @@
       const logoutButtons = document.querySelectorAll('[onclick*="logoutAdmin"]');
       logoutButtons.forEach(btn => {
         btn.addEventListener('touchstart', function (e) {
-          // Add touch feedback
           this.style.opacity = '0.7';
         }, false);
 
         btn.addEventListener('touchend', function (e) {
-          // Reset opacity
           this.style.opacity = '1';
-          // Trigger logout
           window.logoutAdmin(e);
         }, false);
 
         btn.addEventListener('click', function (e) {
-          // Trigger logout on click
           window.logoutAdmin(e);
         }, false);
       });
@@ -988,30 +1816,21 @@
   <script>
     // Mobile-optimized back button disabling
     (function () {
-      // Initial push state
       window.history.pushState({ page: 'admin' }, null, window.location.href);
-
-      // Handle pop state (back button)
       window.onpopstate = function (event) {
         window.history.pushState({ page: 'admin' }, null, window.location.href);
       };
 
-      // Additional protection for mobile
       document.addEventListener('touchmove', function (e) {
-        // Prevent swipe-back gesture on iOS
-        if (e.touches.length > 1 || e.scale !== 1) {
-          return;
-        }
+        if (e.touches.length > 1 || e.scale !== 1) return;
       }, false);
 
-      // Prevent iOS swipe-to-go-back
       let lastX = 0;
       document.addEventListener('touchstart', function (e) {
         lastX = e.touches[0].clientX;
       }, false);
 
       document.addEventListener('touchend', function (e) {
-        // Check if swipe-back gesture was attempted
         if (e.changedTouches[0].clientX > lastX + 100) {
           e.preventDefault();
           window.history.pushState({ page: 'admin' }, null, window.location.href);
@@ -1036,7 +1855,6 @@
       else if (status === 'Overdue') statusClass = 'px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
 
       document.getElementById('modalStatus').innerHTML = '<span class="' + statusClass + '">' + status + '</span>';
-
       modal.classList.remove('hidden');
     }
 
@@ -1065,13 +1883,13 @@
     window.onclick = function (event) {
       const paymentModal = document.getElementById('paymentModal');
       const dueDateModal = document.getElementById('dueDateModal');
+      const createTenantModal = document.getElementById('createTenantModal');
+      const viewTenantModal = document.getElementById('viewTenantModal');
 
-      if (event.target === paymentModal) {
-        closePaymentModal();
-      }
-      if (event.target === dueDateModal) {
-        closeDueDateModal();
-      }
+      if (event.target === paymentModal) closePaymentModal();
+      if (event.target === dueDateModal) closeDueDateModal();
+      if (event.target === createTenantModal) closeCreateTenantModal();
+      if (event.target === viewTenantModal) closeViewTenantModal();
     }
   </script>
 </body>

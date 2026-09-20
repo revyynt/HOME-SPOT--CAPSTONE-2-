@@ -8,7 +8,7 @@ const roomsData = [
     price: "₱10,000/month",
     beds: 1,
     capacity: 3,
-    available: 4,
+    available: 3,
     size: "30 sqm",
     mainImage: "interior room 1.jpg",
     gallery: [
@@ -421,3 +421,47 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+// Global presentation helper to change room availability live
+window.setRoomAvailability = async function(roomNameOrCount, maybeCount) {
+  let roomName = 'Triple Occupancy Room';
+  let count = roomNameOrCount;
+
+  const currentRoomNameEl = document.getElementById('roomName');
+  if (currentRoomNameEl && currentRoomNameEl.textContent.trim()) {
+    roomName = currentRoomNameEl.textContent.trim();
+  }
+
+  if (typeof roomNameOrCount === 'string') {
+    roomName = roomNameOrCount;
+    count = maybeCount;
+  }
+
+  if (typeof count !== 'number') {
+    count = parseInt(count, 10);
+  }
+
+  if (isNaN(count)) {
+    console.error('Invalid count provided. Usage: setRoomAvailability(3) or setRoomAvailability("Triple Occupancy Room", 3)');
+    return false;
+  }
+
+  if (!hasFirestore()) {
+    console.error('Firestore not initialized');
+    return false;
+  }
+
+  const roomRef = getRoomDocRef(roomName);
+  if (!roomRef) {
+    console.error('Room ref not found for:', roomName);
+    return false;
+  }
+
+  await window.firebaseFirestore.setDoc(roomRef, {
+    name: roomName,
+    available: count
+  }, { merge: true });
+
+  console.log(`✅ Updated "${roomName}" availability to ${count} rooms.`);
+  return true;
+};
