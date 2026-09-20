@@ -62,7 +62,12 @@ export function toCentavos(amountInPesos) {
  */
 async function postToApiServer(endpoint, payload) {
   // Always prioritize the active local Node API servers first
-  const candidates = ['http://localhost:5000', 'http://localhost:5050'];
+  const candidates = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:5050',
+    'http://127.0.0.1:5050'
+  ];
   const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
   if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
     candidates.push(origin);
@@ -101,7 +106,12 @@ async function postToApiServer(endpoint, payload) {
  * @returns {Promise<Object|null>}
  */
 export async function getCheckoutSession(sessionId) {
-  const candidates = ['http://localhost:5000', 'http://localhost:5050'];
+  const candidates = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:5050',
+    'http://127.0.0.1:5050'
+  ];
   const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
   if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
     candidates.push(origin);
