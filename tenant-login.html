@@ -433,6 +433,14 @@
                     sessionStorage.setItem('tenantMoveInDate', tenantData.moveInDate || 'May 1, 2026');
                     sessionStorage.setItem('tenantMonthlyRent', tenantData.monthlyRent || '5000');
                     sessionStorage.setItem('tenantEmergencyContact', tenantData.emergencyContact || '');
+                    if (tenantData.amountDue !== undefined && tenantData.amountDue !== null) {
+                        sessionStorage.setItem('tenantAmountDue', tenantData.amountDue.toString());
+                    } else {
+                        sessionStorage.removeItem('tenantAmountDue');
+                    }
+                    if (tenantData.dueDay) {
+                        sessionStorage.setItem('tenantDueDay', tenantData.dueDay.toString());
+                    }
                     if (tenantDocId) sessionStorage.setItem('tenantDocId', tenantDocId);
 
                     showAlert('Login successful! Redirecting to your Tenant Portal...', true);

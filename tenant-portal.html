@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -603,8 +604,15 @@
         }
 
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .paymongo-modal-header {
@@ -809,6 +817,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <div class="logo">
@@ -840,11 +849,13 @@
 
                 <div class="chat-messages" id="chatMessages">
                     <div class="message-bubble received">
-                        <div>Hi Juan! Welcome to Triple Occupancy Room. Your reservation for the Room  has been confirmed.</div>
+                        <div>Hi Juan! Welcome to Triple Occupancy Room. Your reservation for the Room has been
+                            confirmed.</div>
                         <div class="message-time-stamp">Today, 9:30 AM</div>
                     </div>
                     <div class="message-bubble received">
-                        <div>Check-in is available starting May 1, 2026. Please bring a valid ID and your payment confirmation.</div>
+                        <div>Check-in is available starting May 1, 2026. Please bring a valid ID and your payment
+                            confirmation.</div>
                         <div class="message-time-stamp">Today, 9:32 AM</div>
                     </div>
                     <div class="message-bubble sent">
@@ -852,7 +863,8 @@
                         <div class="message-time-stamp">Today, 10:15 AM</div>
                     </div>
                     <div class="message-bubble received">
-                        <div>Check-in is available anytime from 9:00 AM to 6:00 PM. Just let me know when you're coming so I can prepare the keys.</div>
+                        <div>Check-in is available anytime from 9:00 AM to 6:00 PM. Just let me know when you're coming
+                            so I can prepare the keys.</div>
                         <div class="message-time-stamp">Today, 10:20 AM</div>
                     </div>
                     <div class="message-bubble sent">
@@ -866,16 +878,12 @@
                 </div>
 
                 <div class="chat-input-area">
-                    <input
-                        type="text"
-                        class="chat-input"
-                        id="messageInput"
-                        placeholder="Type your message..."
-                        onkeypress="handleMessageKeyPress(event)"
-                    >
+                    <input type="text" class="chat-input" id="messageInput" placeholder="Type your message..."
+                        onkeypress="handleMessageKeyPress(event)">
                     <button class="send-button" onclick="sendMessage()">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                         </svg>
                     </button>
                 </div>
@@ -909,7 +917,8 @@
                     </div>
                     <div class="payment-summary-item">
                         <span class="payment-summary-label">Amount Due:</span>
-                        <span class="payment-summary-value" id="summaryAmountDue" style="color: #059669; font-size: 18px; font-weight: 700;">₱10,000.00</span>
+                        <span class="payment-summary-value" id="summaryAmountDue"
+                            style="color: #059669; font-size: 18px; font-weight: 700;">₱10,000.00</span>
                     </div>
                 </div>
 
@@ -919,7 +928,9 @@
                         <div class="payment-method-card" id="method-qrph" onclick="selectPaymentMethod('qrph')">
                             <div class="payment-method-icon icon-qrph">
                                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
+                                    </path>
                                 </svg>
                             </div>
                             <div class="payment-method-name">National QR (QR Ph)</div>
@@ -929,7 +940,9 @@
                         <div class="payment-method-card" id="method-card" onclick="selectPaymentMethod('card')">
                             <div class="payment-method-icon icon-card">
                                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z">
+                                    </path>
                                 </svg>
                             </div>
                             <div class="payment-method-name">Credit / Debit Card</div>
@@ -943,21 +956,33 @@
                     <div id="cardDetailsBox" class="card-details-box" style="display: none;">
                         <h4>
                             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                                </path>
                             </svg>
                             Card Payment Details
                         </h4>
-                        <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; margin-top: 4px;">
-                            <svg width="22" height="22" fill="none" stroke="#10B981" viewBox="0 0 24 24" style="flex-shrink:0; margin-top:1px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        <div
+                            style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; margin-top: 4px;">
+                            <svg width="22" height="22" fill="none" stroke="#10B981" viewBox="0 0 24 24"
+                                style="flex-shrink:0; margin-top:1px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                                </path>
                             </svg>
                             <div>
-                                <div style="font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">Secure PayMongo Card Checkout</div>
-                                <div style="font-size: 12px; color: #64748b; line-height: 1.5;">Clicking <strong>Pay with Card</strong> will securely redirect you to PayMongo's hosted checkout page where you can safely enter your Visa or Mastercard details.</div>
+                                <div style="font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">
+                                    Secure PayMongo Card Checkout</div>
+                                <div style="font-size: 12px; color: #64748b; line-height: 1.5;">Clicking <strong>Pay
+                                        with Card</strong> will securely redirect you to PayMongo's hosted checkout page
+                                    where you can safely enter your Visa or Mastercard details.</div>
                                 <div style="margin-top: 8px; display: flex; gap: 6px; align-items: center;">
-                                    <span style="background: #1a56db; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;">VISA</span>
-                                    <span style="background: #e8171c; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;">Mastercard</span>
-                                    <span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">🔒 256-bit SSL</span>
+                                    <span
+                                        style="background: #1a56db; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;">VISA</span>
+                                    <span
+                                        style="background: #e8171c; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;">Mastercard</span>
+                                    <span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">🔒 256-bit
+                                        SSL</span>
                                 </div>
                             </div>
                         </div>
@@ -989,11 +1014,15 @@
                     </button>
 
                     <div class="payment-note">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; margin-top: 1px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            style="flex-shrink: 0; margin-top: 1px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <div>
-                            <strong>Official PayMongo Integration:</strong> Payments are processed live through PayMongo Philippines. You will receive an instant official digital receipt and transaction reference number.
+                            <strong>Official PayMongo Integration:</strong> Payments are processed live through PayMongo
+                            Philippines. You will receive an instant official digital receipt and transaction reference
+                            number.
                         </div>
                     </div>
                 </form>
@@ -1002,7 +1031,8 @@
                 <div class="payment-history-card">
                     <h3>
                         <span>Payment History</span>
-                        <span id="historyCountBadge" style="font-size: 12px; font-weight: normal; color: #6b7280;">0 payments</span>
+                        <span id="historyCountBadge" style="font-size: 12px; font-weight: normal; color: #6b7280;">0
+                            payments</span>
                     </h3>
                     <div class="history-table-wrapper">
                         <table class="history-table">
@@ -1081,18 +1111,22 @@
                     <span class="paymongo-tag">QR Ph</span>
                     <strong style="color: #1e293b; font-size: 15px;">Scan to Pay</strong>
                 </div>
-                <button onclick="closeQrModal()" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
+                <button onclick="closeQrModal()"
+                    style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
             </div>
             <div class="paymongo-modal-body">
-                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px;">Merchant: <strong>MJP Residences</strong></div>
+                <div style="font-size: 13px; color: #64748b; margin-bottom: 4px;">Merchant: <strong>MJP
+                        Residences</strong></div>
                 <div style="font-size: 24px; font-weight: 700; color: #059669;" id="qrModalAmount">₱5,000.00</div>
-                <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Ref: <span id="qrModalRef" style="font-family: monospace; color: #475569;">REF-123456</span></div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Ref: <span id="qrModalRef"
+                        style="font-family: monospace; color: #475569;">REF-123456</span></div>
 
                 <div class="qr-wrapper">
                     <img id="qrModalImage" src="" alt="PayMongo QR Ph Code">
                 </div>
 
-                <div style="font-size: 12px; color: #b45309; background: #fffbeb; padding: 6px 12px; border-radius: 6px; display: inline-block;">
+                <div
+                    style="font-size: 12px; color: #b45309; background: #fffbeb; padding: 6px 12px; border-radius: 6px; display: inline-block;">
                     ⏱ Valid for <span id="qrTimer" style="font-weight: 600;">15:00</span>
                 </div>
 
@@ -1107,8 +1141,11 @@
                 </div>
             </div>
             <div class="paymongo-modal-footer">
-                <button onclick="closeQrModal()" style="padding: 10px 18px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #64748b; cursor: pointer; font-size: 13px; font-weight: 500;">Cancel</button>
-                <button id="confirmQrBtn" onclick="confirmQrPayment()" style="padding: 10px 20px; background: #10B981; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: 600;">I Have Completed Payment</button>
+                <button onclick="closeQrModal()"
+                    style="padding: 10px 18px; background: white; border: 1px solid #cbd5e1; border-radius: 6px; color: #64748b; cursor: pointer; font-size: 13px; font-weight: 500;">Cancel</button>
+                <button id="confirmQrBtn" onclick="confirmQrPayment()"
+                    style="padding: 10px 20px; background: #10B981; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: 600;">I
+                    Have Completed Payment</button>
             </div>
         </div>
     </div>
@@ -1121,12 +1158,15 @@
                     <span class="paymongo-live-dot"></span>
                     <strong style="color: #166534; font-size: 14px;">PayMongo Payment Receipt</strong>
                 </div>
-                <button onclick="closeReceiptModal()" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
+                <button onclick="closeReceiptModal()"
+                    style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
             </div>
             <div class="paymongo-modal-body">
                 <div class="receipt-check-icon">✓</div>
-                <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Payment Successful</h3>
-                <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Your transaction has been processed and verified by PayMongo.</p>
+                <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Payment Successful
+                </h3>
+                <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Your transaction has been processed and
+                    verified by PayMongo.</p>
 
                 <div class="receipt-details-list">
                     <div class="receipt-row">
@@ -1151,11 +1191,13 @@
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">Reference Number</span>
-                        <span class="receipt-row-value" id="receiptReference" style="font-family: monospace;">PM-2026-001</span>
+                        <span class="receipt-row-value" id="receiptReference"
+                            style="font-family: monospace;">PM-2026-001</span>
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">PayMongo Token / ID</span>
-                        <span class="receipt-row-value" id="receiptTokenId" style="font-family: monospace; font-size: 11px;">pm_live_...</span>
+                        <span class="receipt-row-value" id="receiptTokenId"
+                            style="font-family: monospace; font-size: 11px;">pm_live_...</span>
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">Date & Time</span>
@@ -1168,13 +1210,17 @@
                 </div>
             </div>
             <div class="paymongo-modal-footer">
-                <button onclick="printReceipt()" style="padding: 10px 18px; background: white; border: 1px solid #10B981; border-radius: 6px; color: #10B981; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                <button onclick="printReceipt()"
+                    style="padding: 10px 18px; background: white; border: 1px solid #10B981; border-radius: 6px; color: #10B981; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                        </path>
                     </svg>
                     Print / Save Receipt
                 </button>
-                <button onclick="closeReceiptModal()" style="padding: 10px 22px; background: #10B981; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Done</button>
+                <button onclick="closeReceiptModal()"
+                    style="padding: 10px 22px; background: #10B981; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Done</button>
             </div>
         </div>
     </div>
@@ -1194,13 +1240,61 @@
         let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 2026';
         let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
         let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
+        let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
+        let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
 
         // Global State
         let selectedPaymentMethod = null;
         let activeQrPaymentData = null;
         let qrTimerInterval = null;
         let qrStatusPollInterval = null;
-        let currentRemainingDue = tenantRent;
+        let tenantExplicitAmountDueSet = false;
+
+        // Restore initial remaining due from session or local storage
+        let initialDue = sessionStorage.getItem('tenantAmountDue') ?? localStorage.getItem('tenant_amount_due_' + userEmail);
+        let currentRemainingDue = initialDue !== null && !isNaN(parseFloat(initialDue))
+            ? parseFloat(initialDue)
+            : tenantRent;
+        if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
+            tenantExplicitAmountDueSet = true;
+        }
+
+        function updateAmountDueUI() {
+            const summaryAmountDue = document.getElementById('summaryAmountDue');
+            if (summaryAmountDue) {
+                if (currentRemainingDue <= 0) {
+                    summaryAmountDue.textContent = '₱0.00 (Settled)';
+                    summaryAmountDue.style.color = '#15803d';
+                } else {
+                    summaryAmountDue.textContent = '₱' + currentRemainingDue.toLocaleString(undefined, { minimumFractionDigits: 2 });
+                    summaryAmountDue.style.color = '#059669';
+                }
+            }
+
+            const summaryDueDate = document.getElementById('summaryDueDate');
+            if (summaryDueDate) {
+                const now = new Date();
+                const dueDay = tenantDueDay || 5;
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                let targetMonth = now.getMonth();
+                let targetYear = now.getFullYear();
+                if (currentRemainingDue <= 0) {
+                    targetMonth = (targetMonth + 1) % 12;
+                    if (targetMonth === 0) targetYear += 1;
+                }
+                summaryDueDate.textContent = `${monthNames[targetMonth]} ${dueDay}, ${targetYear}`;
+            }
+
+            const paymentAmountInput = document.getElementById('paymentAmount');
+            if (paymentAmountInput) {
+                if (currentRemainingDue <= 0) {
+                    paymentAmountInput.value = '0';
+                    paymentAmountInput.placeholder = '0.00 (Rent Settled)';
+                } else if (!paymentAmountInput.value || paymentAmountInput.value === '5000' || parseFloat(paymentAmountInput.value) > currentRemainingDue) {
+                    paymentAmountInput.value = currentRemainingDue.toString();
+                }
+            }
+        }
 
         function populateTenantUI() {
             const userEmailEl = document.getElementById('userEmail');
@@ -1233,16 +1327,10 @@
             const summaryRent = document.getElementById('summaryRent');
             if (summaryRent) summaryRent.textContent = '₱' + tenantRent.toLocaleString() + '.00';
 
-            const summaryAmountDue = document.getElementById('summaryAmountDue');
-            if (summaryAmountDue) summaryAmountDue.textContent = '₱' + currentRemainingDue.toLocaleString() + '.00';
+            updateAmountDueUI();
 
             const receiptTenantName = document.getElementById('receiptTenantName');
             if (receiptTenantName) receiptTenantName.textContent = tenantName;
-
-            const paymentAmountInput = document.getElementById('paymentAmount');
-            if (paymentAmountInput && !paymentAmountInput.value) {
-                paymentAmountInput.value = tenantRent.toLocaleString();
-            }
         }
 
         // Apply immediately from session storage
@@ -1257,10 +1345,13 @@
             try {
                 const tenantsRef = window.firebaseFirestore.collection(window.firebaseDb, 'tenants');
                 const q = window.firebaseFirestore.query(tenantsRef, window.firebaseFirestore.where('email', '==', userEmail));
-                
+
                 window.firebaseFirestore.onSnapshot(q, (snapshot) => {
                     if (!snapshot.empty) {
-                        const docData = snapshot.docs[0].data();
+                        const tenantDoc = snapshot.docs[0];
+                        currentTenantDocId = tenantDoc.id;
+                        sessionStorage.setItem('tenantDocId', currentTenantDocId);
+                        const docData = tenantDoc.data();
                         if (docData.name) {
                             tenantName = docData.name;
                             sessionStorage.setItem('tenantName', docData.name);
@@ -1281,10 +1372,19 @@
                             tenantMoveIn = docData.moveInDate;
                             sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
                         }
+                        if (docData.dueDay) {
+                            tenantDueDay = parseInt(docData.dueDay);
+                            sessionStorage.setItem('tenantDueDay', tenantDueDay);
+                        }
                         if (docData.monthlyRent) {
                             tenantRent = parseFloat(docData.monthlyRent);
-                            currentRemainingDue = tenantRent;
                             sessionStorage.setItem('tenantMonthlyRent', tenantRent);
+                        }
+                        if (docData.amountDue !== undefined && docData.amountDue !== null) {
+                            currentRemainingDue = parseFloat(docData.amountDue);
+                            tenantExplicitAmountDueSet = true;
+                            sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+                            localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
                         }
                         if (docData.emergencyContact) {
                             tenantEmergency = docData.emergencyContact;
@@ -1363,28 +1463,29 @@
 
             const cardBox = document.getElementById('cardDetailsBox');
             const submitBtn = document.getElementById('submitPaymentBtn');
-            const amount = document.getElementById('paymentAmount').value || '5,000';
+            const amountRaw = (document.getElementById('paymentAmount').value || '0').replace(/,/g, '');
+            const amountNum = parseFloat(amountRaw) || 0;
 
             if (method === 'card') {
                 cardBox.style.display = 'block';
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `Pay ₱${parseFloat(amount).toLocaleString()} with Card`;
+                submitBtn.innerHTML = `Pay ₱${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })} with Card`;
             } else if (method === 'qrph') {
                 cardBox.style.display = 'none';
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `Generate National QR (₱${parseFloat(amount).toLocaleString()})`;
+                submitBtn.innerHTML = `Generate National QR (₱${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })})`;
             }
         }
 
         // Update submit button text when amount changes
-        document.getElementById('paymentAmount')?.addEventListener('input', function() {
+        document.getElementById('paymentAmount')?.addEventListener('input', function () {
             if (selectedPaymentMethod) {
                 selectPaymentMethod(selectedPaymentMethod);
             }
         });
 
         // Payment Form Submission
-        document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+        document.getElementById('paymentForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             if (!selectedPaymentMethod) {
                 alert('Please select a payment method');
@@ -1392,13 +1493,18 @@
             }
 
             const purpose = document.getElementById('paymentPurpose').value;
-            const amountVal = parseFloat(document.getElementById('paymentAmount').value);
+            const amountRaw = (document.getElementById('paymentAmount').value || '0').toString().replace(/,/g, '');
+            const amountVal = parseFloat(amountRaw);
             const notes = document.getElementById('paymentNotes').value;
             const tenantName = document.getElementById('fullName')?.value || sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
             const tenantPhone = document.getElementById('phone')?.value || '+63 912 345 6789';
 
             if (!amountVal || amountVal <= 0) {
-                alert('Please enter a valid amount');
+                if (currentRemainingDue <= 0) {
+                    alert('Your rent for this cycle is already settled! If you wish to make an advance payment, please enter the advance amount in the payment amount box.');
+                } else {
+                    alert('Please enter a valid payment amount.');
+                }
                 return;
             }
 
@@ -1577,7 +1683,7 @@
             document.getElementById('paymongoQrModal').style.display = 'none';
         }
 
-        // Confirm QR Payment — always saves record and shows receipt
+        // Confirm QR Payment — executes live PayMongo test charge, saves record and shows receipt
         async function confirmQrPayment() {
             if (!activeQrPaymentData) return;
             if (qrStatusPollInterval) clearInterval(qrStatusPollInterval);
@@ -1585,48 +1691,53 @@
             const confirmBtn = document.getElementById('confirmQrBtn');
             if (confirmBtn) {
                 confirmBtn.disabled = true;
-                confirmBtn.innerHTML = 'Saving record...';
+                confirmBtn.innerHTML = 'Processing in PayMongo...';
             }
 
-            // Optionally try to enrich with real PayMongo payment ID — non-critical
-            if (activeQrPaymentData.sessionId) {
+            // Ensure PayMongo service is ready
+            if (!window.PayMongoService) {
                 try {
-                    // Ensure service loaded
-                    if (!window.PayMongoService) {
-                        window.PayMongoService = await import('./assets/js/paymongo-service.js');
-                    }
-                    if (window.PayMongoService?.getCheckoutSession) {
-                        const session = await window.PayMongoService.getCheckoutSession(activeQrPaymentData.sessionId);
-                        if (session) {
-                            const payments = session.attributes?.payments || [];
-                            if (payments.length > 0 && payments[0].id) {
-                                activeQrPaymentData.paymentMethodId = payments[0].id;
-                                activeQrPaymentData.referenceNumber = payments[0].attributes?.reference_number || activeQrPaymentData.referenceNumber;
-                            }
-                        }
-                    }
-                } catch (e) {
-                    // Non-critical — proceed with local record
-                    console.log('Session check skipped (non-critical):', e.message);
+                    window.PayMongoService = await import('./assets/js/paymongo-service.js');
+                } catch (e) { }
+            }
+
+            // Execute live test payment in PayMongo (creates real test payment visible in PayMongo Dashboard)
+            let pmResult = null;
+            try {
+                if (window.PayMongoService?.completeQrTestPayment) {
+                    pmResult = await window.PayMongoService.completeQrTestPayment({
+                        amount: activeQrPaymentData.amount,
+                        description: `${activeQrPaymentData.purpose || 'Rent Payment'} - MJP Residences`,
+                        tenantName: activeQrPaymentData.tenantName,
+                        tenantEmail: activeQrPaymentData.tenantEmail
+                    });
                 }
+            } catch (err) {
+                console.warn('PayMongo test payment warning:', err.message);
+            }
+
+            if (pmResult && pmResult.paymentId) {
+                activeQrPaymentData.paymentMethodId = pmResult.paymentId;
+                activeQrPaymentData.referenceNumber = pmResult.referenceNumber || ('PM-QR-' + pmResult.paymentId.slice(-6).toUpperCase());
+                activeQrPaymentData.status = 'Paid';
             }
 
             closeQrModal();
 
-            // Always save and show receipt — even if server is offline
+            // Save to Firestore & localStorage, update balance, and show official receipt
             const recordToSave = { ...activeQrPaymentData };
             activeQrPaymentData = null;
             await saveAndFinalizePayment(recordToSave);
         }
 
-        // Save & Finalize Payment Record — always saves to localStorage at minimum
+        // Save & Finalize Payment Record — always saves to Firestore & localStorage
         async function saveAndFinalizePayment(record) {
             // Ensure PayMongoService is available
             if (!window.PayMongoService) {
-                try { window.PayMongoService = await import('./assets/js/paymongo-service.js'); } catch(e) {}
+                try { window.PayMongoService = await import('./assets/js/paymongo-service.js'); } catch (e) { }
             }
             if (window.PayMongoService?.savePaymentRecord) {
-                try { await window.PayMongoService.savePaymentRecord(record); } catch(e) {
+                try { await window.PayMongoService.savePaymentRecord(record); } catch (e) {
                     // Fallback: save directly to localStorage
                     try {
                         const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
@@ -1636,7 +1747,7 @@
                         const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
                         all.unshift({ ...record, timestamp: new Date().toISOString() });
                         localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-                    } catch(_) {}
+                    } catch (_) { }
                 }
             } else {
                 // Direct localStorage save if service never loaded
@@ -1648,19 +1759,35 @@
                     const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
                     all.unshift({ ...record, timestamp: new Date().toISOString() });
                     localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-                } catch(_) {}
+                } catch (_) { }
             }
 
-            // Deduct from Amount Due
+            // Deduct from Amount Due & Persist
             currentRemainingDue = Math.max(0, currentRemainingDue - record.amount);
-            const summaryDueEl = document.getElementById('summaryAmountDue');
-            if (summaryDueEl) {
-                summaryDueEl.textContent = `₱${currentRemainingDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-                if (currentRemainingDue === 0) {
-                    summaryDueEl.style.color = '#15803d';
-                    summaryDueEl.textContent += ' (Settled)';
+            tenantExplicitAmountDueSet = true;
+            sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+            localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+
+            // Update Firestore tenant document with current remaining due & payment status
+            if (currentTenantDocId && window.firebaseDb && window.firebaseFirestore) {
+                try {
+                    const { doc, updateDoc, serverTimestamp } = window.firebaseFirestore;
+                    const tenantDocRef = doc(window.firebaseDb, 'tenants', currentTenantDocId);
+                    await updateDoc(tenantDocRef, {
+                        amountDue: currentRemainingDue,
+                        paymentStatus: currentRemainingDue <= 0 ? 'Paid' : 'Pending',
+                        lastPaymentDate: new Date().toISOString(),
+                        lastPaymentAmount: record.amount,
+                        lastPaymentReference: record.referenceNumber,
+                        updatedAt: serverTimestamp()
+                    });
+                } catch (fsErr) {
+                    console.warn('Could not update amountDue in tenant doc:', fsErr);
                 }
             }
+
+            // Update UI
+            updateAmountDueUI();
 
             // Reset Form
             document.getElementById('paymentNotes').value = '';
@@ -1745,6 +1872,24 @@
                 payments = await window.PayMongoService.getTenantPayments(userEmail);
             }
 
+            // If tenant document did not have an explicit amountDue set in Firestore,
+            // calculate remaining amount due from existing payment records
+            if (!tenantExplicitAmountDueSet && payments && payments.length > 0) {
+                const totalPaid = payments
+                    .filter(p => p.status === 'Paid')
+                    .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+                if (totalPaid >= tenantRent) {
+                    currentRemainingDue = 0;
+                } else if (totalPaid > 0) {
+                    currentRemainingDue = Math.max(0, tenantRent - totalPaid);
+                }
+                sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+                localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+                updateAmountDueUI();
+            } else {
+                updateAmountDueUI();
+            }
+
             if (!payments || payments.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
@@ -1791,7 +1936,7 @@
                     const saved = sessionStorage.getItem('pending_paymongo_payment');
                     if (saved) pending = JSON.parse(saved);
                     sessionStorage.removeItem('pending_paymongo_payment');
-                } catch (e) {}
+                } catch (e) { }
 
                 const refNumber = pending?.referenceNumber || ('PM-RET-' + Date.now().toString().slice(-6));
                 const record = {
@@ -1871,7 +2016,7 @@
             }
         }
 
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             const chatMessages = document.getElementById('chatMessages');
             if (chatMessages) {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1879,4 +2024,5 @@
         });
     </script>
 </body>
+
 </html>

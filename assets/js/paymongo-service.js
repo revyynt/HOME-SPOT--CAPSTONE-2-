@@ -515,6 +515,7 @@ if (typeof window !== 'undefined') {
     toCentavos,
     createCheckoutSession,
     getCheckoutSession,
+    completeQrTestPayment,
     createPaymentLink,
     createPaymentMethod,
     generateQrPhImageUrl,

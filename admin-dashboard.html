@@ -123,7 +123,8 @@
         <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium">Reservations</button>
         <button data-tab-button="tenants" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
           <span>Tenants</span>
-          <span id="tenantsCountBadge" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+          <span id="tenantsCountBadge"
+            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
         </button>
         <button data-tab-button="tenant-payments" class="tab-button px-6 py-3 font-medium">Tenant Payments</button>
         <button data-tab-button="messages" class="tab-button px-6 py-3 font-medium">Inquiries</button>
@@ -439,9 +440,13 @@
                   </div>
                 </div>
                 <div>
-                  <button onclick="openCreateTenantModalFromData('Ana Garcia', 'ana.garcia@example.com', '+63 917 123 4567', 'Room 101', 'Single Occupancy Room', '2026-03-10', 5500)"
+                  <button
+                    onclick="openCreateTenantModalFromData('Ana Garcia', 'ana.garcia@example.com', '+63 917 123 4567', 'Room 101', 'Single Occupancy Room', '2026-03-10', 5500)"
                     class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
                     Create Tenant Account
                   </button>
                 </div>
@@ -455,13 +460,15 @@
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
             <div>
               <h3 class="text-2xl font-bold text-gray-900">Tenant Management</h3>
-              <p class="text-sm text-gray-500 mt-0.5">Create and manage accounts for tenants moving into MJP Residences</p>
+              <p class="text-sm text-gray-500 mt-0.5">Create and manage accounts for tenants moving into MJP Residences
+              </p>
             </div>
             <div class="flex items-center gap-3">
               <button onclick="openCreateTenantModal()"
                 class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow-md">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
                 Create Tenant Account
               </button>
@@ -470,9 +477,14 @@
 
           <!-- Quick Stats Banner -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
-              <div class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <div
+              class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
               </div>
               <div>
                 <div class="text-xs font-medium text-blue-900 uppercase tracking-wider">Total Enrolled Tenants</div>
@@ -480,9 +492,14 @@
               </div>
             </div>
 
-            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
-              <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div
+              class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <div>
                 <div class="text-xs font-medium text-emerald-900 uppercase tracking-wider">Active Moved-In</div>
@@ -490,9 +507,14 @@
               </div>
             </div>
 
-            <div class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 flex items-center gap-4">
-              <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div
+              class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
               <div>
                 <div class="text-xs font-medium text-purple-900 uppercase tracking-wider">Monthly Rent Receivable</div>
@@ -502,16 +524,21 @@
           </div>
 
           <!-- Filter & Search Toolbar -->
-          <div class="bg-white border rounded-xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div
+            class="bg-white border rounded-xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
             <div class="relative w-full sm:w-80">
-              <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <input type="text" id="tenantSearchInput" oninput="filterTenantsList()" placeholder="Search tenant name, email, room..."
+              <input type="text" id="tenantSearchInput" oninput="filterTenantsList()"
+                placeholder="Search tenant name, email, room..."
                 class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
             </div>
             <div class="flex items-center gap-3 w-full sm:w-auto">
-              <select id="tenantRoomFilter" onchange="filterTenantsList()" class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
+              <select id="tenantRoomFilter" onchange="filterTenantsList()"
+                class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
                 <option value="">All Rooms & Units</option>
                 <option value="Room 101">Room 101</option>
                 <option value="Room 105">Room 105</option>
@@ -544,7 +571,8 @@
                   <tr>
                     <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                       <div class="flex flex-col items-center justify-center gap-2">
-                        <div class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                        <div class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full">
+                        </div>
                         <span>Loading tenants from Firestore...</span>
                       </div>
                     </td>
@@ -1029,21 +1057,26 @@
   </div>
 
   <!-- Create Tenant Account Modal -->
-  <div id="createTenantModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full my-8 shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+  <div id="createTenantModal"
+    class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      class="bg-white rounded-2xl max-w-2xl w-full my-8 shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
       <div class="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-5 text-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
           <div>
             <h3 class="text-xl font-bold">Create Tenant Account</h3>
-            <p class="text-blue-100 text-xs">Enroll tenant moving into the apartment & set up their Tenant Portal login</p>
+            <p class="text-blue-100 text-xs">Enroll tenant moving into the apartment & set up their Tenant Portal login
+            </p>
           </div>
         </div>
-        <button type="button" onclick="closeCreateTenantModal()" class="text-white/80 hover:text-white rounded-lg p-1 hover:bg-white/10 transition-colors">
+        <button type="button" onclick="closeCreateTenantModal()"
+          class="text-white/80 hover:text-white rounded-lg p-1 hover:bg-white/10 transition-colors">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -1061,20 +1094,27 @@
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name <span class="text-red-500">*</span></label>
-              <input type="text" id="tenantFullName" required placeholder="e.g. Juan Dela Cruz" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name <span
+                  class="text-red-500">*</span></label>
+              <input type="text" id="tenantFullName" required placeholder="e.g. Juan Dela Cruz"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address (Login ID) <span class="text-red-500">*</span></label>
-              <input type="email" id="tenantEmail" required placeholder="e.g. juan.delacruz@example.com" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address (Login ID) <span
+                  class="text-red-500">*</span></label>
+              <input type="email" id="tenantEmail" required placeholder="e.g. juan.delacruz@example.com"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number <span class="text-red-500">*</span></label>
-              <input type="tel" id="tenantPhone" required placeholder="e.g. +63 912 345 6789" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number <span
+                  class="text-red-500">*</span></label>
+              <input type="tel" id="tenantPhone" required placeholder="e.g. +63 912 345 6789"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Emergency Contact</label>
-              <input type="text" id="tenantEmergency" placeholder="e.g. Maria (+63 923 456 7890)" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
+              <input type="text" id="tenantEmergency" placeholder="e.g. Maria (+63 923 456 7890)"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm">
             </div>
           </div>
         </div>
@@ -1083,21 +1123,36 @@
         <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-4">
           <div class="flex items-center justify-between mb-2">
             <h4 class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
               Portal Login Password
             </h4>
-            <button type="button" onclick="generateRandomPassword()" class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <button type="button" onclick="generateRandomPassword()"
+              class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
               Generate Password
             </button>
           </div>
           <div class="relative">
-            <input type="text" id="tenantPassword" required placeholder="Minimum 6 characters" minlength="6" class="w-full px-3 py-2 pr-10 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono">
-            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-2 top-2 text-gray-400 hover:text-gray-600 p-1" title="Toggle visibility">
-              <svg id="pwdEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            <input type="text" id="tenantPassword" required placeholder="Minimum 6 characters" minlength="6"
+              class="w-full px-3 py-2 pr-10 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono">
+            <button type="button" onclick="togglePasswordVisibility()"
+              class="absolute right-2 top-2 text-gray-400 hover:text-gray-600 p-1" title="Toggle visibility">
+              <svg id="pwdEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
             </button>
           </div>
-          <p class="text-xs text-blue-700 mt-1">Tenant will use their email and this password to sign into the Tenant Portal.</p>
+          <p class="text-xs text-blue-700 mt-1">Tenant will use their email and this password to sign into the Tenant
+            Portal.</p>
         </div>
 
         <!-- Section 3: Room & Residence Assignment -->
@@ -1108,8 +1163,10 @@
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Assigned Room / Unit <span class="text-red-500">*</span></label>
-              <input type="text" id="tenantRoom" list="roomSuggestionList" required placeholder="e.g. Room 201" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Assigned Room / Unit <span
+                  class="text-red-500">*</span></label>
+              <input type="text" id="tenantRoom" list="roomSuggestionList" required placeholder="e.g. Room 201"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
               <datalist id="roomSuggestionList">
                 <option value="Room 101">
                 <option value="Room 105">
@@ -1122,7 +1179,8 @@
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Residence Type</label>
-              <select id="tenantDorm" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <select id="tenantDorm"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
                 <option value="Triple Occupancy Room">Triple Occupancy Room</option>
                 <option value="Single Occupancy Room">Single Occupancy Room</option>
                 <option value="Double Occupancy Room">Double Occupancy Room</option>
@@ -1130,19 +1188,24 @@
               </select>
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Move-in Date <span class="text-red-500">*</span></label>
-              <input type="date" id="tenantMoveInDate" required class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Move-in Date <span
+                  class="text-red-500">*</span></label>
+              <input type="date" id="tenantMoveInDate" required
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Monthly Rent (₱) <span class="text-red-500">*</span></label>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Monthly Rent (₱) <span
+                  class="text-red-500">*</span></label>
               <div class="relative">
                 <span class="absolute left-3 top-2 text-gray-500 text-sm font-medium">₱</span>
-                <input type="number" id="tenantMonthlyRent" required min="0" step="100" placeholder="5000" class="w-full pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <input type="number" id="tenantMonthlyRent" required min="0" step="100" placeholder="5000"
+                  class="w-full pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
               </div>
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Payment Due Day</label>
-              <select id="tenantDueDay" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <select id="tenantDueDay"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
                 <option value="1">1st of each month</option>
                 <option value="5" selected>5th of each month</option>
                 <option value="10">10th of each month</option>
@@ -1153,7 +1216,8 @@
             </div>
             <div>
               <label class="block text-sm font-semibold text-gray-700 mb-1">Lease Term</label>
-              <select id="tenantLeaseTerm" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <select id="tenantLeaseTerm"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
                 <option value="6 Months">6 Months</option>
                 <option value="1 Year" selected>1 Year</option>
                 <option value="2 Years">2 Years</option>
@@ -1166,14 +1230,18 @@
         <!-- Section 4: Notes -->
         <div>
           <label class="block text-sm font-semibold text-gray-700 mb-1">Remarks / Notes (Optional)</label>
-          <textarea id="tenantNotes" rows="2" placeholder="e.g. Paid 1-month advance deposit. Keycard #12 issued." class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"></textarea>
+          <textarea id="tenantNotes" rows="2" placeholder="e.g. Paid 1-month advance deposit. Keycard #12 issued."
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"></textarea>
         </div>
 
         <!-- Modal Footer Buttons -->
         <div class="pt-4 border-t flex items-center justify-end gap-3">
-          <button type="button" onclick="closeCreateTenantModal()" class="px-5 py-2.5 border rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium transition-colors">Cancel</button>
-          <button type="submit" id="submitTenantBtn" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
-            <span id="submitTenantSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+          <button type="button" onclick="closeCreateTenantModal()"
+            class="px-5 py-2.5 border rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium transition-colors">Cancel</button>
+          <button type="submit" id="submitTenantBtn"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+            <span id="submitTenantSpinner"
+              class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
             <span id="submitTenantText">Create Account & Save to Firestore</span>
           </button>
         </div>
@@ -1183,20 +1251,27 @@
 
   <!-- View Tenant Details Modal -->
   <div id="viewTenantModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+    <div
+      class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
       <div class="p-6 border-b flex items-center justify-between">
         <h3 class="text-xl font-bold text-gray-900">Tenant Profile</h3>
         <button onclick="closeViewTenantModal()" class="text-gray-400 hover:text-gray-600 p-1">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
       </div>
       <div class="p-6 space-y-4">
         <div class="flex items-center gap-4 pb-4 border-b">
-          <div id="viewTenantAvatar" class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-xl font-bold shadow-md">JD</div>
+          <div id="viewTenantAvatar"
+            class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-xl font-bold shadow-md">
+            JD</div>
           <div>
             <h4 id="viewTenantName" class="text-lg font-bold text-gray-900">Juan Dela Cruz</h4>
             <p id="viewTenantEmail" class="text-sm text-gray-500 font-mono">juan@example.com</p>
-            <span id="viewTenantStatus" class="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800">Active Tenant</span>
+            <span id="viewTenantStatus"
+              class="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800">Active
+              Tenant</span>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-3 text-sm">
@@ -1221,11 +1296,15 @@
         </div>
         <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 text-xs text-blue-950 space-y-1.5">
           <div class="font-bold text-blue-900 flex items-center gap-1.5">
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
             Tenant Portal Credentials
           </div>
           <div>Login Email: <span id="viewTenantLoginEmail" class="font-mono font-semibold text-blue-900"></span></div>
-          <div>Password: <span id="viewTenantLoginPassword" class="font-mono font-semibold text-blue-900">••••••••</span></div>
+          <div>Password: <span id="viewTenantLoginPassword"
+              class="font-mono font-semibold text-blue-900">••••••••</span></div>
         </div>
         <div id="viewTenantNotesSection" class="hidden text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border">
           <div class="font-semibold text-gray-700 mb-0.5">Notes:</div>
@@ -1233,11 +1312,16 @@
         </div>
       </div>
       <div class="p-6 border-t bg-gray-50 flex justify-between items-center">
-        <button onclick="copyCurrentTenantCredentials()" class="px-4 py-2 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <button onclick="copyCurrentTenantCredentials()"
+          class="px-4 py-2 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
           Copy Login Info
         </button>
-        <button onclick="closeViewTenantModal()" class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors">Done</button>
+        <button onclick="closeViewTenantModal()"
+          class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors">Done</button>
       </div>
     </div>
   </div>
@@ -1245,10 +1329,10 @@
   <script type="module" src="./assets/js/firebase-service.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getAuth, 
-      signOut, 
-      createUserWithEmailAndPassword 
+    import {
+      getAuth,
+      signOut,
+      createUserWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
     import {
       getFirestore,
@@ -1295,7 +1379,7 @@
     let currentViewingTenant = null;
 
     // Helper: Generate readable, secure password
-    window.generateRandomPassword = function() {
+    window.generateRandomPassword = function () {
       const prefix = ["Home", "Spot", "Dorm", "MJP", "Stay"];
       const randWord = prefix[Math.floor(Math.random() * prefix.length)];
       const randNum = Math.floor(1000 + Math.random() * 9000);
@@ -1308,7 +1392,7 @@
     };
 
     // Helper: Toggle Password Visibility
-    window.togglePasswordVisibility = function() {
+    window.togglePasswordVisibility = function () {
       const pwdInput = document.getElementById('tenantPassword');
       if (!pwdInput) return;
       if (pwdInput.type === 'password') {
@@ -1319,7 +1403,7 @@
     };
 
     // Modal Controls
-    window.openCreateTenantModal = function() {
+    window.openCreateTenantModal = function () {
       const modal = document.getElementById('createTenantModal');
       const form = document.getElementById('createTenantForm');
       const alertBox = document.getElementById('createTenantAlert');
@@ -1338,12 +1422,12 @@
       if (modal) modal.classList.remove('hidden');
     };
 
-    window.closeCreateTenantModal = function() {
+    window.closeCreateTenantModal = function () {
       const modal = document.getElementById('createTenantModal');
       if (modal) modal.classList.add('hidden');
     };
 
-    window.openCreateTenantModalFromData = function(name, email, phone, room, dorm, moveInDate, rent) {
+    window.openCreateTenantModalFromData = function (name, email, phone, room, dorm, moveInDate, rent) {
       window.openCreateTenantModal();
       if (name) document.getElementById('tenantFullName').value = name;
       if (email) document.getElementById('tenantEmail').value = email;
@@ -1357,12 +1441,12 @@
           if (!isNaN(d.getTime())) {
             document.getElementById('tenantMoveInDate').value = d.toISOString().split('T')[0];
           }
-        } catch (_) {}
+        } catch (_) { }
       }
       if (rent) document.getElementById('tenantMonthlyRent').value = rent;
     };
 
-    window.viewTenantDetails = function(tenantId) {
+    window.viewTenantDetails = function (tenantId) {
       const tenant = loadedTenants.find(t => t.id === tenantId);
       if (!tenant) return;
       currentViewingTenant = tenant;
@@ -1394,12 +1478,12 @@
       modal.classList.remove('hidden');
     };
 
-    window.closeViewTenantModal = function() {
+    window.closeViewTenantModal = function () {
       const modal = document.getElementById('viewTenantModal');
       if (modal) modal.classList.add('hidden');
     };
 
-    window.copyTenantLoginInfo = function(email, password, name, room) {
+    window.copyTenantLoginInfo = function (email, password, name, room) {
       const text = `MJP Residences - Tenant Portal Access\nTenant: ${name}\nRoom: ${room}\nPortal URL: ${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}tenant-login.html\nEmail: ${email}\nPassword: ${password}`;
       navigator.clipboard.writeText(text).then(() => {
         if (window.Toast) {
@@ -1412,17 +1496,17 @@
       });
     };
 
-    window.copyCurrentTenantCredentials = function() {
+    window.copyCurrentTenantCredentials = function () {
       if (!currentViewingTenant) return;
       window.copyTenantLoginInfo(
-        currentViewingTenant.email, 
-        currentViewingTenant.password, 
-        currentViewingTenant.name, 
+        currentViewingTenant.email,
+        currentViewingTenant.password,
+        currentViewingTenant.name,
         currentViewingTenant.room
       );
     };
 
-    window.deleteTenantAccount = async function(tenantId, tenantName) {
+    window.deleteTenantAccount = async function (tenantId, tenantName) {
       if (!confirm(`Are you sure you want to remove the tenant account for "${tenantName}"? This tenant will no longer be able to log in.`)) {
         return;
       }
@@ -1546,12 +1630,12 @@
     }
 
     // Filter Tenants List
-    window.filterTenantsList = function() {
+    window.filterTenantsList = function () {
       const search = (document.getElementById('tenantSearchInput')?.value || '').toLowerCase().trim();
       const roomFilter = (document.getElementById('tenantRoomFilter')?.value || '').toLowerCase().trim();
 
       const filtered = loadedTenants.filter(t => {
-        const matchesSearch = !search || 
+        const matchesSearch = !search ||
           (t.name && t.name.toLowerCase().includes(search)) ||
           (t.email && t.email.toLowerCase().includes(search)) ||
           (t.room && t.room.toLowerCase().includes(search)) ||
@@ -1629,7 +1713,7 @@
     // Form Submit Handler: Create Tenant Account
     const createTenantForm = document.getElementById('createTenantForm');
     if (createTenantForm) {
-      createTenantForm.addEventListener('submit', async function(e) {
+      createTenantForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
         const alertBox = document.getElementById('createTenantAlert');
