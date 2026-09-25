@@ -166,7 +166,9 @@ export async function getCheckoutSession(sessionId) {
  */
 export async function createCheckoutSession({
   amount,
-  description = 'Rent Payment',
+  purpose = 'Monthly Rent',
+  notes = '',
+  description,
   tenantName = '',
   tenantEmail = '',
   tenantPhone = '',
@@ -174,16 +176,21 @@ export async function createCheckoutSession({
   successUrl,
   cancelUrl
 }) {
+  const finalPurpose = purpose || description || 'Monthly Rent';
+  const finalNotes = (notes || '').trim();
+  const finalDescription = description || (finalNotes ? `${finalPurpose} (${finalNotes}) - MJP Residences` : `${finalPurpose} - MJP Residences`);
   const amountCentavos = toCentavos(amount);
   const currentOrigin = (typeof window !== 'undefined' && window.location && !window.location.origin.startsWith('file:')) ? window.location.origin : 'http://localhost:5050';
   const currentPath = (typeof window !== 'undefined' && window.location) ? window.location.pathname : '/tenant-portal.html';
 
-  const defaultSuccessUrl = `${currentOrigin}${currentPath}?payment=success&amount=${amount}&purpose=${encodeURIComponent(description)}`;
+  const defaultSuccessUrl = `${currentOrigin}${currentPath}?payment=success&amount=${amount}&purpose=${encodeURIComponent(finalPurpose)}`;
   const defaultCancelUrl = `${currentOrigin}${currentPath}?payment=cancelled`;
 
   const requestBody = {
     amount: amount,
-    description: description,
+    purpose: finalPurpose,
+    notes: finalNotes,
+    description: finalDescription,
     tenantName: tenantName,
     tenantEmail: tenantEmail,
     tenantPhone: tenantPhone,

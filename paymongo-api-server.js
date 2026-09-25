@@ -92,6 +92,10 @@ const server = http.createServer((req, res) => {
       try {
         const params = JSON.parse(body);
         const amountCentavos = Math.round(parseFloat(params.amount) * 100);
+        const purpose = params.purpose || params.description || 'Monthly Rent';
+        const notes = (params.notes || '').toString().trim();
+        const sessionDescription = params.description || (notes ? `${purpose} (${notes}) - MJP Residences` : `${purpose} - MJP Residences`);
+        const itemDescription = notes ? `Notes: ${notes}` : `Payment for ${purpose} - MJP Residences`;
 
         const payload = {
           data: {
@@ -99,12 +103,13 @@ const server = http.createServer((req, res) => {
               send_email_receipt: true,
               show_description: true,
               show_line_items: true,
-              description: params.description || 'Rent Payment - MJP Residences',
+              description: sessionDescription,
               line_items: [
                 {
                   currency: 'PHP',
                   amount: amountCentavos,
-                  name: params.description || 'Rent Payment',
+                  name: purpose,
+                  description: itemDescription,
                   quantity: 1
                 }
               ],
@@ -114,7 +119,13 @@ const server = http.createServer((req, res) => {
                 email: params.tenantEmail || undefined,
                 phone: params.tenantPhone || undefined
               },
-              success_url: params.successUrl || `http://localhost:${PORT}/tenant-portal.html?payment=success&amount=${params.amount}&purpose=${encodeURIComponent(params.description || 'Rent')}`,
+              metadata: {
+                purpose: purpose,
+                notes: notes,
+                tenantName: params.tenantName || '',
+                tenantEmail: params.tenantEmail || ''
+              },
+              success_url: params.successUrl || `http://localhost:${PORT}/tenant-portal.html?payment=success&amount=${params.amount}&purpose=${encodeURIComponent(purpose)}`,
               cancel_url: params.cancelUrl || `http://localhost:${PORT}/tenant-portal.html?payment=cancelled`
             }
           }
