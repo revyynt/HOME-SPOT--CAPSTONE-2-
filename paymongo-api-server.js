@@ -14,6 +14,7 @@ const url = require('url');
 const PORT = process.env.PORT || process.argv[2] || 5000;
 const PAYMONGO_SECRET_KEY = process.env.PAYMONGO_SECRET_KEY || 'sk_test_W88PSSzUqwSr3hobvsUyaZK5';
 const PAYMONGO_AUTH = 'Basic ' + Buffer.from(PAYMONGO_SECRET_KEY + ':').toString('base64');
+const receivedWebhookEvents = [];
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -459,6 +460,120 @@ const server = http.createServer((req, res) => {
         };
 
         handlePayMongoRequest('/v1/links', payload, (err, status, json) => {
+          if (err) return sendJson(res, 500, { error: err.message });
+          sendJson(res, status, json);
+        });
+      } catch (err) {
+        sendJson(res, 400, { error: 'Invalid JSON payload' });
+      }
+    });
+    return;
+  }
+
+  // API Endpoint: /api/paymongo-webhook or /api/webhook (Receives Webhooks from PayMongo)
+  if ((pathname === '/api/paymongo-webhook' || pathname === '/api/webhook') && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const eventObj = payload.data?.attributes || {};
+        const eventType = eventObj.type || 'unknown.event';
+        const eventResource = eventObj.data?.attributes || {};
+        const eventId = payload.data?.id || 'evt_' + Date.now();
+        const resourceId = eventObj.data?.id || 'res_unknown';
+
+        const amountCentavos = eventResource.amount || 0;
+        const amountPhp = (amountCentavos / 100).toFixed(2);
+        const failureCode = eventResource.failed_code || eventResource.last_payment_error?.failed_code || null;
+        const failureMessage = eventResource.failed_message || eventResource.last_payment_error?.failed_message || eventResource.last_payment_error?.detail || null;
+        const description = eventResource.description || '';
+        const billing = eventResource.billing || {};
+
+        console.log('\n======================================================');
+        console.log(`🔔 [PayMongo Webhook Event Received]`);
+        console.log(`  Event Type:   ${eventType}`);
+        console.log(`  Event ID:     ${eventId}`);
+        console.log(`  Resource ID:  ${resourceId}`);
+        console.log(`  Amount:       ₱${amountPhp}`);
+        if (billing.name) console.log(`  Tenant:       ${billing.name} (${billing.email || 'no email'})`);
+
+        if (eventType === 'payment.failed') {
+          console.log(`🚨 STATUS:       FAILED`);
+          console.log(`  Failure Code:   ${failureCode || 'declined'}`);
+          console.log(`  Failure Reason: ${failureMessage || 'Payment authorization / 3DS authentication failed'}`);
+        } else if (eventType === 'payment.paid' || eventType === 'checkout_session.payment.paid') {
+          console.log(`✅ STATUS:       PAID / SUCCESSFUL`);
+        }
+        console.log('======================================================\n');
+
+        const summary = {
+          eventId,
+          eventType,
+          resourceId,
+          status: eventType === 'payment.failed' ? 'Failed' : (eventType.includes('paid') ? 'Paid' : 'Processed'),
+          amount: parseFloat(amountPhp),
+          currency: eventResource.currency || 'PHP',
+          description,
+          tenantName: billing.name || 'Tenant',
+          tenantEmail: billing.email || '',
+          failureCode,
+          failureReason: failureMessage,
+          receivedAt: new Date().toISOString()
+        };
+
+        receivedWebhookEvents.unshift(summary);
+        if (receivedWebhookEvents.length > 50) receivedWebhookEvents.pop();
+
+        sendJson(res, 200, {
+          success: true,
+          message: 'Webhook processed successfully',
+          eventType,
+          eventId
+        });
+      } catch (err) {
+        console.error('❌ Webhook error:', err.message);
+        sendJson(res, 400, { error: 'Invalid Webhook JSON payload', message: err.message });
+      }
+    });
+    return;
+  }
+
+  // API Endpoint: /api/webhook-events (View all recent received webhooks)
+  if (pathname === '/api/webhook-events' && req.method === 'GET') {
+    return sendJson(res, 200, {
+      total: receivedWebhookEvents.length,
+      events: receivedWebhookEvents
+    });
+  }
+
+  // API Endpoint: /api/register-webhook (Helper to register ngrok webhook with PayMongo)
+  if (pathname === '/api/register-webhook' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        const params = JSON.parse(body || '{}');
+        const webhookUrl = params.url;
+        if (!webhookUrl) {
+          return sendJson(res, 400, { error: 'Webhook URL is required (e.g. https://your-ngrok.app/api/paymongo-webhook)' });
+        }
+
+        const payload = {
+          data: {
+            attributes: {
+              url: webhookUrl,
+              events: params.events || [
+                'checkout_session.payment.paid',
+                'payment.paid',
+                'payment.failed',
+                'qrph.expired'
+              ]
+            }
+          }
+        };
+
+        handlePayMongoRequest('/v1/webhooks', payload, (err, status, json) => {
           if (err) return sendJson(res, 500, { error: err.message });
           sendJson(res, status, json);
         });

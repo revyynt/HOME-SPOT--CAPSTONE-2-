@@ -188,3 +188,50 @@ exports.createPayMongoLink = functions.https.onRequest(async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+/**
+ * Cloud Function to receive PayMongo Webhooks
+ */
+exports.paymongoWebhook = functions.https.onRequest(async (req, res) => {
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") return res.status(204).send("");
+  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
+
+  try {
+    const payload = req.body || {};
+    const eventObj = payload.data?.attributes || {};
+    const eventType = eventObj.type || "unknown.event";
+    const eventResource = eventObj.data?.attributes || {};
+    const resourceId = eventObj.data?.id || "res_unknown";
+
+    console.log(`[PayMongo Cloud Webhook] ${eventType} (Resource: ${resourceId})`);
+
+    // If payment failed or paid, log in Firestore
+    if (eventType === "payment.failed") {
+      const failedCode = eventResource.failed_code || eventResource.last_payment_error?.failed_code || "card_declined";
+      const failedMsg = eventResource.failed_message || eventResource.last_payment_error?.failed_message || "Payment declined";
+      const amountCentavos = eventResource.amount || 0;
+      
+      await admin.firestore().collection("payments").add({
+        paymentMethodId: resourceId,
+        referenceNumber: "PM-FAIL-" + resourceId.slice(-6).toUpperCase(),
+        amount: amountCentavos / 100,
+        status: "Failed",
+        failureReason: failedMsg,
+        failureCode: failedCode,
+        tenantEmail: eventResource.billing?.email || "",
+        tenantName: eventResource.billing?.name || "",
+        dateFormatted: new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    return res.status(200).json({ received: true, event: eventType });
+  } catch (err) {
+    console.error("Cloud Webhook Error:", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
