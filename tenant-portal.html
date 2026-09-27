@@ -1512,7 +1512,7 @@
                 });
 
                 if (session && session.checkoutUrl) {
-                    sessionStorage.setItem('pending_paymongo_payment', JSON.stringify({
+                    const pendingPayload = JSON.stringify({
                         sessionId: session.sessionId,
                         referenceNumber: session.referenceNumber,
                         amount: amountVal,
@@ -1521,9 +1521,17 @@
                         method: 'PayMongo Checkout',
                         tenantName: tenantName,
                         tenantEmail: userEmail
-                    }));
+                    });
+                    // Store in BOTH storages for maximum reliability across cross-origin redirects
+                    sessionStorage.setItem('pending_paymongo_payment', pendingPayload);
+                    localStorage.setItem('pending_paymongo_payment', pendingPayload);
+                    // Mark that we are leaving for PayMongo checkout — used to force fresh load on return
+                    sessionStorage.setItem('paymongo_checkout_active', '1');
 
-                    window.location.href = session.checkoutUrl;
+                    // Use location.replace() so HomeSpot is NOT in browser history stack.
+                    // This means pressing Back from PayMongo checkout does a FRESH load of HomeSpot
+                    // (not a BF-cache restore), ensuring checkUrlPaymentReturn() runs on DOMContentLoaded.
+                    window.location.replace(session.checkoutUrl);
                     return;
                 } else {
                     throw new Error('Unable to generate PayMongo checkout session.');
@@ -1782,6 +1790,39 @@
                     } catch (_) { }
                 }
             }
+
+            // Fire a synthetic payment.failed webhook event to our local server
+            // so it appears in the admin webhook events log
+            try {
+                const webhookPayload = {
+                    data: {
+                        id: 'evt_homespot_' + Date.now(),
+                        attributes: {
+                            type: 'payment.failed',
+                            data: {
+                                id: record.paymentMethodId || ('pay_fail_' + Date.now()),
+                                attributes: {
+                                    amount: Math.round(parseFloat(record.amount || 0) * 100),
+                                    currency: 'PHP',
+                                    description: record.purpose || 'Monthly Rent',
+                                    failed_code: 'card_declined',
+                                    failed_message: record.failureReason || 'Payment declined or 3DS authentication failed.',
+                                    billing: {
+                                        name: record.tenantName || 'Tenant',
+                                        email: record.tenantEmail || ''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                const apiBase = window.location.origin.startsWith('file:') ? 'http://localhost:5050' : window.location.origin;
+                fetch(`${apiBase}/api/paymongo-webhook`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(webhookPayload)
+                }).catch(() => {});
+            } catch (_) {}
 
             // CRITICAL: For failed payment, do NOT deduct from currentRemainingDue!
             // Refresh history table so the failed record is immediately visible
@@ -2065,21 +2106,106 @@
                 }
             }
 
+            // Read pending payment from BOTH storages (localStorage survives more edge cases)
             let pending = null;
             try {
-                const saved = sessionStorage.getItem('pending_paymongo_payment');
+                const saved = sessionStorage.getItem('pending_paymongo_payment')
+                    || localStorage.getItem('pending_paymongo_payment');
                 if (saved) pending = JSON.parse(saved);
             } catch (e) { }
+
+            console.log('[PayReturn] URL params - paymentIntentId:', paymentIntentId, '| paymentStatus:', paymentStatus, '| pending:', pending);
 
             // If neither param found in URL, but we have pending direct 3DS payment and we just returned to tenant portal
             if (!paymentIntentId && !paymentStatus && pending?.paymentIntentId) {
                 paymentIntentId = pending.paymentIntentId;
             }
 
+            // SCENARIO: Returned from PayMongo hosted checkout with no URL params
+            // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
+            // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
+            if (!paymentIntentId && !paymentStatus && pending?.sessionId) {
+                console.log('[PayReturn] Checking pending checkout session:', pending.sessionId);
+                const sessionId = pending.sessionId;
+                sessionStorage.removeItem('pending_paymongo_payment');
+                localStorage.removeItem('pending_paymongo_payment');
+
+                let sessionStatus = null;
+                let failureDetail = 'Card declined or 3DS authentication failed.';
+                try {
+                    if (window.PayMongoService?.getCheckoutSession) {
+                        const sessionData = await window.PayMongoService.getCheckoutSession(sessionId);
+                        console.log('[PayReturn] Session data:', sessionData);
+                        if (sessionData) {
+                            sessionStatus = sessionData.attributes?.status;
+                            const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
+                            if (lastErr && (lastErr.failed_message || lastErr.detail)) {
+                                failureDetail = lastErr.failed_message || lastErr.detail;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[PayReturn] Could not inspect checkout session:', e);
+                }
+
+                console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
+
+                if (sessionStatus === 'paid') {
+                    const amountParam2 = parseFloat(pending?.amount) || 5000;
+                    const purposeParam2 = pending?.purpose || 'Monthly Rent';
+                    const tenantNameVal2 = pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
+                    const refNumber2 = pending?.referenceNumber || ('PM-RET-' + Date.now().toString().slice(-6));
+                    const record2 = {
+                        referenceNumber: refNumber2,
+                        paymentMethodId: sessionId,
+                        method: pending?.method || 'PayMongo Checkout',
+                        amount: amountParam2,
+                        purpose: purposeParam2,
+                        notes: pending?.notes || 'Completed via PayMongo Checkout',
+                        tenantName: tenantNameVal2,
+                        tenantEmail: userEmail,
+                        dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                        status: 'Paid'
+                    };
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    switchTab('payment');
+                    await saveAndFinalizePayment(record2);
+                } else {
+                    // Session not paid — card was declined or 3DS failed
+                    const amountParam2 = parseFloat(pending?.amount) || 5000;
+                    const purposeParam2 = pending?.purpose || 'Monthly Rent';
+                    const tenantNameVal2 = pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
+                    const refNumber2 = pending?.referenceNumber || ('PM-FAIL-' + Date.now().toString().slice(-6));
+                    const record2 = {
+                        referenceNumber: refNumber2,
+                        paymentMethodId: sessionId,
+                        method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+                        amount: amountParam2,
+                        purpose: purposeParam2,
+                        notes: pending?.notes || 'Card declined / 3DS authentication failed',
+                        failureReason: failureDetail,
+                        tenantName: tenantNameVal2,
+                        tenantEmail: userEmail,
+                        dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                        status: 'Failed'
+                    };
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    switchTab('payment');
+                    // Save receipt first, then expire session in background (non-blocking)
+                    await saveFailedPayment(record2);
+                    // Fire-and-forget: expire session in PayMongo dashboard
+                    if (window.PayMongoService?.expireCheckoutSession && sessionStatus !== 'expired') {
+                        window.PayMongoService.expireCheckoutSession(sessionId).catch(() => {});
+                    }
+                }
+                return;
+            }
+
             // If neither parameter is present and no pending, nothing to do
             if (!paymentIntentId && !paymentStatus) return;
 
             sessionStorage.removeItem('pending_paymongo_payment');
+            localStorage.removeItem('pending_paymongo_payment');
 
             const amountParam = parseFloat(urlParams.get('amount')) || pending?.amount || 5000;
             const purposeParam = urlParams.get('purpose') || pending?.purpose || 'Monthly Rent';
@@ -2170,27 +2296,24 @@
                 switchTab('payment');
                 await saveAndFinalizePayment(record);
             } 
-            // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED OR CANCELLED)
+            // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED OR CANCELLED via cancel_url)
             else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
                 const sessionId = pending?.sessionId || urlParams.get('sessionId') || '';
                 let failureDetail = 'Payment declined / 3DS authentication failed on PayMongo';
 
+                console.log('[PayReturn] Scenario 3 - failed/cancelled. sessionId:', sessionId);
+
                 if (sessionId && window.PayMongoService) {
                     try {
                         const sessionData = await window.PayMongoService.getCheckoutSession(sessionId);
+                        console.log('[PayReturn] Scenario 3 session data:', sessionData);
                         if (sessionData) {
                             const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
                             if (lastErr && (lastErr.failed_message || lastErr.detail)) {
                                 failureDetail = lastErr.failed_message || lastErr.detail;
                             }
                         }
-                    } catch (err) { }
-
-                    try {
-                        if (window.PayMongoService.expireCheckoutSession) {
-                            await window.PayMongoService.expireCheckoutSession(sessionId);
-                        }
-                    } catch (e) { }
+                    } catch (err) { console.warn('[PayReturn] Scenario 3 getCheckoutSession error:', err); }
                 }
 
                 const refNumber = pending?.referenceNumber || ('PM-FAIL-' + Date.now().toString().slice(-6));
@@ -2210,7 +2333,12 @@
 
                 window.history.replaceState({}, document.title, window.location.pathname);
                 switchTab('payment');
+                // Save receipt FIRST — non-blocking expire after
                 await saveFailedPayment(record);
+                // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
+                if (sessionId && window.PayMongoService?.expireCheckoutSession) {
+                    window.PayMongoService.expireCheckoutSession(sessionId).catch(() => {});
+                }
             }
         }
 
@@ -2219,6 +2347,34 @@
             updateSubmitButton();
             loadTenantPaymentHistory();
             checkUrlPaymentReturn();
+        });
+
+        // Handle Back-Forward Cache (BF cache) restores:
+        // When the user presses the browser Back button from PayMongo's checkout page,
+        // the browser restores this page from BF cache WITHOUT firing DOMContentLoaded.
+        // pageshow fires in both fresh load and BF-cache restore cases.
+        let paymentReturnChecked = false;
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                // Page restored from BF cache — re-run payment return check
+                console.log('[PayReturn] BF-cache restore detected — re-checking payment return');
+                paymentReturnChecked = false;
+                checkUrlPaymentReturn();
+            }
+        });
+
+        // Also handle tab visibility change as a secondary fallback
+        // (some mobile browsers use this instead of pageshow for back navigation)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !paymentReturnChecked) {
+                const pendingRaw = sessionStorage.getItem('pending_paymongo_payment')
+                    || localStorage.getItem('pending_paymongo_payment');
+                if (pendingRaw) {
+                    console.log('[PayReturn] visibilitychange with pending payment — checking');
+                    paymentReturnChecked = true;
+                    checkUrlPaymentReturn();
+                }
+            }
         });
 
         function sendMessage() {
