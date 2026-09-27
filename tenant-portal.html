@@ -982,56 +982,7 @@
                         <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026">
                     </div>
 
-                    <!-- Payment Channel Selection -->
-                    <div class="payment-field" style="margin-top: 18px;">
-                        <label style="font-weight: 600; display: block; margin-bottom: 8px;">Select Payment Mode</label>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <label id="modeCardLabel" onclick="togglePaymentMode('card_3ds')" style="border: 2px solid #10B981; background: #f0fdf4; border-radius: 8px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="paymentMode" value="card_3ds" checked style="accent-color: #10B981;">
-                                    <strong style="font-size: 13px; color: #1e293b;">💳 Card (Direct 3DS Test)</strong>
-                                </div>
-                                <span style="font-size: 11px; color: #64748b; line-height: 1.4;">Recommended for testing! Opens PayMongo 3DS page directly. Pressing "Fail" redirects immediately back to HomeSpot with the Failed Receipt!</span>
-                            </label>
-
-                            <label id="modeHostedLabel" onclick="togglePaymentMode('hosted_checkout')" style="border: 1px solid #cbd5e1; background: white; border-radius: 8px; padding: 12px; cursor: pointer; display: flex; flex-direction: column; gap: 4px;">
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="radio" name="paymentMode" value="hosted_checkout" style="accent-color: #10B981;">
-                                    <strong style="font-size: 13px; color: #1e293b;">🌐 PayMongo Hosted Page</strong>
-                                </div>
-                                <span style="font-size: 11px; color: #64748b; line-height: 1.4;">Full PayMongo hosted checkout page with Card, QR Ph, Maya, and GrabPay.</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Direct Card Testing Simulator Options -->
-                    <div id="cardTestOptionsBox" style="margin-top: 12px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-                        <label style="font-weight: 600; font-size: 12px; color: #334155; display: block; margin-bottom: 8px;">Quick Test Scenarios (Click to Pre-fill):</label>
-                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
-                            <button type="button" id="btnScenarioFail" onclick="selectCardScenario('fail')" style="padding: 6px 12px; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
-                                🔴 Fail Scenario (Card 4120...0007)
-                            </button>
-                            <button type="button" id="btnScenarioSuccess" onclick="selectCardScenario('success')" style="padding: 6px 12px; background: #dcfce7; border: 1px solid #86efac; color: #166534; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
-                                🟢 Success Scenario (Card 4343...4345)
-                            </button>
-                        </div>
-                        <div class="payment-field" style="margin-bottom: 8px;">
-                            <label for="directCardNumber" style="font-size: 11px; color: #64748b;">Card Number</label>
-                            <input type="text" id="directCardNumber" value="4120 0000 0000 0007" oninput="formatCardNumber(this)" style="font-family: monospace; font-size: 13px;" required>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div class="payment-field" style="margin-bottom: 0;">
-                                <label for="directCardExpiry" style="font-size: 11px; color: #64748b;">Expiry (MM/YY)</label>
-                                <input type="text" id="directCardExpiry" value="12/28" placeholder="12/28" oninput="formatCardExpiry(this)">
-                            </div>
-                            <div class="payment-field" style="margin-bottom: 0;">
-                                <label for="directCardCvc" style="font-size: 11px; color: #64748b;">CVC</label>
-                                <input type="text" id="directCardCvc" value="123" placeholder="123" maxlength="4">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 16px;">
+                    <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 20px;">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
@@ -1039,21 +990,6 @@
                         </svg>
                         <span>Proceed to Pay</span>
                     </button>
-
-                    <div class="payment-note">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            style="flex-shrink: 0; margin-top: 1px;">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <div>
-                            <strong>Official PayMongo Test Gateway:</strong> Secured by PayMongo. Both Direct 3DS Card and Hosted Checkout modes are fully integrated with PayMongo test credentials.
-                        </div>
-                    </div>
-
-                    <div id="hostedCheckoutGuideNotice" style="display: none; margin-top: 12px; padding: 12px 14px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 12px; color: #92400e; line-height: 1.5;">
-                        <strong>⚠️ Notice for PayMongo Hosted Page:</strong> If you test 3DS failure on PayMongo's hosted page, PayMongo resets its form to allow another card. To return to HomeSpot and view your Official Failed Payment Receipt, simply click the <strong>"← Return to Merchant"</strong> arrow at the top-left of the PayMongo page!
-                    </div>
                 </form>
 
                 <!-- Payment History Card -->
@@ -1522,59 +1458,7 @@
 
         document.getElementById('paymentAmount')?.addEventListener('input', updateSubmitButton);
 
-        // Toggle Payment Mode Selection
-        function togglePaymentMode(mode) {
-            const cardBox = document.getElementById('cardTestOptionsBox');
-            const hostedNotice = document.getElementById('hostedCheckoutGuideNotice');
-            const modeCardLabel = document.getElementById('modeCardLabel');
-            const modeHostedLabel = document.getElementById('modeHostedLabel');
-            const radioCard = document.querySelector('input[name="paymentMode"][value="card_3ds"]');
-            const radioHosted = document.querySelector('input[name="paymentMode"][value="hosted_checkout"]');
-
-            if (mode === 'card_3ds') {
-                if (radioCard) radioCard.checked = true;
-                if (cardBox) cardBox.style.display = 'block';
-                if (hostedNotice) hostedNotice.style.display = 'none';
-                if (modeCardLabel) {
-                    modeCardLabel.style.border = '2px solid #10B981';
-                    modeCardLabel.style.background = '#f0fdf4';
-                }
-                if (modeHostedLabel) {
-                    modeHostedLabel.style.border = '1px solid #cbd5e1';
-                    modeHostedLabel.style.background = 'white';
-                }
-            } else {
-                if (radioHosted) radioHosted.checked = true;
-                if (cardBox) cardBox.style.display = 'none';
-                if (hostedNotice) hostedNotice.style.display = 'block';
-                if (modeCardLabel) {
-                    modeCardLabel.style.border = '1px solid #cbd5e1';
-                    modeCardLabel.style.background = 'white';
-                }
-                if (modeHostedLabel) {
-                    modeHostedLabel.style.border = '2px solid #10B981';
-                    modeHostedLabel.style.background = '#f0fdf4';
-                }
-            }
-        }
-
-        // Quick Card Scenario Selector
-        function selectCardScenario(scenario) {
-            const numInput = document.getElementById('directCardNumber');
-            const expInput = document.getElementById('directCardExpiry');
-            const cvcInput = document.getElementById('directCardCvc');
-            if (scenario === 'fail') {
-                if (numInput) numInput.value = '4120 0000 0000 0007';
-                if (expInput) expInput.value = '12/28';
-                if (cvcInput) cvcInput.value = '123';
-            } else {
-                if (numInput) numInput.value = '4343 4343 4343 4345';
-                if (expInput) expInput.value = '12/28';
-                if (cvcInput) cvcInput.value = '123';
-            }
-        }
-
-        // Payment Form Submission - Direct Card 3DS or PayMongo Hosted Checkout
+        // Payment Form Submission - Direct to PayMongo Hosted Checkout
         document.getElementById('paymentForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
@@ -1584,7 +1468,6 @@
             const notes = (document.getElementById('paymentNotes').value || '').trim();
             const tenantName = document.getElementById('fullName')?.value || sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
             const tenantPhone = document.getElementById('phone')?.value || '+63 912 345 6789';
-            const selectedMode = document.querySelector('input[name="paymentMode"]:checked')?.value || 'card_3ds';
 
             if (!amountVal || amountVal <= 0) {
                 if (currentRemainingDue <= 0) {
@@ -1607,96 +1490,43 @@
             `;
 
             try {
-                // Ensure PayMongoService is ready
                 if (!window.PayMongoService) {
                     window.PayMongoService = await import('./assets/js/paymongo-service.js');
                 }
 
-                // MODE 1: DIRECT CARD 3DS TEST (Redirects directly to 3DS test page and returns directly to HomeSpot)
-                if (selectedMode === 'card_3ds') {
-                    const rawCard = (document.getElementById('directCardNumber')?.value || '4120 0000 0000 0007').replace(/\s/g, '');
-                    const expiry = (document.getElementById('directCardExpiry')?.value || '12/28').split('/');
-                    const expMonth = (expiry[0] || '12').trim();
-                    const expYear = (expiry[1] || '28').trim();
-                    const cvc = (document.getElementById('directCardCvc')?.value || '123').trim();
+                const descWithNotes = notes ? `${purpose} (${notes}) - MJP Residences` : `${purpose} - MJP Residences`;
+                const successUrl = `${window.location.origin}${window.location.pathname}?payment=success&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
+                const cancelUrl = `${window.location.origin}${window.location.pathname}?payment=failed&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
 
-                    const returnUrl = `${window.location.origin}${window.location.pathname}`;
+                const session = await window.PayMongoService.createCheckoutSession({
+                    amount: amountVal,
+                    purpose: purpose,
+                    notes: notes,
+                    description: descWithNotes,
+                    tenantName: tenantName,
+                    tenantEmail: userEmail,
+                    tenantPhone: tenantPhone,
+                    paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'qrph'],
+                    successUrl: successUrl,
+                    cancelUrl: cancelUrl
+                });
 
-                    const intentResult = await window.PayMongoService.createCardPaymentIntent({
-                        amount: amountVal,
-                        purpose: purpose,
-                        tenantName: tenantName,
-                        tenantEmail: userEmail,
-                        tenantPhone: tenantPhone,
-                        cardNumber: rawCard,
-                        expMonth: expMonth,
-                        expYear: expYear,
-                        cvc: cvc,
-                        returnUrl: returnUrl
-                    });
-
-                    if (intentResult && (intentResult.nextActionUrl || intentResult.status === 'succeeded')) {
-                        // Store pending payment in sessionStorage
-                        sessionStorage.setItem('pending_paymongo_payment', JSON.stringify({
-                            paymentIntentId: intentResult.paymentIntentId,
-                            referenceNumber: intentResult.referenceNumber,
-                            amount: amountVal,
-                            purpose: purpose,
-                            notes: notes,
-                            method: 'Credit/Debit Card (PayMongo Test 3DS)',
-                            tenantName: tenantName,
-                            tenantEmail: userEmail
-                        }));
-
-                        if (intentResult.nextActionUrl) {
-                            // Redirect directly to PayMongo 3DS test authentication page
-                            window.location.href = intentResult.nextActionUrl;
-                            return;
-                        } else {
-                            // Instant success (no 3DS needed)
-                            window.location.href = `${returnUrl}&payment_intent_id=${intentResult.paymentIntentId}`;
-                            return;
-                        }
-                    } else {
-                        throw new Error('Unable to initialize card payment intent with PayMongo.');
-                    }
-                } 
-                // MODE 2: PAYMONGO HOSTED CHECKOUT PAGE
-                else {
-                    const descWithNotes = notes ? `${purpose} (${notes}) - MJP Residences` : `${purpose} - MJP Residences`;
-                    const successUrl = `${window.location.origin}${window.location.pathname}?payment=success&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
-                    const cancelUrl = `${window.location.origin}${window.location.pathname}?payment=failed&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
-
-                    const session = await window.PayMongoService.createCheckoutSession({
+                if (session && session.checkoutUrl) {
+                    sessionStorage.setItem('pending_paymongo_payment', JSON.stringify({
+                        sessionId: session.sessionId,
+                        referenceNumber: session.referenceNumber,
                         amount: amountVal,
                         purpose: purpose,
                         notes: notes,
-                        description: descWithNotes,
+                        method: 'PayMongo Checkout',
                         tenantName: tenantName,
-                        tenantEmail: userEmail,
-                        tenantPhone: tenantPhone,
-                        paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'qrph'],
-                        successUrl: successUrl,
-                        cancelUrl: cancelUrl
-                    });
+                        tenantEmail: userEmail
+                    }));
 
-                    if (session && session.checkoutUrl) {
-                        sessionStorage.setItem('pending_paymongo_payment', JSON.stringify({
-                            sessionId: session.sessionId,
-                            referenceNumber: session.referenceNumber,
-                            amount: amountVal,
-                            purpose: purpose,
-                            notes: notes,
-                            method: 'PayMongo Checkout',
-                            tenantName: tenantName,
-                            tenantEmail: userEmail
-                        }));
-
-                        window.location.href = session.checkoutUrl;
-                        return;
-                    } else {
-                        throw new Error('Unable to generate PayMongo checkout session.');
-                    }
+                    window.location.href = session.checkoutUrl;
+                    return;
+                } else {
+                    throw new Error('Unable to generate PayMongo checkout session.');
                 }
             } catch (err) {
                 console.error('Payment processing failed:', err);
