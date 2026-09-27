@@ -22,9 +22,14 @@ const MIME_TYPES = {
   '.json': 'application/json',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf'
 };
 
 function sendJson(res, statusCode, data) {
@@ -292,7 +297,22 @@ const server = http.createServer((req, res) => {
   }
 
   // Static File Serving
-  let filePath = path.join(__dirname, pathname === '/' ? 'tenant-portal.html' : pathname);
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(pathname);
+  } catch (err) {
+    decodedPath = pathname;
+  }
+
+  let filePath = path.join(__dirname, decodedPath === '/' ? 'tenant-portal.html' : decodedPath);
+
+  // Security: Prevent directory traversal
+  const resolvedPath = path.resolve(filePath);
+  if (!resolvedPath.startsWith(path.resolve(__dirname))) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    return res.end('403 Forbidden');
+  }
+
   const extname = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[extname] || 'application/octet-stream';
 
@@ -302,7 +322,7 @@ const server = http.createServer((req, res) => {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
         res.end('404 Not Found');
       } else {
-        res.writeHead(500);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
         res.end('Server Error: ' + err.code);
       }
     } else {
@@ -310,7 +330,7 @@ const server = http.createServer((req, res) => {
         'Content-Type': contentType,
         'Access-Control-Allow-Origin': '*'
       });
-      res.end(content, 'utf-8');
+      res.end(content);
     }
   });
 });

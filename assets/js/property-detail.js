@@ -34,7 +34,7 @@ const roomsData = [
     ],
     description: "Premium commercial space ideal for business operations. Spacious unit suitable for small offices, retail, or service-based businesses with comfortable working capacity.",
     features: ["4 People", "Bathroom"],
-    panorama: "CommercialPanorama.png",
+    panorama: "commercial space 360.png",
   },
 ];
 
