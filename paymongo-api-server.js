@@ -113,7 +113,7 @@ const server = http.createServer((req, res) => {
                   quantity: 1
                 }
               ],
-              payment_method_types: params.payment_method_types || ['card', 'paymaya', 'grab_pay', 'dob', 'qrph', 'billease'],
+              payment_method_types: (params.payment_method_types || ['card', 'paymaya', 'grab_pay', 'qrph']).filter(m => m !== 'dob' && m !== 'billease'),
               billing: {
                 name: params.tenantName || undefined,
                 email: params.tenantEmail || undefined,
@@ -126,7 +126,7 @@ const server = http.createServer((req, res) => {
                 tenantEmail: params.tenantEmail || ''
               },
               success_url: params.successUrl || `http://localhost:${PORT}/tenant-portal.html?payment=success&amount=${params.amount}&purpose=${encodeURIComponent(purpose)}`,
-              cancel_url: params.cancelUrl || `http://localhost:${PORT}/tenant-portal.html?payment=cancelled`
+              cancel_url: params.cancelUrl || `http://localhost:${PORT}/tenant-portal.html?payment=failed&amount=${params.amount}&purpose=${encodeURIComponent(purpose)}`
             }
           }
         };
@@ -164,6 +164,179 @@ const server = http.createServer((req, res) => {
           const json = JSON.parse(body);
           sendJson(res, pmRes.statusCode, json);
         } catch (err) {
+          sendJson(res, 500, { error: 'Invalid response from PayMongo' });
+        }
+      });
+    });
+    pmReq.on('error', err => sendJson(res, 500, { error: err.message }));
+    pmReq.end();
+    return;
+  }
+
+  // API Endpoint: /api/expire-checkout?id=cs_... (Marks checkout session expired/failed in PayMongo test mode)
+  if (pathname === '/api/expire-checkout' && (req.method === 'POST' || req.method === 'GET')) {
+    const sessionId = parsedUrl.query.id || parsedUrl.query.sessionId;
+    if (!sessionId) {
+      return sendJson(res, 400, { error: 'Session ID is required' });
+    }
+    const options = {
+      hostname: 'api.paymongo.com',
+      path: `/v1/checkout_sessions/${sessionId}/expire`,
+      method: 'POST',
+      headers: {
+        'Authorization': PAYMONGO_AUTH,
+        'Content-Type': 'application/json'
+      }
+    };
+    const pmReq = https.request(options, pmRes => {
+      let body = '';
+      pmRes.on('data', chunk => body += chunk);
+      pmRes.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          sendJson(res, pmRes.statusCode, json);
+        } catch (err) {
+          sendJson(res, 500, { error: 'Invalid response from PayMongo' });
+        }
+      });
+    });
+    pmReq.on('error', err => sendJson(res, 500, { error: err.message }));
+    pmReq.end();
+    return;
+  }
+
+  // API Endpoint: /api/create-card-intent (Direct Card payment with PayMongo 3DS test redirect)
+  if (pathname === '/api/create-card-intent' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const params = JSON.parse(body);
+        const amountCentavos = Math.round(parseFloat(params.amount) * 100);
+        const purpose = params.purpose || params.description || 'Monthly Rent';
+        const cardNumber = (params.cardNumber || '4120000000000007').toString().replace(/\s/g, '');
+        const expMonth = parseInt(params.expMonth || '12', 10);
+        const expYear = parseInt(params.expYear || '28', 10);
+        const cvc = (params.cvc || '123').toString();
+
+        // 1. Create PaymentIntent
+        const piRes = await fetch('https://api.paymongo.com/v1/payment_intents', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': PAYMONGO_AUTH
+          },
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                amount: amountCentavos,
+                payment_method_allowed: ['card'],
+                payment_method_options: { card: { request_three_d_secure: 'any' } },
+                currency: 'PHP',
+                description: `${purpose} - MJP Residences`,
+                metadata: {
+                  tenantName: params.tenantName || 'Juan Dela Cruz',
+                  tenantEmail: params.tenantEmail || 'tenant@example.com',
+                  purpose: purpose
+                }
+              }
+            }
+          })
+        });
+        const piData = await piRes.json();
+        const piId = piData.data?.id;
+        const clientKey = piData.data?.attributes?.client_key;
+
+        if (!piId) {
+          return sendJson(res, 400, { error: 'Failed to create payment intent', details: piData });
+        }
+
+        // 2. Create PaymentMethod
+        const pmRes = await fetch('https://api.paymongo.com/v1/payment_methods', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + Buffer.from('pk_test_gsoWoMD6Ww41rrbHmYz1Jm8n:').toString('base64')
+          },
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                type: 'card',
+                details: {
+                  card_number: cardNumber,
+                  exp_month: expMonth,
+                  exp_year: expYear,
+                  cvc: cvc
+                },
+                billing: {
+                  name: params.tenantName || 'Juan Dela Cruz',
+                  email: params.tenantEmail || 'tenant@example.com',
+                  phone: params.tenantPhone || '09123456789'
+                }
+              }
+            }
+          })
+        });
+        const pmData = await pmRes.json();
+        const pmId = pmData.data?.id;
+
+        if (!pmId) {
+          return sendJson(res, 400, { error: 'Failed to create payment method', details: pmData });
+        }
+
+        // 3. Attach PaymentMethod to PaymentIntent
+        const cleanReturnBase = params.returnUrl ? params.returnUrl.split('?')[0] : `http://localhost:${PORT}/tenant-portal.html`;
+        const returnUrl = cleanReturnBase;
+        const attachRes = await fetch(`https://api.paymongo.com/v1/payment_intents/${piId}/attach`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': PAYMONGO_AUTH
+          },
+          body: JSON.stringify({
+            data: {
+              attributes: {
+                payment_method: pmId,
+                client_key: clientKey,
+                return_url: returnUrl
+              }
+            }
+          })
+        });
+        const attachData = await attachRes.json();
+        const nextActionUrl = attachData.data?.attributes?.next_action?.redirect?.url;
+        const status = attachData.data?.attributes?.status;
+
+        sendJson(res, 200, {
+          paymentIntentId: piId,
+          status: status,
+          nextActionUrl: nextActionUrl,
+          returnUrl: returnUrl,
+          referenceNumber: 'PM-CARD-' + piId.slice(-6).toUpperCase()
+        });
+      } catch (err) {
+        sendJson(res, 500, { error: err.message });
+      }
+    });
+    return;
+  }
+
+  // API Endpoint: /api/payment-intent-status?id=pi_...
+  if (pathname === '/api/payment-intent-status' && req.method === 'GET') {
+    const piId = parsedUrl.query.id;
+    if (!piId) return sendJson(res, 400, { error: 'Payment Intent ID is required' });
+    const pmReq = https.request({
+      hostname: 'api.paymongo.com',
+      path: `/v1/payment_intents/${piId}`,
+      method: 'GET',
+      headers: { 'Authorization': PAYMONGO_AUTH }
+    }, pmRes => {
+      let body = '';
+      pmRes.on('data', chunk => body += chunk);
+      pmRes.on('end', () => {
+        try {
+          sendJson(res, pmRes.statusCode, JSON.parse(body));
+        } catch (e) {
           sendJson(res, 500, { error: 'Invalid response from PayMongo' });
         }
       });

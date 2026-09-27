@@ -68,7 +68,7 @@ exports.createPayMongoCheckout = functions.https.onRequest(async (req, res) => {
               quantity: 1
             }
           ],
-          payment_method_types: ["card", "paymaya", "grab_pay", "dob", "qrph", "billease"],
+          payment_method_types: ["card", "paymaya", "grab_pay", "qrph"],
           billing: {
             name: tenantName || undefined,
             email: tenantEmail || undefined,
