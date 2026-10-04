@@ -77,10 +77,11 @@ php -S localhost:8000
 - Manager/Owner information
 - All room details, features, and amenities
 
-✅ **admin-login.html** - Admin/Super Admin Login
-- Role selection (Admin/Super Admin)
-- Demo credentials included
-- Form validation
+✅ **login.html** - Unified Portal Login (Owner & Tenant)
+- Unified login for both Tenant and Owner/Admin accounts
+- Automatic role detection (Tenant, Admin, Super Admin)
+- Quick demo credential pre-fill
+- Form validation and direct routing to designated portals
 
 ✅ **admin-dashboard.html** - Admin Dashboard
 - Overview with stats and recent activity

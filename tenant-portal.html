@@ -1229,7 +1229,7 @@
     <script type="module" src="./assets/js/paymongo-service.js"></script>
     <script>
         if (!sessionStorage.getItem('tenantLoggedIn')) {
-            window.location.href = 'tenant-login.html';
+            window.location.href = 'login.html?role=tenant';
         }
 
         const userEmail = sessionStorage.getItem('tenantEmail') || 'tenant@example.com';
@@ -1428,7 +1428,7 @@
         function logout() {
             sessionStorage.removeItem('tenantLoggedIn');
             sessionStorage.removeItem('tenantEmail');
-            window.location.href = 'tenant-login.html';
+            window.location.href = 'login.html';
         }
 
         function saveProfile() {
