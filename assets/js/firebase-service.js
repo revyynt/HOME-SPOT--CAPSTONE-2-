@@ -5,7 +5,7 @@
 // scripts and CANNOT import from here, so the shared helpers are also exposed
 // on `window.firebaseService` for them to consume lazily at call time.
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import {
   getFirestore,
   collection,
@@ -21,19 +21,19 @@ import {
   setDoc,
   serverTimestamp,
   getDocs
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth,
   onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM",
-  authDomain: "capstoneapt-b5681.firebaseapp.com",
-  projectId: "capstoneapt-b5681",
-  storageBucket: "capstoneapt-b5681.appspot.com",
-  messagingSenderId: "192229736140",
-  appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69"
+  apiKey: 'AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM',
+  authDomain: 'capstoneapt-b5681.firebaseapp.com',
+  projectId: 'capstoneapt-b5681',
+  storageBucket: 'capstoneapt-b5681.appspot.com',
+  messagingSenderId: '192229736140',
+  appId: '1:192229736140:web:20d0e4e603d6ca98dd4c69'
 };
 
 const app = initializeApp(firebaseConfig);
@@ -168,6 +168,18 @@ onAuthStateChanged(auth, (user) => {
 });
 
 /**
+ * The currently signed-in user, or null.
+ *
+ * `auth.currentUser` is null until the SDK has restored its persisted session,
+ * so await `authReady` before relying on this.
+ *
+ * @returns {import('firebase/auth').User|null}
+ */
+function getCurrentUser() {
+  return currentUser;
+}
+
+/**
  * Resolves once Firebase has restored (or rejected) the persisted session.
  * Use this before any auth guard -- `auth.currentUser` is null until the SDK
  * has finished reading its IndexedDB-backed session.
@@ -211,7 +223,7 @@ async function requireRole(requiredRole, redirectTo) {
     return false;
   }
 
-  let role = null;
+  let role;
   try {
     const snap = await getDoc(doc(db, 'users', user.uid));
     role = snap.exists() ? snap.data().role : null;

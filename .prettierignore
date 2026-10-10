@@ -1,0 +1,24 @@
+# Generated / vendor / lock files
+node_modules/
+functions/node_modules/
+package-lock.json
+functions/package-lock.json
+.firebase/
+
+# Large binary room photography
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+
+# ---------------------------------------------------------------------------
+# Legacy exclusions, kept only while a file is mid-refactor.
+#
+# Every page and script in assets/js/ is now a module and is formatted. Add a
+# file here only if it is being restructured and you want to avoid a whitespace
+# diff obscuring the structural change -- then remove the entry once the
+# restructuring lands.
+#
+# See the "Incremental adoption" note in README.md.
+# ---------------------------------------------------------------------------

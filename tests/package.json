@@ -1,0 +1,4 @@
+{
+  "//": "Marks tests/** as ES modules. Browsers never load this; it exists so node --test can use import syntax.",
+  "type": "module"
+}

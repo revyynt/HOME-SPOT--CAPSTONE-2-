@@ -1,10 +1,26 @@
 {
+  "name": "homespot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Home-Spot apartment booking and management system",
+  "type": "commonjs",
   "scripts": {
     "start": "node paymongo-api-server.js 5050",
-    "set-room": "node set-room.js"
+    "set-room": "node set-room.js",
+    "test": "node --test \"tests/*.test.js\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm test"
   },
-  "dependencies": {
-    "@dataconnect/generated": "file:src/dataconnect-generated",
-    "firebase": "^12.10.0"
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10"
   }
 }

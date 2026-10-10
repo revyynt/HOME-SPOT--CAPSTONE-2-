@@ -1,0 +1,4 @@
+{
+  "//": "Marks assets/js/** as ES modules for Node's resolver so `node --test` can import the same files the browser loads. Browsers ignore this file; it is never fetched. Root package.json stays CommonJS for paymongo-api-server.js.",
+  "type": "module"
+}

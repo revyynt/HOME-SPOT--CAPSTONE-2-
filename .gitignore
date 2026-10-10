@@ -64,6 +64,12 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.*
+!.env.example
 
-# dataconnect generated files
-.dataconnect
+# dataconnect generated files (project removed; ignored if reintroduced)
+.dataconnect/
+
+# Test and tooling output
+coverage/
+.nyc_output/

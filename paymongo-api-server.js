@@ -63,9 +63,7 @@ function boolEnv(name, fallback = false) {
 
 const PORT = Number(process.env.PORT || process.argv[2] || 5050);
 const PAYMONGO_SECRET_KEY = requireEnv('PAYMONGO_SECRET_KEY');
-const PAYMONGO_PUBLIC_KEY = requireEnv('PAYMONGO_PUBLIC_KEY');
 const PAYMONGO_AUTH = 'Basic ' + Buffer.from(PAYMONGO_SECRET_KEY + ':').toString('base64');
-const PAYMONGO_PUBLIC_AUTH = 'Basic ' + Buffer.from(PAYMONGO_PUBLIC_KEY + ':').toString('base64');
 
 // Firebase ID-token verification via the public Identity Toolkit REST API.
 // This keeps the server dependency-free while still validating real Firebase
@@ -80,7 +78,9 @@ const REQUIRE_AUTH = boolEnv('REQUIRE_AUTH', true);
 const ALLOW_TEST_AUTO_CHARGE = boolEnv('ALLOW_TEST_AUTO_CHARGE', false);
 
 if (REQUIRE_AUTH && (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY)) {
-  console.error('\n[config] REQUIRE_AUTH is on but FIREBASE_PROJECT_ID / FIREBASE_API_KEY are unset.');
+  console.error(
+    '\n[config] REQUIRE_AUTH is on but FIREBASE_PROJECT_ID / FIREBASE_API_KEY are unset.'
+  );
   console.error('[config] Set them in .env, or export REQUIRE_AUTH=false for local-only testing.');
   console.error('[config] NOTE: REQUIRE_AUTH=false leaves every payment route open to anyone.\n');
   process.exit(1);
@@ -124,11 +124,11 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
-  '.ttf': 'font/ttf'
+  '.ttf': 'font/ttf',
+  // Documentation is linked from start.html. Served as plain text -- it will not
+  // render as GitHub-flavoured markdown, but it is far better than a 404.
+  '.md': 'text/markdown; charset=utf-8'
 };
-
-// Room photos live at the repo root and are referenced directly by the HTML.
-const IMAGE_EXTENSIONS = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg', '.ico']);
 
 // Directories and filenames that must never be served over HTTP. The static
 // handler below resolves paths inside the project root, so without this an
@@ -168,7 +168,7 @@ function corsHeaders(req) {
   if (!origin) return {};
   return {
     'Access-Control-Allow-Origin': origin,
-    'Vary': 'Origin',
+    Vary: 'Origin',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Private-Network': 'true'
@@ -233,7 +233,10 @@ function payMongoGet(apiPath, callback) {
         try {
           callback(null, res.statusCode, JSON.parse(body));
         } catch (err) {
-          callback(null, res.statusCode, { error: 'Invalid JSON response from PayMongo', raw: body });
+          callback(null, res.statusCode, {
+            error: 'Invalid JSON response from PayMongo',
+            raw: body
+          });
         }
       });
     }
@@ -262,7 +265,10 @@ function payMongoPost(apiPath, payload, callback) {
         try {
           callback(null, res.statusCode, JSON.parse(body));
         } catch (err) {
-          callback(null, res.statusCode, { error: 'Invalid JSON response from PayMongo', raw: body });
+          callback(null, res.statusCode, {
+            error: 'Invalid JSON response from PayMongo',
+            raw: body
+          });
         }
       });
     }
@@ -439,9 +445,7 @@ async function handleApi(req, res, pathname, query) {
       const notes = (params.notes || '').toString().trim();
       const sessionDescription =
         params.description ||
-        (notes
-          ? `${purpose} (${notes}) - ${MERCHANT_NAME}`
-          : `${purpose} - ${MERCHANT_NAME}`);
+        (notes ? `${purpose} (${notes}) - ${MERCHANT_NAME}` : `${purpose} - ${MERCHANT_NAME}`);
       const itemDescription = notes
         ? `Notes: ${notes}`
         : `Payment for ${purpose} - ${MERCHANT_NAME}`;
@@ -462,12 +466,9 @@ async function handleApi(req, res, pathname, query) {
                 quantity: 1
               }
             ],
-            payment_method_types: (params.payment_method_types || [
-              'card',
-              'paymaya',
-              'grab_pay',
-              'qrph'
-            ]).filter((m) => m !== 'dob' && m !== 'billease'),
+            payment_method_types: (
+              params.payment_method_types || ['card', 'paymaya', 'grab_pay', 'qrph']
+            ).filter((m) => m !== 'dob' && m !== 'billease'),
             billing: {
               name: params.tenantName || undefined,
               email: params.tenantEmail || undefined,
@@ -482,11 +483,9 @@ async function handleApi(req, res, pathname, query) {
               firebaseUid: req.auth ? req.auth.sub : ''
             },
             success_url:
-              params.successUrl ||
-              `http://localhost:${PORT}/tenant-portal.html?payment=success`,
+              params.successUrl || `http://localhost:${PORT}/tenant-portal.html?payment=success`,
             cancel_url:
-              params.cancelUrl ||
-              `http://localhost:${PORT}/tenant-portal.html?payment=failed`
+              params.cancelUrl || `http://localhost:${PORT}/tenant-portal.html?payment=failed`
           }
         }
       };
@@ -547,7 +546,8 @@ async function handleApi(req, res, pathname, query) {
       // public key via PayMongo's client-side library.
       if (params.cardNumber || params.cvc) {
         return sendJson(req, res, 400, {
-          error: 'Raw card details are not accepted. Tokenize the card client-side with the public key.'
+          error:
+            'Raw card details are not accepted. Tokenize the card client-side with the public key.'
         });
       }
 
@@ -833,15 +833,17 @@ function serveStatic(req, res, pathname) {
   }
 
   // Only the site's own pages and assets are published. Server sources, config
-  // files, and anything under functions/ or src/ are treated as non-existent
-  // rather than leaking from the repo root.
+  // files, and anything under functions/ are treated as non-existent rather
+  // than leaking from the repo root.
+  //
+  // Every image lives under assets/, so `isAsset` already covers them; the
+  // allowance for loose images in the repo root was removed with them.
   const isPage = ext === '.html' && segments.length === 1;
   const isAsset = segments[0] === 'assets';
-  const isRootImage = segments.length === 1 && IMAGE_EXTENSIONS.has(ext);
-  const isServiceWorker =
-    segments.length === 1 && baseName === 'firebase-messaging-sw.js';
+  const isDoc = segments[0] === 'docs';
+  const isServiceWorker = segments.length === 1 && baseName === 'firebase-messaging-sw.js';
 
-  if (!isPage && !isAsset && !isRootImage && !isServiceWorker) {
+  if (!isPage && !isAsset && !isDoc && !isServiceWorker) {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     return res.end('404 Not Found');
   }

@@ -32,15 +32,15 @@ if (!ID_TOKEN) {
 
 const authHeaders = {
   'Content-Type': 'application/json',
-  'Authorization': `Bearer ${ID_TOKEN}`
+  Authorization: `Bearer ${ID_TOKEN}`
 };
 
 const ROOM_MAP = {
-  'triple': { id: 'triple-occupancy-room', name: 'Triple Occupancy Room' },
+  triple: { id: 'triple-occupancy-room', name: 'Triple Occupancy Room' },
   'triple occupancy': { id: 'triple-occupancy-room', name: 'Triple Occupancy Room' },
   'triple occupancy room': { id: 'triple-occupancy-room', name: 'Triple Occupancy Room' },
-  'commercial': { id: 'commercial-space', name: 'Commercial Space' },
-  'commercial space': { id: 'commercial-space', name: 'Commercial Space' },
+  commercial: { id: 'commercial-space', name: 'Commercial Space' },
+  'commercial space': { id: 'commercial-space', name: 'Commercial Space' }
 };
 
 async function getRooms() {
@@ -49,12 +49,13 @@ async function getRooms() {
     throw new Error(`Failed to fetch rooms: ${res.status} ${res.statusText}`);
   }
   const data = await res.json();
-  return (data.documents || []).map(doc => {
+  return (data.documents || []).map((doc) => {
     const parts = doc.name.split('/');
     const docId = parts[parts.length - 1];
-    const available = doc.fields?.available?.integerValue !== undefined
-      ? parseInt(doc.fields.available.integerValue, 10)
-      : (doc.fields?.available?.doubleValue ?? 'N/A');
+    const available =
+      doc.fields?.available?.integerValue !== undefined
+        ? parseInt(doc.fields.available.integerValue, 10)
+        : (doc.fields?.available?.doubleValue ?? 'N/A');
     const name = doc.fields?.name?.stringValue || docId;
     return { docId, name, available };
   });
@@ -91,7 +92,7 @@ async function main() {
     console.log('-------------------------------------------');
     try {
       const rooms = await getRooms();
-      rooms.forEach(r => {
+      rooms.forEach((r) => {
         console.log(`• ${r.name} (${r.docId}): ${r.available} available`);
       });
       console.log('-------------------------------------------');
@@ -136,8 +137,12 @@ async function main() {
   try {
     console.log(`Updating "${roomConfig.name}" to ${targetCount} available rooms...`);
     await setAvailability(roomConfig.id, roomConfig.name, targetCount);
-    console.log(`✅ Success! "${roomConfig.name}" is now set to ${targetCount} available in Firestore.`);
-    console.log('   All open browsers (index.html and property-detail.html) will update in real time!\n');
+    console.log(
+      `✅ Success! "${roomConfig.name}" is now set to ${targetCount} available in Firestore.`
+    );
+    console.log(
+      '   All open browsers (index.html and property-detail.html) will update in real time!\n'
+    );
   } catch (err) {
     console.error('❌ Update failed:', err.message);
     process.exit(1);

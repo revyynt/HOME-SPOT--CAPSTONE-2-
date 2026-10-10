@@ -1,461 +1,116 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tenant Login - MJP Residences</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: #F5F5F5;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 440px;
-            padding: 48px 40px;
-        }
-
-        .logo-section {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .logo-section h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 4px;
-        }
-
-        .logo-section p {
-            font-size: 14px;
-            color: #666;
-        }
-
-        .login-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            transition: border-color 0.2s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #10B981;
-        }
-
-        .forgot-password {
-            text-align: right;
-            margin-top: -8px;
-            margin-bottom: 24px;
-        }
-
-        .forgot-password a {
-            font-size: 13px;
-            color: #10B981;
-            text-decoration: none;
-        }
-
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        .login-button {
-            width: 100%;
-            padding: 14px;
-            background-color: #10B981;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .login-button:hover {
-            background-color: #059669;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 24px 0;
-            position: relative;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background-color: #e5e5e5;
-        }
-
-        .divider span {
-            position: relative;
-            background: white;
-            padding: 0 16px;
-            font-size: 13px;
-            color: #999;
-        }
-
-        .signup-link {
-            text-align: center;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .signup-link a {
-            color: #10B981;
-            font-weight: 600;
-            text-decoration: none;
-        }
-
-        .signup-link a:hover {
-            text-decoration: underline;
-        }
-
-        .back-home {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .back-home a {
-            font-size: 14px;
-            color: #666;
-            text-decoration: none;
-        }
-
-        .back-home a:hover {
-            color: #10B981;
-        }
-
-        /* Modal Styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 480px;
-            max-height: 90vh;
-            overflow-y: auto;
-            margin: 20px;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 24px 32px;
-            border-bottom: 1px solid #e5e5e5;
-        }
-
-        .modal-header h2 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin: 0;
-        }
-
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 28px;
-            color: #666;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: background-color 0.2s;
-        }
-
-        .close-modal:hover {
-            background-color: #f5f5f5;
-            color: #333;
-        }
-    </style>
-</head>
-<body>
+    <link rel="stylesheet" href="./assets/css/tenant-login.css" />
+  </head>
+  <body>
     <div class="login-container">
-        <div class="logo-section">
-            <h1>MJP Residences</h1>
-            <p>homespot AR</p>
+      <div class="logo-section">
+        <h1>MJP Residences</h1>
+        <p>homespot AR</p>
+      </div>
+
+      <h2 class="login-title">Tenant Login</h2>
+
+      <div
+        id="loginAlert"
+        style="
+          display: none;
+          margin-bottom: 20px;
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: 14px;
+          text-align: left;
+          line-height: 1.4;
+        "
+      ></div>
+
+      <form id="tenantLoginForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" name="email" required placeholder="Enter your email" />
         </div>
 
-        <h2 class="login-title">Tenant Login</h2>
-
-        <div id="loginAlert" style="display: none; margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; font-size: 14px; text-align: left; line-height: 1.4;"></div>
-
-        <form id="tenantLoginForm">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" required placeholder="Enter your email">
-            </div>
-
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="Enter your password">
-            </div>
-
-            <div class="forgot-password">
-                <a href="#" onclick="alert('Please contact the building administrator or front desk to reset your tenant password.'); return false;">Forgot Password?</a>
-            </div>
-
-            <button type="submit" id="loginSubmitBtn" class="login-button">Sign In</button>
-        </form>
-
-        <div class="divider">
-            <span>or</span>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Enter your password"
+          />
         </div>
 
-        <div class="signup-link">
-            Moving in? <a href="#" id="signupLink">Need an account?</a>
+        <div class="forgot-password">
+          <a href="#" data-action="contact-admin">Forgot Password?</a>
         </div>
 
-        <div class="back-home">
-            <a href="./index.html">← Back to Home</a>
-        </div>
+        <button type="submit" id="loginSubmitBtn" class="login-button">Sign In</button>
+      </form>
+
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <div class="signup-link">Moving in? <a href="#" id="signupLink">Need an account?</a></div>
+
+      <div class="back-home">
+        <a href="./index.html">← Back to Home</a>
+      </div>
     </div>
 
     <!-- Signup Info Modal -->
-    <div id="signupModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Tenant Account Notice</h2>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div style="padding: 24px 32px; color: #374151; font-size: 15px; line-height: 1.6;">
-                <div style="width: 48px; height: 48px; background: #ecfdf5; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;">
-                    <svg width="24" height="24" fill="none" stroke="#059669" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                </div>
-                <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px;">Moving into MJP Residences?</h3>
-                <p style="margin-bottom: 16px;">
-                    Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in to link your assigned room, lease term, and monthly rent schedule.
-                </p>
-                <p style="margin-bottom: 24px; font-size: 14px; color: #6b7280;">
-                    If you have moved in or finalized your reservation, please ask the admin for your official login credentials.
-                </p>
-                <button type="button" class="login-button" onclick="document.getElementById('signupModal').style.display = 'none';">Understood</button>
-            </div>
+    <div id="signupModal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Tenant Account Notice</h2>
+          <button class="close-modal">&times;</button>
         </div>
+        <div style="padding: 24px 32px; color: #374151; font-size: 15px; line-height: 1.6">
+          <div
+            style="
+              width: 48px;
+              height: 48px;
+              background: #ecfdf5;
+              border-radius: 12px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin-bottom: 16px;
+            "
+          >
+            <svg width="24" height="24" fill="none" stroke="#059669" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h3 style="font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px">
+            Moving into MJP Residences?
+          </h3>
+          <p style="margin-bottom: 16px">
+            Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
+            to link your assigned room, lease term, and monthly rent schedule.
+          </p>
+          <p style="margin-bottom: 24px; font-size: 14px; color: #6b7280">
+            If you have moved in or finalized your reservation, please ask the admin for your
+            official login credentials.
+          </p>
+          <button type="button" class="login-button" data-action="close-signup-modal">
+            Understood
+          </button>
+        </div>
+      </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { 
-            getAuth, 
-            signInWithEmailAndPassword 
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            query, 
-            where, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM",
-            authDomain: "capstoneapt-b5681.firebaseapp.com",
-            projectId: "capstoneapt-b5681",
-            storageBucket: "capstoneapt-b5681.appspot.com",
-            messagingSenderId: "192229736140",
-            appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        // Modal functionality
-        const signupModal = document.getElementById('signupModal');
-        const signupLink = document.getElementById('signupLink');
-        const closeModalBtn = document.querySelector('.close-modal');
-
-        if (signupLink) {
-            signupLink.addEventListener('click', function(e) {
-                e.preventDefault();
-                signupModal.style.display = 'flex';
-            });
-        }
-
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', function() {
-                signupModal.style.display = 'none';
-            });
-        }
-
-        signupModal.addEventListener('click', function(e) {
-            if (e.target === signupModal) {
-                signupModal.style.display = 'none';
-            }
-        });
-
-        const alertBox = document.getElementById('loginAlert');
-        function showAlert(msg, isSuccess = false) {
-            if (!alertBox) return;
-            alertBox.style.display = 'block';
-            if (isSuccess) {
-                alertBox.style.background = '#ecfdf5';
-                alertBox.style.color = '#065f46';
-                alertBox.style.border = '1px solid #a7f3d0';
-            } else {
-                alertBox.style.background = '#fef2f2';
-                alertBox.style.color = '#991b1b';
-                alertBox.style.border = '1px solid #fecaca';
-            }
-            alertBox.textContent = msg;
-        }
-
-        function clearAlert() {
-            if (!alertBox) return;
-            alertBox.style.display = 'none';
-            alertBox.textContent = '';
-        }
-
-        // Login form handler. Credentials are verified by Firebase Auth only --
-        // there is no plaintext password fallback.
-        document.getElementById('tenantLoginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            clearAlert();
-
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const submitBtn = document.getElementById('loginSubmitBtn');
-
-            const email = emailInput.value.trim().toLowerCase();
-            const password = passwordInput.value;
-
-            if (!email || !password) {
-                showAlert('Please enter both your email address and password.');
-                return;
-            }
-
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Verifying Credentials...';
-            submitBtn.style.opacity = '0.7';
-
-            try {
-                // 1. Verify the password with Firebase Auth.
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const authUser = userCredential.user;
-
-                // 2. Load the tenant profile. firestore.rules scopes this read to
-                //    the signed-in user's own record.
-                let tenantData = {};
-                let tenantDocId = null;
-                try {
-                    const profileQuery = query(
-                        collection(db, 'tenants'),
-                        where('email', '==', authUser.email || email)
-                    );
-                    const profileSnapshot = await getDocs(profileQuery);
-                    if (!profileSnapshot.empty) {
-                        tenantDocId = profileSnapshot.docs[0].id;
-                        tenantData = profileSnapshot.docs[0].data();
-                    }
-                } catch (profileError) {
-                    // A missing profile is not a login failure; the portal copes
-                    // with defaults and the admin can still see the account.
-                    console.warn('Tenant profile lookup failed:', profileError);
-                }
-
-                // 3. Seed the portal's session cache from the verified profile.
-                sessionStorage.setItem('tenantLoggedIn', 'true');
-                sessionStorage.setItem('tenantEmail', authUser.email || email);
-                sessionStorage.setItem('tenantName', tenantData.name || authUser.displayName || email.split('@')[0]);
-                sessionStorage.setItem('tenantPhone', tenantData.phone || '');
-                sessionStorage.setItem('tenantRoom', tenantData.room || 'Room 201');
-                sessionStorage.setItem('tenantDorm', tenantData.dormName || 'Triple Occupancy Room');
-                sessionStorage.setItem('tenantMoveInDate', tenantData.moveInDate || 'May 1, 2026');
-                sessionStorage.setItem('tenantMonthlyRent', tenantData.monthlyRent || '5000');
-                sessionStorage.setItem('tenantEmergencyContact', tenantData.emergencyContact || '');
-                if (tenantData.amountDue !== undefined && tenantData.amountDue !== null) {
-                    sessionStorage.setItem('tenantAmountDue', tenantData.amountDue.toString());
-                } else {
-                    sessionStorage.removeItem('tenantAmountDue');
-                }
-                if (tenantData.dueDay) {
-                    sessionStorage.setItem('tenantDueDay', tenantData.dueDay.toString());
-                }
-                if (tenantDocId) sessionStorage.setItem('tenantDocId', tenantDocId);
-
-                showAlert('Login successful! Redirecting to your Tenant Portal...', true);
-
-                setTimeout(() => {
-                    window.location.href = 'tenant-portal.html';
-                }, 600);
-            } catch (err) {
-                const code = err && err.code;
-                if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
-                    showAlert('Account not found or password incorrect. Please contact the administrator to create your tenant account upon move-in.');
-                } else if (code === 'auth/too-many-requests') {
-                    showAlert('Too many failed attempts. Please wait a moment and try again.');
-                } else {
-                    console.error('Tenant login error:', err);
-                    showAlert('Login error: ' + (err.message || 'Please check your connection and try again.'));
-                }
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
-                submitBtn.style.opacity = '1';
-            }
-        });
-    </script>
-</body>
+    <script type="module" src="./assets/js/firebase-service.js"></script>
+    <script type="module" src="./assets/js/pages/tenant-login.js"></script>
+  </body>
 </html>

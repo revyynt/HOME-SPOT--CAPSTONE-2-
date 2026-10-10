@@ -26,14 +26,24 @@ the CDN.
 ├── firestore.rules                 # Per-collection security rules
 ├── .env.example                    # Copy to .env and fill in
 ├── assets/
-│   ├── css/style.css
-│   └── js/
-│       ├── firebase-service.js     # Firebase init + auth helpers (single source)
-│       ├── main.js                 # Landing page + admin list rendering
-│       ├── property-detail.js      # Room detail logic
-│       └── paymongo-service.js     # Payment client (no secret key)
-└── functions/index.js              # Cloud Functions v2 (PayMongo webhook)
+│   ├── img/                        # All images, kebab-case
+│   ├── css/
+│   │   ├── style.css               # Shared styles
+│   │   ├── tenant-portal.css
+│   │   └── tenant-login.css
+│   └── js/                         # See "Source layout" below
+├── tests/                          # node:test suites
+├── docs/
+│   ├── QUICKSTART.md               # First-time setup
+│   └── CONVERSION-SUMMARY.md       # What is built, what is still stubbed
+├── functions/index.js              # Cloud Functions (PayMongo webhook)
+└── eslint.config.mjs               # Includes the homespot/* custom rules
 ```
+
+Every page is a static HTML file that loads ES modules. There is no build step
+and no bundler — edit a file and reload. Images live only under
+`assets/img/`; a structural test enforces that so a stray root-level photo can
+never leak into the published tree.
 
 ## Getting Started
 
@@ -77,23 +87,70 @@ firebase deploy
 
 ## Architecture
 
-| Concern | Where it lives |
-|---|---|
-| Auth | Firebase Auth. Roles live in `users/{uid}.role` |
-| Data | Firestore: `rooms`, `reservations`, `messages`, `tenants`, `payments`, `users` |
-| Payments | Client → `paymongo-api-server.js` → PayMongo |
-| Payment truth | `functions.paymongoWebhook` writes `payments` (the only writer) |
+| Concern       | Where it lives                                                                 |
+| ------------- | ------------------------------------------------------------------------------ |
+| Auth          | Firebase Auth. Roles live in `users/{uid}.role`                                |
+| Data          | Firestore: `rooms`, `reservations`, `messages`, `tenants`, `payments`, `users` |
+| Payments      | Client → `paymongo-api-server.js` → PayMongo                                   |
+| Payment truth | `functions.paymongoWebhook` writes `payments` (the only writer)                |
 
 ### Firestore collections
 
-| Collection | Written by | Read by |
-|---|---|---|
-| `rooms` | Admin | Everyone (public inventory) |
-| `reservations` | Public form (constrained shape) | Admin |
-| `messages` | Tenant + Admin | Participant + Admin |
-| `tenants` | Admin | Admin + the tenant themself |
-| `payments` | Webhook only | Admin + the tenant themself |
-| `users` | Admin / self-service | Owner + Admin |
+| Collection     | Written by                      | Read by                     |
+| -------------- | ------------------------------- | --------------------------- |
+| `rooms`        | Admin                           | Everyone (public inventory) |
+| `reservations` | Public form (constrained shape) | Admin                       |
+| `messages`     | Tenant + Admin                  | Participant + Admin         |
+| `tenants`      | Admin                           | Admin + the tenant themself |
+| `payments`     | Webhook only                    | Admin + the tenant themself |
+| `users`        | Admin / self-service            | Owner + Admin               |
+
+### Source layout
+
+```
+assets/js/
+├── firebase-service.js   Sole owner of the Firebase config + auth helpers
+├── room-availability.js  Single implementation of setRoomAvailability
+├── main.js               Thin entry: initialises only what the page contains
+├── lib/                  Pure, DOM-free — directly unit-testable
+│   ├── format.js           escapeHtml, formatPHP, initials, avatarGradient
+│   ├── rooms.js            normalizeRoomDocId, resolveRoom
+│   ├── qr.js               buildQrPhPayload
+│   ├── payment-return.js   Payment-redirect state machine
+│   ├── guard.js            Page-level auth guard
+│   ├── session.js          Staff logout + mobile back-button guard
+│   └── dom.js              byId, onClick, attr
+├── render/               toast, tabs, reservations, messages
+└── pages/                One module per page
+```
+
+Two rules keep this from drifting:
+
+- **`lib/` must stay pure** — no DOM, no Firebase, no network. That is what lets
+  `node --test` import the exact code the browser runs.
+- **Pages delegate, they don't assign to `window`.** Module scope is invisible
+  to inline `onclick`, so controls use `data-*` attributes. ESLint enforces
+  this with the custom `homespot/no-global-leak` rule.
+
+## Development
+
+```bash
+npm run check        # lint + test
+npm test             # unit, structural, smoke, and secret-scan tests
+npm run lint         # ESLint
+npm run format       # Prettier
+```
+
+| Test file                                         | Guards                                                                                                                                            |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/format\|rooms\|qr\|payment-return.test.js` | Pure logic, including every payment-redirect branch                                                                                               |
+| `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet |
+| `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                              |
+| `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears                                                                                                      |
+
+`tests/structure.test.js` is the safety net for refactoring: if an edit breaks
+markup, an import path, or module ordering, the suite fails before the page
+does.
 
 ## Security Notes
 

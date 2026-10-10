@@ -13,13 +13,7 @@
       "source": "functions",
       "codebase": "default",
       "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"]
     }
   ],
   "hosting": {
@@ -31,8 +25,6 @@
       "**/.*",
       "**/node_modules/**",
       "functions/**",
-      "src/**",
-      "dataconnect/**",
       "paymongo-api-server.js",
       "set-room.js",
       "package.json",
