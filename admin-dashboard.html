@@ -1484,7 +1484,7 @@
     };
 
     window.copyTenantLoginInfo = function (email, password, name, room) {
-      const text = `MJP Residences - Tenant Portal Access\nTenant: ${name}\nRoom: ${room}\nPortal URL: ${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}tenant-login.html\nEmail: ${email}\nPassword: ${password}`;
+      const text = `MJP Residences - Tenant Portal Access\nTenant: ${name}\nRoom: ${room}\nPortal URL: ${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}login.html?role=tenant\nEmail: ${email}\nPassword: ${password}`;
       navigator.clipboard.writeText(text).then(() => {
         if (window.Toast) {
           window.Toast.success('Login credentials copied to clipboard!');
@@ -1868,12 +1868,12 @@
 
         sessionStorage.clear();
         localStorage.removeItem('adminSession');
-        window.location.href = './admin-login.html';
+        window.location.href = './login.html';
       } catch (error) {
         console.error('Error signing out:', error);
         sessionStorage.clear();
         localStorage.removeItem('adminSession');
-        window.location.href = './admin-login.html';
+        window.location.href = './login.html';
       }
     };
 

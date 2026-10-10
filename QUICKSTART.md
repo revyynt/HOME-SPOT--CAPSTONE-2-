@@ -15,15 +15,19 @@
 - Use "Inquire Now" for questions
 - Use "Reserve Dorm" to submit a booking request
 
-**For Admins (Dashboard):**
-- Click "Owner Portal" in the header
-- Login with: `admin@dormkaya.com` / `admin123`
-- Manage listings, reservations, and messages
+**For Admins & Owners (Dashboard):**
+- Click "Login" in the header
+- Login with: `admin@mjpresidence.com` / `admin123`
+- Manage listings, reservations, and tenants
+
+**For Tenants (Portal):**
+- Click "Login" in the header
+- Login with tenant email and password provided by admin
+- View room details, payments, and invoices
 
 **For Super Admin (Platform Management):**
-- Click "Owner Portal" in the header
-- Select "Super Admin" role
-- Login with: `super@dormkaya.com` / `super123`
+- Click "Login" in the header
+- Login with: `super@mjpresidence.com` / `super123`
 - Manage users, system settings, and escalations
 
 ### Step 3: Test Features
@@ -32,7 +36,7 @@
 1. View room details (click any room)
 2. Submit an inquiry form
 3. Submit a reservation request
-4. Login to admin dashboard
+4. Login via unified login (`login.html`) as Owner or Tenant
 5. Approve/decline a reservation
 6. Reply to a message
 
@@ -40,10 +44,11 @@
 
 ```
 public/
-├── index.html                    ← Main homepage
+├── index.html                    ← Main homepage with unified Login button
 ├── property-detail.html          ← Room details (opens when clicking a room)
-├── admin-login.html             ← Login page
-├── admin-dashboard.html         ← Admin dashboard
+├── login.html                   ← Unified login page (Owner & Tenant)
+├── tenant-portal.html           ← Tenant self-service portal
+├── admin-dashboard.html         ← Admin/Owner dashboard
 ├── super-admin-dashboard.html   ← Super admin dashboard
 └── assets/
     ├── css/style.css            ← Custom styling
@@ -56,8 +61,9 @@ public/
 ```
 Index (Homepage)
 ├── Click Room Card → property-detail.html?id=1
-├── Click "Owner Portal" → admin-login.html
-│   ├── Login as Admin → admin-dashboard.html
+├── Click "Login" → login.html
+│   ├── Login as Tenant → tenant-portal.html
+│   ├── Login as Admin / Owner → admin-dashboard.html
 │   └── Login as Super Admin → super-admin-dashboard.html
 └── All pages link back to homepage
 ```

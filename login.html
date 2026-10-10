@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Login - MJP Residences | Homespot AR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at top right, #eff6ff 0%, #f8fafc 40%, #f1f5f9 100%);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.04);
+    }
+
+    .role-tab.active {
+      background-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+  </style>
+</head>
+
+<body
+  class="min-h-screen flex flex-col justify-between text-gray-800 antialiased selection:bg-blue-500 selection:text-white">
+  <!-- Minimal Top Navigation Bar -->
+  <header class="w-full border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="./index.html" class="flex items-center gap-3 group">
+        <img src="image.png" alt="MJP Residences Logo"
+          class="h-10 w-auto object-contain transition-transform group-hover:scale-105">
+        <div>
+          <span class="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">MJP
+            Residences</span>
+          <p class="text-[11px] text-emerald-600 font-semibold tracking-wide uppercase">HomeSpot Apartment Realty</p>
+        </div>
+      </a>
+      <a href="./index.html"
+        class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        <span>Back to Home</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Login Container -->
+  <main class="flex-1 flex items-center justify-center py-10 px-4 sm:px-6">
+    <div class="w-full max-w-md">
+      <!-- Welcome Header -->
+      <div class="text-center mb-6">
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-semibold mb-3">
+          <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+          Unified Account Login
+        </div>
+        <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Welcome to Portal</h1>
+        <p class="text-sm text-gray-500 mt-1">Sign in with your account to access your designated dashboard</p>
+      </div>
+
+
+
+      <!-- Role Context Banner -->
+      <div id="roleHint"
+        class="mb-5 p-3 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center gap-2.5 text-xs text-blue-800">
+        <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span id="roleHintText">Enter your credentials. We'll automatically route you to the Tenant or Owner
+          dashboard.</span>
+      </div>
+
+      <!-- Alert Notification Box -->
+      <div id="loginAlert" class="hidden mb-5 p-3.5 rounded-xl text-sm font-medium transition-all" role="alert"></div>
+
+      <!-- Login Form -->
+      <form id="unifiedLoginForm" class="space-y-4">
+        <!-- Email Field -->
+        <div>
+          <label for="loginEmail" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+            Email Address
+          </label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+              </svg>
+            </div>
+            <input type="email" id="loginEmail" name="email" required autocomplete="email"
+              placeholder="name@example.com"
+              class="w-full pl-10 pr-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all placeholder:text-gray-400" />
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="loginPassword" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Password
+            </label>
+            <button type="button" id="forgotPasswordBtn"
+              class="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline">
+              Forgot password?
+            </button>
+          </div>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <input type="password" id="loginPassword" name="password" required autocomplete="current-password"
+              placeholder="••••••••"
+              class="w-full pl-10 pr-10 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 focus:bg-white transition-all placeholder:text-gray-400" />
+            <button type="button" id="togglePasswordBtn"
+              class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+              title="Toggle password visibility">
+              <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me Checkbox -->
+        <div class="flex items-center justify-between pt-1">
+          <label class="flex items-center text-xs text-gray-600 cursor-pointer select-none">
+            <input type="checkbox" id="rememberMe"
+              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500/30">
+            <span class="ml-2">Keep me signed in</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="loginSubmitBtn"
+          class="w-full mt-2 py-3 px-4 rounded-xl text-white font-semibold text-sm bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 group active:scale-[0.99]">
+          <span id="submitBtnText">Sign In to Account</span>
+          <svg id="submitArrow" class="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none"
+            stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+          <svg id="submitSpinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+        </button>
+      </form>
+
+      <!-- Divider -->
+      <div class="relative my-6 text-center">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-200"></div>
+        </div>
+        <span class="relative bg-white px-3 text-xs uppercase tracking-wider text-gray-400">Quick Access & Info</span>
+      </div>
+
+      <!-- Demo Accounts & Quick Fill Helper -->
+      <div class="space-y-2">
+        <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 text-xs text-gray-600">
+          <div class="flex items-center justify-between mb-2">
+            <span class="font-bold text-gray-700">Quick Demo Accounts</span>
+            <span class="text-[10px] text-gray-400">Click to fill</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="fillAdminDemo"
+              class="px-2.5 py-1.5 bg-white border border-gray-200 hover:border-blue-400 hover:text-blue-600 rounded-lg text-left transition-colors font-medium text-[11px] flex items-center justify-between">
+              <span>Owner / Admin</span>
+              <span class="text-[9px] bg-blue-100 text-blue-700 px-1 py-0.5 rounded font-mono">Fill</span>
+            </button>
+            <button type="button" id="fillSuperDemo"
+              class="px-2.5 py-1.5 bg-white border border-gray-200 hover:border-purple-400 hover:text-purple-600 rounded-lg text-left transition-colors font-medium text-[11px] flex items-center justify-between">
+              <span>Super Admin</span>
+              <span class="text-[9px] bg-purple-100 text-purple-700 px-1 py-0.5 rounded font-mono">Fill</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="text-center pt-2">
+          <p class="text-xs text-gray-500">
+            New tenant moving in?
+            <button type="button" id="needTenantAccountBtn" class="text-emerald-600 font-semibold hover:underline ml-1">
+              Account creation info
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-4 text-center text-xs text-gray-400 border-t border-gray-100 bg-white/50">
+    <p>&copy; 2026 MJP Residences &bull; Homespot AR Platform</p>
+  </footer>
+
+  <!-- Tenant Notice Modal -->
+  <div id="tenantNoticeModal"
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div
+      class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 relative animate-in fade-in zoom-in-95 duration-200">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+          Tenant Account Notice
+        </h3>
+        <button type="button" id="closeTenantNoticeBtn" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="py-4 text-sm text-gray-600 space-y-3">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </div>
+        <p class="text-center font-medium text-gray-800">
+          Tenant accounts are officially registered upon reservation approval and move-in.
+        </p>
+        <p class="text-xs text-gray-500 text-center leading-relaxed">
+          The building administrator creates your tenant login credentials linking your assigned room, lease contract,
+          and rental payment schedule. Please contact front desk if you haven't received your credentials yet.
+        </p>
+      </div>
+      <div class="pt-2">
+        <button type="button" id="closeTenantNoticeConfirm"
+          class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-colors">
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Auth & Firestore Unified Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      setPersistence,
+      browserLocalPersistence,
+      browserSessionPersistence,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      where,
+      getDocs,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDfsx3AhGY9YSs73ng2t4s8-Nm76_kQewM",
+      authDomain: "capstoneapt-b5681.firebaseapp.com",
+      projectId: "capstoneapt-b5681",
+      storageBucket: "capstoneapt-b5681.appspot.com",
+      messagingSenderId: "192229736140",
+      appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI Elements
+    const form = document.getElementById('unifiedLoginForm');
+    const emailInput = document.getElementById('loginEmail');
+    const passwordInput = document.getElementById('loginPassword');
+    const rememberMeInput = document.getElementById('rememberMe');
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const submitArrow = document.getElementById('submitArrow');
+    const submitSpinner = document.getElementById('submitSpinner');
+    const alertBox = document.getElementById('loginAlert');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const eyeIcon = document.getElementById('eyeIcon');
+    const roleTabs = document.querySelectorAll('.role-tab');
+    const roleHintText = document.getElementById('roleHintText');
+
+    // Demo Fill Buttons
+    const fillAdminBtn = document.getElementById('fillAdminDemo');
+    const fillSuperBtn = document.getElementById('fillSuperDemo');
+
+    // Modal elements
+    const tenantNoticeModal = document.getElementById('tenantNoticeModal');
+    const needTenantAccountBtn = document.getElementById('needTenantAccountBtn');
+    const closeTenantNoticeBtn = document.getElementById('closeTenantNoticeBtn');
+    const closeTenantNoticeConfirm = document.getElementById('closeTenantNoticeConfirm');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+
+    // Password visibility toggle
+    togglePasswordBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeIcon.innerHTML = isPassword
+        ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>'
+        : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+    });
+
+    // Role Tab Filtering (Visual Guidance)
+    let selectedRole = 'auto';
+    roleTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        roleTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        selectedRole = tab.dataset.role;
+
+        if (selectedRole === 'tenant') {
+          roleHintText.textContent = "Tenant Mode: Sign in to view your rent status, payments, contract, and room notices.";
+        } else if (selectedRole === 'owner') {
+          roleHintText.textContent = "Owner/Admin Mode: Sign in to manage rooms, review applications, and administer tenants.";
+        } else {
+          roleHintText.textContent = "Enter your credentials. We'll automatically route you to the Tenant or Owner dashboard.";
+        }
+      });
+    });
+
+    // Check URL query parameters for default role
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialRole = urlParams.get('role');
+    if (initialRole && (initialRole === 'tenant' || initialRole === 'owner')) {
+      const matchingTab = document.querySelector(`.role-tab[data-role="${initialRole}"]`);
+      if (matchingTab) matchingTab.click();
+    }
+
+    // Demo Fill Actions
+    if (fillAdminBtn) {
+      fillAdminBtn.addEventListener('click', () => {
+        emailInput.value = 'admin@mjpresidence.com';
+        passwordInput.value = 'admin123';
+        const ownerTab = document.querySelector('.role-tab[data-role="owner"]');
+        if (ownerTab) ownerTab.click();
+        showAlert('Owner / Admin credentials loaded. Click "Sign In" to proceed.', 'info');
+      });
+    }
+
+    if (fillSuperBtn) {
+      fillSuperBtn.addEventListener('click', () => {
+        emailInput.value = 'super@mjpresidence.com';
+        passwordInput.value = 'super123';
+        const ownerTab = document.querySelector('.role-tab[data-role="owner"]');
+        if (ownerTab) ownerTab.click();
+        showAlert('Super Admin credentials loaded. Click "Sign In" to proceed.', 'info');
+      });
+    }
+
+    // Modal controls
+    if (needTenantAccountBtn) {
+      needTenantAccountBtn.addEventListener('click', () => {
+        tenantNoticeModal.classList.remove('hidden');
+      });
+    }
+    if (closeTenantNoticeBtn) {
+      closeTenantNoticeBtn.addEventListener('click', () => {
+        tenantNoticeModal.classList.add('hidden');
+      });
+    }
+    if (closeTenantNoticeConfirm) {
+      closeTenantNoticeConfirm.addEventListener('click', () => {
+        tenantNoticeModal.classList.add('hidden');
+      });
+    }
+    tenantNoticeModal.addEventListener('click', (e) => {
+      if (e.target === tenantNoticeModal) {
+        tenantNoticeModal.classList.add('hidden');
+      }
+    });
+
+    if (forgotPasswordBtn) {
+      forgotPasswordBtn.addEventListener('click', () => {
+        showAlert('Password Reset: Please contact the building administrator or system manager to reset your credentials.', 'info');
+      });
+    }
+
+    // Alert helper
+    function showAlert(msg, type = 'error') {
+      alertBox.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'border-red-200', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-blue-50', 'text-blue-800', 'border-blue-200');
+      alertBox.classList.add('border');
+
+      if (type === 'success') {
+        alertBox.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200');
+        alertBox.innerHTML = `<div class="flex items-center gap-2"><svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg><span>${msg}</span></div>`;
+      } else if (type === 'info') {
+        alertBox.classList.add('bg-blue-50', 'text-blue-800', 'border-blue-200');
+        alertBox.innerHTML = `<div class="flex items-center gap-2"><svg class="w-4 h-4 text-blue-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg><span>${msg}</span></div>`;
+      } else {
+        alertBox.classList.add('bg-red-50', 'text-red-700', 'border-red-200');
+        alertBox.innerHTML = `<div class="flex items-center gap-2"><svg class="w-4 h-4 text-red-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg><span>${msg}</span></div>`;
+      }
+    }
+
+    function clearAlert() {
+      alertBox.classList.add('hidden');
+      alertBox.innerHTML = '';
+    }
+
+    function setLoading(isLoading, text = 'Verifying Account...') {
+      submitBtn.disabled = isLoading;
+      if (isLoading) {
+        submitBtnText.textContent = text;
+        submitArrow.classList.add('hidden');
+        submitSpinner.classList.remove('hidden');
+        submitBtn.classList.add('opacity-80', 'cursor-not-allowed');
+      } else {
+        submitBtnText.textContent = 'Sign In to Account';
+        submitArrow.classList.remove('hidden');
+        submitSpinner.classList.add('hidden');
+        submitBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+      }
+    }
+
+    // Check if user is already logged in as Admin via Firebase Auth
+    onAuthStateChanged(auth, async (user) => {
+      // If user came here deliberately to login, we don't forcefully bounce them unless they have an active valid role
+      if (user && !sessionStorage.getItem('logging_in_in_progress')) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            const role = userDoc.data().role;
+            if (role === 'superadmin' && selectedRole !== 'tenant') {
+              console.log('Active Super Admin session detected');
+            } else if (role === 'admin' && selectedRole !== 'tenant') {
+              console.log('Active Admin session detected');
+            }
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }
+    });
+
+    // Helper: Set Tenant Session & Redirect
+    function setupTenantSession(email, tenantData = {}, tenantDocId = null, authUser = null) {
+      sessionStorage.setItem('tenantLoggedIn', 'true');
+      sessionStorage.setItem('tenantEmail', email);
+      sessionStorage.setItem('tenantName', tenantData.name || authUser?.displayName || email.split('@')[0]);
+      sessionStorage.setItem('tenantPhone', tenantData.phone || '');
+      sessionStorage.setItem('tenantRoom', tenantData.room || 'Room 201');
+      sessionStorage.setItem('tenantDorm', tenantData.dormName || 'Triple Occupancy Room');
+      sessionStorage.setItem('tenantMoveInDate', tenantData.moveInDate || 'May 1, 2026');
+      sessionStorage.setItem('tenantMonthlyRent', tenantData.monthlyRent || '5000');
+      sessionStorage.setItem('tenantEmergencyContact', tenantData.emergencyContact || '');
+      if (tenantData.amountDue !== undefined && tenantData.amountDue !== null) {
+        sessionStorage.setItem('tenantAmountDue', tenantData.amountDue.toString());
+      } else {
+        sessionStorage.removeItem('tenantAmountDue');
+      }
+      if (tenantData.dueDay) {
+        sessionStorage.setItem('tenantDueDay', tenantData.dueDay.toString());
+      }
+      if (tenantDocId) {
+        sessionStorage.setItem('tenantDocId', tenantDocId);
+      }
+    }
+
+    // Unified Form Submit Handler (Handles BOTH Owner & Tenant)
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearAlert();
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+      const remember = rememberMeInput.checked;
+
+      if (!email || !password) {
+        showAlert('Please enter both your email address and password.');
+        return;
+      }
+
+      setLoading(true, 'Verifying Credentials...');
+      sessionStorage.setItem('logging_in_in_progress', 'true');
+
+      try {
+        let authUser = null;
+        let authRole = null;
+        let matchedTenant = null;
+        let tenantDocId = null;
+
+        // 1. Parallel verification against Firebase Auth & Firestore Tenants Collection
+        const authPromise = (async () => {
+          try {
+            await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            authUser = userCredential.user;
+
+            // Check role in 'users' collection
+            const userDoc = await getDoc(doc(db, 'users', authUser.uid));
+            if (userDoc.exists()) {
+              authRole = userDoc.data().role;
+            }
+          } catch (authErr) {
+            console.log('Firebase Auth verification note:', authErr.code);
+          }
+        })();
+
+        const tenantQueryPromise = (async () => {
+          try {
+            const tenantsRef = collection(db, 'tenants');
+            const q = query(tenantsRef, where('email', '==', email));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+              querySnapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (data.password === password) {
+                  matchedTenant = data;
+                  tenantDocId = docSnap.id;
+                }
+              });
+            }
+          } catch (tErr) {
+            console.warn('Firestore tenants query note:', tErr);
+          }
+        })();
+
+        await Promise.all([authPromise, tenantQueryPromise]);
+
+        // 2. Resolve Role & Route:
+
+        // A. Check for Super Admin
+        if (authRole === 'superadmin' || email === 'super@mjpresidence.com') {
+          if (authUser || (email === 'super@mjpresidence.com' && password === 'super123')) {
+            showAlert('Super Admin verified! Redirecting to Super Admin Dashboard...', 'success');
+            setTimeout(() => {
+              sessionStorage.removeItem('logging_in_in_progress');
+              window.location.href = './super-admin-dashboard.html';
+            }, 600);
+            return;
+          }
+        }
+
+        // B. Check for Admin / Owner
+        if (authRole === 'admin' || email === 'admin@mjpresidence.com') {
+          if (authUser || (email === 'admin@mjpresidence.com' && password === 'admin123')) {
+            showAlert('Owner / Administrator verified! Redirecting to Owner Portal...', 'success');
+            setTimeout(() => {
+              sessionStorage.removeItem('logging_in_in_progress');
+              window.location.href = './admin-dashboard.html';
+            }, 600);
+            return;
+          }
+        }
+
+        // C. Check for Tenant (from Firestore collection or Auth role)
+        if (matchedTenant || (authUser && authRole === 'tenant')) {
+          setupTenantSession(email, matchedTenant || {}, tenantDocId, authUser);
+          const tenantName = matchedTenant?.name || authUser?.displayName || 'Tenant';
+          showAlert(`Welcome back, ${tenantName}! Redirecting to your Tenant Portal...`, 'success');
+          setTimeout(() => {
+            sessionStorage.removeItem('logging_in_in_progress');
+            window.location.href = './tenant-portal.html';
+          }, 600);
+          return;
+        }
+
+        // D. Fallback check: if authUser succeeded without explicit users doc
+        if (authUser) {
+          // Let's check if there is any tenant doc with this email regardless of password match
+          try {
+            const tenantsRef = collection(db, 'tenants');
+            const q = query(tenantsRef, where('email', '==', email));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+              const firstDoc = querySnapshot.docs[0];
+              setupTenantSession(email, firstDoc.data(), firstDoc.id, authUser);
+              showAlert('Tenant authenticated! Redirecting to Tenant Portal...', 'success');
+              setTimeout(() => {
+                sessionStorage.removeItem('logging_in_in_progress');
+                window.location.href = './tenant-portal.html';
+              }, 600);
+              return;
+            }
+          } catch (e) { }
+
+          // Default fallback for auth user
+          showAlert('Signed in! Redirecting to dashboard...', 'success');
+          setTimeout(() => {
+            sessionStorage.removeItem('logging_in_in_progress');
+            window.location.href = './admin-dashboard.html';
+          }, 600);
+          return;
+        }
+
+        // E. If Demo accounts used offline
+        if (email === 'admin@mjpresidence.com' && password === 'admin123') {
+          showAlert('Demo Owner account verified! Redirecting...', 'success');
+          setTimeout(() => {
+            sessionStorage.removeItem('logging_in_in_progress');
+            window.location.href = './admin-dashboard.html';
+          }, 600);
+          return;
+        }
+
+        if (email === 'super@mjpresidence.com' && password === 'super123') {
+          showAlert('Demo Super Admin verified! Redirecting...', 'success');
+          setTimeout(() => {
+            sessionStorage.removeItem('logging_in_in_progress');
+            window.location.href = './super-admin-dashboard.html';
+          }, 600);
+          return;
+        }
+
+        // F. No match found
+        sessionStorage.removeItem('logging_in_in_progress');
+        setLoading(false);
+        showAlert('Invalid account email or password. For tenants, ensure your account was created by the admin upon move-in.');
+
+      } catch (err) {
+        console.error('Unified login error:', err);
+        sessionStorage.removeItem('logging_in_in_progress');
+        setLoading(false);
+        showAlert('Login error: ' + (err.message || 'Please check your connection and try again.'));
+      }
+    });
+  </script>
+</body>
+
+</html>
