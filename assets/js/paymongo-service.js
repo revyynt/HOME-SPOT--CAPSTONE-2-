@@ -9,7 +9,7 @@ export const PAYMONGO_CONFIG = {
   apiBaseUrl: 'https://api.paymongo.com/v1',
   merchantName: 'MJP Residences (GAVIÑO, RENZ ALEX ZANDER ENRIQUEZ)',
   currency: 'PHP',
-  supportedMethods: ['card', 'paymaya', 'grab_pay', 'dob', 'qrph', 'billease']
+  supportedMethods: ['card', 'paymaya', 'grab_pay', 'qrph']
 };
 
 /**
@@ -150,8 +150,147 @@ export async function getCheckoutSession(sessionId) {
 }
 
 /**
+ * Expires Checkout Session in PayMongo test mode
+ * @param {string} sessionId
+ * @returns {Promise<Object|null>}
+ */
+export async function expireCheckoutSession(sessionId) {
+  if (!sessionId) return null;
+  const candidates = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:5050',
+    'http://127.0.0.1:5050'
+  ];
+  const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+  if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
+    candidates.push(origin);
+  }
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/api/expire-checkout?id=${encodeURIComponent(sessionId)}`, {
+        method: 'POST'
+      });
+      if (res.status === 404 || res.status === 405) continue;
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch (e) {
+      // continue
+    }
+  }
+
+  // Fallback to direct PayMongo API
+  try {
+    const res = await fetch(`${PAYMONGO_CONFIG.apiBaseUrl}/checkout_sessions/${sessionId}/expire`, {
+      method: 'POST',
+      headers: {
+        'Authorization': getBasicAuthHeader(PAYMONGO_CONFIG.secretKey),
+        'Content-Type': 'application/json'
+      }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn('Direct PayMongo expire error:', err);
+  }
+  return null;
+}
+
+/**
+ * Creates direct Card Payment Intent with PayMongo 3DS test redirect
+ * @param {Object} options
+ * @returns {Promise<{paymentIntentId: string, status: string, nextActionUrl: string, returnUrl: string, referenceNumber: string}>}
+ */
+export async function createCardPaymentIntent({
+  amount,
+  purpose = 'Monthly Rent',
+  tenantName = '',
+  tenantEmail = '',
+  tenantPhone = '',
+  cardNumber = '4120000000000007',
+  expMonth = '12',
+  expYear = '28',
+  cvc = '123',
+  returnUrl
+}) {
+  const currentOrigin = (typeof window !== 'undefined' && window.location && !window.location.origin.startsWith('file:')) ? window.location.origin : 'http://localhost:5050';
+  const currentPath = (typeof window !== 'undefined' && window.location) ? window.location.pathname : '/tenant-portal.html';
+  const defaultReturnUrl = returnUrl || `${currentOrigin}${currentPath}?amount=${amount}&purpose=${encodeURIComponent(purpose)}`;
+
+  const payload = {
+    amount,
+    purpose,
+    tenantName,
+    tenantEmail,
+    tenantPhone,
+    cardNumber,
+    expMonth,
+    expYear,
+    cvc,
+    returnUrl: defaultReturnUrl
+  };
+
+  const res = await postToApiServer('/api/create-card-intent', payload);
+  if (res && res.paymentIntentId) {
+    return res;
+  }
+  throw new Error(res?.error || 'Failed to initialize Card Payment Intent.');
+}
+
+/**
+ * Retrieves Payment Intent status from PayMongo
+ * @param {string} paymentIntentId
+ * @returns {Promise<Object|null>}
+ */
+export async function getPaymentIntentStatus(paymentIntentId) {
+  if (!paymentIntentId) return null;
+  const candidates = [
+    'http://localhost:5000',
+    'http://127.0.0.1:5000',
+    'http://localhost:5050',
+    'http://127.0.0.1:5050'
+  ];
+  const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+  if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
+    candidates.push(origin);
+  }
+
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/api/payment-intent-status?id=${encodeURIComponent(paymentIntentId)}`);
+      if (res.status === 404 || res.status === 405) continue;
+      if (res.ok) {
+        const json = await res.json();
+        return json.data;
+      }
+    } catch (e) { }
+  }
+
+  // Fallback to direct PayMongo API
+  try {
+    const res = await fetch(`${PAYMONGO_CONFIG.apiBaseUrl}/payment_intents/${paymentIntentId}`, {
+      headers: {
+        'Authorization': getBasicAuthHeader(PAYMONGO_CONFIG.secretKey)
+      }
+    });
+    if (res.ok) {
+      const json = await res.json();
+      return json.data;
+    }
+  } catch (err) {
+    console.warn('Direct PayMongo check PI error:', err);
+  }
+  return null;
+}
+
+/**
  * Creates a PayMongo Checkout Session
- * Allows tenant to pay via GCash, Maya, Cards, QR Ph, GrabPay, Billease
+ * Allows tenant to pay via GCash, Maya, Cards, QR Ph, GrabPay
  * 
  * @param {Object} options
  * @param {number} options.amount - Amount in Pesos
@@ -166,7 +305,9 @@ export async function getCheckoutSession(sessionId) {
  */
 export async function createCheckoutSession({
   amount,
-  description = 'Rent Payment',
+  purpose = 'Monthly Rent',
+  notes = '',
+  description,
   tenantName = '',
   tenantEmail = '',
   tenantPhone = '',
@@ -174,20 +315,27 @@ export async function createCheckoutSession({
   successUrl,
   cancelUrl
 }) {
+  const finalPurpose = purpose || description || 'Monthly Rent';
+  const finalNotes = (notes || '').trim();
+  const finalDescription = description || (finalNotes ? `${finalPurpose} (${finalNotes}) - MJP Residences` : `${finalPurpose} - MJP Residences`);
   const amountCentavos = toCentavos(amount);
   const currentOrigin = (typeof window !== 'undefined' && window.location && !window.location.origin.startsWith('file:')) ? window.location.origin : 'http://localhost:5050';
   const currentPath = (typeof window !== 'undefined' && window.location) ? window.location.pathname : '/tenant-portal.html';
 
-  const defaultSuccessUrl = `${currentOrigin}${currentPath}?payment=success&amount=${amount}&purpose=${encodeURIComponent(description)}`;
-  const defaultCancelUrl = `${currentOrigin}${currentPath}?payment=cancelled`;
+  const defaultSuccessUrl = `${currentOrigin}${currentPath}?payment=success&amount=${amount}&purpose=${encodeURIComponent(finalPurpose)}`;
+  const defaultCancelUrl = `${currentOrigin}${currentPath}?payment=failed&amount=${amount}&purpose=${encodeURIComponent(finalPurpose)}`;
+
+  const sanitizedMethods = (paymentMethodTypes || PAYMONGO_CONFIG.supportedMethods).filter(m => m !== 'dob' && m !== 'billease');
 
   const requestBody = {
     amount: amount,
-    description: description,
+    purpose: finalPurpose,
+    notes: finalNotes,
+    description: finalDescription,
     tenantName: tenantName,
     tenantEmail: tenantEmail,
     tenantPhone: tenantPhone,
-    payment_method_types: paymentMethodTypes,
+    payment_method_types: sanitizedMethods,
     successUrl: successUrl || defaultSuccessUrl,
     cancelUrl: cancelUrl || defaultCancelUrl
   };
@@ -515,6 +663,9 @@ if (typeof window !== 'undefined') {
     toCentavos,
     createCheckoutSession,
     getCheckoutSession,
+    expireCheckoutSession,
+    createCardPaymentIntent,
+    getPaymentIntentStatus,
     completeQrTestPayment,
     createPaymentLink,
     createPaymentMethod,

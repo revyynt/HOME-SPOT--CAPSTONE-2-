@@ -560,6 +560,30 @@
             font-weight: 600;
         }
 
+        .status-badge-failed {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-badge-pending {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: #fef3c7;
+            color: #b45309;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
         .btn-view-receipt {
             padding: 4px 10px;
             background: white;
@@ -682,6 +706,20 @@
             justify-content: center;
             margin: 0 auto 16px;
             font-size: 32px;
+        }
+
+        .receipt-fail-icon {
+            width: 64px;
+            height: 64px;
+            background: #fee2e2;
+            color: #dc2626;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 32px;
+            font-weight: 700;
         }
 
         .receipt-details-list {
@@ -922,72 +960,7 @@
                     </div>
                 </div>
 
-                <div class="payment-section">
-                    <h3>Select Payment Method</h3>
-                    <div class="payment-methods">
-                        <div class="payment-method-card" id="method-qrph" onclick="selectPaymentMethod('qrph')">
-                            <div class="payment-method-icon icon-qrph">
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div class="payment-method-name">National QR (QR Ph)</div>
-                            <div class="payment-method-desc">Scan to pay with GCash, Maya, ShopeePay & Banks</div>
-                        </div>
-
-                        <div class="payment-method-card" id="method-card" onclick="selectPaymentMethod('card')">
-                            <div class="payment-method-icon icon-card">
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div class="payment-method-name">Credit / Debit Card</div>
-                            <div class="payment-method-desc">Visa & Mastercard powered by PayMongo</div>
-                        </div>
-                    </div>
-                </div>
-
-                <form id="paymentForm">
-                    <!-- Card Redirect Info Box (shown when card is selected) -->
-                    <div id="cardDetailsBox" class="card-details-box" style="display: none;">
-                        <h4>
-                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                </path>
-                            </svg>
-                            Card Payment Details
-                        </h4>
-                        <div
-                            style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; margin-top: 4px;">
-                            <svg width="22" height="22" fill="none" stroke="#10B981" viewBox="0 0 24 24"
-                                style="flex-shrink:0; margin-top:1px;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
-                                </path>
-                            </svg>
-                            <div>
-                                <div style="font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 4px;">
-                                    Secure PayMongo Card Checkout</div>
-                                <div style="font-size: 12px; color: #64748b; line-height: 1.5;">Clicking <strong>Pay
-                                        with Card</strong> will securely redirect you to PayMongo's hosted checkout page
-                                    where you can safely enter your Visa or Mastercard details.</div>
-                                <div style="margin-top: 8px; display: flex; gap: 6px; align-items: center;">
-                                    <span
-                                        style="background: #1a56db; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;">VISA</span>
-                                    <span
-                                        style="background: #e8171c; color: white; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.5px;">Mastercard</span>
-                                    <span style="font-size: 11px; color: #94a3b8; margin-left: 4px;">🔒 256-bit
-                                        SSL</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                <form id="paymentForm" style="margin-top: 20px;">
                     <div class="payment-field">
                         <label for="paymentPurpose">Payment Purpose</label>
                         <select id="paymentPurpose" required>
@@ -1009,22 +982,14 @@
                         <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026">
                     </div>
 
-                    <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" disabled>
-                        Select a Payment Method
-                    </button>
-
-                    <div class="payment-note">
-                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            style="flex-shrink: 0; margin-top: 1px;">
+                    <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 20px;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                            </path>
                         </svg>
-                        <div>
-                            <strong>Official PayMongo Integration:</strong> Payments are processed live through PayMongo
-                            Philippines. You will receive an instant official digital receipt and transaction reference
-                            number.
-                        </div>
-                    </div>
+                        <span>Proceed to Pay</span>
+                    </button>
                 </form>
 
                 <!-- Payment History Card -->
@@ -1150,23 +1115,23 @@
         </div>
     </div>
 
-    <!-- PayMongo Official Receipt Modal -->
+    <!-- PayMongo Official Receipt Modal (Success & Failed States) -->
     <div id="paymongoReceiptModal" class="paymongo-modal-backdrop" style="display: none;">
         <div class="paymongo-modal-card" id="receiptPrintArea">
-            <div class="paymongo-modal-header" style="background: #f0fdf4;">
+            <div class="paymongo-modal-header" id="receiptModalHeader" style="background: #f0fdf4;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="paymongo-live-dot"></span>
-                    <strong style="color: #166534; font-size: 14px;">PayMongo Payment Receipt</strong>
+                    <span class="paymongo-live-dot" id="receiptModalDot"></span>
+                    <strong id="receiptModalHeaderTitle" style="color: #166534; font-size: 14px;">PayMongo Payment Receipt</strong>
                 </div>
                 <button onclick="closeReceiptModal()"
                     style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 4px 8px;">&times;</button>
             </div>
             <div class="paymongo-modal-body">
-                <div class="receipt-check-icon">✓</div>
-                <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Payment Successful
-                </h3>
-                <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Your transaction has been processed and
-                    verified by PayMongo.</p>
+                <div id="receiptIconContainer">
+                    <div class="receipt-check-icon">✓</div>
+                </div>
+                <h3 id="receiptModalTitle" style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">Payment Successful</h3>
+                <p id="receiptModalSubtitle" style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Your transaction has been processed and verified by PayMongo.</p>
 
                 <div class="receipt-details-list">
                     <div class="receipt-row">
@@ -1179,7 +1144,7 @@
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">Residence / Room</span>
-                        <span class="receipt-row-value">Triple Occupancy Room (Room 201)</span>
+                        <span class="receipt-row-value" id="receiptResidence">Triple Occupancy Room (Room 201)</span>
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">Purpose</span>
@@ -1187,7 +1152,17 @@
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">Payment Method</span>
-                        <span class="receipt-row-value" id="receiptMethod">PayMongo (QR Ph)</span>
+                        <span class="receipt-row-value" id="receiptMethod">PayMongo Checkout</span>
+                    </div>
+                    <div class="receipt-row">
+                        <span class="receipt-row-label">Status</span>
+                        <span class="receipt-row-value" id="receiptStatusBadge">
+                            <span class="status-badge-paid">✓ Paid</span>
+                        </span>
+                    </div>
+                    <div class="receipt-row" id="receiptFailureRow" style="display: none;">
+                        <span class="receipt-row-label">Failure Reason</span>
+                        <span class="receipt-row-value" id="receiptFailureReason" style="color: #dc2626; font-size: 12px; text-align: right; max-width: 65%;">3DS Authentication Failed</span>
                     </div>
                     <div class="receipt-row">
                         <span class="receipt-row-label">Reference Number</span>
@@ -1204,22 +1179,22 @@
                         <span class="receipt-row-value" id="receiptDateTime">May 5, 2026</span>
                     </div>
                     <div class="receipt-row">
-                        <span class="receipt-row-label">Amount Paid</span>
+                        <span class="receipt-row-label" id="receiptAmountLabel">Amount Paid</span>
                         <span class="receipt-row-value" id="receiptAmount" style="color: #059669;">₱5,000.00</span>
                     </div>
                 </div>
             </div>
             <div class="paymongo-modal-footer">
-                <button onclick="printReceipt()"
+                <button onclick="printReceipt()" id="receiptPrintBtn"
                     style="padding: 10px 18px; background: white; border: 1px solid #10B981; border-radius: 6px; color: #10B981; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
                     <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
                         </path>
                     </svg>
-                    Print / Save Receipt
+                    <span>Print / Save Receipt</span>
                 </button>
-                <button onclick="closeReceiptModal()"
+                <button onclick="closeReceiptModal()" id="receiptCloseBtn"
                     style="padding: 10px 22px; background: #10B981; border: none; border-radius: 6px; color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Done</button>
             </div>
         </div>
@@ -1244,7 +1219,6 @@
         let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
 
         // Global State
-        let selectedPaymentMethod = null;
         let activeQrPaymentData = null;
         let qrTimerInterval = null;
         let qrStatusPollInterval = null;
@@ -1292,6 +1266,9 @@
                     paymentAmountInput.placeholder = '0.00 (Rent Settled)';
                 } else if (!paymentAmountInput.value || paymentAmountInput.value === '5000' || parseFloat(paymentAmountInput.value) > currentRemainingDue) {
                     paymentAmountInput.value = currentRemainingDue.toString();
+                }
+                if (typeof updateSubmitButton === 'function') {
+                    updateSubmitButton();
                 }
             }
         }
@@ -1400,15 +1377,16 @@
 
         fetchTenantFirestoreProfile();
 
-        function switchTab(tabName) {
+        function switchTab(tabName, evt) {
             const tabs = document.querySelectorAll('.tab-content');
             tabs.forEach(tab => tab.classList.remove('active'));
             const tabButtons = document.querySelectorAll('.tab');
             tabButtons.forEach(btn => btn.classList.remove('active'));
             const targetContent = document.getElementById(tabName + '-tab');
             if (targetContent) targetContent.classList.add('active');
-            if (event && event.target && event.target.classList) {
-                event.target.classList.add('active');
+            const targetEvt = evt || (typeof window !== 'undefined' && window.event ? window.event : null);
+            if (targetEvt && targetEvt.target && targetEvt.target.classList) {
+                targetEvt.target.classList.add('active');
             } else {
                 tabButtons.forEach(btn => {
                     if (btn.textContent.toLowerCase().includes(tabName)) btn.classList.add('active');
@@ -1452,50 +1430,42 @@
             }
         }
 
-        // Select Payment Method
-        function selectPaymentMethod(method) {
-            document.querySelectorAll('.payment-method-card').forEach(card => {
-                card.classList.remove('selected');
-            });
-            const cardEl = document.getElementById('method-' + method);
-            if (cardEl) cardEl.classList.add('selected');
-            selectedPaymentMethod = method;
-
-            const cardBox = document.getElementById('cardDetailsBox');
+        // Update Submit Button State and Text
+        function updateSubmitButton() {
             const submitBtn = document.getElementById('submitPaymentBtn');
-            const amountRaw = (document.getElementById('paymentAmount').value || '0').replace(/,/g, '');
+            if (!submitBtn) return;
+            const amountRaw = (document.getElementById('paymentAmount')?.value || '0').toString().replace(/,/g, '');
             const amountNum = parseFloat(amountRaw) || 0;
-
-            if (method === 'card') {
-                cardBox.style.display = 'block';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `Pay ₱${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })} with Card`;
-            } else if (method === 'qrph') {
-                cardBox.style.display = 'none';
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = `Generate National QR (₱${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2 })})`;
+            if (amountNum > 0) {
+                submitBtn.innerHTML = `
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span>Proceed to Pay (₱${amountNum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+                `;
+            } else {
+                submitBtn.innerHTML = `
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    <span>Proceed to Pay</span>
+                `;
             }
+            submitBtn.disabled = false;
         }
 
-        // Update submit button text when amount changes
-        document.getElementById('paymentAmount')?.addEventListener('input', function () {
-            if (selectedPaymentMethod) {
-                selectPaymentMethod(selectedPaymentMethod);
-            }
-        });
+        document.getElementById('paymentAmount')?.addEventListener('input', updateSubmitButton);
 
-        // Payment Form Submission
+        // Payment Form Submission - Direct to PayMongo Hosted Checkout
         document.getElementById('paymentForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            if (!selectedPaymentMethod) {
-                alert('Please select a payment method');
-                return;
-            }
 
             const purpose = document.getElementById('paymentPurpose').value;
             const amountRaw = (document.getElementById('paymentAmount').value || '0').toString().replace(/,/g, '');
             const amountVal = parseFloat(amountRaw);
-            const notes = document.getElementById('paymentNotes').value;
+            const notes = (document.getElementById('paymentNotes').value || '').trim();
             const tenantName = document.getElementById('fullName')?.value || sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
             const tenantPhone = document.getElementById('phone')?.value || '+63 912 345 6789';
 
@@ -1516,61 +1486,59 @@
                     <circle cx="12" cy="12" r="10" stroke-width="4" stroke="currentColor" stroke-opacity="0.25"></circle>
                     <path d="M4 12a8 8 0 018-8" stroke-width="4" stroke-linecap="round"></path>
                 </svg>
-                Connecting to PayMongo...
+                <span>Connecting to PayMongo...</span>
             `;
 
             try {
-                // Ensure PayMongoService is ready
                 if (!window.PayMongoService) {
                     window.PayMongoService = await import('./assets/js/paymongo-service.js');
                 }
 
-                // METHOD 1: NATIONAL QR (QR PH - GCASH, MAYA, SHOPEEPAY, BANKS)
-                if (selectedPaymentMethod === 'qrph') {
-                    await initiateQrPhFlow(amountVal, purpose, tenantName, tenantPhone);
-                }
-                // METHOD 2: CREDIT / DEBIT CARD CHECKOUT
-                else if (selectedPaymentMethod === 'card') {
-                    submitBtn.innerHTML = 'Connecting to PayMongo Card Checkout...';
+                const descWithNotes = notes ? `${purpose} (${notes}) - MJP Residences` : `${purpose} - MJP Residences`;
+                const successUrl = `${window.location.origin}${window.location.pathname}?payment=success&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
+                const cancelUrl = `${window.location.origin}${window.location.pathname}?payment=failed&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
 
-                    const successUrl = `${window.location.origin}${window.location.pathname}?payment=success&method=card&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`;
-                    const cancelUrl = `${window.location.origin}${window.location.pathname}?payment=cancelled`;
+                const session = await window.PayMongoService.createCheckoutSession({
+                    amount: amountVal,
+                    purpose: purpose,
+                    notes: notes,
+                    description: descWithNotes,
+                    tenantName: tenantName,
+                    tenantEmail: userEmail,
+                    tenantPhone: tenantPhone,
+                    paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'qrph'],
+                    successUrl: successUrl,
+                    cancelUrl: cancelUrl
+                });
 
-                    const session = await window.PayMongoService.createCheckoutSession({
+                if (session && session.checkoutUrl) {
+                    const pendingPayload = JSON.stringify({
+                        sessionId: session.sessionId,
+                        referenceNumber: session.referenceNumber,
                         amount: amountVal,
-                        description: `${purpose} - MJP Residences`,
+                        purpose: purpose,
+                        notes: notes,
+                        method: 'PayMongo Checkout',
                         tenantName: tenantName,
-                        tenantEmail: userEmail,
-                        tenantPhone: tenantPhone,
-                        paymentMethodTypes: ['card'],
-                        successUrl: successUrl,
-                        cancelUrl: cancelUrl
+                        tenantEmail: userEmail
                     });
+                    // Store in BOTH storages for maximum reliability across cross-origin redirects
+                    sessionStorage.setItem('pending_paymongo_payment', pendingPayload);
+                    localStorage.setItem('pending_paymongo_payment', pendingPayload);
+                    // Mark that we are leaving for PayMongo checkout — used to force fresh load on return
+                    sessionStorage.setItem('paymongo_checkout_active', '1');
 
-                    if (session && session.checkoutUrl) {
-                        // Store pending payment in sessionStorage so we can verify upon return
-                        sessionStorage.setItem('pending_paymongo_payment', JSON.stringify({
-                            sessionId: session.sessionId,
-                            referenceNumber: session.referenceNumber,
-                            amount: amountVal,
-                            purpose: purpose,
-                            method: 'Credit/Debit Card (PayMongo)',
-                            notes: notes,
-                            tenantName: tenantName,
-                            tenantEmail: userEmail
-                        }));
-
-                        // Redirect to PayMongo secure test checkout
-                        window.location.href = session.checkoutUrl;
-                        return;
-                    } else {
-                        throw new Error('Unable to generate PayMongo checkout session.');
-                    }
+                    // Use location.replace() so HomeSpot is NOT in browser history stack.
+                    // This means pressing Back from PayMongo checkout does a FRESH load of HomeSpot
+                    // (not a BF-cache restore), ensuring checkUrlPaymentReturn() runs on DOMContentLoaded.
+                    window.location.replace(session.checkoutUrl);
+                    return;
+                } else {
+                    throw new Error('Unable to generate PayMongo checkout session.');
                 }
             } catch (err) {
                 console.error('Payment processing failed:', err);
                 alert('Payment processing error: ' + err.message);
-            } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalBtnText;
             }
@@ -1791,12 +1759,7 @@
 
             // Reset Form
             document.getElementById('paymentNotes').value = '';
-            document.querySelectorAll('.payment-method-card').forEach(card => card.classList.remove('selected'));
-            document.getElementById('cardDetailsBox').style.display = 'none';
-            selectedPaymentMethod = null;
-            const submitBtn = document.getElementById('submitPaymentBtn');
-            submitBtn.textContent = 'Select a Payment Method';
-            submitBtn.disabled = true;
+            updateSubmitButton();
 
             // Refresh history table
             await loadTenantPaymentHistory();
@@ -1805,15 +1768,199 @@
             showReceiptModal(record);
         }
 
-        // Show Official Receipt Modal
+        // Save Failed Payment Record — logs in Firestore & localStorage, refreshes history, shows Failed Receipt
+        async function saveFailedPayment(record) {
+            if (!window.PayMongoService) {
+                try { window.PayMongoService = await import('./assets/js/paymongo-service.js'); } catch (e) { }
+            }
+
+            if (window.PayMongoService?.savePaymentRecord) {
+                try {
+                    await window.PayMongoService.savePaymentRecord(record);
+                } catch (e) {
+                    // Fallback: save to localStorage
+                    try {
+                        const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
+                        const arr = JSON.parse(localStorage.getItem(k) || '[]');
+                        arr.unshift({ ...record, timestamp: new Date().toISOString() });
+                        localStorage.setItem(k, JSON.stringify(arr));
+                        const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
+                        all.unshift({ ...record, timestamp: new Date().toISOString() });
+                        localStorage.setItem('all_tenant_payments', JSON.stringify(all));
+                    } catch (_) { }
+                }
+            }
+
+            // Fire a synthetic payment.failed webhook event to our local server
+            // so it appears in the admin webhook events log
+            try {
+                const webhookPayload = {
+                    data: {
+                        id: 'evt_homespot_' + Date.now(),
+                        attributes: {
+                            type: 'payment.failed',
+                            data: {
+                                id: record.paymentMethodId || ('pay_fail_' + Date.now()),
+                                attributes: {
+                                    amount: Math.round(parseFloat(record.amount || 0) * 100),
+                                    currency: 'PHP',
+                                    description: record.purpose || 'Monthly Rent',
+                                    failed_code: 'card_declined',
+                                    failed_message: record.failureReason || 'Payment declined or 3DS authentication failed.',
+                                    billing: {
+                                        name: record.tenantName || 'Tenant',
+                                        email: record.tenantEmail || ''
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                const apiBase = window.location.origin.startsWith('file:') ? 'http://localhost:5050' : window.location.origin;
+                fetch(`${apiBase}/api/paymongo-webhook`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(webhookPayload)
+                }).catch(() => {});
+            } catch (_) {}
+
+            // CRITICAL: For failed payment, do NOT deduct from currentRemainingDue!
+            // Refresh history table so the failed record is immediately visible
+            await loadTenantPaymentHistory();
+
+            // Display Official Receipt in Failed Payment state
+            showReceiptModal(record);
+        }
+
+        // Show Official Receipt Modal (Supports Paid & Failed states)
         function showReceiptModal(record) {
+            const isFailed = (record.status || '').toLowerCase().includes('fail') || 
+                             (record.status || '').toLowerCase().includes('declined') || 
+                             (record.status || '').toLowerCase().includes('cancel');
+
+            const headerEl = document.getElementById('receiptModalHeader');
+            const dotEl = document.getElementById('receiptModalDot');
+            const headerTitleEl = document.getElementById('receiptModalHeaderTitle');
+            const iconContainer = document.getElementById('receiptIconContainer');
+            const titleEl = document.getElementById('receiptModalTitle');
+            const subtitleEl = document.getElementById('receiptModalSubtitle');
+            const statusBadgeEl = document.getElementById('receiptStatusBadge');
+            const failureRow = document.getElementById('receiptFailureRow');
+            const failureReasonEl = document.getElementById('receiptFailureReason');
+            const amountLabelEl = document.getElementById('receiptAmountLabel');
+            const amountEl = document.getElementById('receiptAmount');
+            const printBtn = document.getElementById('receiptPrintBtn');
+            const closeBtn = document.getElementById('receiptCloseBtn');
+
             document.getElementById('receiptTenantName').textContent = record.tenantName || 'Juan Dela Cruz';
+            const residenceEl = document.getElementById('receiptResidence');
+            if (residenceEl) residenceEl.textContent = `${tenantDorm || 'Triple Occupancy Room'} (${tenantRoom || 'Room 201'})`;
             document.getElementById('receiptPurpose').textContent = record.purpose || 'Monthly Rent';
-            document.getElementById('receiptMethod').textContent = record.method || 'PayMongo';
+            document.getElementById('receiptMethod').textContent = record.method || 'PayMongo Checkout';
             document.getElementById('receiptReference').textContent = record.referenceNumber || 'PM-REF';
-            document.getElementById('receiptTokenId').textContent = record.paymentMethodId || 'pm_live_verified';
+            document.getElementById('receiptTokenId').textContent = record.paymentMethodId || 'pm_verified';
             document.getElementById('receiptDateTime').textContent = record.dateFormatted || new Date().toLocaleString();
-            document.getElementById('receiptAmount').textContent = `₱${parseFloat(record.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+            const formattedAmount = `₱${parseFloat(record.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+            if (isFailed) {
+                // Failed Payment Styling
+                if (headerEl) headerEl.style.background = '#fef2f2';
+                if (dotEl) {
+                    dotEl.style.background = '#ef4444';
+                    dotEl.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+                }
+                if (headerTitleEl) {
+                    headerTitleEl.textContent = 'PayMongo Payment Notice - Failed';
+                    headerTitleEl.style.color = '#991b1b';
+                }
+                if (iconContainer) {
+                    iconContainer.innerHTML = '<div class="receipt-fail-icon">✕</div>';
+                }
+                if (titleEl) {
+                    titleEl.textContent = 'Payment Failed';
+                    titleEl.style.color = '#dc2626';
+                }
+                if (subtitleEl) {
+                    subtitleEl.textContent = 'Transaction was not completed or 3DS authentication failed on PayMongo.';
+                }
+                if (statusBadgeEl) {
+                    statusBadgeEl.innerHTML = '<span class="status-badge-failed">✗ Failed</span>';
+                }
+                if (failureRow) {
+                    failureRow.style.display = 'flex';
+                    if (failureReasonEl) {
+                        failureReasonEl.textContent = record.failureReason || 'Card authentication failed / cancelled in PayMongo test mode';
+                    }
+                }
+                if (amountLabelEl) amountLabelEl.textContent = 'Amount (Unpaid)';
+                if (amountEl) {
+                    amountEl.textContent = `${formattedAmount} (Not Charged)`;
+                    amountEl.style.color = '#dc2626';
+                }
+                if (printBtn) {
+                    printBtn.style.borderColor = '#ef4444';
+                    printBtn.style.color = '#dc2626';
+                    printBtn.innerHTML = `
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                            </path>
+                        </svg>
+                        <span>Print Failure Notice</span>
+                    `;
+                }
+                if (closeBtn) {
+                    closeBtn.style.background = '#dc2626';
+                    closeBtn.textContent = 'Try Again';
+                }
+            } else {
+                // Successful Payment Styling
+                if (headerEl) headerEl.style.background = '#f0fdf4';
+                if (dotEl) {
+                    dotEl.style.background = '#10B981';
+                    dotEl.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.2)';
+                }
+                if (headerTitleEl) {
+                    headerTitleEl.textContent = 'PayMongo Payment Receipt';
+                    headerTitleEl.style.color = '#166534';
+                }
+                if (iconContainer) {
+                    iconContainer.innerHTML = '<div class="receipt-check-icon">✓</div>';
+                }
+                if (titleEl) {
+                    titleEl.textContent = 'Payment Successful';
+                    titleEl.style.color = '#0f172a';
+                }
+                if (subtitleEl) {
+                    subtitleEl.textContent = 'Your transaction has been processed and verified by PayMongo.';
+                }
+                if (statusBadgeEl) {
+                    statusBadgeEl.innerHTML = '<span class="status-badge-paid">✓ Paid</span>';
+                }
+                if (failureRow) failureRow.style.display = 'none';
+                if (amountLabelEl) amountLabelEl.textContent = 'Amount Paid';
+                if (amountEl) {
+                    amountEl.textContent = formattedAmount;
+                    amountEl.style.color = '#059669';
+                }
+                if (printBtn) {
+                    printBtn.style.borderColor = '#10B981';
+                    printBtn.style.color = '#10B981';
+                    printBtn.innerHTML = `
+                        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                            </path>
+                        </svg>
+                        <span>Print / Save Receipt</span>
+                    `;
+                }
+                if (closeBtn) {
+                    closeBtn.style.background = '#10B981';
+                    closeBtn.textContent = 'Done';
+                }
+            }
 
             document.getElementById('paymongoReceiptModal').style.display = 'flex';
         }
@@ -1835,20 +1982,23 @@
                         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 40px; color: #1e293b; }
                         .receipt-details-list { border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
                         .receipt-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
-                        .receipt-row:last-child { border-bottom: none; font-weight: bold; font-size: 16px; color: #059669; }
+                        .receipt-row:last-child { border-bottom: none; font-weight: bold; font-size: 16px; color: #0f172a; }
                         .receipt-check-icon { font-size: 40px; color: #16a34a; text-align: center; margin-bottom: 10px; }
+                        .receipt-fail-icon { font-size: 40px; color: #dc2626; text-align: center; margin-bottom: 10px; }
                         .paymongo-tag { background: #10B981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+                        .status-badge-paid { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+                        .status-badge-failed { background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
                         .no-print { display: none !important; }
                     </style>
                 </head>
                 <body>
                     <div style="text-align: center; margin-bottom: 24px;">
                         <h2 style="margin: 0 0 4px;">MJP Residences</h2>
-                        <p style="margin: 0; color: #64748b; font-size: 13px;">Official Electronic Payment Receipt • Powered by PayMongo</p>
+                        <p style="margin: 0; color: #64748b; font-size: 13px;">Official Electronic Payment Record • Powered by PayMongo</p>
                     </div>
                     ${printContent}
                     <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #94a3b8;">
-                        This document serves as your verified proof of payment. For inquiries, contact management.
+                        This document serves as your verified proof of transaction. For inquiries, contact management.
                     </div>
                 </body>
                 </html>
@@ -1904,72 +2054,327 @@
 
             if (countBadge) countBadge.textContent = `${payments.length} payment${payments.length > 1 ? 's' : ''}`;
 
-            tableBody.innerHTML = payments.map((p, idx) => `
+            tableBody.innerHTML = payments.map((p, idx) => {
+                const isFailed = (p.status || '').toLowerCase().includes('fail') || 
+                                 (p.status || '').toLowerCase().includes('declined') || 
+                                 (p.status || '').toLowerCase().includes('cancel');
+                const isPending = (p.status || '').toLowerCase() === 'pending';
+                const statusBadge = isFailed
+                    ? `<span class="status-badge-failed">✗ Failed</span>`
+                    : (isPending ? `<span class="status-badge-pending">⏱ Pending</span>` : `<span class="status-badge-paid">✓ Paid</span>`);
+                const amountColor = isFailed ? '#dc2626' : (isPending ? '#b45309' : '#059669');
+
+                return `
                 <tr>
                     <td>${p.dateFormatted || new Date(p.timestamp || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                     <td style="font-family: monospace; font-size: 12px; color: #475569;">${p.referenceNumber || 'PM-' + idx}</td>
                     <td>${p.purpose || 'Monthly Rent'}</td>
                     <td>${p.method || 'PayMongo'}</td>
-                    <td style="font-weight: 600; color: #059669;">₱${parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td><span class="status-badge-paid">✓ Paid</span></td>
+                    <td style="font-weight: 600; color: ${amountColor};">₱${parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td>${statusBadge}</td>
                     <td>
                         <button class="btn-view-receipt" onclick='showReceiptModal(${JSON.stringify(p).replace(/'/g, "&apos;")})'>
                             Receipt
                         </button>
                     </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // Check for return from PayMongo hosted checkout (Card / QR Ph)
+        // Check for return from PayMongo (Direct 3DS Card Intent OR Hosted Checkout Session)
         async function checkUrlPaymentReturn() {
+            // Ensure PayMongoService is ready
+            if (!window.PayMongoService) {
+                try { window.PayMongoService = await import('./assets/js/paymongo-service.js'); } catch (e) { }
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
-            const paymentStatus = urlParams.get('payment');
+            let paymentIntentId = urlParams.get('payment_intent_id');
+            if (!paymentIntentId) {
+                const match = window.location.href.match(/[?&]payment_intent_id=([^&#]+)/);
+                if (match) {
+                    paymentIntentId = decodeURIComponent(match[1]);
+                }
+            }
 
-            if (paymentStatus === 'success') {
-                const amountParam = parseFloat(urlParams.get('amount')) || 5000;
-                const purposeParam = urlParams.get('purpose') || 'Monthly Rent';
-                const methodParam = urlParams.get('method') === 'card' ? 'Credit/Debit Card (PayMongo)' : 'PayMongo (QR Ph)';
+            let paymentStatus = urlParams.get('payment');
+            if (!paymentStatus) {
+                const matchStatus = window.location.href.match(/[?&]payment=([^&#]+)/);
+                if (matchStatus) {
+                    paymentStatus = decodeURIComponent(matchStatus[1]);
+                }
+            }
 
-                let pending = null;
+            // Read pending payment from BOTH storages (localStorage survives more edge cases)
+            let pending = null;
+            try {
+                const saved = sessionStorage.getItem('pending_paymongo_payment')
+                    || localStorage.getItem('pending_paymongo_payment');
+                if (saved) pending = JSON.parse(saved);
+            } catch (e) { }
+
+            console.log('[PayReturn] URL params - paymentIntentId:', paymentIntentId, '| paymentStatus:', paymentStatus, '| pending:', pending);
+
+            // If neither param found in URL, but we have pending direct 3DS payment and we just returned to tenant portal
+            if (!paymentIntentId && !paymentStatus && pending?.paymentIntentId) {
+                paymentIntentId = pending.paymentIntentId;
+            }
+
+            // SCENARIO: Returned from PayMongo hosted checkout with no URL params
+            // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
+            // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
+            if (!paymentIntentId && !paymentStatus && pending?.sessionId) {
+                console.log('[PayReturn] Checking pending checkout session:', pending.sessionId);
+                const sessionId = pending.sessionId;
+                sessionStorage.removeItem('pending_paymongo_payment');
+                localStorage.removeItem('pending_paymongo_payment');
+
+                let sessionStatus = null;
+                let failureDetail = 'Card declined or 3DS authentication failed.';
                 try {
-                    const saved = sessionStorage.getItem('pending_paymongo_payment');
-                    if (saved) pending = JSON.parse(saved);
-                    sessionStorage.removeItem('pending_paymongo_payment');
-                } catch (e) { }
+                    if (window.PayMongoService?.getCheckoutSession) {
+                        const sessionData = await window.PayMongoService.getCheckoutSession(sessionId);
+                        console.log('[PayReturn] Session data:', sessionData);
+                        if (sessionData) {
+                            sessionStatus = sessionData.attributes?.status;
+                            const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
+                            if (lastErr && (lastErr.failed_message || lastErr.detail)) {
+                                failureDetail = lastErr.failed_message || lastErr.detail;
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[PayReturn] Could not inspect checkout session:', e);
+                }
 
+                console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
+
+                if (sessionStatus === 'paid') {
+                    const amountParam2 = parseFloat(pending?.amount) || 5000;
+                    const purposeParam2 = pending?.purpose || 'Monthly Rent';
+                    const tenantNameVal2 = pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
+                    const refNumber2 = pending?.referenceNumber || ('PM-RET-' + Date.now().toString().slice(-6));
+                    const record2 = {
+                        referenceNumber: refNumber2,
+                        paymentMethodId: sessionId,
+                        method: pending?.method || 'PayMongo Checkout',
+                        amount: amountParam2,
+                        purpose: purposeParam2,
+                        notes: pending?.notes || 'Completed via PayMongo Checkout',
+                        tenantName: tenantNameVal2,
+                        tenantEmail: userEmail,
+                        dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                        status: 'Paid'
+                    };
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    switchTab('payment');
+                    await saveAndFinalizePayment(record2);
+                } else {
+                    // Session not paid — card was declined or 3DS failed
+                    const amountParam2 = parseFloat(pending?.amount) || 5000;
+                    const purposeParam2 = pending?.purpose || 'Monthly Rent';
+                    const tenantNameVal2 = pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
+                    const refNumber2 = pending?.referenceNumber || ('PM-FAIL-' + Date.now().toString().slice(-6));
+                    const record2 = {
+                        referenceNumber: refNumber2,
+                        paymentMethodId: sessionId,
+                        method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+                        amount: amountParam2,
+                        purpose: purposeParam2,
+                        notes: pending?.notes || 'Card declined / 3DS authentication failed',
+                        failureReason: failureDetail,
+                        tenantName: tenantNameVal2,
+                        tenantEmail: userEmail,
+                        dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                        status: 'Failed'
+                    };
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    switchTab('payment');
+                    // Save receipt first, then expire session in background (non-blocking)
+                    await saveFailedPayment(record2);
+                    // Fire-and-forget: expire session in PayMongo dashboard
+                    if (window.PayMongoService?.expireCheckoutSession && sessionStatus !== 'expired') {
+                        window.PayMongoService.expireCheckoutSession(sessionId).catch(() => {});
+                    }
+                }
+                return;
+            }
+
+            // If neither parameter is present and no pending, nothing to do
+            if (!paymentIntentId && !paymentStatus) return;
+
+            sessionStorage.removeItem('pending_paymongo_payment');
+            localStorage.removeItem('pending_paymongo_payment');
+
+            const amountParam = parseFloat(urlParams.get('amount')) || pending?.amount || 5000;
+            const purposeParam = urlParams.get('purpose') || pending?.purpose || 'Monthly Rent';
+            const tenantNameVal = pending?.tenantName || document.getElementById('fullName')?.value || sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
+
+            // SCENARIO 1: RETURN FROM DIRECT CARD 3DS TEST
+            if (paymentIntentId) {
+                let piStatus = 'awaiting_payment_method';
+                let failureDetail = '3DS Authentication Failed / Card Declined in PayMongo test mode';
+                let isSuccess = false;
+
+                try {
+                    if (window.PayMongoService?.getPaymentIntentStatus) {
+                        const piData = await window.PayMongoService.getPaymentIntentStatus(paymentIntentId);
+                        if (piData && piData.attributes) {
+                            piStatus = piData.attributes.status;
+                            if (piStatus === 'succeeded') {
+                                isSuccess = true;
+                            } else {
+                                const lastErr = piData.attributes.last_payment_error;
+                                if (lastErr && (lastErr.failed_message || lastErr.detail)) {
+                                    failureDetail = lastErr.failed_message || lastErr.detail;
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Could not inspect payment intent:', err);
+                }
+
+                const refNumber = pending?.referenceNumber || ('PM-CARD-' + paymentIntentId.slice(-6).toUpperCase());
+
+                // Remove query parameters from URL without reloading
+                window.history.replaceState({}, document.title, window.location.pathname);
+                switchTab('payment');
+
+                if (isSuccess) {
+                    const record = {
+                        referenceNumber: refNumber,
+                        paymentMethodId: paymentIntentId,
+                        method: 'Credit/Debit Card (PayMongo Test 3DS)',
+                        amount: amountParam,
+                        purpose: purposeParam,
+                        notes: pending?.notes || 'Paid via PayMongo 3DS Card Payment',
+                        tenantName: tenantNameVal,
+                        tenantEmail: userEmail,
+                        dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                        status: 'Paid'
+                    };
+                    await saveAndFinalizePayment(record);
+                } else {
+                    const record = {
+                        referenceNumber: refNumber,
+                        paymentMethodId: paymentIntentId,
+                        method: 'Credit/Debit Card (PayMongo Test 3DS)',
+                        amount: amountParam,
+                        purpose: purposeParam,
+                        notes: pending?.notes || 'PayMongo 3DS Test Failed / Declined',
+                        failureReason: failureDetail,
+                        tenantName: tenantNameVal,
+                        tenantEmail: userEmail,
+                        dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                        status: 'Failed'
+                    };
+                    await saveFailedPayment(record);
+                }
+                return;
+            }
+
+            // SCENARIO 2: RETURN FROM PAYMONGO HOSTED CHECKOUT (SUCCESS)
+            if (paymentStatus === 'success') {
+                const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
                 const refNumber = pending?.referenceNumber || ('PM-RET-' + Date.now().toString().slice(-6));
                 const record = {
                     referenceNumber: refNumber,
                     paymentMethodId: pending?.sessionId || ('pm_success_' + Date.now().toString(36)),
-                    method: pending?.method || methodParam,
-                    amount: pending?.amount || amountParam,
-                    purpose: pending?.purpose || purposeParam,
+                    method: methodParam,
+                    amount: amountParam,
+                    purpose: purposeParam,
                     notes: pending?.notes || 'Completed via PayMongo Official Checkout',
-                    tenantName: pending?.tenantName || document.getElementById('fullName')?.value || sessionStorage.getItem('tenantName') || 'Juan Dela Cruz',
+                    tenantName: tenantNameVal,
                     tenantEmail: userEmail,
                     dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
                     status: 'Paid'
                 };
 
-                // Remove query parameters from URL without reloading
                 window.history.replaceState({}, document.title, window.location.pathname);
-
-                // Switch to payment tab to display receipt and history
                 switchTab('payment');
-
-                // Save record, deduct due and display receipt
                 await saveAndFinalizePayment(record);
-            } else if (paymentStatus === 'cancelled') {
+            } 
+            // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED OR CANCELLED via cancel_url)
+            else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
+                const sessionId = pending?.sessionId || urlParams.get('sessionId') || '';
+                let failureDetail = 'Payment declined / 3DS authentication failed on PayMongo';
+
+                console.log('[PayReturn] Scenario 3 - failed/cancelled. sessionId:', sessionId);
+
+                if (sessionId && window.PayMongoService) {
+                    try {
+                        const sessionData = await window.PayMongoService.getCheckoutSession(sessionId);
+                        console.log('[PayReturn] Scenario 3 session data:', sessionData);
+                        if (sessionData) {
+                            const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
+                            if (lastErr && (lastErr.failed_message || lastErr.detail)) {
+                                failureDetail = lastErr.failed_message || lastErr.detail;
+                            }
+                        }
+                    } catch (err) { console.warn('[PayReturn] Scenario 3 getCheckoutSession error:', err); }
+                }
+
+                const refNumber = pending?.referenceNumber || ('PM-FAIL-' + Date.now().toString().slice(-6));
+                const record = {
+                    referenceNumber: refNumber,
+                    paymentMethodId: sessionId || ('pm_failed_' + Date.now().toString(36)),
+                    method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+                    amount: amountParam,
+                    purpose: purposeParam,
+                    notes: pending?.notes || 'PayMongo Checkout: 3DS Test Failed / Cancelled',
+                    failureReason: failureDetail,
+                    tenantName: tenantNameVal,
+                    tenantEmail: userEmail,
+                    dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+                    status: 'Failed'
+                };
+
                 window.history.replaceState({}, document.title, window.location.pathname);
-                alert('Payment was cancelled on PayMongo.');
+                switchTab('payment');
+                // Save receipt FIRST — non-blocking expire after
+                await saveFailedPayment(record);
+                // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
+                if (sessionId && window.PayMongoService?.expireCheckoutSession) {
+                    window.PayMongoService.expireCheckoutSession(sessionId).catch(() => {});
+                }
             }
         }
 
         // Initialize on DOM load
         window.addEventListener('DOMContentLoaded', () => {
+            updateSubmitButton();
             loadTenantPaymentHistory();
             checkUrlPaymentReturn();
+        });
+
+        // Handle Back-Forward Cache (BF cache) restores:
+        // When the user presses the browser Back button from PayMongo's checkout page,
+        // the browser restores this page from BF cache WITHOUT firing DOMContentLoaded.
+        // pageshow fires in both fresh load and BF-cache restore cases.
+        let paymentReturnChecked = false;
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                // Page restored from BF cache — re-run payment return check
+                console.log('[PayReturn] BF-cache restore detected — re-checking payment return');
+                paymentReturnChecked = false;
+                checkUrlPaymentReturn();
+            }
+        });
+
+        // Also handle tab visibility change as a secondary fallback
+        // (some mobile browsers use this instead of pageshow for back navigation)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !paymentReturnChecked) {
+                const pendingRaw = sessionStorage.getItem('pending_paymongo_payment')
+                    || localStorage.getItem('pending_paymongo_payment');
+                if (pendingRaw) {
+                    console.log('[PayReturn] visibilitychange with pending payment — checking');
+                    paymentReturnChecked = true;
+                    checkUrlPaymentReturn();
+                }
+            }
         });
 
         function sendMessage() {
