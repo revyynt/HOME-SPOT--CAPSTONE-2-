@@ -24,9 +24,12 @@ const Toast = {
     
     toast.innerHTML = `
       ${icon}
-      <span>${message}</span>
+   <span></span>
     `;
-    
+    // Toast copy is routinely built from Firestore values (tenant names, etc),
+    // so it is inserted as text rather than parsed as HTML.
+  toast.querySelector('span').textContent = String(message ?? '');
+
     this.container.appendChild(toast);
     
     setTimeout(() => {
@@ -61,7 +64,19 @@ function hasFirestore() {
   return FirestoreHelpers.db && FirestoreHelpers.api;
 }
 
+// firebase-service.js is an ES module, so this classic script cannot import
+// from it. Resolve it lazily at call time instead: on some pages
+// (admin-login.html) the service is never loaded at all, and on others it
+// initialises after this file runs. Delegates fall back to the local handles
+// so behaviour is unchanged when the service is absent.
+function getFirebaseService() {
+  return typeof window !== 'undefined' ? window.firebaseService : null;
+}
+
 function waitForFirebaseReady(timeout = 5000) {
+  const service = getFirebaseService();
+  if (service) return service.waitForFirebaseReady(timeout);
+
   return new Promise((resolve) => {
     if (window.firebaseReady) {
       resolve(true);
@@ -83,6 +98,9 @@ function waitForFirebaseReady(timeout = 5000) {
 }
 
 function normalizeRoomDocId(name) {
+  const service = getFirebaseService();
+  if (service) return service.normalizeRoomDocId(name);
+
   return String(name || '')
     .toLowerCase()
     .trim()
@@ -91,16 +109,25 @@ function normalizeRoomDocId(name) {
 }
 
 function getReservationsRef() {
+  const service = getFirebaseService();
+  if (service) return service.getReservationsRef();
+
   updateFirestoreHelpers();
   return hasFirestore() ? FirestoreHelpers.api.collection(FirestoreHelpers.db, 'reservations') : null;
 }
 
 function getMessagesRef() {
+  const service = getFirebaseService();
+  if (service) return service.getMessagesRef();
+
   updateFirestoreHelpers();
   return hasFirestore() ? FirestoreHelpers.api.collection(FirestoreHelpers.db, 'messages') : null;
 }
 
 function getRoomRef(roomName) {
+  const service = getFirebaseService();
+  if (service) return service.getRoomDocRef(roomName);
+
   if (!hasFirestore() || !roomName) return null;
   const roomId = normalizeRoomDocId(roomName);
   return FirestoreHelpers.api.doc(FirestoreHelpers.db, 'rooms', roomId);
@@ -245,50 +272,62 @@ function renderReservationRequests(docs) {
     return;
   }
 
-  container.innerHTML = docs.map(doc => {
+container.innerHTML = docs.map(doc => {
     const data = doc.data();
     const requestDate = data.moveInDate || 'Not specified';
     const amount = data.amount ? `₱${Number(data.amount).toLocaleString()}` : 'TBD';
-    const status = data.status || 'Pending';
+ const status = data.status || 'Pending';
     const statusClass = status === 'Approved'
       ? 'px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800'
       : status === 'Declined'
-        ? 'px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'
+    ? 'px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800'
         : 'px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800';
+
+    // Row data is carried on data-* attributes rather than inline handlers.
+    // HTML attribute values are decoded before the JS parser runs, so an
+    // escaped apostrophe inside onclick="..." would still terminate the string.
+  const payload = escapeHtml(JSON.stringify({
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      room: data.room || '',
+      moveInDate: requestDate,
+      amount: data.amount || 5000
+    }));
 
     return `
       <div class="bg-white border rounded-lg p-6">
         <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-2">
-              <h4 class="text-lg font-bold">${escapeHtml(data.name || 'Guest')}</h4>
-              <span class="${statusClass}">${escapeHtml(status)}</span>
+<div class="flex-1">
+      <div class="flex items-center gap-3 mb-2">
+     <h4 class="text-lg font-bold">${escapeHtml(data.name || 'Guest')}</h4>
+            <span class="${statusClass}">${escapeHtml(status)}</span>
             </div>
-            <div class="text-sm text-gray-600 space-y-1">
-              <div>Property: ${escapeHtml(data.room || 'Unknown')}</div>
-              <div>Move-in Date: ${escapeHtml(requestDate)}</div>
-              ${data.message ? `<div>Message: ${escapeHtml(data.message)}</div>` : ''}
-              <div class="text-green-600 font-medium">Amount: ${escapeHtml(amount)}</div>
+   <div class="text-sm text-gray-600 space-y-1">
+    <div>Property: ${escapeHtml(data.room || 'Unknown')}</div>
+          <div>Move-in Date: ${escapeHtml(requestDate)}</div>
+    ${data.message ? `<div>Message: ${escapeHtml(data.message)}</div>` : ''}
+     <div class="text-green-600 font-medium">Amount: ${escapeHtml(amount)}</div>
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            ${status === 'Approved' ? `
-              <button onclick="window.openCreateTenantModalFromData && window.openCreateTenantModalFromData('${escapeHtml(data.name || '')}', '${escapeHtml(data.email || '')}', '${escapeHtml(data.phone || '')}', '', '${escapeHtml(data.room || '')}', '${escapeHtml(requestDate)}', '${data.amount || 5000}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                Create Tenant Account
-              </button>
-            ` : `
-              <button onclick="approveReservation('${doc.id}')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"/></svg>
-                Approve
-              </button>
-              <button onclick="declineReservation('${doc.id}')" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10 7.293 11.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg>
-                Decline
+     <div class="flex items-center gap-2">
+     ${status === 'Approved' ? `
+   <button data-action="create-tenant" data-payload="${payload}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+      Create Tenant Account
+        </button>
+    ` : `
+       <button data-action="approve" data-id="${escapeHtml(doc.id)}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center gap-2">
+  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"/></svg>
+     Approve
+     </button>
+     <button data-action="decline" data-id="${escapeHtml(doc.id)}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center gap-2">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 0L9.586 10l-2.293 2.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"/></svg>
+        Decline
               </button>
             `}
           </div>
-        </div>
+    </div>
       </div>`;
   }).join('');
 }
@@ -323,14 +362,43 @@ function renderMessages(docs) {
               <p class="text-sm text-gray-500">${escapeHtml(data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : 'Just now')}</p>
             </div>
           </div>
-          <div class="flex flex-col gap-2">
-            <button onclick="replyToMessage('${doc.id}')" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Reply</button>
-            <button onclick="deleteMessage('${doc.id}')" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600">Delete</button>
-          </div>
+<div class="flex flex-col gap-2">
+        <button data-action="reply" data-id="${escapeHtml(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Reply</button>
+     <button data-action="delete-message" data-id="${escapeHtml(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600">Delete</button>
+</div>
         </div>
       </div>`;
-  }).join('');
+}).join('');
 }
+
+// Delegated handlers for the reservation / message lists. Keeping these out of
+// inline onclick attributes prevents attribute-value escaping from becoming JS
+// string injection.
+document.addEventListener('click', function (event) {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+
+  const { action, id } = button.dataset;
+
+  if (action === 'approve' && typeof window.approveReservation === 'function') {
+    window.approveReservation(id);
+  } else if (action === 'decline' && typeof window.declineReservation === 'function') {
+    window.declineReservation(id);
+  } else if (action === 'reply' && typeof window.replyToMessage === 'function') {
+    window.replyToMessage(id);
+  } else if (action === 'delete-message' && typeof window.deleteMessage === 'function') {
+    window.deleteMessage(id);
+  } else if (action === 'create-tenant') {
+    try {
+const p = JSON.parse(button.dataset.payload || '{}');
+  if (typeof window.openCreateTenantModalFromData === 'function') {
+        window.openCreateTenantModalFromData(p.name, p.email, p.phone, p.room, p.dormName, p.moveInDate, p.amount);
+      }
+    } catch (e) {
+      console.error('Failed to parse tenant prefill payload:', e);
+    }
+  }
+});
 
 function setupAdminDashboardRealtime() {
   if (!hasFirestore()) {

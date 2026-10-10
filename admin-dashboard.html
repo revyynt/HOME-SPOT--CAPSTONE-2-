@@ -1328,7 +1328,7 @@
 
   <script type="module" src="./assets/js/firebase-service.js"></script>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import {
       getAuth,
       signOut,
@@ -1359,13 +1359,14 @@
       appId: "1:192229736140:web:20d0e4e603d6ca98dd4c69"
     };
 
-    // Primary Auth & Firestore (Admin session)
-    const primaryApp = initializeApp(firebaseConfig);
+    // Reuse the default app created by firebase-service.js; initializeApp()
+    // throws if '[DEFAULT]' already exists.
+    const primaryApp = getApps().length ? getApp() : initializeApp(firebaseConfig);
     const auth = getAuth(primaryApp);
     const db = getFirestore(primaryApp);
 
-    // Secondary Firebase Auth instance dedicated to tenant registration
-    // This CRITICALLY ensures creating a tenant in Firebase Auth never logs out the active admin!
+    // Secondary Firebase Auth instance dedicated to tenant registration.
+    // This ensures creating a tenant in Firebase Auth never logs out the admin.
     let secondaryAuth = null;
     try {
       const secondaryApp = initializeApp(firebaseConfig, "TenantAccountCreationApp");
@@ -1374,11 +1375,25 @@
       console.warn("Secondary auth initialization note:", e);
     }
 
+    // -------------------------------------------------------------------------
+    // Auth guard. The dashboard renders and binds live Firestore listeners, so it
+    // must not run at all for an anonymous or non-staff visitor.
+    // -------------------------------------------------------------------------
+    (async () => {
+      await window.firebaseService.authReady;
+      const allowed = await window.firebaseService.requireRole('admin', 'admin-login.html');
+      if (!allowed) return; // requireRole has already redirected
+      window.adminAccessGranted = true;
+      document.dispatchEvent(new CustomEvent('admin-access-granted'));
+    })();
+
     // In-memory tenant collection
     let loadedTenants = [];
     let currentViewingTenant = null;
 
-    // Helper: Generate readable, secure password
+    // Helper: Generate a readable, secure temporary password.
+    // This value is handed to the tenant once and handed to Firebase Auth --
+    // it is never persisted in Firestore.
     window.generateRandomPassword = function () {
       const prefix = ["Home", "Spot", "Dorm", "MJP", "Stay"];
       const randWord = prefix[Math.floor(Math.random() * prefix.length)];
@@ -1461,7 +1476,7 @@
       document.getElementById('viewTenantMoveIn').textContent = tenant.moveInDate || '—';
       document.getElementById('viewTenantPhone').textContent = tenant.phone || '—';
       document.getElementById('viewTenantLoginEmail').textContent = tenant.email || '—';
-      document.getElementById('viewTenantLoginPassword').textContent = tenant.password || '••••••••';
+      document.getElementById('viewTenantLoginPassword').textContent = 'Managed by Firebase Auth';
 
       const initials = (tenant.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
       document.getElementById('viewTenantAvatar').textContent = initials;
@@ -1483,16 +1498,20 @@
       if (modal) modal.classList.add('hidden');
     };
 
-    window.copyTenantLoginInfo = function (email, password, name, room) {
-      const text = `MJP Residences - Tenant Portal Access\nTenant: ${name}\nRoom: ${room}\nPortal URL: ${window.location.origin + window.location.pathname.replace(/[^/]*$/, '')}tenant-login.html\nEmail: ${email}\nPassword: ${password}`;
+    // Copies the tenant's portal sign-in details. The password is intentionally
+    // omitted: it lives in Firebase Auth, never in Firestore, and is shown to
+    // the tenant exactly once at account creation.
+    window.copyTenantLoginInfo = function (email, name, room) {
+      const portalUrl = window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'tenant-login.html';
+      const text = `MJP Residences - Tenant Portal Access\nTenant: ${name}\nRoom: ${room}\nPortal URL: ${portalUrl}\nEmail: ${email}\n\nSign in with the temporary password provided at move-in, then change it from your profile.`;
       navigator.clipboard.writeText(text).then(() => {
         if (window.Toast) {
-          window.Toast.success('Login credentials copied to clipboard!');
+          window.Toast.success('Tenant portal details copied to clipboard!');
         } else {
-          alert('Tenant login credentials copied to clipboard!');
+          alert('Tenant portal details copied to clipboard!');
         }
       }).catch(() => {
-        alert(`Tenant Login:\nEmail: ${email}\nPassword: ${password}`);
+        alert(`Tenant Portal:\nEmail: ${email}\nURL: ${portalUrl}`);
       });
     };
 
@@ -1500,7 +1519,6 @@
       if (!currentViewingTenant) return;
       window.copyTenantLoginInfo(
         currentViewingTenant.email,
-        currentViewingTenant.password,
         currentViewingTenant.name,
         currentViewingTenant.room
       );
@@ -1566,45 +1584,43 @@
         return;
       }
 
-      tbody.innerHTML = tenants.map(t => {
+tbody.innerHTML = tenants.map(t => {
         const initials = (t.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
         const gradient = getAvatarGradient(t.name);
         const rentFormatted = '₱' + Number(t.monthlyRent || 0).toLocaleString() + '.00';
-        const escapedName = (t.name || '').replace(/'/g, "\\'");
-        const escapedEmail = (t.email || '').replace(/'/g, "\\'");
-        const escapedPassword = (t.password || '').replace(/'/g, "\\'");
-        const escapedRoom = (t.room || '').replace(/'/g, "\\'");
 
+        // Every value below originates in Firestore, so it must be escaped
+        // before it reaches innerHTML.
         return `
           <tr class="hover:bg-gray-50/70 transition-colors">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr ${gradient} text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-                  ${initials}
+                  ${esc(initials)}
                 </div>
                 <div>
-                  <div class="font-bold text-gray-900">${t.name || 'Tenant'}</div>
-                  <div class="text-xs text-gray-500 font-mono">${t.email || '—'}</div>
+                  <div class="font-bold text-gray-900">${esc(t.name || 'Tenant')}</div>
+                  <div class="text-xs text-gray-500 font-mono">${esc(t.email || '—')}</div>
                 </div>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
-                ${t.room || 'Unassigned'}
+                ${esc(t.room || 'Unassigned')}
               </span>
-              <div class="text-xs text-gray-500 mt-0.5">${t.dormName || ''}</div>
+              <div class="text-xs text-gray-500 mt-0.5">${esc(t.dormName || '')}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-800">${t.phone || '—'}</div>
-              ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${t.emergencyContact}</div>` : ''}
+              <div class="text-sm text-gray-800">${esc(t.phone || '—')}</div>
+              ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${esc(t.emergencyContact)}</div>` : ''}
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-              ${t.moveInDate || '—'}
-              <div class="text-xs text-gray-400">${t.leaseTerm || '1 Year'}</div>
+              ${esc(t.moveInDate || '—')}
+              <div class="text-xs text-gray-400">${esc(t.leaseTerm || '1 Year')}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="font-bold text-gray-900">${rentFormatted}</div>
-              <div class="text-xs text-gray-500">Due every ${t.dueDay || 5}th</div>
+              <div class="font-bold text-gray-900">${esc(rentFormatted)}</div>
+              <div class="text-xs text-gray-500">Due every ${esc(String(t.dueDay || 5))}th</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
@@ -1613,13 +1629,13 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
               <div class="flex items-center justify-end gap-2">
-                <button onclick="viewTenantDetails('${t.id}')" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                <button data-action="view" data-id="${esc(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 </button>
-                <button onclick="copyTenantLoginInfo('${escapedEmail}', '${escapedPassword}', '${escapedName}', '${escapedRoom}')" title="Copy Login Credentials" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                <button data-action="copy" data-id="${esc(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002 2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                 </button>
-                <button onclick="deleteTenantAccount('${t.id}', '${escapedName}')" title="Deactivate / Remove Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                <button data-action="delete" data-id="${esc(t.id)}" data-name="${esc(t.name || 'this tenant')}" title="Deactivate / Remove Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </div>
@@ -1628,6 +1644,31 @@
         `;
       }).join('');
     }
+
+    // Escapes text before it is interpolated into innerHTML.
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[ch]);
+    }
+
+    // Row actions are wired through delegation so tenant-supplied values are
+    // never embedded in an inline handler.
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-action]');
+      if (!button) return;
+      const id = button.dataset.id;
+      const tenant = loadedTenants.find(t => t.id === id);
+      if (!tenant) return;
+
+      if (button.dataset.action === 'view') {
+        window.viewTenantDetails(id);
+      } else if (button.dataset.action === 'copy') {
+        window.copyTenantLoginInfo(tenant.email, tenant.name, tenant.room);
+      } else if (button.dataset.action === 'delete') {
+        window.deleteTenantAccount(id, button.dataset.name);
+      }
+    });
 
     // Filter Tenants List
     window.filterTenantsList = function () {
@@ -1707,8 +1748,12 @@
       }
     }
 
-    // Initialize Tenant Firestore Listener on load
-    listenToTenantsCollection();
+    // Initialize Tenant Firestore Listener, but only once the auth guard has
+    // confirmed a staff session. Binding this for an anonymous visitor would
+  // leak tenant PII and (previously) plaintext passwords.
+    document.addEventListener('admin-access-granted', function () {
+      listenToTenantsCollection();
+    }, { once: true });
 
     // Form Submit Handler: Create Tenant Account
     const createTenantForm = document.getElementById('createTenantForm');
@@ -1757,31 +1802,37 @@
         try {
           let tenantUid = null;
 
-          // 1. Attempt creating user in Firebase Auth via Secondary Auth
-          // (Does NOT log out the current admin session!)
-          if (secondaryAuth) {
-            try {
-              const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-              tenantUid = userCred.user.uid;
-              // Cleanly sign out secondary auth so it remains fresh
-              await signOut(secondaryAuth);
-            } catch (authErr) {
-              console.warn('Firebase Auth user creation notice:', authErr);
-              if (authErr.code === 'auth/email-already-in-use') {
-                // Email is already in Auth; proceed to create/update Firestore record
-              } else if (authErr.code === 'auth/weak-password') {
-                throw new Error('Password should be at least 6 characters.');
-              } else if (authErr.code === 'auth/invalid-email') {
-                throw new Error('Please enter a valid email address.');
-              }
+          // 1. Create the Firebase Auth account via the secondary auth instance
+          //    (so the admin's own session stays signed in).
+          if (!secondaryAuth) {
+            throw new Error('Tenant account creation is unavailable: auth is not ready.');
+          }
+          try {
+            const userCred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+            tenantUid = userCred.user.uid;
+          } catch (authErr) {
+            if (authErr.code === 'auth/email-already-in-use') {
+              throw new Error('An account already exists for that email address.');
+            } else if (authErr.code === 'auth/weak-password') {
+              throw new Error('Password should be at least 6 characters.');
+            } else if (authErr.code === 'auth/invalid-email') {
+              throw new Error('Please enter a valid email address.');
             }
+            // Any other failure means the tenant would have no way to sign in,
+            // so abort instead of creating an orphaned Firestore record.
+            console.error('Firebase Auth user creation failed:', authErr);
+            throw new Error('Could not create the sign-in account. Please try again.');
+          } finally {
+            await signOut(secondaryAuth).catch(() => {});
           }
 
-          // 2. Prepare Tenant Record for Firestore
+          // 2. Prepare Tenant Record for Firestore.
+          // The password is deliberately NOT stored here -- Firebase Auth owns
+          // it, and firestore.rules rejects any write containing a `password`
+            // field.
           const tenantPayload = {
             name: fullName,
             email: email,
-            password: password, // preserved so admin can retrieve/copy login details
             phone: phone,
             emergencyContact: emergencyContact,
             room: room,

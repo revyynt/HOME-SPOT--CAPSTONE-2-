@@ -369,7 +369,8 @@
             alertBox.textContent = '';
         }
 
-        // Login form handler connected to Firebase Firestore & Auth
+        // Login form handler. Credentials are verified by Firebase Auth only --
+        // there is no plaintext password fallback.
         document.getElementById('tenantLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             clearAlert();
@@ -391,72 +392,65 @@
             submitBtn.style.opacity = '0.7';
 
             try {
-                // 1. Look up tenant account in Firestore 'tenants' collection
-                const tenantsRef = collection(db, 'tenants');
-                const q = query(tenantsRef, where('email', '==', email));
-                const querySnapshot = await getDocs(q);
+                // 1. Verify the password with Firebase Auth.
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const authUser = userCredential.user;
 
-                let matchedTenant = null;
+                // 2. Load the tenant profile. firestore.rules scopes this read to
+                //    the signed-in user's own record.
+                let tenantData = {};
                 let tenantDocId = null;
-
-                if (!querySnapshot.empty) {
-                    querySnapshot.forEach(docSnap => {
-                        const data = docSnap.data();
-                        // Verify password matches stored credential
-                        if (data.password === password) {
-                            matchedTenant = data;
-                            tenantDocId = docSnap.id;
-                        }
-                    });
-                }
-
-                // 2. Also attempt Firebase Auth in parallel
-                let authUser = null;
                 try {
-                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                    authUser = userCredential.user;
-                } catch (authError) {
-                    console.warn('Firebase Auth sign-in note:', authError.code);
+                    const profileQuery = query(
+                        collection(db, 'tenants'),
+                        where('email', '==', authUser.email || email)
+                    );
+                    const profileSnapshot = await getDocs(profileQuery);
+                    if (!profileSnapshot.empty) {
+                        tenantDocId = profileSnapshot.docs[0].id;
+                        tenantData = profileSnapshot.docs[0].data();
+                    }
+                } catch (profileError) {
+                    // A missing profile is not a login failure; the portal copes
+                    // with defaults and the admin can still see the account.
+                    console.warn('Tenant profile lookup failed:', profileError);
                 }
 
-                // If credentials matched Firestore or Firebase Auth
-                if (matchedTenant || authUser) {
-                    const tenantData = matchedTenant || {};
-
-                    // Save session details for Tenant Portal
-                    sessionStorage.setItem('tenantLoggedIn', 'true');
-                    sessionStorage.setItem('tenantEmail', email);
-                    sessionStorage.setItem('tenantName', tenantData.name || authUser?.displayName || email.split('@')[0]);
-                    sessionStorage.setItem('tenantPhone', tenantData.phone || '');
-                    sessionStorage.setItem('tenantRoom', tenantData.room || 'Room 201');
-                    sessionStorage.setItem('tenantDorm', tenantData.dormName || 'Triple Occupancy Room');
-                    sessionStorage.setItem('tenantMoveInDate', tenantData.moveInDate || 'May 1, 2026');
-                    sessionStorage.setItem('tenantMonthlyRent', tenantData.monthlyRent || '5000');
-                    sessionStorage.setItem('tenantEmergencyContact', tenantData.emergencyContact || '');
-                    if (tenantData.amountDue !== undefined && tenantData.amountDue !== null) {
-                        sessionStorage.setItem('tenantAmountDue', tenantData.amountDue.toString());
-                    } else {
-                        sessionStorage.removeItem('tenantAmountDue');
-                    }
-                    if (tenantData.dueDay) {
-                        sessionStorage.setItem('tenantDueDay', tenantData.dueDay.toString());
-                    }
-                    if (tenantDocId) sessionStorage.setItem('tenantDocId', tenantDocId);
-
-                    showAlert('Login successful! Redirecting to your Tenant Portal...', true);
-
-                    setTimeout(() => {
-                        window.location.href = 'tenant-portal.html';
-                    }, 600);
+                // 3. Seed the portal's session cache from the verified profile.
+                sessionStorage.setItem('tenantLoggedIn', 'true');
+                sessionStorage.setItem('tenantEmail', authUser.email || email);
+                sessionStorage.setItem('tenantName', tenantData.name || authUser.displayName || email.split('@')[0]);
+                sessionStorage.setItem('tenantPhone', tenantData.phone || '');
+                sessionStorage.setItem('tenantRoom', tenantData.room || 'Room 201');
+                sessionStorage.setItem('tenantDorm', tenantData.dormName || 'Triple Occupancy Room');
+                sessionStorage.setItem('tenantMoveInDate', tenantData.moveInDate || 'May 1, 2026');
+                sessionStorage.setItem('tenantMonthlyRent', tenantData.monthlyRent || '5000');
+                sessionStorage.setItem('tenantEmergencyContact', tenantData.emergencyContact || '');
+                if (tenantData.amountDue !== undefined && tenantData.amountDue !== null) {
+                    sessionStorage.setItem('tenantAmountDue', tenantData.amountDue.toString());
                 } else {
-                    showAlert('Account not found or password incorrect. Please contact the administrator to create your tenant account upon move-in.');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
-                    submitBtn.style.opacity = '1';
+                    sessionStorage.removeItem('tenantAmountDue');
                 }
+                if (tenantData.dueDay) {
+                    sessionStorage.setItem('tenantDueDay', tenantData.dueDay.toString());
+                }
+                if (tenantDocId) sessionStorage.setItem('tenantDocId', tenantDocId);
+
+                showAlert('Login successful! Redirecting to your Tenant Portal...', true);
+
+                setTimeout(() => {
+                    window.location.href = 'tenant-portal.html';
+                }, 600);
             } catch (err) {
-                console.error('Tenant login error:', err);
-                showAlert('Login error: ' + (err.message || 'Please check your connection and try again.'));
+                const code = err && err.code;
+                if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') {
+                    showAlert('Account not found or password incorrect. Please contact the administrator to create your tenant account upon move-in.');
+                } else if (code === 'auth/too-many-requests') {
+                    showAlert('Too many failed attempts. Please wait a moment and try again.');
+                } else {
+                    console.error('Tenant login error:', err);
+                    showAlert('Login error: ' + (err.message || 'Please check your connection and try again.'));
+                }
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Sign In';
                 submitBtn.style.opacity = '1';

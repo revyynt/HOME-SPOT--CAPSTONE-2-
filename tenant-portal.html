@@ -854,6 +854,10 @@
             }
         }
     </style>
+    <style>
+        /* Portal content stays hidden until the Firebase auth guard resolves. */
+        html[data-auth-pending] body { visibility: hidden; }
+    </style>
 </head>
 
 <body>
@@ -1203,11 +1207,10 @@
     <script type="module" src="./assets/js/firebase-service.js"></script>
     <script type="module" src="./assets/js/paymongo-service.js"></script>
     <script>
-        if (!sessionStorage.getItem('tenantLoggedIn')) {
-            window.location.href = 'tenant-login.html';
-        }
+        // Content stays hidden until the Firebase auth guard resolves.
+        document.documentElement.dataset.authPending = 'true';
 
-        const userEmail = sessionStorage.getItem('tenantEmail') || 'tenant@example.com';
+        let userEmail = sessionStorage.getItem('tenantEmail') || '';
         let tenantName = sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
         let tenantPhone = sessionStorage.getItem('tenantPhone') || '+63 912 345 6789';
         let tenantRoom = sessionStorage.getItem('tenantRoom') || 'Room 201';
@@ -1736,23 +1739,27 @@
             sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
             localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
 
-            // Update Firestore tenant document with current remaining due & payment status
-            if (currentTenantDocId && window.firebaseDb && window.firebaseFirestore) {
-                try {
-                    const { doc, updateDoc, serverTimestamp } = window.firebaseFirestore;
-                    const tenantDocRef = doc(window.firebaseDb, 'tenants', currentTenantDocId);
-                    await updateDoc(tenantDocRef, {
-                        amountDue: currentRemainingDue,
-                        paymentStatus: currentRemainingDue <= 0 ? 'Paid' : 'Pending',
-                        lastPaymentDate: new Date().toISOString(),
-                        lastPaymentAmount: record.amount,
-                        lastPaymentReference: record.referenceNumber,
-                        updatedAt: serverTimestamp()
-                    });
-                } catch (fsErr) {
-                    console.warn('Could not update amountDue in tenant doc:', fsErr);
-                }
-            }
+// Update Firestore tenant document with current remaining due & payment status.
+      // firestore.rules deliberately denies tenant writes here: a browser must
+        // not be able to zero out its own balance. The authoritative balance is
+  // reconciled server-side from the PayMongo webhook / by an admin, so a
+       // permission error below is expected for tenants.
+      if (currentTenantDocId && window.firebaseDb && window.firebaseFirestore) {
+            try {
+                const { doc, updateDoc, serverTimestamp } = window.firebaseFirestore;
+        const tenantDocRef = doc(window.firebaseDb, 'tenants', currentTenantDocId);
+       await updateDoc(tenantDocRef, {
+    amountDue: currentRemainingDue,
+         paymentStatus: currentRemainingDue <= 0 ? 'Paid' : 'Pending',
+      lastPaymentDate: new Date().toISOString(),
+          lastPaymentAmount: record.amount,
+        lastPaymentReference: record.referenceNumber,
+          updatedAt: serverTimestamp()
+       });
+            } catch (fsErr) {
+    console.info('Balance left for server reconciliation:', fsErr.code || fsErr.message);
+      }
+    }
 
             // Update UI
             updateAmountDueUI();
@@ -2426,6 +2433,35 @@
             if (chatMessages) {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
+        });
+    </script>
+
+    <script type="module">
+        // Real authentication guard. The previous check only tested a
+        // sessionStorage string, which any visitor could set from the console.
+        (async () => {
+            const service = window.firebaseService;
+            await service.authReady;
+
+            const user = service.getCurrentUser();
+            if (!user) {
+                sessionStorage.clear();
+                window.location.replace('tenant-login.html');
+                return;
+            }
+
+            // The session email must belong to the verified account, otherwise
+            // fall back to the identity Firebase actually signed in.
+            if (userEmail !== user.email) {
+                userEmail = user.email || '';
+                sessionStorage.setItem('tenantEmail', userEmail);
+            }
+
+            delete document.documentElement.dataset.authPending;
+            document.dispatchEvent(new CustomEvent('tenant-access-granted'));
+        })().catch((err) => {
+            console.error('[auth] portal guard failed:', err);
+            window.location.replace('tenant-login.html');
         });
     </script>
 </body>

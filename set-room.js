@@ -1,6 +1,16 @@
 /**
  * Utility script to view and update room availability in Firestore
- * 
+ *
+ * Requires an admin Firebase ID token, because firestore.rules only permits
+ * authenticated staff to write to `rooms`. Get one by signing in at
+ * admin-login.html and copying it from the browser console:
+ *
+ *   await firebaseService.getIdToken()
+ *
+ * then run:
+ *   set FIREBASE_ID_TOKEN=<token> (PowerShell)
+ *   export FIREBASE_ID_TOKEN=<token> (bash/macOS)
+ *
  * Examples:
  *   node set-room.js                  -> Shows all rooms and current availability
  *   node set-room.js 3                -> Sets Triple Occupancy Room to 3 available
@@ -8,8 +18,22 @@
  *   node set-room.js commercial 1     -> Sets Commercial Space to 1 available
  */
 
-const PROJECT_ID = 'capstoneapt-b5681';
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'capstoneapt-b5681';
 const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/rooms`;
+
+const ID_TOKEN = (process.env.FIREBASE_ID_TOKEN || '').trim();
+if (!ID_TOKEN) {
+  console.error('\n[auth] FIREBASE_ID_TOKEN is not set.');
+  console.error('[auth] Sign in at admin-login.html, then run:');
+  console.error('[auth]   await firebaseService.getIdToken()');
+  console.error('[auth] and export it before running this script.\n');
+  process.exit(1);
+}
+
+const authHeaders = {
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${ID_TOKEN}`
+};
 
 const ROOM_MAP = {
   'triple': { id: 'triple-occupancy-room', name: 'Triple Occupancy Room' },
@@ -20,7 +44,7 @@ const ROOM_MAP = {
 };
 
 async function getRooms() {
-  const res = await fetch(BASE_URL);
+  const res = await fetch(BASE_URL, { headers: authHeaders });
   if (!res.ok) {
     throw new Error(`Failed to fetch rooms: ${res.status} ${res.statusText}`);
   }
@@ -47,7 +71,7 @@ async function setAvailability(docId, roomName, count) {
 
   const res = await fetch(url, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders,
     body: JSON.stringify(body)
   });
 

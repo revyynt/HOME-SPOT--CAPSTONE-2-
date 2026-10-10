@@ -3,12 +3,189 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // This rule allows anyone with your Firestore database reference to view, edit,
-    // and delete all data in your Firestore database. It is useful for getting
-    // started in development. Replace this with proper security rules before
-    // deploying to production.
+    // -------------------------------------------------------------------------
+    // Helpers
+    //
+    // `get()` inside a rule is not itself subject to the read rules below, so
+    // these lookups are safe to use as guards.
+    // -------------------------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && role() in ['admin', 'superadmin'];
+    }
+
+    function isSuperAdmin() {
+      return isSignedIn() && role() == 'superadmin';
+    }
+
+    // The signed-in user's own email, used to scope tenant-owned data.
+    function myEmail() {
+      return request.auth.token.email;
+    }
+
+    function isValidText(value, max) {
+      return value is string && value.size() > 0 && value.size() <= max;
+    }
+
+    // -------------------------------------------------------------------------
+    // users -- role source of truth
+    //
+    // A signed-in user may create ONLY their own document, and only with the
+    // 'tenant' role. This is what stops an anonymous visitor from promoting
+    // themselves to superadmin.
+    // -------------------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+
+      // A staff member may provision a tenant profile; a signed-in user may only
+          // create their own, and only with the 'tenant' role. Neither path can
+    // mint an admin or superadmin account -- that is superadmin-only.
+      allow create: if request.resource.data.role == 'tenant'
+                    && (isAdmin() || (isSignedIn() && request.auth.uid == userId));
+
+// Only a superadmin may change roles or create/destroy staff accounts.
+      // A user may edit their own contact details but never their own role.
+      allow update: if isSuperAdmin()
+  || (isSignedIn()
+  && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly(['name', 'phone', 'dormName', 'updatedAt']));
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // rooms -- public inventory
+    // -------------------------------------------------------------------------
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // reservations -- public submission, staff-only decision
+    //
+    // The public form is intentionally anonymous, so `create` is constrained to
+    // an exact field set and a Pending status. Anyone reading or deciding on a
+    // reservation must be staff.
+    // -------------------------------------------------------------------------
+    match /reservations/{reservationId} {
+      allow create: if request.resource.data.keys().hasOnly([
+                       'name', 'email', 'phone', 'room', 'moveInDate',
+                       'message', 'additionalInfo', 'status', 'createdAt'
+                     ])
+                    && isValidText(request.resource.data.name, 120)
+                    && isValidText(request.resource.data.email, 200)
+&& isValidText(request.resource.data.room, 120)
+     && request.resource.data.status == 'Pending';
+
+      allow read, update, delete: if isAdmin();
+    }
+
+// -------------------------------------------------------------------------
+    // messages -- two distinct producers sharing one collection:
+    //   1. Public "Inquire Now" form (anonymous, inquiry shape)
+    //   2. Tenant <-> staff chat (authenticated, own email only)
+    //
+    // Both shapes are pinned by `hasOnly` so a caller cannot smuggle extra
+    // fields in. Note that rules cannot rate-limit: the anonymous create path
+    // still needs CAPTCHA/rate limiting at the network edge to stop spam.
+    // -------------------------------------------------------------------------
+    match /messages/{messageId} {
+      allow create: if isSignedIn()
+                    && request.resource.data.email == myEmail()
+                    && request.resource.data.keys().hasOnly([
+                         'name', 'email', 'message', 'status', 'sender', 'createdAt', 'reply'
+                       ])
+                    && isValidText(request.resource.data.message, 4000);
+
+   // Anonymous public inquiry.
+      allow create: if !isSignedIn()
+          && request.resource.data.keys().hasOnly([
+               'name', 'email', 'phone', 'room', 'moveInDate',
+                       'message', 'status', 'createdAt'
+                  ])
+       && isValidText(request.resource.data.name, 120)
+     && isValidText(request.resource.data.email, 200)
+                    && isValidText(request.resource.data.room, 120)
+            && request.resource.data.status == 'New';
+
+      allow read: if isAdmin()
+         || (isSignedIn() && resource.data.email == myEmail());
+
+// Staff post replies; tenants may only edit their own unanswered message.
+      // `get(k, default)` is used because reading a missing field directly
+      // raises an error in rules rather than evaluating to null.
+      allow update: if isAdmin()
+     || (isSignedIn()
+      && resource.data.email == myEmail()
+   && resource.data.get('reply', null) == null
+            && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['message']));
+
+   allow delete: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // tenants -- PII, lease records, and login linkage
+    //
+    // Staff-only. Note there is intentionally NO plaintext password field here
+    // any more: tenants authenticate with Firebase Auth, and `uid` links the
+    // Firestore profile to the Auth account.
+    // -------------------------------------------------------------------------
+    match /tenants/{tenantId} {
+      allow read: if isAdmin()
+                  || (isSignedIn()
+                      && (resource.data.uid == request.auth.uid
+                          || resource.data.email == myEmail()));
+
+      allow create, update: if isAdmin()
+                            && !request.resource.data.keys().hasAny(['password']);
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // payments -- server-authoritative
+    //
+    // Written only by the PayMongo webhook (Admin SDK bypasses these rules).
+    // The browser can never mark a payment as paid.
+    // -------------------------------------------------------------------------
+    match /payments/{paymentId} {
+      allow read: if isAdmin()
+                  || (isSignedIn() && resource.data.tenantEmail == myEmail());
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // adminTokens -- FCM device tokens for staff
+    // -------------------------------------------------------------------------
+    match /adminTokens/{tokenId} {
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
+    // inquiries -- written by Cloud Functions; staff read only
+    // -------------------------------------------------------------------------
+    match /inquiries/{inquiryId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Default deny: anything not matched above is unreachable from a client.
+    // -------------------------------------------------------------------------
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

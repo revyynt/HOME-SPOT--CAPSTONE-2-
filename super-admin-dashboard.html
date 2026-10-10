@@ -6,6 +6,10 @@
   <title>Super Admin Dashboard - HomeSpot</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./assets/css/style.css">
+<style>
+  /* Content stays hidden until the superadmin auth guard resolves. */
+  html[data-auth-pending] body { visibility: hidden; }
+</style>
 </head>
 <body class="bg-gray-50">
   <!-- Top Navigation -->
@@ -496,8 +500,19 @@
   <script type="module">
     import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-    // Initialize Firebase Auth
-    const auth = getAuth();
+    // Reuse the default app created by firebase-service.js.
+    const auth = window.firebaseAuth || getAuth();
+
+    // Auth guard: this dashboard is superadmin-only. Without it the page is
+    // reachable by URL by anyone. Content stays hidden until the guard passes.
+    document.documentElement.dataset.authPending = 'true';
+    (async () => {
+      await window.firebaseService.authReady;
+      const allowed = await window.firebaseService.requireRole('superadmin', 'admin-login.html');
+      if (!allowed) return; // requireRole has already redirected
+      delete document.documentElement.dataset.authPending;
+      document.dispatchEvent(new CustomEvent('superadmin-access-granted'));
+    })();
 
     // Mobile-optimized logout function
     window.logoutAdmin = async function(e) {

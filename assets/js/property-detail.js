@@ -38,8 +38,17 @@ const roomsData = [
   },
 ];
 
-// Get URL parameters
+// firebase-service.js is an ES module, so this classic script cannot import
+// from it. Resolve it lazily at call time instead, falling back to the local
+// implementation so behaviour is unchanged when the service is absent.
+function getFirebaseService() {
+  return typeof window !== 'undefined' ? window.firebaseService : null;
+}
+
 function normalizeRoomDocId(name) {
+  const service = getFirebaseService();
+  if (service) return service.normalizeRoomDocId(name);
+
   return String(name || '')
     .toLowerCase()
     .trim()
@@ -48,16 +57,25 @@ function normalizeRoomDocId(name) {
 }
 
 function hasFirestore() {
+  const service = getFirebaseService();
+  if (service) return service.isFirestoreReady();
+
   return typeof window !== 'undefined' && window.firebaseDb && window.firebaseFirestore;
 }
 
 function getRoomDocRef(roomName) {
+  const service = getFirebaseService();
+  if (service) return service.getRoomDocRef(roomName);
+
   if (!hasFirestore() || !roomName) return null;
   const roomId = normalizeRoomDocId(roomName);
   return window.firebaseFirestore.doc(window.firebaseDb, 'rooms', roomId);
 }
 
 async function ensureRoomDocument(room) {
+  const service = getFirebaseService();
+  if (service) return service.ensureRoomDocument(room);
+
   if (!hasFirestore()) return null;
   const roomRef = getRoomDocRef(room.name);
   if (!roomRef) return null;
