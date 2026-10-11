@@ -143,3 +143,18 @@ test('the PayMongo secret key is never referenced in client-side code', () => {
     );
   }
 });
+
+test('the API bridge requires WEBHOOK_SECRET at boot', () => {
+  // The dev bridge used to warn-and-continue without WEBHOOK_SECRET, leaving
+  // /api/paymongo-webhook open to forged events. It must now fail fast.
+  const server = readFileSync(join(ROOT, 'paymongo-api-server.js'), 'utf8');
+  assert.match(
+    server,
+    /const WEBHOOK_SECRET = requireEnv\('WEBHOOK_SECRET'\)/,
+    'paymongo-api-server.js must requireEnv(WEBHOOK_SECRET) so the server refuses to boot without it'
+  );
+  assert.ok(
+    !/webhook endpoint is unauthenticated/.test(server),
+    'the bridge must no longer contain an unauthenticated-webhook fallback'
+  );
+});

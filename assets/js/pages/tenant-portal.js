@@ -9,66 +9,103 @@
  *     execution order. Identity now comes from the verified Firebase user.
  *   - Row/tab/modal actions are delegated from data-* attributes, so module
  *     scope stays private instead of being published wholesale to window.
+ *
+ * Payment state is server-authoritative: a PayMongo redirect is treated as a
+ * claim that must be corroborated by the webhook, never as proof of payment.
  */
 
 import { guardPage } from '../lib/guard.js';
 import { getCurrentUser } from '../firebase-service.js';
-import { interpretPaymentIntent } from '../lib/payment-return.js';
+import { escapeHtml } from '../lib/format.js';
+import {
+  SCENARIO,
+  resolveReturnScenario,
+  interpretPaymentIntent,
+  interpretCheckoutSession,
+  buildReturnRecord,
+  shouldExpireSession
+} from '../lib/payment-return.js';
+import { VERIFICATION, decideVerification, resolveAmountDue } from '../lib/payment-verification.js';
+import { Toast } from '../render/toast.js';
 import * as PayMongo from '../paymongo-service.js';
-
-// TODO(refactor): checkUrlPaymentReturn still carries its own parameter
-// parsing and scenario cascade. The tested decision logic already exists in
-// ../lib/payment-return.js (resolveReturnScenario / interpretCheckoutSession /
-// buildReturnRecord / shouldExpireSession) and should replace it -- the pure
-// function is covered by tests/payment-return.test.js. Only
-// interpretPaymentIntent has been swapped in so far. Do this as one change,
-// with a manual walkthrough of all four return paths.
 
 // Hide the portal until the session check resolves.
 document.documentElement.dataset.authPending = 'true';
 
+let userEmail = sessionStorage.getItem('tenantEmail') || '';
+// No placeholder PII in the fallbacks: a receipt that invents a tenant name or
+// phone is worse than one that shows the field is missing. These are replaced by
+// the Firestore profile snapshot below; until it arrives the fields are blank.
+let tenantName = sessionStorage.getItem('tenantName') || '';
+let tenantPhone = sessionStorage.getItem('tenantPhone') || '';
+let tenantRoom = sessionStorage.getItem('tenantRoom') || '';
+let tenantDorm = sessionStorage.getItem('tenantDorm') || '';
+let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || '';
+let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 0;
+let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '';
+let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
+let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
+
+/**
+ * Reconciles the cached session email with the verified Firebase account.
+ *
+ * sessionStorage is not trusted for identity: the signed-in account is. When
+ * they differ, the verified address wins and the UI is repainted so the page
+ * never shows the previous session's tenant.
+ *
+ * @returns {boolean} whether the cached identity was replaced
+ */
+function syncSessionIdentity() {
+  const user = getCurrentUser();
+  if (!user || !user.email || user.email === userEmail) return false;
+
+  userEmail = user.email;
+  sessionStorage.setItem('tenantEmail', userEmail);
+  return true;
+}
+
+// Runs only after the guard resolves, and after `userEmail` is initialised --
+// this ordering was previously inverted, which left the displayed email able to
+// lag the verified account.
 guardPage({
   role: 'tenant',
   redirectTo: 'tenant-login.html',
   grantedEvent: 'tenant-access-granted'
 }).then((allowed) => {
   if (!allowed) return;
-  // The session email must belong to the verified account.
-  const user = getCurrentUser();
-  if (user && userEmail !== user.email) {
-    userEmail = user.email || '';
-    sessionStorage.setItem('tenantEmail', userEmail);
+  if (syncSessionIdentity()) {
+    populateTenantUI();
+    watchServerPayments();
+    loadTenantPaymentHistory();
   }
 });
 
 // Content stays hidden until the Firebase auth guard resolves.
 
-let userEmail = sessionStorage.getItem('tenantEmail') || '';
-let tenantName = sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
-let tenantPhone = sessionStorage.getItem('tenantPhone') || '+63 912 345 6789';
-let tenantRoom = sessionStorage.getItem('tenantRoom') || 'Room 201';
-let tenantDorm = sessionStorage.getItem('tenantDorm') || 'Triple Occupancy Room';
-let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 2026';
-let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
-let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
-let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
-let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
-
 // Global State
-let activeQrPaymentData = null;
-let qrTimerInterval = null;
-let qrStatusPollInterval = null;
-let tenantExplicitAmountDueSet = false;
 
-// Restore initial remaining due from session or local storage
-let initialDue =
-  sessionStorage.getItem('tenantAmountDue') ??
-  localStorage.getItem('tenant_amount_due_' + userEmail);
-let currentRemainingDue =
-  initialDue !== null && !isNaN(parseFloat(initialDue)) ? parseFloat(initialDue) : tenantRent;
-if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
-  tenantExplicitAmountDueSet = true;
-}
+/** How long after checkout a webhook payment may still be treated as ours. */
+const PAYMENT_MATCH_WINDOW_HOURS = 24;
+
+// `payments` the webhook has written for this tenant (read-only mirror).
+let serverPayments = [];
+
+/**
+ * Epoch millis for the checkout currently being returned from.
+ *
+ * Captured while the pending record is still in scope, because the return
+ * handlers clear it before saving. Used to anchor the webhook match window so
+ * an older payment of the same amount cannot confirm this attempt.
+ */
+let returnAttemptStartedAtMs = null;
+
+/** `tenants.amountDue` as set by staff, when present. Takes priority. */
+let tenantAmountDueFromServer = null;
+
+// Start from the rent; refreshServerBalance() replaces this with the
+// server-derived figure as soon as the payments listener resolves. The cached
+// value is deliberately NOT trusted -- it is browser state a user can edit.
+let currentRemainingDue = tenantRent;
 
 function updateAmountDueUI() {
   const summaryAmountDue = document.getElementById('summaryAmountDue');
@@ -216,16 +253,17 @@ async function fetchTenantFirestoreProfile() {
           sessionStorage.setItem('tenantMonthlyRent', tenantRent);
         }
         if (docData.amountDue !== undefined && docData.amountDue !== null) {
-          currentRemainingDue = parseFloat(docData.amountDue);
-          tenantExplicitAmountDueSet = true;
-          sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-          localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+          // Staff-set balance. Authoritative, so it overrides any derived total.
+          tenantAmountDueFromServer = parseFloat(docData.amountDue);
         }
         if (docData.emergencyContact) {
           tenantEmergency = docData.emergencyContact;
           sessionStorage.setItem('tenantEmergencyContact', docData.emergencyContact);
         }
         populateTenantUI();
+        // The profile may have supplied a staff-set balance after the first
+        // paint, so re-derive now that we know it.
+        if (tenantAmountDueFromServer !== null) refreshServerBalance();
       }
     });
   } catch (err) {
@@ -269,8 +307,56 @@ function logout() {
   window.location.href = 'tenant-login.html';
 }
 
-function saveProfile() {
-  alert('Profile updated successfully!');
+/**
+ * Persists the tenant's editable profile fields.
+ *
+ * Only name, phone, and emergency contact are written. firestore.rules scopes
+ * a tenant's own update to exactly those keys, so rent, balance, status, and
+ * role cannot be touched from here -- staff and the webhook own those.
+ */
+async function saveProfile() {
+  const name = (document.getElementById('fullName')?.value || '').trim();
+  const phone = (document.getElementById('phone')?.value || '').trim();
+  const emergencyContact = (document.getElementById('emergencyContact')?.value || '').trim();
+
+  if (!name) {
+    Toast.error('Please enter your name.');
+    return;
+  }
+
+  if (!currentTenantDocId || !window.firebaseDb || !window.firebaseFirestore) {
+    Toast.error('Your profile is still loading. Please try again in a moment.');
+    return;
+  }
+
+  const { doc, updateDoc, serverTimestamp } = window.firebaseFirestore;
+
+  try {
+    await updateDoc(doc(window.firebaseDb, 'tenants', currentTenantDocId), {
+      name,
+      phone,
+      emergencyContact,
+      updatedAt: serverTimestamp()
+    });
+
+    // Keep the local mirror in step so the rest of the portal agrees.
+    tenantName = name;
+    tenantPhone = phone;
+    tenantEmergency = emergencyContact;
+    sessionStorage.setItem('tenantName', name);
+    sessionStorage.setItem('tenantPhone', phone);
+    sessionStorage.setItem('tenantEmergencyContact', emergencyContact);
+
+    populateTenantUI();
+    Toast.success('Profile updated.');
+  } catch (error) {
+    console.error('Profile save failed:', error);
+    Toast.error(
+      error?.code === 'permission-denied'
+        ? 'You can only update your own contact details. Contact the admin for other changes.'
+        : 'Could not save your profile. Please try again.'
+    );
+  }
 }
 
 // Update Submit Button State and Text
@@ -314,10 +400,10 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   const amountVal = parseFloat(amountRaw);
   const notes = (document.getElementById('paymentNotes').value || '').trim();
   const tenantName =
-    document.getElementById('fullName')?.value ||
+    document.getElementById('fullName')?.value?.trim() ||
     sessionStorage.getItem('tenantName') ||
-    'Juan Dela Cruz';
-  const tenantPhone = document.getElementById('phone')?.value || '+63 912 345 6789';
+    '';
+  const tenantPhone = document.getElementById('phone')?.value?.trim() || '';
 
   if (!amountVal || amountVal <= 0) {
     if (currentRemainingDue <= 0) {
@@ -370,7 +456,10 @@ document.getElementById('paymentForm').addEventListener('submit', async function
         notes: notes,
         method: 'PayMongo Checkout',
         tenantName: tenantName,
-        tenantEmail: userEmail
+        tenantEmail: userEmail,
+        // Anchors the webhook match window to when the checkout was created,
+        // so an older payment of the same amount cannot confirm this one.
+        startedAtMs: Date.now()
       });
       // Store in BOTH storages for maximum reliability across cross-origin redirects
       sessionStorage.setItem('pending_paymongo_payment', pendingPayload);
@@ -394,293 +483,205 @@ document.getElementById('paymentForm').addEventListener('submit', async function
   }
 });
 
-// Initiate QR Ph flow with PayMongo.
+// Save & Finalize Payment Record
 //
-// UNREACHABLE: nothing calls this, and it is the only thing that opens the QR
-// modal -- so showQrModal/confirmQrPayment and the "I Have Completed Payment"
-// button below are dead too. Left in place pending a decision: wire the QR
-// method up, or delete the whole flow. See CONVERSION-SUMMARY.md.
-// eslint-disable-next-line no-unused-vars
-async function initiateQrPhFlow(amountVal, purpose, tenantName, tenantPhone) {
-  // Always set activeQrPaymentData first so "I Have Completed Payment" always works
-  const refNumber = 'PM-QR-' + Date.now().toString().slice(-6);
-  activeQrPaymentData = {
-    referenceNumber: refNumber,
-    sessionId: '',
-    checkoutUrl: '',
-    paymentMethodId: 'pm_qr_' + Date.now().toString(36),
-    method: 'QR Ph (GCash/Maya)',
-    amount: amountVal,
-    purpose: purpose,
-    tenantName: tenantName,
-    tenantEmail: userEmail,
-    dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-    status: 'Paid'
-  };
-
-  // Try to get a real PayMongo session (optional — QR works without it)
-  try {
-    // Ensure PayMongoService is ready
-    const session = await PayMongo.createCheckoutSession({
-      amount: amountVal,
-      description: `${purpose} - MJP Residences (QR Ph)`,
-      tenantName: tenantName,
-      tenantEmail: userEmail,
-      tenantPhone: tenantPhone,
-      paymentMethodTypes: ['qrph'],
-      successUrl: `${window.location.origin}${window.location.pathname}?payment=success&method=qrph&amount=${amountVal}&purpose=${encodeURIComponent(purpose)}`,
-      cancelUrl: `${window.location.origin}${window.location.pathname}?payment=cancelled`
-    });
-    if (session && session.sessionId) {
-      activeQrPaymentData.sessionId = session.sessionId;
-      activeQrPaymentData.referenceNumber =
-        session.referenceNumber || activeQrPaymentData.referenceNumber;
-      activeQrPaymentData.paymentMethodId = session.sessionId;
-    }
-  } catch (e) {
-    console.warn('PayMongo QR session (non-critical):', e.message);
-  }
-
-  showQrModal(activeQrPaymentData);
-}
-
-// Show PayMongo QR Ph Modal
-function showQrModal(data) {
-  document.getElementById('qrModalAmount').textContent =
-    `₱${data.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-  document.getElementById('qrModalRef').textContent = data.referenceNumber;
-
-  // Always generate a proper QR Ph code using payment reference data
-  const qrContent = PayMongo
-    ? PayMongo.generateQrPhImageUrl({
-        amount: data.amount,
-        reference: data.referenceNumber,
-        merchant: 'MJP Residences'
-      })
-    : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent('PAYMONGO-QRPH-' + data.referenceNumber + '-' + data.amount)}`;
-  document.getElementById('qrModalImage').src = qrContent;
-
-  // Start 15 minute countdown timer
-  let timeLeft = 15 * 60;
-  const timerEl = document.getElementById('qrTimer');
-  if (qrTimerInterval) clearInterval(qrTimerInterval);
-  qrTimerInterval = setInterval(() => {
-    timeLeft--;
-    const mins = Math.floor(timeLeft / 60);
-    const secs = timeLeft % 60;
-    timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    if (timeLeft <= 0) {
-      clearInterval(qrTimerInterval);
-      closeQrModal();
-      alert('Payment session expired. Please generate a new QR code.');
-    }
-  }, 1000);
-
-  // Auto-poll PayMongo session status every 3 seconds to detect when paid in test mode
-  if (qrStatusPollInterval) clearInterval(qrStatusPollInterval);
-  if (data.sessionId && PayMongo?.getCheckoutSession) {
-    qrStatusPollInterval = setInterval(async () => {
-      try {
-        const session = await PayMongo.getCheckoutSession(data.sessionId);
-        if (session) {
-          const payments = session.attributes?.payments || [];
-          const isPaid = session.attributes?.status === 'paid' || payments.length > 0;
-          if (isPaid) {
-            clearInterval(qrStatusPollInterval);
-            closeQrModal();
-            if (payments.length > 0 && payments[0].id) {
-              activeQrPaymentData.paymentMethodId = payments[0].id;
-            }
-            await saveAndFinalizePayment(activeQrPaymentData);
-            activeQrPaymentData = null;
-          }
-        }
-      } catch (err) {
-        // ignore poll errors
-      }
-    }, 3000);
-  }
-
-  document.getElementById('paymongoQrModal').style.display = 'flex';
-}
-
-function closeQrModal() {
-  if (qrTimerInterval) clearInterval(qrTimerInterval);
-  if (qrStatusPollInterval) clearInterval(qrStatusPollInterval);
-  document.getElementById('paymongoQrModal').style.display = 'none';
-}
-
-// Confirm QR Payment — executes live PayMongo test charge, saves record and shows receipt
-async function confirmQrPayment() {
-  if (!activeQrPaymentData) return;
-  if (qrStatusPollInterval) clearInterval(qrStatusPollInterval);
-
-  const confirmBtn = document.getElementById('confirmQrBtn');
-  if (confirmBtn) {
-    confirmBtn.disabled = true;
-    confirmBtn.innerHTML = 'Processing in PayMongo...';
-  }
-
-  // Ensure PayMongo service is ready
-
-  // Execute live test payment in PayMongo (creates real test payment visible in PayMongo Dashboard)
-  let pmResult = null;
-  try {
-    if (PayMongo?.completeQrTestPayment) {
-      pmResult = await PayMongo.completeQrTestPayment({
-        amount: activeQrPaymentData.amount,
-        description: `${activeQrPaymentData.purpose || 'Rent Payment'} - MJP Residences`,
-        tenantName: activeQrPaymentData.tenantName,
-        tenantEmail: activeQrPaymentData.tenantEmail
-      });
-    }
-  } catch (err) {
-    console.warn('PayMongo test payment warning:', err.message);
-  }
-
-  if (pmResult && pmResult.paymentId) {
-    activeQrPaymentData.paymentMethodId = pmResult.paymentId;
-    activeQrPaymentData.referenceNumber =
-      pmResult.referenceNumber || 'PM-QR-' + pmResult.paymentId.slice(-6).toUpperCase();
-    activeQrPaymentData.status = 'Paid';
-  }
-
-  closeQrModal();
-
-  // Save to Firestore & localStorage, update balance, and show official receipt
-  const recordToSave = { ...activeQrPaymentData };
-  activeQrPaymentData = null;
-  await saveAndFinalizePayment(recordToSave);
-}
-
-// Save & Finalize Payment Record — always saves to Firestore & localStorage
+// The redirect back from PayMongo is only a CLAIM that a payment was made, so
+// nothing here marks money as received. The record is cached locally for the
+// history table, the attempt is stored as pending verification, and the balance
+// is recomputed from the `payments` collection -- which only the PayMongo
+// webhook can write (firestore.rules: `allow write: if false`).
+//
+// Hand-editing ?payment=success therefore shows "Awaiting confirmation"
+// forever, and the balance does not move until PayMongo reports the payment.
 async function saveAndFinalizePayment(record) {
-  // Ensure PayMongoService is available
+  const attempt = {
+    ...record,
+    // The verification window is anchored to when the checkout was created,
+    // falling back to now only when we have nothing better (which keeps the
+    // attempt matchable but never lets an old payment stand in for it).
+    startedAtMs: Number(record.startedAtMs) || returnAttemptStartedAtMs || Date.now()
+  };
+  returnAttemptStartedAtMs = null;
 
+  // Local cache only. This is display history, never proof of payment.
   if (PayMongo?.savePaymentRecord) {
     try {
-      await PayMongo.savePaymentRecord(record);
+      await PayMongo.savePaymentRecord(attempt);
     } catch (e) {
-      // Fallback: save directly to localStorage
-      try {
-        const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
-        const arr = JSON.parse(localStorage.getItem(k) || '[]');
-        arr.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem(k, JSON.stringify(arr));
-        const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
-        all.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-      } catch (_) {}
+      cacheLocalPayment(attempt);
     }
   } else {
-    // Direct localStorage save if service never loaded
-    try {
-      const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
-      const arr = JSON.parse(localStorage.getItem(k) || '[]');
-      arr.unshift({ ...record, timestamp: new Date().toISOString() });
-      localStorage.setItem(k, JSON.stringify(arr));
-      const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
-      all.unshift({ ...record, timestamp: new Date().toISOString() });
-      localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-    } catch (_) {}
+    cacheLocalPayment(attempt);
   }
 
-  // Deduct from Amount Due & Persist
-  currentRemainingDue = Math.max(0, currentRemainingDue - record.amount);
-  tenantExplicitAmountDueSet = true;
-  sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-  localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+  // Stash the attempt so the watcher can corroborate it against the webhook.
+  persistPendingVerification(attempt);
 
-  // Update Firestore tenant document with current remaining due & payment status.
-  // firestore.rules deliberately denies tenant writes here: a browser must
-  // not be able to zero out its own balance. The authoritative balance is
-  // reconciled server-side from the PayMongo webhook / by an admin, so a
-  // permission error below is expected for tenants.
-  if (currentTenantDocId && window.firebaseDb && window.firebaseFirestore) {
-    try {
-      const { doc, updateDoc, serverTimestamp } = window.firebaseFirestore;
-      const tenantDocRef = doc(window.firebaseDb, 'tenants', currentTenantDocId);
-      await updateDoc(tenantDocRef, {
-        amountDue: currentRemainingDue,
-        paymentStatus: currentRemainingDue <= 0 ? 'Paid' : 'Pending',
-        lastPaymentDate: new Date().toISOString(),
-        lastPaymentAmount: record.amount,
-        lastPaymentReference: record.referenceNumber,
-        updatedAt: serverTimestamp()
-      });
-    } catch (fsErr) {
-      console.info('Balance left for server reconciliation:', fsErr.code || fsErr.message);
-    }
-  }
+  // Recompute the balance from server-confirmed payments.
+  await refreshServerBalance();
 
-  // Update UI
-  updateAmountDueUI();
-
-  // Reset Form
+  // Reset form
   document.getElementById('paymentNotes').value = '';
   updateSubmitButton();
 
   // Refresh history table
   await loadTenantPaymentHistory();
 
-  // Display Receipt
-  showReceiptModal(record);
+  // Tell the payer it is being verified rather than "Paid".
+  showReceiptModal(attempt);
 }
 
-// Save Failed Payment Record — logs in Firestore & localStorage, refreshes history, shows Failed Receipt
+/**
+ * Mirrors a payment record into localStorage.
+ *
+ * The portal used to call this "saving to Firestore", but firestore.rules deny
+ * every client write to `payments`, so this has only ever been a local cache.
+ */
+function cacheLocalPayment(record) {
+  try {
+    const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
+    const arr = JSON.parse(localStorage.getItem(k) || '[]');
+    arr.unshift({ ...record, timestamp: new Date().toISOString() });
+    localStorage.setItem(k, JSON.stringify(arr));
+    const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
+    all.unshift({ ...record, timestamp: new Date().toISOString() });
+    localStorage.setItem('all_tenant_payments', JSON.stringify(all));
+  } catch (_) {}
+}
+
+function persistPendingVerification(attempt) {
+  try {
+    sessionStorage.setItem('pending_payment_verification', JSON.stringify(attempt));
+  } catch (_) {}
+}
+
+function readPendingVerification() {
+  try {
+    const raw = sessionStorage.getItem('pending_payment_verification');
+    return raw ? JSON.parse(raw) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearPendingVerification() {
+  try {
+    sessionStorage.removeItem('pending_payment_verification');
+  } catch (_) {}
+}
+
+/**
+ * Subscribes to the `payments` collection for this tenant and re-derives the
+ * balance whenever the webhook writes.
+ *
+ * firestore.rules already allows this read to the payer and denies them every
+ * write, which is exactly the authority split this flow needs.
+ */
+function watchServerPayments() {
+  if (!window.firebaseDb || !window.firebaseFirestore || !userEmail) return null;
+
+  const { collection, query, where, onSnapshot } = window.firebaseFirestore;
+  const paymentsRef = collection(window.firebaseDb, 'payments');
+  const q = query(paymentsRef, where('tenantEmail', '==', userEmail));
+
+  try {
+    return onSnapshot(
+      q,
+      async (snapshot) => {
+        serverPayments = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            ...data,
+            // Normalise the Timestamp so the pure matcher can read it.
+            timestamp: data.timestamp ?? data.createdAt ?? null,
+            firestoreTimestamp: data.createdAt ?? null
+          };
+        });
+        await refreshServerBalance();
+        resolvePendingVerification();
+        await loadTenantPaymentHistory();
+      },
+      (error) => {
+        // A missing composite index, or the rule denying this read, should not
+        // break the portal -- it just means no server-side reconciliation.
+        console.warn('Server payment watcher unavailable:', error?.code || error?.message);
+      }
+    );
+  } catch (error) {
+    console.warn('Could not subscribe to payments:', error?.message);
+    return null;
+  }
+}
+
+/**
+ * Re-derives `currentRemainingDue` from server-confirmed payments and an
+ * admin-set `amountDue`, then repaints the summary.
+ */
+async function refreshServerBalance() {
+  const { due } = resolveAmountDue({
+    rent: tenantRent,
+    serverPayments,
+    explicitAmountDue: tenantAmountDueFromServer
+  });
+
+  currentRemainingDue = due;
+  sessionStorage.setItem('tenantAmountDue', String(due));
+  localStorage.setItem('tenant_amount_due_' + userEmail, String(due));
+  updateAmountDueUI();
+}
+
+/**
+ * Once the webhook reports an outcome for the pending attempt, drop the local
+ * "verifying" state and let the confirmed payment drive the UI.
+ */
+function resolvePendingVerification() {
+  const attempt = readPendingVerification();
+  if (!attempt) return;
+
+  const { state, match } = decideVerification({
+    attempt,
+    serverPayments,
+    windowHours: PAYMENT_MATCH_WINDOW_HOURS
+  });
+
+  if (state === VERIFICATION.CONFIRMED || state === VERIFICATION.FAILED) {
+    clearPendingVerification();
+    Toast[state === VERIFICATION.CONFIRMED ? 'success' : 'error'](
+      state === VERIFICATION.CONFIRMED
+        ? 'Payment confirmed by PayMongo.'
+        : 'PayMongo reported this payment as failed.'
+    );
+    // The server record is now the source of truth for this attempt.
+    showReceiptModal({
+      ...attempt,
+      status: state === VERIFICATION.CONFIRMED ? 'Paid' : 'Failed',
+      payMongoReference: match?.referenceNumber || null,
+      dateFormatted: match?.dateFormatted || attempt.dateFormatted
+    });
+  }
+}
+
+// Save Failed Payment Record — local cache only, then refresh and show receipt.
 async function saveFailedPayment(record) {
   if (PayMongo?.savePaymentRecord) {
     try {
       await PayMongo.savePaymentRecord(record);
     } catch (e) {
-      // Fallback: save to localStorage
-      try {
-        const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
-        const arr = JSON.parse(localStorage.getItem(k) || '[]');
-        arr.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem(k, JSON.stringify(arr));
-        const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
-        all.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-      } catch (_) {}
+      cacheLocalPayment(record);
     }
+  } else {
+    cacheLocalPayment(record);
   }
 
-  // Fire a synthetic payment.failed webhook event to our local server
-  // so it appears in the admin webhook events log
-  try {
-    const webhookPayload = {
-      data: {
-        id: 'evt_homespot_' + Date.now(),
-        attributes: {
-          type: 'payment.failed',
-          data: {
-            id: record.paymentMethodId || 'pay_fail_' + Date.now(),
-            attributes: {
-              amount: Math.round(parseFloat(record.amount || 0) * 100),
-              currency: 'PHP',
-              description: record.purpose || 'Monthly Rent',
-              failed_code: 'card_declined',
-              failed_message:
-                record.failureReason || 'Payment declined or 3DS authentication failed.',
-              billing: {
-                name: record.tenantName || 'Tenant',
-                email: record.tenantEmail || ''
-              }
-            }
-          }
-        }
-      }
-    };
-    const apiBase = window.location.origin.startsWith('file:')
-      ? 'http://localhost:5050'
-      : window.location.origin;
-    fetch(`${apiBase}/api/paymongo-webhook`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(webhookPayload)
-    }).catch(() => {});
-  } catch (_) {}
+  // The browser does NOT announce its own payment events to the webhook
+  // endpoint. That path let any client forge a PayMongo event in the dev log,
+  // and it never reached `payments` anyway: firestore.rules denies client
+  // writes there, and the authoritative record is written by the Cloud
+  // Function webhook (functions/index.js). Real settlement is confirmed by
+  // PayMongo calling us, never by the payer.
+
+  // A failure never changes the balance.
+  await refreshServerBalance();
 
   // CRITICAL: For failed payment, do NOT deduct from currentRemainingDue!
   // Refresh history table so the failed record is immediately visible
@@ -690,12 +691,21 @@ async function saveFailedPayment(record) {
   showReceiptModal(record);
 }
 
-// Show Official Receipt Modal (Supports Paid & Failed states)
+// Show Official Receipt Modal (Paid / Failed / Awaiting confirmation)
 function showReceiptModal(record) {
   const isFailed =
     (record.status || '').toLowerCase().includes('fail') ||
     (record.status || '').toLowerCase().includes('declined') ||
     (record.status || '').toLowerCase().includes('cancel');
+
+  // A redirect is not proof. Unless the webhook confirmed this attempt, we
+  // must not render a green "Payment Successful" receipt -- that claim is what
+  // a hand-edited ?payment=success URL used to produce.
+  const isConfirmed =
+    String(record.status || '')
+      .trim()
+      .toLowerCase() === 'paid' || isFailed;
+  const isVerifying = !isFailed && !isConfirmed;
 
   const headerEl = document.getElementById('receiptModalHeader');
   const dotEl = document.getElementById('receiptModalDot');
@@ -711,14 +721,17 @@ function showReceiptModal(record) {
   const printBtn = document.getElementById('receiptPrintBtn');
   const closeBtn = document.getElementById('receiptCloseBtn');
 
-  document.getElementById('receiptTenantName').textContent = record.tenantName || 'Juan Dela Cruz';
+  document.getElementById('receiptTenantName').textContent =
+    record.tenantName || tenantName || 'Tenant';
   const residenceEl = document.getElementById('receiptResidence');
-  if (residenceEl)
-    residenceEl.textContent = `${tenantDorm || 'Triple Occupancy Room'} (${tenantRoom || 'Room 201'})`;
+  if (residenceEl) {
+    const residence = [tenantDorm, tenantRoom].filter(Boolean).join(' (') + (tenantRoom ? ')' : '');
+    residenceEl.textContent = residence || '—';
+  }
   document.getElementById('receiptPurpose').textContent = record.purpose || 'Monthly Rent';
   document.getElementById('receiptMethod').textContent = record.method || 'PayMongo Checkout';
   document.getElementById('receiptReference').textContent = record.referenceNumber || 'PM-REF';
-  document.getElementById('receiptTokenId').textContent = record.paymentMethodId || 'pm_verified';
+  document.getElementById('receiptTokenId').textContent = record.paymentMethodId || '—';
   document.getElementById('receiptDateTime').textContent =
     record.dateFormatted || new Date().toLocaleString();
 
@@ -777,8 +790,48 @@ function showReceiptModal(record) {
       closeBtn.style.background = '#dc2626';
       closeBtn.textContent = 'Try Again';
     }
+  } else if (isVerifying) {
+    // Redirect received, webhook has not reported yet.
+    if (headerEl) headerEl.style.background = '#fffbeb';
+    if (dotEl) {
+      dotEl.style.background = '#f59e0b';
+      dotEl.style.boxShadow = '0 0 0 3px rgba(245, 158, 11, 0.2)';
+    }
+    if (headerTitleEl) {
+      headerTitleEl.textContent = 'PayMongo Payment Notice - Verifying';
+      headerTitleEl.style.color = '#92400e';
+    }
+    if (iconContainer) {
+      iconContainer.innerHTML = '<div class="receipt-check-icon" style="color:#f59e0b">⏱</div>';
+    }
+    if (titleEl) {
+      titleEl.textContent = 'Awaiting Confirmation';
+      titleEl.style.color = '#92400e';
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent =
+        'We received your payment submission. Your balance updates once PayMongo confirms the transaction.';
+    }
+    if (statusBadgeEl) {
+      statusBadgeEl.innerHTML = '<span class="status-badge-pending">⏱ Verifying</span>';
+    }
+    if (failureRow) failureRow.style.display = 'none';
+    if (amountLabelEl) amountLabelEl.textContent = 'Amount Submitted';
+    if (amountEl) {
+      amountEl.textContent = formattedAmount;
+      amountEl.style.color = '#b45309';
+    }
+    if (printBtn) {
+      printBtn.style.borderColor = '#f59e0b';
+      printBtn.style.color = '#b45309';
+      printBtn.innerHTML = '<span>Print Confirmation</span>';
+    }
+    if (closeBtn) {
+      closeBtn.style.background = '#f59e0b';
+      closeBtn.textContent = 'Close';
+    }
   } else {
-    // Successful Payment Styling
+    // Successful Payment Styling (webhook-confirmed)
     if (headerEl) headerEl.style.background = '#f0fdf4';
     if (dotEl) {
       dotEl.style.background = '#10B981';
@@ -830,6 +883,24 @@ function showReceiptModal(record) {
 
 function closeReceiptModal() {
   document.getElementById('paymongoReceiptModal').style.display = 'none';
+}
+
+/**
+ * Opens the receipt for the payment record carried on a data-record attribute.
+ *
+ * Replaces the previous inline `onclick='showReceiptModal(...)'` wiring: the
+ * payload is URL-encoded JSON, so quotes, braces, and angle brackets cannot
+ * break out of the attribute or into executable JS context.
+ *
+ * @param {string} raw
+ */
+function showReceiptModalForRecord(raw) {
+  if (!raw) return;
+  try {
+    showReceiptModal(JSON.parse(decodeURIComponent(raw)));
+  } catch (error) {
+    console.error('Invalid payment record on receipt button:', error);
+  }
 }
 
 // Print Receipt
@@ -887,25 +958,26 @@ async function loadTenantPaymentHistory() {
     payments = await PayMongo.getTenantPayments(userEmail);
   }
 
-  // If tenant document did not have an explicit amountDue set in Firestore,
-  // calculate remaining amount due from existing payment records
-  if (!tenantExplicitAmountDueSet && payments && payments.length > 0) {
-    const totalPaid = payments
-      .filter((p) => p.status === 'Paid')
-      .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    if (totalPaid >= tenantRent) {
-      currentRemainingDue = 0;
-    } else if (totalPaid > 0) {
-      currentRemainingDue = Math.max(0, tenantRent - totalPaid);
-    }
-    sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-    localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
-    updateAmountDueUI();
-  } else {
-    updateAmountDueUI();
-  }
+  // The balance is derived from server-confirmed payments (and any staff-set
+  // amountDue), NEVER from these local records -- they live in localStorage and
+  // a user can edit them. This used to compute the due from local records,
+  // which made the whole balance forgeable.
+  await refreshServerBalance();
 
-  if (!payments || payments.length === 0) {
+  // Show the webhook's view of the ledger. Until the webhook reports an
+  // outcome, an attempt is shown as awaiting confirmation rather than paid.
+  const serverRows = serverPayments.map((p) => ({
+    ...p,
+    __source: 'server',
+    status: String(p.status || '').toLowerCase() === 'paid' ? 'Paid' : p.status
+  }));
+  const serverRefs = new Set(serverRows.map((p) => p.referenceNumber).filter(Boolean));
+  const localOnly = (payments || []).filter(
+    (p) => !p.referenceNumber || !serverRefs.has(p.referenceNumber)
+  );
+  const merged = [...serverRows, ...localOnly];
+
+  if (!merged.length) {
     tableBody.innerHTML = `
             <tr>
                 <td colspan="7" style="text-align: center; color: #9ca3af; padding: 24px;">
@@ -918,32 +990,44 @@ async function loadTenantPaymentHistory() {
   }
 
   if (countBadge)
-    countBadge.textContent = `${payments.length} payment${payments.length > 1 ? 's' : ''}`;
+    countBadge.textContent = `${merged.length} payment${merged.length > 1 ? 's' : ''}`;
 
-  tableBody.innerHTML = payments
+  tableBody.innerHTML = merged
     .map((p, idx) => {
       const isFailed =
         (p.status || '').toLowerCase().includes('fail') ||
         (p.status || '').toLowerCase().includes('declined') ||
         (p.status || '').toLowerCase().includes('cancel');
       const isPending = (p.status || '').toLowerCase() === 'pending';
+      // A local-only record is an attempt the webhook has not confirmed yet.
+      // Calling it "Paid" would be the exact lie this flow was built to avoid.
+      const isUnconfirmed = p.__source !== 'server';
       const statusBadge = isFailed
         ? `<span class="status-badge-failed">✗ Failed</span>`
-        : isPending
-          ? `<span class="status-badge-pending">⏱ Pending</span>`
-          : `<span class="status-badge-paid">✓ Paid</span>`;
-      const amountColor = isFailed ? '#dc2626' : isPending ? '#b45309' : '#059669';
+        : isUnconfirmed
+          ? `<span class="status-badge-pending">⏱ Awaiting confirmation</span>`
+          : isPending
+            ? `<span class="status-badge-pending">⏱ Pending</span>`
+            : `<span class="status-badge-paid">✓ Paid</span>`;
+      const amountColor = isFailed ? '#dc2626' : isUnconfirmed || isPending ? '#b45309' : '#059669';
+
+      // The record travels in a URL-encoded data-* attribute and is parsed by
+      // the delegated click handler in showReceiptModalForRecord(). Putting it
+      // in an inline `onclick` is unsafe: attribute values are HTML-decoded
+      // before the JS parser runs, so escaping single quotes is not enough to
+      // keep user-controlled payment fields out of executable context.
+      const record = encodeURIComponent(JSON.stringify(p));
 
       return `
         <tr>
-            <td>${p.dateFormatted || new Date(p.timestamp || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-            <td style="font-family: monospace; font-size: 12px; color: #475569;">${p.referenceNumber || 'PM-' + idx}</td>
-            <td>${p.purpose || 'Monthly Rent'}</td>
-            <td>${p.method || 'PayMongo'}</td>
+            <td>${escapeHtml(p.dateFormatted || new Date(p.timestamp || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}</td>
+            <td style="font-family: monospace; font-size: 12px; color: #475569;">${escapeHtml(p.referenceNumber || 'PM-' + idx)}</td>
+            <td>${escapeHtml(p.purpose || 'Monthly Rent')}</td>
+            <td>${escapeHtml(p.method || 'PayMongo')}</td>
             <td style="font-weight: 600; color: ${amountColor};">₱${parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td>${statusBadge}</td>
             <td>
-                <button class="btn-view-receipt" onclick='showReceiptModal(${JSON.stringify(p).replace(/'/g, '&apos;')})'>
+                <button class="btn-view-receipt" data-action="view-receipt" data-record="${record}">
                     Receipt
                 </button>
             </td>
@@ -953,28 +1037,20 @@ async function loadTenantPaymentHistory() {
     .join('');
 }
 
-// Check for return from PayMongo (Direct 3DS Card Intent OR Hosted Checkout Session)
+/**
+ * Handles a return from PayMongo.
+ *
+ * All four return shapes (pending checkout session, card 3DS, hosted success,
+ * hosted failure) are resolved by `lib/payment-return.js`, which is unit-tested
+ * in tests/payment-return.test.js. This function only performs the I/O the
+ * decision asks for -- reading storage, calling PayMongo, repainting -- so the
+ * tested logic and the browser cannot drift apart.
+ *
+ * Note that a resolved outcome still yields a PENDING record: the redirect is a
+ * claim, and only the webhook marks money received (see
+ * lib/payment-verification.js).
+ */
 async function checkUrlPaymentReturn() {
-  // Ensure PayMongoService is ready
-
-  const urlParams = new URLSearchParams(window.location.search);
-  let paymentIntentId = urlParams.get('payment_intent_id');
-  if (!paymentIntentId) {
-    const match = window.location.href.match(/[?&]payment_intent_id=([^&#]+)/);
-    if (match) {
-      paymentIntentId = decodeURIComponent(match[1]);
-    }
-  }
-
-  let paymentStatus = urlParams.get('payment');
-  if (!paymentStatus) {
-    const matchStatus = window.location.href.match(/[?&]payment=([^&#]+)/);
-    if (matchStatus) {
-      paymentStatus = decodeURIComponent(matchStatus[1]);
-    }
-  }
-
-  // Read pending payment from BOTH storages (localStorage survives more edge cases)
   let pending = null;
   try {
     const saved =
@@ -983,258 +1059,146 @@ async function checkUrlPaymentReturn() {
     if (saved) pending = JSON.parse(saved);
   } catch (e) {}
 
-  console.log(
-    '[PayReturn] URL params - paymentIntentId:',
-    paymentIntentId,
-    '| paymentStatus:',
-    paymentStatus,
-    '| pending:',
-    pending
-  );
+  // Capture the checkout start time before the pending record is cleared below.
+  if (pending?.startedAtMs) returnAttemptStartedAtMs = Number(pending.startedAtMs);
 
-  // If neither param found in URL, but we have pending direct 3DS payment and we just returned to tenant portal
-  if (!paymentIntentId && !paymentStatus && pending?.paymentIntentId) {
-    paymentIntentId = pending.paymentIntentId;
-  }
+  const scenario = resolveReturnScenario({
+    search: window.location.search,
+    href: window.location.href,
+    pending,
+    fallbackTenantName: sessionStorage.getItem('tenantName') || tenantName
+  });
 
-  // SCENARIO: Returned from PayMongo hosted checkout with no URL params
-  // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
-  // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
-  if (!paymentIntentId && !paymentStatus && pending?.sessionId) {
-    console.log('[PayReturn] Checking pending checkout session:', pending.sessionId);
-    const sessionId = pending.sessionId;
+  if (scenario.kind === SCENARIO.NONE) return;
+
+  if (scenario.clearPending) {
     sessionStorage.removeItem('pending_paymongo_payment');
     localStorage.removeItem('pending_paymongo_payment');
+  }
 
-    let sessionStatus = null;
-    let failureDetail = 'Card declined or 3DS authentication failed.';
+  // --- Resolve the gateway's actual outcome -----------------------------------
+  let sessionStatus = null;
+
+  if (scenario.kind === SCENARIO.PENDING_SESSION) {
+    // No URL params at all: ask PayMongo what really happened to the session.
+    const sessionId = scenario.sessionId;
+    let sessionData = null;
     try {
-      if (PayMongo?.getCheckoutSession) {
-        const sessionData = await PayMongo.getCheckoutSession(sessionId);
-        console.log('[PayReturn] Session data:', sessionData);
-        if (sessionData) {
-          sessionStatus = sessionData.attributes?.status;
-          const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
-          if (lastErr && (lastErr.failed_message || lastErr.detail)) {
-            failureDetail = lastErr.failed_message || lastErr.detail;
-          }
-        }
-      }
+      sessionData = await PayMongo.getCheckoutSession(sessionId);
     } catch (e) {
       console.warn('[PayReturn] Could not inspect checkout session:', e);
     }
-
-    console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
-
-    if (sessionStatus === 'paid') {
-      const amountParam2 = parseFloat(pending?.amount) || 5000;
-      const purposeParam2 = pending?.purpose || 'Monthly Rent';
-      const tenantNameVal2 =
-        pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
-      const refNumber2 = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
-      const record2 = {
-        referenceNumber: refNumber2,
-        paymentMethodId: sessionId,
-        method: pending?.method || 'PayMongo Checkout',
-        amount: amountParam2,
-        purpose: purposeParam2,
-        notes: pending?.notes || 'Completed via PayMongo Checkout',
-        tenantName: tenantNameVal2,
-        tenantEmail: userEmail,
-        dateFormatted: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        }),
-        status: 'Paid'
-      };
-      window.history.replaceState({}, document.title, window.location.pathname);
-      switchTab('payment');
-      await saveAndFinalizePayment(record2);
-    } else {
-      // Session not paid — card was declined or 3DS failed
-      const amountParam2 = parseFloat(pending?.amount) || 5000;
-      const purposeParam2 = pending?.purpose || 'Monthly Rent';
-      const tenantNameVal2 =
-        pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
-      const refNumber2 = pending?.referenceNumber || 'PM-FAIL-' + Date.now().toString().slice(-6);
-      const record2 = {
-        referenceNumber: refNumber2,
-        paymentMethodId: sessionId,
-        method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
-        amount: amountParam2,
-        purpose: purposeParam2,
-        notes: pending?.notes || 'Card declined / 3DS authentication failed',
-        failureReason: failureDetail,
-        tenantName: tenantNameVal2,
-        tenantEmail: userEmail,
-        dateFormatted: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        }),
-        status: 'Failed'
-      };
-      window.history.replaceState({}, document.title, window.location.pathname);
-      switchTab('payment');
-      // Save receipt first, then expire session in background (non-blocking)
-      await saveFailedPayment(record2);
-      // Fire-and-forget: expire session in PayMongo dashboard
-      if (PayMongo?.expireCheckoutSession && sessionStatus !== 'expired') {
-        PayMongo.expireCheckoutSession(sessionId).catch(() => {});
-      }
+    sessionStatus = sessionData?.attributes?.status ?? null;
+  } else if (scenario.kind === SCENARIO.HOSTED_FAILED && scenario.sessionId) {
+    try {
+      const sessionData = await PayMongo.getCheckoutSession(scenario.sessionId);
+      sessionStatus = sessionData?.attributes?.status ?? null;
+    } catch (e) {
+      console.warn('[PayReturn] Could not inspect failed checkout session:', e);
     }
-    return;
   }
 
-  // If neither parameter is present and no pending, nothing to do
-  if (!paymentIntentId && !paymentStatus) return;
+  // --- Decide paid vs failed from the gateway's own answer --------------------
+  let outcomeStatus;
 
-  sessionStorage.removeItem('pending_paymongo_payment');
-  localStorage.removeItem('pending_paymongo_payment');
-
-  const amountParam = parseFloat(urlParams.get('amount')) || pending?.amount || 5000;
-  const purposeParam = urlParams.get('purpose') || pending?.purpose || 'Monthly Rent';
-  const tenantNameVal =
-    pending?.tenantName ||
-    document.getElementById('fullName')?.value ||
-    sessionStorage.getItem('tenantName') ||
-    'Juan Dela Cruz';
-
-  // SCENARIO 1: RETURN FROM DIRECT CARD 3DS TEST
-  if (paymentIntentId) {
+  if (scenario.kind === SCENARIO.PENDING_SESSION) {
+    // Fail closed: only an explicit 'paid' counts.
+    outcomeStatus = sessionStatus === 'paid' ? 'Paid' : 'Failed';
+  } else if (scenario.kind === SCENARIO.CARD_3DS) {
     let piData = null;
     try {
-      piData = await PayMongo.getPaymentIntentStatus(paymentIntentId);
-    } catch (err) {
-      console.warn('Could not inspect payment intent:', err);
+      piData = await PayMongo.getPaymentIntentStatus(scenario.paymentIntentId);
+    } catch (e) {
+      console.warn('[PayReturn] Could not inspect payment intent:', e);
     }
+    outcomeStatus = interpretPaymentIntent(piData).isSuccess ? 'Paid' : 'Failed';
+  } else if (scenario.kind === SCENARIO.HOSTED_SUCCESS) {
+    outcomeStatus = 'Paid';
+  } else {
+    outcomeStatus = 'Failed';
+  }
 
-    // Fails closed: only an explicit "succeeded" counts as paid.
-    const { isSuccess, failureDetail } = interpretPaymentIntent(piData);
+  // A hosted "success" URL is not proof either; if we managed to inspect the
+  // session and PayMongo disagrees, trust PayMongo.
+  if (outcomeStatus === 'Paid' && sessionStatus && sessionStatus !== 'paid') {
+    outcomeStatus = 'Failed';
+  }
 
-    const refNumber =
-      pending?.referenceNumber || 'PM-CARD-' + paymentIntentId.slice(-6).toUpperCase();
+  // --- Gather the failure detail for the receipt ------------------------------
+  let failureReason;
+  if (outcomeStatus === 'Failed') {
+    failureReason = await resolveFailureReason(scenario);
+  }
 
-    // Remove query parameters from URL without reloading
+  const record = buildReturnRecord(scenario, {
+    // `status` is the gateway's verdict; `recordStatus` is what we store. Even
+    // a gateway-confirmed success is stored as Pending, because the balance may
+    // only move once the webhook writes the matching `payments` record.
+    status: outcomeStatus === 'Paid' ? 'Paid' : 'Failed',
+    recordStatus: outcomeStatus === 'Paid' ? 'Pending' : 'Failed',
+    failureReason,
+    tenantEmail: userEmail,
+    startedAtMs: returnAttemptStartedAtMs
+  });
+
+  // Clean the query string so a refresh does not replay the return.
+  if (scenario.stripUrl) {
     window.history.replaceState({}, document.title, window.location.pathname);
-    switchTab('payment');
+  }
 
-    if (isSuccess) {
-      const record = {
-        referenceNumber: refNumber,
-        paymentMethodId: paymentIntentId,
-        method: 'Credit/Debit Card (PayMongo Test 3DS)',
-        amount: amountParam,
-        purpose: purposeParam,
-        notes: pending?.notes || 'Paid via PayMongo 3DS Card Payment',
-        tenantName: tenantNameVal,
-        tenantEmail: userEmail,
-        dateFormatted: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        }),
-        status: 'Paid'
-      };
-      await saveAndFinalizePayment(record);
-    } else {
-      const record = {
-        referenceNumber: refNumber,
-        paymentMethodId: paymentIntentId,
-        method: 'Credit/Debit Card (PayMongo Test 3DS)',
-        amount: amountParam,
-        purpose: purposeParam,
-        notes: pending?.notes || 'PayMongo 3DS Test Failed / Declined',
-        failureReason: failureDetail,
-        tenantName: tenantNameVal,
-        tenantEmail: userEmail,
-        dateFormatted: new Date().toLocaleString('en-US', {
-          dateStyle: 'medium',
-          timeStyle: 'short'
-        }),
-        status: 'Failed'
-      };
-      await saveFailedPayment(record);
-    }
+  switchTab('payment');
+
+  if (outcomeStatus === 'Paid') {
+    await saveAndFinalizePayment(record);
     return;
   }
 
-  // SCENARIO 2: RETURN FROM PAYMONGO HOSTED CHECKOUT (SUCCESS)
-  if (paymentStatus === 'success') {
-    const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
-    const refNumber = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
-    const record = {
-      referenceNumber: refNumber,
-      paymentMethodId: pending?.sessionId || 'pm_success_' + Date.now().toString(36),
-      method: methodParam,
-      amount: amountParam,
-      purpose: purposeParam,
-      notes: pending?.notes || 'Completed via PayMongo Official Checkout',
-      tenantName: tenantNameVal,
-      tenantEmail: userEmail,
-      dateFormatted: new Date().toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }),
-      status: 'Paid'
-    };
+  await saveFailedPayment(record);
 
-    window.history.replaceState({}, document.title, window.location.pathname);
-    switchTab('payment');
-    await saveAndFinalizePayment(record);
+  // Fire-and-forget: expire the session so PayMongo's dashboard reflects it.
+  if (
+    scenario.sessionId &&
+    shouldExpireSession(scenario.kind, sessionStatus) &&
+    PayMongo?.expireCheckoutSession
+  ) {
+    PayMongo.expireCheckoutSession(scenario.sessionId).catch(() => {});
   }
-  // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED OR CANCELLED via cancel_url)
-  else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
-    const sessionId = pending?.sessionId || urlParams.get('sessionId') || '';
-    let failureDetail = 'Payment declined / 3DS authentication failed on PayMongo';
+}
 
-    console.log('[PayReturn] Scenario 3 - failed/cancelled. sessionId:', sessionId);
-
-    if (sessionId && PayMongo) {
-      try {
-        const sessionData = await PayMongo.getCheckoutSession(sessionId);
-        console.log('[PayReturn] Scenario 3 session data:', sessionData);
-        if (sessionData) {
-          const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
-          if (lastErr && (lastErr.failed_message || lastErr.detail)) {
-            failureDetail = lastErr.failed_message || lastErr.detail;
-          }
-        }
-      } catch (err) {
-        console.warn('[PayReturn] Scenario 3 getCheckoutSession error:', err);
-      }
-    }
-
-    const refNumber = pending?.referenceNumber || 'PM-FAIL-' + Date.now().toString().slice(-6);
-    const record = {
-      referenceNumber: refNumber,
-      paymentMethodId: sessionId || 'pm_failed_' + Date.now().toString(36),
-      method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
-      amount: amountParam,
-      purpose: purposeParam,
-      notes: pending?.notes || 'PayMongo Checkout: 3DS Test Failed / Cancelled',
-      failureReason: failureDetail,
-      tenantName: tenantNameVal,
-      tenantEmail: userEmail,
-      dateFormatted: new Date().toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }),
-      status: 'Failed'
-    };
-
-    window.history.replaceState({}, document.title, window.location.pathname);
-    switchTab('payment');
-    // Save receipt FIRST — non-blocking expire after
-    await saveFailedPayment(record);
-    // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
-    if (sessionId && PayMongo?.expireCheckoutSession) {
-      PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+/**
+ * Best-effort explanation of why a payment failed, from PayMongo.
+ * @param {Object} scenario
+ * @returns {Promise<string|undefined>}
+ */
+async function resolveFailureReason(scenario) {
+  if (scenario.kind === SCENARIO.CARD_3DS) {
+    try {
+      const piData = await PayMongo.getPaymentIntentStatus(scenario.paymentIntentId);
+      return interpretPaymentIntent(piData).failureDetail;
+    } catch (e) {
+      return undefined;
     }
   }
+
+  if (scenario.sessionId) {
+    try {
+      const sessionData = await PayMongo.getCheckoutSession(scenario.sessionId);
+      return interpretCheckoutSession(sessionData).failureDetail || undefined;
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  return undefined;
 }
 
 // Initialize on DOM load
 window.addEventListener('DOMContentLoaded', () => {
   updateSubmitButton();
+  // Balance comes from the webhook's ledger, not from local state.
+  watchServerPayments();
+  // Chat renders from Firestore, so admin replies arrive without a refresh.
+  watchChatThread();
   loadTenantPaymentHistory();
   checkUrlPaymentReturn();
 });
@@ -1268,45 +1232,140 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-function sendMessage() {
+/**
+ * Subscribes to this tenant's message thread and renders it.
+ *
+ * The snapshot -- not a local append -- is the source of truth, so a message
+ * that Firestore rejects never appears to have been sent, and an admin reply
+ * shows up without a refresh. firestore.rules already scopes this read to the
+ * sender's own email, so a tenant only ever sees their own thread.
+ *
+ * @returns {(() => void)|null} unsubscribe
+ */
+function watchChatThread() {
+  const container = document.getElementById('chatMessages');
+  if (!container || !window.firebaseDb || !window.firebaseFirestore || !userEmail) return null;
+
+  const { collection, query, where, orderBy, onSnapshot } = window.firebaseFirestore;
+
+  try {
+    const messagesRef = collection(window.firebaseDb, 'messages');
+    const q = query(messagesRef, where('email', '==', userEmail), orderBy('createdAt', 'asc'));
+
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        renderChatThread(
+          container,
+          snapshot.docs.map((doc) => doc.data())
+        );
+      },
+      (error) => {
+        // A missing composite index is the likely cause; the chat still sends,
+        // it just does not render the history.
+        console.warn('Chat subscription unavailable:', error?.code || error?.message);
+      }
+    );
+  } catch (error) {
+    console.warn('Could not subscribe to the chat thread:', error?.message);
+    return null;
+  }
+}
+
+/**
+ * Renders the thread. Uses textContent throughout -- message bodies are
+ * arbitrary user input from both sides of the conversation.
+ */
+function renderChatThread(container, messages) {
+  container.innerHTML = '';
+
+  if (!messages.length) {
+    const empty = document.createElement('div');
+    empty.className = 'chat-empty';
+    empty.textContent = 'No messages yet. Send a message to the building administrator.';
+    container.appendChild(empty);
+    return;
+  }
+
+  for (const message of messages) {
+    const fromTenant = message.sender === 'tenant';
+
+    const bubble = document.createElement('div');
+    bubble.className = `message-bubble ${fromTenant ? 'sent' : 'received'}`;
+
+    const body = document.createElement('div');
+    body.textContent = message.message || '';
+    bubble.appendChild(body);
+
+    const stamp = document.createElement('div');
+    stamp.className = 'message-time-stamp';
+    stamp.textContent = formatChatStamp(message.createdAt);
+    bubble.appendChild(stamp);
+
+    // An admin reply, shown inline beneath the original question.
+    if (message.reply) {
+      const reply = document.createElement('div');
+      reply.className = 'message-bubble received message-reply';
+      const replyBody = document.createElement('div');
+      replyBody.textContent = message.reply;
+      const replyStamp = document.createElement('div');
+      replyStamp.className = 'message-time-stamp';
+      replyStamp.textContent = formatChatStamp(message.repliedAt);
+      reply.append(replyBody, replyStamp);
+      bubble.appendChild(reply);
+    }
+
+    container.appendChild(bubble);
+  }
+
+  container.scrollTop = container.scrollHeight;
+}
+
+/** Formats a Firestore Timestamp (or anything date-like) for the chat. */
+function formatChatStamp(value) {
+  if (!value) return '';
+  const ms = value.toDate ? value.toDate().getTime() : Date.parse(value);
+  if (!Number.isFinite(ms)) return '';
+  return new Date(ms).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+async function sendMessage() {
   const input = document.getElementById('messageInput');
   const messageText = input.value.trim();
   if (!messageText) return;
 
-  const chatMessages = document.getElementById('chatMessages');
-  const messageDiv = document.createElement('div');
-  messageDiv.className = 'message-bubble sent';
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  });
-  messageDiv.innerHTML = `
-        <div>${messageText}</div>
-        <div class="message-time-stamp">Today, ${timeStr}</div>
-    `;
-  chatMessages.appendChild(messageDiv);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  if (!window.firebaseDb || !window.firebaseFirestore) {
+    Toast.error('Chat is unavailable right now. Please try again.');
+    return;
+  }
+
+  // The onSnapshot above renders this the moment Firestore accepts it, so
+  // there is no optimistic append here -- that would double-render the message.
   input.value = '';
 
-  const tenantName = sessionStorage.getItem('tenantName') || userEmail.split('@')[0] || 'Tenant';
-
-  if (window.firebaseDb && window.firebaseFirestore) {
-    try {
-      const messagesRef = window.firebaseFirestore.collection(window.firebaseDb, 'messages');
-      window.firebaseFirestore.addDoc(messagesRef, {
-        name: tenantName,
+  try {
+    await window.firebaseFirestore.addDoc(
+      window.firebaseFirestore.collection(window.firebaseDb, 'messages'),
+      {
+        name: tenantName || userEmail.split('@')[0],
         email: userEmail,
         message: messageText,
         status: 'Unread',
         sender: 'tenant',
         createdAt: window.firebaseFirestore.serverTimestamp(),
         reply: null
-      });
-    } catch (error) {
-      console.error('Firestore send message failed:', error);
-    }
+      }
+    );
+  } catch (error) {
+    // Restore what the tenant typed rather than silently discarding it.
+    input.value = messageText;
+    console.error('Firestore send message failed:', error);
+    Toast.error('Could not send your message. Please try again.');
   }
 }
 
@@ -1342,17 +1401,14 @@ document.addEventListener('click', function (event) {
     case 'logout':
       logout();
       break;
+    case 'view-receipt':
+      showReceiptModalForRecord(button.dataset.record);
+      break;
     case 'send-message':
       sendMessage();
       break;
     case 'save-profile':
       saveProfile();
-      break;
-    case 'close-qr-modal':
-      closeQrModal();
-      break;
-    case 'confirm-qr-payment':
-      confirmQrPayment();
       break;
     case 'close-receipt-modal':
       closeReceiptModal();

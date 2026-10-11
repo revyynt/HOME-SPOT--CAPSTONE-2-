@@ -10,6 +10,7 @@
 import { db, firebaseFirestore } from '../../firebase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
+import { renderBalances } from './payments.js';
 
 /** @type {Array<Object & {id: string}>} */
 let loadedTenants = [];
@@ -43,6 +44,8 @@ export function listenToTenants() {
     }
     renderFiltered();
     updateTenantStats(loadedTenants);
+    // Keep the Tenant Payments balance table in step with this snapshot.
+    renderBalances(loadedTenants);
   };
 
   try {

@@ -88,7 +88,12 @@ if (REQUIRE_AUTH && (!FIREBASE_PROJECT_ID || !FIREBASE_API_KEY)) {
 
 // Optional shared secret for inbound webhooks. PayMongo does not sign payloads,
 // so an unguessable path/header is the only available control.
-const WEBHOOK_SECRET = (process.env.WEBHOOK_SECRET || '').trim();
+//
+// This is REQUIRED, not optional. When it was unset the endpoint silently
+// accepted unauthenticated POSTs, which let any browser fabricate a PayMongo
+// event in the dev log. Fail at boot instead: a dev bridge that can be fooled
+// into reporting a settlement is worse than one that will not start.
+const WEBHOOK_SECRET = requireEnv('WEBHOOK_SECRET');
 
 const DEFAULT_ORIGINS = [
   'http://localhost:5050',
@@ -354,13 +359,11 @@ async function handleApi(req, res, pathname, query) {
     if (req.method !== 'POST') {
       return sendJson(req, res, 405, { error: 'Method not allowed' });
     }
-    if (WEBHOOK_SECRET) {
-      const provided = req.headers['x-webhook-secret'] || query.secret || '';
-      if (provided !== WEBHOOK_SECRET) {
-        return sendJson(req, res, 401, { error: 'Invalid webhook secret' });
-      }
-    } else {
-      console.warn('[webhook] WEBHOOK_SECRET is not set -- webhook endpoint is unauthenticated.');
+    // WEBHOOK_SECRET is mandatory (checked at boot), so a mismatch here is a
+    // genuine forgery attempt rather than a missing local config.
+    const provided = req.headers['x-webhook-secret'] || query.secret || '';
+    if (!WEBHOOK_SECRET || provided !== WEBHOOK_SECRET) {
+      return sendJson(req, res, 401, { error: 'Invalid webhook secret' });
     }
 
     let params;

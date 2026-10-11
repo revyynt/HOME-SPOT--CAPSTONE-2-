@@ -10,6 +10,7 @@ import { initBackButtonGuard, initLogoutButtons } from '../lib/session.js';
 import { initTenantTable, listenToTenants } from './admin-dashboard/tenants.js';
 import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
+import { listenToPayments } from './admin-dashboard/payments.js';
 
 guardPage({
   role: 'admin',
@@ -29,6 +30,9 @@ document.addEventListener(
     initTenantTable();
     initCreateTenant();
     listenToTenants();
+
+    // The webhook's ledger, so staff can reconcile a missed payment.
+    listenToPayments();
   },
   { once: true }
 );

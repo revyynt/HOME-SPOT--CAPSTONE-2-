@@ -148,8 +148,20 @@ service cloud.firestore {
                       && (resource.data.uid == request.auth.uid
                           || resource.data.email == myEmail()));
 
+      // Staff may create and edit any tenant.
       allow create, update: if isAdmin()
                             && !request.resource.data.keys().hasAny(['password']);
+
+      // A tenant may edit ONLY their own editable contact details, and only
+      // those fields. Financial and authority fields -- monthlyRent, amountDue,
+      // paymentStatus, role, uid, status -- are excluded, so a tenant cannot
+      // grant themselves a discount or rewrite the balance. The webhook and
+      // staff own those.
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && !request.resource.data.keys().hasAny(['password'])
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['name', 'phone', 'emergencyContact', 'updatedAt']);
 
       allow delete: if isSuperAdmin();
     }

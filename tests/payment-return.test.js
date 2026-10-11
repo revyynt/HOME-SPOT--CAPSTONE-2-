@@ -124,7 +124,7 @@ test('URL amount wins over the pending record for the param-driven scenarios', (
   assert.equal(s.base.amount, 7500);
 });
 
-test('amount falls back to pending, then to the 5000 default', () => {
+test('amount falls back to pending, then to 0 rather than an invented figure', () => {
   const withPending = resolveReturnScenario({
     search: '?payment=success',
     pending: { amount: 4500 },
@@ -137,7 +137,9 @@ test('amount falls back to pending, then to the 5000 default', () => {
     pending: null,
     now: NOW
   });
-  assert.equal(withNeither.base.amount, 5000);
+  // Fabricating an amount here would put a peso figure on a receipt that was
+  // never confirmed. 0 also means it can never match a real webhook payment.
+  assert.equal(withNeither.base.amount, 0);
 });
 
 test('pending notes and method override the generic defaults', () => {

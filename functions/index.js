@@ -4,6 +4,7 @@
 const functions = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const https = require('https');
+const { computeAmountDue, paymentStatusFor } = require('../lib/ledger.js');
 
 admin.initializeApp();
 
@@ -333,5 +334,97 @@ exports.paymongoWebhook = functions.https.onRequest(async (req, res) => {
     `Recorded ${record.status} payment ${written.id} for ${record.tenantEmail || 'unknown'}`
   );
 
+  // Keep the tenant balance in step with the ledger. The browser never writes
+  // `amountDue` (firestore.rules denies it), so this is what makes a confirmed
+  // payment actually move the number the tenant sees.
+  const balance = await reconcileTenantBalance(record);
+  if (balance && balance.updated) {
+    logger.info(
+      `Tenant ${balance.email} balance -> PHP ${balance.amountDue} (${balance.paymentStatus})`
+    );
+  }
+
   return res.status(200).json({ received: true, event: eventType });
 });
+
+/**
+ * Recomputes `tenants.amountDue` from the payment ledger and stores it.
+ *
+ * Deliberately recomputes rather than decrementing by the event amount:
+ *   - a retried delivery cannot double-apply, because each payment document is
+ *     counted once;
+ *   - a void/refund (status 'Failed') falls out of the total and the balance
+ *     correctly rises again;
+ *   - an overpayment floors at 0 instead of going negative.
+ *
+ * Runs in a transaction so two concurrent webhooks cannot interleave into an
+ * inconsistent balance.
+ *
+ * @param {Object} record - the payment document just written
+ * @returns {Promise<null|{email: string, amountDue: number, paymentStatus: string, updated: boolean}>}
+ */
+async function reconcileTenantBalance(record) {
+  const email = String(record.tenantEmail || '')
+    .trim()
+    .toLowerCase();
+  if (!email) return null;
+
+  const db = admin.firestore();
+  const tenantsRef = db.collection('tenants');
+
+  try {
+    const tenantSnap = await tenantsRef.where('email', '==', email).limit(1).get();
+    if (tenantSnap.empty) {
+      // A payer with no tenant profile (e.g. a one-off link payment). The
+      // payment is still recorded; there is just no balance to move.
+      logger.warn(`No tenant profile for ${email}; balance not reconciled`);
+      return null;
+    }
+
+    const tenantDoc = tenantSnap.docs[0];
+    const tenantRef = tenantDoc.ref;
+
+    const result = await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(tenantRef);
+      if (!fresh.exists) return null;
+
+      const tenant = fresh.data();
+      const baseline = Number(tenant.monthlyRent);
+      if (!Number.isFinite(baseline) || baseline <= 0) return null;
+
+      // Every payment for this tenant, current cycle included.
+      const paymentsSnap = await tx.get(
+        db.collection('payments').where('tenantEmail', '==', email)
+      );
+      const payments = paymentsSnap.docs.map((doc) => doc.data());
+
+      const amountDue = computeAmountDue({ baseline, payments });
+      const paymentStatus = paymentStatusFor(amountDue);
+
+      if (Number(tenant.amountDue) === amountDue && tenant.paymentStatus === paymentStatus) {
+        return { email, amountDue, paymentStatus, updated: false };
+      }
+
+      tx.update(tenantRef, {
+        amountDue,
+        paymentStatus,
+        lastPaymentDate: new Date().toISOString(),
+        lastPaymentAmount: record.amount,
+        lastPaymentReference: record.referenceNumber,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+
+      return { email, amountDue, paymentStatus, updated: true };
+    });
+
+    return result;
+  } catch (error) {
+    // Never fail the webhook over a balance update: the payment is already
+    // recorded, and a 500 here would make PayMongo retry the whole delivery.
+    logger.error('Balance reconciliation failed', {
+      error: error.message,
+      tenantEmail: email
+    });
+    return null;
+  }
+}

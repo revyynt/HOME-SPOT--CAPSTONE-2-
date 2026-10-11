@@ -24,6 +24,7 @@ the CDN.
 ├── set-room.js                     # Room availability CLI (requires admin token)
 ├── firebase.json                   # Hosting / Functions / Firestore config
 ├── firestore.rules                 # Per-collection security rules
+├── firestore.indexes.json          # Composite indexes for the live queries
 ├── .env.example                    # Copy to .env and fill in
 ├── assets/
 │   ├── img/                        # All images, kebab-case
@@ -32,6 +33,8 @@ the CDN.
 │   │   ├── tenant-portal.css
 │   │   └── tenant-login.css
 │   └── js/                         # See "Source layout" below
+├── lib/                            # CommonJS, shared by the Cloud Function + tests
+│   └── ledger.js                   # Rent balance arithmetic
 ├── tests/                          # node:test suites
 ├── docs/
 │   ├── QUICKSTART.md               # First-time setup
@@ -54,8 +57,10 @@ cp .env.example .env    # Windows: copy .env.example .env
 ```
 
 Fill in `PAYMONGO_SECRET_KEY` and `PAYMONGO_PUBLIC_KEY` from the
-[PayMongo dashboard](https://developers.paymongo.com). `.env` is gitignored and
-must never be committed.
+[PayMongo dashboard](https://developers.paymongo.com), and set `WEBHOOK_SECRET`
+to any long random string — the server refuses to start without it, because an
+unguarded webhook endpoint lets a browser fabricate payment events. `.env` is
+gitignored and must never be committed.
 
 ### 2. Start the payment bridge
 
@@ -87,12 +92,12 @@ firebase deploy
 
 ## Architecture
 
-| Concern       | Where it lives                                                                 |
-| ------------- | ------------------------------------------------------------------------------ |
-| Auth          | Firebase Auth. Roles live in `users/{uid}.role`                                |
-| Data          | Firestore: `rooms`, `reservations`, `messages`, `tenants`, `payments`, `users` |
-| Payments      | Client → `paymongo-api-server.js` → PayMongo                                   |
-| Payment truth | `functions.paymongoWebhook` writes `payments` (the only writer)                |
+| Concern       | Where it lives                                                                  |
+| ------------- | ------------------------------------------------------------------------------- |
+| Auth          | Firebase Auth. Roles live in `users/{uid}.role`                                 |
+| Data          | Firestore: `rooms`, `reservations`, `messages`, `tenants`, `payments`, `users`  |
+| Payments      | Client → `paymongo-api-server.js` → PayMongo                                    |
+| Payment truth | `functions.paymongoWebhook` writes `payments` and recomputes the tenant balance |
 
 ### Firestore collections
 
@@ -117,6 +122,7 @@ assets/js/
 │   ├── rooms.js            normalizeRoomDocId, resolveRoom
 │   ├── qr.js               buildQrPhPayload
 │   ├── payment-return.js   Payment-redirect state machine
+│   ├── payment-verification.js  Webhook corroboration + balance derivation
 │   ├── guard.js            Page-level auth guard
 │   ├── session.js          Staff logout + mobile back-button guard
 │   └── dom.js              byId, onClick, attr
@@ -141,12 +147,15 @@ npm run lint         # ESLint
 npm run format       # Prettier
 ```
 
-| Test file                                         | Guards                                                                                                                                            |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/format\|rooms\|qr\|payment-return.test.js` | Pure logic, including every payment-redirect branch                                                                                               |
-| `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet |
-| `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                              |
-| `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears                                                                                                      |
+| Test file                                         | Guards                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tests/format\|rooms\|qr\|payment-return.test.js` | Pure logic, including every payment-redirect branch                                                                                                                                                                                                                                        |
+| `tests/payment-verification.test.js`              | Webhook corroboration: a forged `?payment=success` stays Pending, cross-tenant and stale payments never confirm, the balance never comes from `localStorage`                                                                                                                               |
+| `tests/payment-flow.test.js`                      | Walks all four PayMongo return paths through the real modules; asserts a redirect alone never moves a balance and the webhook closes the loop                                                                                                                                              |
+| `tests/ledger.test.js`                            | Balance arithmetic: idempotent recompute, a voided payment restores the balance, an overpayment floors at 0                                                                                                                                                                                |
+| `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet, no dynamic inline handlers built in JS, role-hierarchy parity with the rules, no client-side "paid" claim, the webhook owns the balance |
+| `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                                                                                                                                                                       |
+| `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears; the API bridge refuses to boot without `WEBHOOK_SECRET`                                                                                                                                                                                      |
 
 `tests/structure.test.js` is the safety net for refactoring: if an edit breaks
 markup, an import path, or module ordering, the suite fails before the page
@@ -167,7 +176,22 @@ does.
 - **Payment calls are proxied.** The browser never holds the PayMongo secret key
   and never talks to PayMongo directly.
 - **Client-side balance edits are denied.** A tenant cannot mark their own
-  account paid; the webhook is authoritative.
+  account paid. `tenants.amountDue` is written by staff and by the webhook's
+  `reconcileTenantBalance` only; the browser has no write path to it.
+- **The PayMongo redirect is treated as a claim, not proof.** Anyone can type
+  `?payment=success` into the URL bar, so every return path records `Pending`
+  and the portal derives what is owed from the webhook-written `payments`
+  collection. An attempt stays "Awaiting confirmation" until a webhook record
+  matching payer + amount + checkout window arrives.
+- **A tenant may edit only their own contact details.** `firestore.rules`
+  restricts a self-update on `tenants/{uid}` to `name`, `phone`,
+  `emergencyContact`, and `updatedAt` — rent, balance, status, and role are not
+  reachable from a browser.
+- **No dynamic inline event handlers.** Values reach controls through `data-*`
+  attributes and delegated listeners — including handlers generated inside JS,
+  which `tests/structure.test.js` checks for.
+- **`WEBHOOK_SECRET` is mandatory.** The dev bridge refuses to boot without it,
+  so the webhook endpoint cannot be forged from a browser.
 
 ## Room Availability CLI
 

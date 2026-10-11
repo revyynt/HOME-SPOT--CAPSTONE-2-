@@ -18,7 +18,14 @@ export const SCENARIO = {
   HOSTED_FAILED: 'hosted-failed'
 };
 
-const DEFAULT_AMOUNT = 5000;
+/**
+ * Used only when no amount can be recovered from the URL or the pending record.
+ *
+ * Deliberately 0, not a plausible-looking peso figure: a receipt that invents an
+ * amount is worse than one that admits the amount is unknown, and a 0-amount
+ * attempt can never match a real webhook payment, so it fails closed.
+ */
+const DEFAULT_AMOUNT = 0;
 const DEFAULT_PURPOSE = 'Monthly Rent';
 const DEFAULT_TENANT = 'Tenant';
 const DEFAULT_FAILURE = 'Card declined or 3DS authentication failed.';
@@ -83,7 +90,8 @@ export function resolveReturnScenario({
         tenantName: pending.tenantName || fallbackTenantName,
         referenceNumber: pending.referenceNumber || suffix('PM-RET-', now),
         method: pending.method || 'PayMongo Checkout',
-        notes: pending.notes
+        notes: pending.notes,
+        startedAtMs: pending.startedAtMs
       })
     };
   }
@@ -103,7 +111,8 @@ export function resolveReturnScenario({
       tenantName: pending?.tenantName || fallbackTenantName,
       referenceNumber: pending?.referenceNumber,
       method: params.get('method') || pending?.method,
-      notes: pending?.notes
+      notes: pending?.notes,
+      startedAtMs: pending?.startedAtMs
     })
   };
 
@@ -153,14 +162,16 @@ export function resolveReturnScenario({
   return { kind: SCENARIO.NONE, clearPending: false, stripUrl: false, targetTab: null };
 }
 
-function buildBase({ amount, purpose, tenantName, referenceNumber, method, notes }) {
+function buildBase({ amount, purpose, tenantName, referenceNumber, method, notes, startedAtMs }) {
   return {
     amount,
     purpose,
     tenantName,
     referenceNumber: referenceNumber || null,
     method: method || null,
-    notes: notes || null
+    notes: notes || null,
+    // Anchors the webhook verification window to the checkout, not the return.
+    startedAtMs: startedAtMs || null
   };
 }
 
@@ -228,14 +239,26 @@ export function interpretCheckoutSession(sessionData) {
 /**
  * Builds the persisted payment record for a resolved scenario.
  *
+ * `outcome.status` is the *gateway's* answer (Paid/Failed), used to pick the
+ * default notes and reference prefix. The record's own `status` is the
+ * settlement state the portal displays, and is passed separately as
+ * `outcome.recordStatus` -- a redirect is only a claim, so a gateway-confirmed
+ * success is still recorded as 'Pending' until the webhook corroborates it.
+ *
+ * `startedAtMs` is carried through so the verification window is anchored to
+ * when the checkout was created rather than to when the portal happened to
+ * render the return.
+ *
  * @param {Object} scenario - a value returned by resolveReturnScenario()
  * @param {Object} outcome
- * @param {'Paid'|'Failed'} outcome.status
+ * @param {'Paid'|'Failed'} outcome.status - the gateway's verdict
+ * @param {'Paid'|'Failed'|'Pending'} [outcome.recordStatus] - what to store
  * @param {string} [outcome.paymentMethodId]
  * @param {string} [outcome.failureReason]
  * @param {string} [outcome.tenantEmail]
  * @param {string} [outcome.defaultNotes]
  * @param {number} [outcome.now]
+ * @param {number} [outcome.startedAtMs]
  * @returns {Object} the record handed to saveAndFinalizePayment / saveFailedPayment
  */
 export function buildReturnRecord(scenario, outcome) {
@@ -262,7 +285,8 @@ export function buildReturnRecord(scenario, outcome) {
       dateStyle: 'medium',
       timeStyle: 'short'
     }),
-    status: outcome.status
+    startedAtMs: outcome.startedAtMs ?? scenario.base.startedAtMs ?? now,
+    status: outcome.recordStatus ?? outcome.status
   };
 }
 

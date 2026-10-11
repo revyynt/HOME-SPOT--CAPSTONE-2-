@@ -208,6 +208,27 @@ async function getIdToken(forceRefresh = false) {
 }
 
 /**
+ * Whether a user's role satisfies a page requirement.
+ *
+ * Roles are hierarchical, mirroring firestore.rules:
+ *   isAdmin()      -> ['admin', 'superadmin']
+ *   isSuperAdmin() -> 'superadmin'
+ * A superadmin therefore satisfies an 'admin' requirement. The guard used to
+ * compare with `!==`, which bounced a superadmin off admin-dashboard.html even
+ * though the rules let them read and write everything in it.
+ *
+ * @param {string|null} role
+ * @param {'admin'|'superadmin'} requiredRole
+ * @returns {boolean}
+ */
+function roleSatisfies(role, requiredRole) {
+  if (role == null) return false;
+  if (requiredRole === 'superadmin') return role === 'superadmin';
+  if (requiredRole === 'admin') return role === 'admin' || role === 'superadmin';
+  return role === requiredRole;
+}
+
+/**
  * Guards a page behind an authentication + role requirement.
  * Redirects and returns false when the requirement is not met.
  *
@@ -233,7 +254,7 @@ async function requireRole(requiredRole, redirectTo) {
     return false;
   }
 
-  if (role !== requiredRole) {
+  if (!roleSatisfies(role, requiredRole)) {
     console.warn(`[auth] role mismatch: required ${requiredRole}, found ${role}`);
     window.location.replace(redirectTo || 'admin-login.html');
     return false;

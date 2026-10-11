@@ -30,6 +30,20 @@ function read(page) {
   return readFileSync(join(ROOT, page), 'utf8');
 }
 
+/** Every browser JS source under assets/js, recursively. */
+function jsSources(dir = join(ROOT, 'assets', 'js')) {
+  const out = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      out.push(...jsSources(full));
+    } else if (entry.name.endsWith('.js')) {
+      out.push(relative(ROOT, full));
+    }
+  }
+  return out;
+}
+
 /** Counts opening/closing tags for a container element. */
 function tagBalance(html, tag) {
   const open = (html.match(new RegExp(`<${tag}\\b`, 'g')) || []).length;
@@ -292,6 +306,132 @@ test('no inline event handler interpolates a dynamic value', () => {
     offenders,
     [],
     `Inline handlers interpolating dynamic values:\n${offenders.join('\n')}`
+  );
+});
+
+test('JS never builds an inline event handler with a dynamic value', () => {
+  // The page scan above only sees handlers that ship as literal markup. It is
+  // blind to handlers emitted from JS template literals, which is how the
+  // receipt button used to carry an entire payment record into an inline
+  // `onclick` -- user-controlled data inside an executable context.
+  // Payment records, Firestore values, and profile fields must ride on data-*
+  // attributes and be handled by a delegated listener.
+  const offenders = [];
+
+  for (const rel of jsSources()) {
+    const src = readFileSync(join(ROOT, rel), 'utf8');
+    // on<event>= ... through to the closing quote/brace, flagging `${` or `+`
+    // concatenation anywhere in the handler body.
+    for (const match of src.matchAll(/\son[a-z]+\s*=\s*(['"`])((?:[^\\]|\\.)*?)\1/g)) {
+      if (/\$\{|\+/.test(match[2])) {
+        const line = src.slice(0, match.index).split('\n').length;
+        offenders.push(`${rel}:${line}  ${match[0].trim().slice(0, 70)}`);
+      }
+    }
+  }
+
+  assert.deepEqual(
+    offenders,
+    [],
+    `Inline handlers built from dynamic values in JS:\n${offenders.join('\n')}\n\n` +
+      'Use a data-* attribute plus a delegated click listener instead.'
+  );
+});
+
+test('the client role guard matches the firestore.rules role hierarchy', () => {
+  // firestore.rules: isAdmin() -> ['admin','superadmin'], isSuperAdmin() ->
+  // 'superadmin'. The page guard used `role !== requiredRole`, which was an
+  // exact match and so bounced a superadmin off admin-dashboard.html even
+  // though the rules grant them full admin access there.
+  const service = readFileSync(join(ROOT, 'assets/js/firebase-service.js'), 'utf8');
+
+  assert.ok(
+    !/if \(role !== requiredRole\)/.test(service),
+    'requireRole must not use an exact role comparison'
+  );
+  assert.match(
+    service,
+    /if \(requiredRole === 'admin'\) return role === 'admin' \|\| role === 'superadmin';/,
+    'an admin requirement must also be satisfied by a superadmin'
+  );
+  assert.match(
+    service,
+    /if \(requiredRole === 'superadmin'\) return role === 'superadmin';/,
+    'a superadmin requirement must NOT be satisfied by a plain admin'
+  );
+
+  // The tenant portal depends on the guard NOT admitting staff.
+  const portal = readFileSync(join(ROOT, 'assets/js/pages/tenant-portal.js'), 'utf8');
+  assert.match(portal, /role: 'tenant'/, 'tenant-portal must guard on the tenant role');
+});
+
+test('the portal never marks a payment paid from the redirect alone', () => {
+  // Regression guard for the forgeable-balance bug: the PayMongo return URL is
+  // attacker-controlled, so no return path may build a record with
+  // `status: 'Paid'`. Payment state must come from the webhook instead.
+  const portal = readFileSync(join(ROOT, 'assets/js/pages/tenant-portal.js'), 'utf8');
+
+  const offenders = [];
+  portal.split('\n').forEach((line, i) => {
+    if (/status:\s*'Paid'/.test(line)) offenders.push(`tenant-portal.js:${i + 1}`);
+  });
+
+  assert.deepEqual(
+    offenders,
+    [],
+    `These lines claim a payment is Paid from the client:\n${offenders.join('\n')}\n\n` +
+      'Use status: Pending and let lib/payment-verification.js corroborate it.'
+  );
+});
+
+test('the portal derives its balance from the server, not localStorage', () => {
+  const portal = readFileSync(join(ROOT, 'assets/js/pages/tenant-portal.js'), 'utf8');
+
+  // The local due must never seed the displayed balance.
+  assert.ok(
+    !/localStorage\.getItem\('tenant_amount_due_'\s*\+/.test(portal),
+    'the balance must not be seeded from the localStorage cache'
+  );
+  assert.match(portal, /resolveAmountDue\(/, 'the balance must be derived via resolveAmountDue()');
+  assert.match(
+    portal,
+    /where\('tenantEmail',\s*'==',\s*userEmail\)/,
+    'the portal must subscribe to its own payments from the webhook-written collection'
+  );
+});
+
+test('the webhook is the only thing that reconciles tenant balances', () => {
+  // The portal derives what is owed from server data. That only works because
+  // something server-side keeps `tenants.amountDue` current once a payment
+  // settles -- otherwise a stored balance would forever shadow new payments.
+  const fn = readFileSync(join(ROOT, 'functions/index.js'), 'utf8');
+  assert.match(
+    fn,
+    /reconcileTenantBalance/,
+    'the webhook must reconcile the tenant balance after recording a payment'
+  );
+  assert.match(
+    fn,
+    /computeAmountDue/,
+    'the webhook must recompute the balance from the ledger (idempotent), not blind-decrement'
+  );
+});
+
+test('only the webhook writes tenants.amountDue', () => {
+  // Guard against a client write creeping back in. firestore.rules already
+  // denies it; this makes the intent explicit in the source too.
+  const portal = readFileSync(join(ROOT, 'assets/js/pages/tenant-portal.js'), 'utf8');
+  assert.ok(
+    !/amountDue:\s*currentRemainingDue/.test(portal),
+    'the tenant portal must not write amountDue'
+  );
+
+  // staff may write tenants (they create the profile with monthlyRent etc.),
+  // but amountDue for a live balance is the webhook's job. Verify the portal
+  // has no updateDoc against the tenant doc at all.
+  assert.ok(
+    !/updateDoc\(tenantDocRef/.test(portal),
+    'the tenant portal must not attempt to update its tenant document'
   );
 });
 
