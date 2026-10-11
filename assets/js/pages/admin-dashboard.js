@@ -21,6 +21,12 @@ guardPage({
   grantedEvent: 'admin-access-granted'
 });
 
+// Set as the first statement after the imports: every import has resolved by
+// this point, so reaching it proves the whole module graph evaluated and the
+// page is genuinely live. boot-guard.js watches for this and explains itself
+// on screen if it never arrives.
+window.homespotBooted = true;
+
 initLogoutButtons();
 initBackButtonGuard('admin');
 initDetailModals();

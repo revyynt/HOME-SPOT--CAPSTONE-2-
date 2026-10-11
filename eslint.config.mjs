@@ -187,7 +187,12 @@ export default [
             'decrementRoomAvailability',
 
             // Standard window event-handler property, not a leaked global.
-            'onpopstate'
+            'onpopstate',
+
+            // Set by each dashboard's entry module once its whole import graph
+            // has evaluated. Read by the classic boot-guard.js script, which
+            // cannot import it -- that is the whole point of it being classic.
+            'homespotBooted'
           ]
         }
       ]

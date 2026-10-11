@@ -828,6 +828,37 @@ test('dashboard controls bind outside the auth guard', () => {
   );
 });
 
+test('the boot watchdog is wired in ahead of the module bundle', () => {
+  // A module that fails to fetch or evaluate takes every module behind it down
+  // too. The page still renders and <a href> links still navigate, so the
+  // result looks half-alive -- links work, buttons do nothing, no error shown.
+  // boot-guard.js is a classic script precisely so it survives that, and it can
+  // only help if it is loaded before the modules it is watching.
+  const dash = readFileSync(join(ROOT, 'admin-dashboard.html'), 'utf8');
+
+  const guardAt = dash.indexOf('./assets/js/boot-guard.js');
+  assert.ok(guardAt > -1, 'the dashboard must load boot-guard.js');
+
+  const firstModule = dash.indexOf('type="module"');
+  assert.ok(firstModule > -1, 'the dashboard must load module scripts');
+  assert.ok(guardAt < firstModule, 'boot-guard.js must load before the module bundle');
+
+  // It must not be a module itself, or it would share the fate it exists to
+  // report on.
+  const guardTag = dash.slice(dash.lastIndexOf('<script', guardAt), guardAt);
+  assert.ok(
+    !guardTag.includes('type="module"'),
+    'boot-guard.js must be a classic script, not a module'
+  );
+
+  // ...and the dashboard must announce itself, or the banner is a false alarm.
+  assert.match(
+    readFileSync(join(ROOT, 'assets/js/pages/admin-dashboard.js'), 'utf8'),
+    /window\.homespotBooted = true;/,
+    'admin-dashboard.js must set homespotBooted so the watchdog stays quiet'
+  );
+});
+
 test('the login page guards against concurrent routing', () => {
   // onAuthStateChanged and the submit handler both fire for one sign-in.
   // Without a guard they ran two overlapping routeUser() passes, and the
