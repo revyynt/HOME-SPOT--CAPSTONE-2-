@@ -221,9 +221,13 @@ stacking, non-overlap, centring and determinism); `lib/building-viewer.js` only
 turns those numbers into meshes. That split is why the layout is verifiable in
 `node --test` even though Three.js needs a browser.
 
-Seed some units with `npm run seed-units` (needs an admin ID token, like
-`set-room.js`). Assign a tenant to a unit via the optional **Unit ID** field on
-the create-tenant form.
+Seed units from the **Building** tab (**Add Units**), which writes through the
+signed-in Firebase session — no token needed. `seed-units.js` remains for
+bulk/offline seeding, and `check-auth.js` diagnoses a token when one is
+required (expired vs revoked vs missing role document).
+
+Assign a tenant to a unit via the optional **Unit ID** field on the
+create-tenant form.
 
 ### QR Ph flow was removed
 

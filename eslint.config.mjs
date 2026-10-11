@@ -75,6 +75,7 @@ export default [
       'paymongo-api-server.js',
       'set-room.js',
       'seed-units.js',
+      'check-auth.js',
       'functions/**/*.js',
       'lib/**/*.js'
     ],

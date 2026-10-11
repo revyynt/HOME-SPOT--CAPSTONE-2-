@@ -13,6 +13,7 @@ import { initDetailModals } from './admin-dashboard/modals.js';
 import { listenToPayments } from './admin-dashboard/payments.js';
 import { initRoomControls, listenToRooms } from './admin-dashboard/rooms.js';
 import { initBuildingTab, listenToBuilding } from './admin-dashboard/building.js';
+import { initUnitsEditor } from './admin-dashboard/units-editor.js';
 
 guardPage({
   role: 'admin',
@@ -43,6 +44,9 @@ document.addEventListener(
     // 3D building with per-unit occupancy.
     listenToBuilding();
     initBuildingTab();
+
+    // Creating units here uses the signed-in session -- no token required.
+    initUnitsEditor();
   },
   { once: true }
 );

@@ -84,10 +84,8 @@ function parseArgs(argv) {
   }
 
   // `3 4` positionally, then fall back to flags, then defaults.
-  const resolvedFloors =
-    positional[0] ?? floors ?? DEFAULT_FLOORS;
-  const resolvedPerFloor =
-    positional[1] ?? perFloor ?? DEFAULT_PER_FLOOR;
+  const resolvedFloors = positional[0] ?? floors ?? DEFAULT_FLOORS;
+  const resolvedPerFloor = positional[1] ?? perFloor ?? DEFAULT_PER_FLOOR;
 
   return {
     floors: Math.max(1, Math.min(50, resolvedFloors)),

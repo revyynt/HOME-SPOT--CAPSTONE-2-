@@ -68,11 +68,16 @@ Without this, **every** Firestore read is denied. `firestore.rules` ends with a
 catch-all `allow read, write: if false`, so the app will load but every page will
 show empty data — including the Building tab.
 
-**7. Seed some data.** A fresh project has nothing in it:
+**7. Seed some data.** A fresh project has nothing in it. Sign in at
+`admin-login.html`, open the **Building** tab, and use **Add Units** — it writes
+through the signed-in session, so no token is needed:
 
-```bash
-npm run seed-units -- --floors 3 --per-floor 4   # needs an admin token
-```
+> admin-dashboard.html → Building → Add Units → floors × units-per-floor → Create Units
+
+For offline/bulk seeding there is also a CLI (`npm run seed-units -- 3 4`),
+which needs an admin ID token. Run `node check-auth.js` first if a write is
+refused — it distinguishes an expired token, a revoked account, and a missing
+`users/{uid}` role document.
 
 **8. Create the first admin.** Sign in at `admin-login.html`. You need an
 account with a `users/{uid}` document whose `role` is `admin` or `superadmin`.

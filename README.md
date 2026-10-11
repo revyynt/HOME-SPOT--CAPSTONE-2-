@@ -239,13 +239,22 @@ The geometry is **generated from the `units` collection**, so there is no model
 file to author and the building updates live as Firestore changes. The public
 tour at `building.html` shows the same model without occupancy.
 
-Seed units to get started:
+Seed units from the admin dashboard's **Building** tab (**Add Units**). It
+writes through the Firestore Web SDK using your already-signed-in session, so
+there is no token to copy or paste.
+
+For bulk/offline seeding there is a CLI (needs an admin ID token):
 
 ```bash
-export FIREBASE_ID_TOKEN=<token>   # from the admin console
-npm run seed-units -- --floors 3 --per-floor 4
-npm run seed-units -- --dry-run    # preview without writing
+npm run seed-units -- 3 4        # create 3 floors x 4 units
+npm run seed-units               # preview only (no token needed)
 ```
+
+> npm's PowerShell wrapper strips dashed flags after `--`, so use the positional
+> form (`-- 3 4`). Flags still work via `node seed-units.js --floors 3 ...`.
+
+If a token is needed, `node check-auth.js` says exactly whether it is expired,
+revoked, or simply lacks a role document.
 
 Assign a tenant to a unit via the optional **Unit ID** field on the
 create-tenant form.
