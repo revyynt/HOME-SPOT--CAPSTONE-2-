@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Login - MJP Residences</title>
+    <title>Sign In - MJP Residences</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./assets/css/style.css" />
   </head>
@@ -16,7 +16,7 @@
         <!-- Logo/Header -->
         <div class="text-center mb-8">
           <h1 class="text-2xl font-bold text-gray-900 mb-1">MJP Residences</h1>
-          <p class="text-sm text-gray-600">Admin Portal Login</p>
+          <p class="text-sm text-gray-600">Sign in to your HomeSpot account</p>
         </div>
 
         <!-- Login Card -->
@@ -30,7 +30,7 @@
                   type="email"
                   name="email"
                   class="form-input"
-                  placeholder="admin@mjpresidence.com"
+                  placeholder="you@example.com"
                   required
                   style="border-color: #e5e7eb"
                 />
@@ -54,6 +54,7 @@
                 <input
                   type="checkbox"
                   id="remember"
+                  checked
                   class="w-4 h-4 text-blue-600 border-gray-300 rounded"
                 />
                 <label for="remember" class="ml-2 text-sm text-gray-700">Remember me</label>
@@ -70,12 +71,11 @@
               </button>
 
               <!-- Access notice -->
-              <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <p class="text-xs text-gray-700 font-semibold mb-2">Staff access</p>
-                <p class="text-xs text-blue-700">
-                  Accounts are provisioned by a superadmin in Firebase Auth. Your role is read from
-                  the <code class="bg-blue-100 px-1 rounded">users</code> document linked to your
-                  account.
+              <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <p class="text-xs text-gray-700 font-semibold mb-2">Moving in?</p>
+                <p class="text-xs text-gray-600">
+                  Tenant accounts are created by the Apartment Administrator at move-in. Ask them
+                  for your temporary password — it is shown once and never stored.
                 </p>
               </div>
             </div>

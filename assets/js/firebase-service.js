@@ -291,7 +291,7 @@ async function requireRole(requiredRole, redirectTo) {
 
   const user = getCurrentUser();
   if (!user) {
-    window.location.replace(redirectTo || 'tenant-login.html');
+    window.location.replace(redirectTo || 'admin-login.html');
     return false;
   }
 
@@ -301,7 +301,7 @@ async function requireRole(requiredRole, redirectTo) {
     role = snap.exists() ? snap.data().role : null;
   } catch (err) {
     console.error('[auth] role lookup failed:', err);
-    window.location.replace(redirectTo || 'tenant-login.html');
+    window.location.replace(redirectTo || 'admin-login.html');
     return false;
   }
 

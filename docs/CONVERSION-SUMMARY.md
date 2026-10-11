@@ -14,16 +14,17 @@ and every page is a static file.
 
 ## Pages
 
-| Page                         | Audience           |
-| ---------------------------- | ------------------ |
-| `index.html`                 | Public             |
-| `property-detail.html`       | Public             |
-| `start.html`                 | Dev launcher       |
-| `admin-login.html`           | Admin / superadmin |
-| `admin-dashboard.html`       | Admin              |
-| `super-admin-dashboard.html` | Superadmin         |
-| `tenant-login.html`          | Tenant             |
-| `tenant-portal.html`         | Tenant             |
+| Page                         | Audience                                |
+| ---------------------------- | --------------------------------------- |
+| `index.html`                 | Public                                  |
+| `property-detail.html`       | Public                                  |
+| `building.html`              | Public (3D tour, no occupancy shown)    |
+| `start.html`                 | Dev launcher                            |
+| `admin-login.html`           | **Everyone** — routes staff and tenants |
+| `tenant-login.html`          | Redirect stub → `admin-login.html`      |
+| `admin-dashboard.html`       | Admin / superadmin                      |
+| `super-admin-dashboard.html` | Superadmin                              |
+| `tenant-portal.html`         | Tenant                                  |
 
 ## Known gaps
 
@@ -45,6 +46,43 @@ These are real and still open:
   until someone reconciles it. The admin **Tenant Payments** tab now shows the
   raw ledger, so a missed event is visible to staff; watch the `functions` logs
   for webhook failures.
+
+### One sign-in form for everyone
+
+There used to be two: `admin-login.html` and `tenant-login.html`, each with its
+own form, script and stylesheet. That meant two ways to fail — signing in on the
+wrong page, and a support question each time it happened.
+
+`admin-login.html` is now the single form. After the credential check it routes
+by role:
+
+| Account has                             | Lands on                          |
+| --------------------------------------- | --------------------------------- |
+| `users/{uid}.role == 'superadmin'`      | `super-admin-dashboard.html`      |
+| `users/{uid}.role == 'admin'`           | `admin-dashboard.html`            |
+| `users/{uid}.role == 'tenant'`          | `tenant-portal.html`              |
+| no role, but a `tenants` profile exists | `tenant-portal.html`              |
+| neither                                 | signed out, with the reason shown |
+
+That last-but-one row is what keeps **legacy tenants** working: profiles created
+before the `users` document existed have a `tenants` record but no role, so the
+email/uid lookup finds them and sends them to the portal.
+
+The decision is pure and lives in `assets/js/lib/login-routing.js`
+(`resolveDestination`), covered by `tests/login-routing.test.js` — including that
+an unknown or capitalised role (`SuperAdmin`) does **not** silently fall through
+to the tenant portal.
+
+`tenant-login.html` remains only as a redirect stub, so old bookmarks and the
+admin's "copy sign-in details" link still resolve. `tenant-login.js` and
+`tenant-login.css` were deleted. `tests/structure.test.js` asserts there is
+exactly one login form and that no script still links to the stub.
+
+A small behaviour change worth knowing: the **Remember me** checkbox now defaults
+to checked, because it applies to tenants too. Unchecked means
+session-persistence — useful on a shared machine, and it also stops the bounce
+loop where a half-signed-in session gets bounced between the login page and a
+dashboard whose guard cannot find a role.
 
 ### Room availability is admin-editable
 

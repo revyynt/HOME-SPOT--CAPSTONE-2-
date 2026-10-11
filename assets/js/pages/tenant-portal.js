@@ -69,7 +69,7 @@ function syncSessionIdentity() {
 // lag the verified account.
 guardPage({
   role: 'tenant',
-  redirectTo: 'tenant-login.html',
+  redirectTo: 'admin-login.html',
   grantedEvent: 'tenant-access-granted'
 }).then((allowed) => {
   if (!allowed) return;
@@ -304,7 +304,7 @@ function switchTab(tabName, evt) {
 function logout() {
   sessionStorage.removeItem('tenantLoggedIn');
   sessionStorage.removeItem('tenantEmail');
-  window.location.href = 'tenant-login.html';
+  window.location.href = 'admin-login.html';
 }
 
 /**

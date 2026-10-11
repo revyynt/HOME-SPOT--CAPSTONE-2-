@@ -16,11 +16,11 @@ the CDN.
 ├── property-detail.html            # Room detail + inquiry/reservation forms
 ├── building.html                   # Public 3D building tour (no occupancy data)
 ├── start.html                      # Dev launcher (navigation hub)
-├── admin-login.html                # Admin / Super Admin login
+├── admin-login.html                # The one sign-in form (staff + tenant)
 ├── admin-dashboard.html            # Admin dashboard (rooms, reservations, tenants,
 │                                  #   messages, tenant-payments, reviews)
 ├── super-admin-dashboard.html      # Platform management (superadmin only)
-├── tenant-login.html               # Tenant sign-in
+├── tenant-login.html               # Redirect stub -> admin-login.html
 ├── tenant-portal.html              # Tenant portal (payments, chat, profile)
 ├── paymongo-api-server.js          # Local payment bridge (dev)
 ├── set-room.js                     # Room availability CLI (requires admin token)
@@ -37,8 +37,7 @@ the CDN.
 │   ├── img/                        # All images, kebab-case
 │   ├── css/
 │   │   ├── style.css               # Shared styles
-│   │   ├── tenant-portal.css
-│   │   └── tenant-login.css
+│   │   └── tenant-portal.css
 │   └── js/                         # See "Source layout" below
 ├── lib/                            # CommonJS, shared by the Cloud Function + tests
 │   └── ledger.js                   # Rent balance arithmetic
@@ -135,6 +134,7 @@ assets/js/
 │   ├── payment-verification.js  Webhook corroboration + balance derivation
 │   ├── building-viewer.js      Three.js x-ray building renderer
 │   ├── units.js                Unit layout maths + occupancy derivation
+│   ├── login-routing.js        Post-sign-in destination per role
 │   ├── booking.js          Reservation approval + availability decisions
 │   ├── guard.js            Page-level auth guard
 │   ├── session.js          Staff logout + mobile back-button guard
@@ -160,17 +160,19 @@ npm run lint         # ESLint
 npm run format       # Prettier
 ```
 
-| Test file                                         | Guards                                                                                                                                                                                                                                                                                     |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tests/format\|rooms\|qr\|payment-return.test.js` | Pure logic, including every payment-redirect branch                                                                                                                                                                                                                                        |
-| `tests/payment-verification.test.js`              | Webhook corroboration: a forged `?payment=success` stays Pending, cross-tenant and stale payments never confirm, the balance never comes from `localStorage`                                                                                                                               |
-| `tests/payment-flow.test.js`                      | Walks all four PayMongo return paths through the real modules; asserts a redirect alone never moves a balance and the webhook closes the loop                                                                                                                                              |
-| `tests/ledger.test.js`                            | Balance arithmetic: idempotent recompute, a voided payment restores the balance, an overpayment floors at 0                                                                                                                                                                                |
-| `tests/booking.test.js`                           | Approval decisions: refuses an already-decided request and a full room, never decrements below zero; `Converted` is terminal                                                                                                                                                               |
-| `tests/booking-race.test.js`                      | Concurrent approval: a second approve of the same request is refused, the last slot cannot be taken twice, and a full room cannot be overbooked                                                                                                                                            |
-| `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet, no dynamic inline handlers built in JS, role-hierarchy parity with the rules, no client-side "paid" claim, the webhook owns the balance |
-| `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                                                                                                                                                                       |
-| `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears; the API bridge refuses to boot without `WEBHOOK_SECRET`                                                                                                                                                                                      |
+| Test file                                         | Guards                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/format\|rooms\|qr\|payment-return.test.js` | Pure logic, including every payment-redirect branch                                                                                                                                                                                                                                                                                                                         |
+| `tests/payment-verification.test.js`              | Webhook corroboration: a forged `?payment=success` stays Pending, cross-tenant and stale payments never confirm, the balance never comes from `localStorage`                                                                                                                                                                                                                |
+| `tests/payment-flow.test.js`                      | Walks all four PayMongo return paths through the real modules; asserts a redirect alone never moves a balance and the webhook closes the loop                                                                                                                                                                                                                               |
+| `tests/ledger.test.js`                            | Balance arithmetic: idempotent recompute, a voided payment restores the balance, an overpayment floors at 0                                                                                                                                                                                                                                                                 |
+| `tests/booking.test.js`                           | Approval decisions: refuses an already-decided request and a full room, never decrements below zero; `Converted` is terminal                                                                                                                                                                                                                                                |
+| `tests/booking-race.test.js`                      | Concurrent approval: a second approve of the same request is refused, the last slot cannot be taken twice, and a full room cannot be overbooked                                                                                                                                                                                                                             |
+| `tests/units.test.js`                             | 3D building layout: floors stack, units never overlap, output is deterministic, and occupancy derives correctly from tenants vs reservations                                                                                                                                                                                                                                |
+| `tests/login-routing.test.js`                     | Post-sign-in routing: every role lands somewhere real, a legacy tenant with no role still reaches the portal, and an unknown role never falls through to the tenant view                                                                                                                                                                                                    |
+| `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet, no dynamic inline handlers built in JS, role-hierarchy parity with the rules, no client-side "paid" claim, the webhook owns the balance, exactly one login form, only real composite indexes, units never leak occupancy |
+| `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                                                                                                                                                                                                                                                        |
+| `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears; the API bridge refuses to boot without `WEBHOOK_SECRET`                                                                                                                                                                                                                                                                       |
 
 `tests/structure.test.js` is the safety net for refactoring: if an edit breaks
 markup, an import path, or module ordering, the suite fails before the page
@@ -188,6 +190,10 @@ does.
   tenant once; it is never persisted in Firestore.
 - **Page guards.** `admin-dashboard.html`, `super-admin-dashboard.html`, and
   `tenant-portal.html` all verify a live Firebase session before rendering.
+- **One sign-in form.** `admin-login.html` serves everyone and routes by role:
+  staff from `users/{uid}.role`, tenants from their `tenants` profile. An
+  account with neither is signed out rather than left half-authenticated.
+  `tenant-login.html` is a redirect stub so old links still resolve.
 - **Payment calls are proxied.** The browser never holds the PayMongo secret key
   and never talks to PayMongo directly.
 - **Client-side balance edits are denied.** A tenant cannot mark their own

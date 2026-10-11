@@ -735,6 +735,60 @@ test('firestore.indexes.json declares only real composite indexes', () => {
   );
 });
 
+test('there is exactly one sign-in form', () => {
+  // Staff and tenants used to have separate login pages, which meant two forms
+  // and a support question whenever someone hit the wrong one. admin-login.html
+  // is now the single form; tenant-login.html is a redirect stub.
+  const loginForms = [];
+
+  for (const page of PAGES) {
+    const html = read(page);
+    for (const match of html.matchAll(/<form[^>]*\sid="([^"]*login[^"]*)"/gi)) {
+      loginForms.push(`${page}:${match[1]}`);
+    }
+  }
+
+  assert.deepEqual(
+    loginForms,
+    ['admin-login.html:loginForm'],
+    `expected a single login form, found: ${loginForms.join(', ')}`
+  );
+
+  // The stub must actually redirect rather than sit there dead.
+  const stub = read('tenant-login.html');
+  assert.match(
+    stub,
+    /url=\.\/admin-login\.html/,
+    'tenant-login.html must redirect to the unified sign-in page'
+  );
+
+  // And no page may still send people to it.
+  for (const rel of jsSources()) {
+    const src = readFileSync(join(ROOT, rel), 'utf8');
+    assert.ok(
+      !/'tenant-login\.html'/.test(src),
+      `${rel} must not link to tenant-login.html; use admin-login.html`
+    );
+  }
+});
+
+test('the login form routes every role to a real page', () => {
+  // The routing decision is pure and unit-tested in tests/login-routing.test.js.
+  // This guards that the destinations it names are actually shipped pages.
+  const routing = readFileSync(join(ROOT, 'assets/js/lib/login-routing.js'), 'utf8');
+  const destinations = [...routing.matchAll(/'(\.\/[^']+\.html)'/g)].map((m) => m[1]);
+
+  assert.ok(destinations.length >= 3, 'expected a destination per role');
+
+  for (const dest of destinations) {
+    const target = dest.replace('./', '');
+    assert.ok(
+      PAGES.includes(target),
+      `login-routing.js points at "${target}", which is not a shipped page`
+    );
+  }
+});
+
 test('inline event handlers are not growing', () => {
   // A ratchet rather than a hard ban: pages still use onclick for simple static
   // wiring. This fails if the count rises above the recorded baseline, so the

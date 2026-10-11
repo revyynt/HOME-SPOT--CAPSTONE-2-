@@ -208,12 +208,14 @@ export function closeViewTenantModal() {
  * lives in Firebase Auth and is shown to the tenant once, at creation.
  */
 export function copyTenantLoginInfo(email, name, room) {
+  // There is one sign-in page for everyone; it routes the tenant on arrival.
   const portalUrl =
-    window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'tenant-login.html';
+    window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'admin-login.html';
 
   const text =
-    `MJP Residences - Tenant Portal Access\n` +
-    `Tenant: ${name}\nRoom: ${room}\nPortal URL: ${portalUrl}\nEmail: ${email}\n\n` +
+    `MJP Residences - HomeSpot Access\n` +
+    `Tenant: ${name}\nRoom: ${room}\nSign-in URL: ${portalUrl}\nEmail: ${email}\n\n` +
+    `Use the same page as staff -- it will take you to your tenant portal.\n` +
     `Sign in with the temporary password provided at move-in.`;
 
   navigator.clipboard
