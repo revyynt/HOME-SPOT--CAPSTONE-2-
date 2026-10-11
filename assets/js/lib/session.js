@@ -11,6 +11,11 @@ import { signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-aut
 
 const SIGNOUT_TIMEOUT_MS = 2000;
 
+/** Where logout sends staff. Kept in one place so the log can name it. */
+function redirectTarget() {
+  return './admin-login.html';
+}
+
 /**
  * Signs the staff member out and returns to the login page.
  *
@@ -19,7 +24,7 @@ const SIGNOUT_TIMEOUT_MS = 2000;
  *
  * @param {string} [redirectTo]
  */
-export async function logoutStaff(redirectTo = './admin-login.html') {
+export async function logoutStaff(redirectTo = redirectTarget()) {
   try {
     await Promise.race([
       signOut(auth),
@@ -49,11 +54,24 @@ export function initLogoutButtons(selector = '[data-action="logout"]') {
     event.preventDefault();
     event.stopPropagation();
 
+    // Visible in the console so a dead button can be told apart from a
+    // handler that never fired (a stale cached module, a guard that redirected,
+    // or a JS error earlier in the page).
+    console.info('[auth] logout pressed ->', redirectTarget());
+
     button.disabled = true;
     button.style.opacity = '0.6';
     button.style.pointerEvents = 'none';
 
-    logoutStaff();
+    // logoutStaff navigates in its `finally`, so a rejected promise here would
+    // otherwise leave the button permanently dead with nothing on screen.
+    logoutStaff().catch((error) => {
+      console.error('[auth] logout failed:', error);
+      button.disabled = false;
+      button.style.opacity = '1';
+      button.style.pointerEvents = '';
+      button.textContent = 'Logout failed — retry or refresh';
+    });
   });
 
   // Touch feedback; the click handler above performs the sign-out so a tap
