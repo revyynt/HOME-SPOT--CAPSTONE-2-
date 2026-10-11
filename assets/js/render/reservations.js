@@ -9,12 +9,13 @@ import {
   db,
   firebaseFirestore,
   getReservationsRef,
+  getRoomDocRef,
   isFirestoreReady
 } from '../firebase-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
+import { canApprove, canDecline, nextAvailability } from '../lib/booking.js';
 import { Toast } from './toast.js';
-import { decrementRoomAvailability } from '../room-availability.js';
 
 const STATUS_CLASS = {
   Approved: 'px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800',
@@ -89,64 +90,115 @@ export function renderReservationRequests(docs) {
 }
 
 /**
- * Approves a reservation and decrements the room's availability.
+ * Approves a reservation and decrements the room's availability, atomically.
+ *
+ * Reads the request and the room inside one Firestore transaction, then writes
+ * both. Firestore serializes transactions, so two admins clicking Approve (or
+ * one double-clicking) can never both succeed: the second re-reads an
+ * `Approved` request and is refused. It also refuses when the room is full,
+ * which the previous non-atomic update-then-decrement pair did not.
+ *
  * @param {string} reservationId
+ * @returns {Promise<boolean>} whether the approval was applied
  */
 export async function approveReservation(reservationId) {
-  if (!isFirestoreReady()) {
+  if (!isFirestoreReady() || !firebaseFirestore.runTransaction) {
     Toast.error('Firestore is not available.');
-    return;
+    return false;
   }
 
   try {
-    const ref = firebaseFirestore.doc(db, 'reservations', reservationId);
-    await firebaseFirestore.updateDoc(ref, {
-      status: 'Approved',
-      decisionAt: firebaseFirestore.serverTimestamp()
+    const reservationRef = firebaseFirestore.doc(db, 'reservations', reservationId);
+
+    const result = await firebaseFirestore.runTransaction(db, async (tx) => {
+      const snap = await tx.get(reservationRef);
+      if (!snap.exists()) return { ok: false, reason: 'missing' };
+
+      const data = snap.data();
+      const roomName = data.room;
+      if (!roomName) return { ok: false, reason: 'no-room' };
+
+      // Derive the room doc from the request's stored room name.
+      const roomRef = getRoomDocRef(roomName);
+      if (!roomRef) return { ok: false, reason: 'no-room-ref' };
+
+      const roomSnap = await tx.get(roomRef);
+      const available = roomSnap.exists() ? Number(roomSnap.data().available ?? 0) : 0;
+
+      const decision = canApprove({ reservationStatus: data.status, available });
+      if (!decision.ok) return { ok: false, reason: decision.reason };
+
+      tx.update(reservationRef, {
+        status: 'Approved',
+        decisionAt: firebaseFirestore.serverTimestamp()
+      });
+      tx.update(roomRef, { available: nextAvailability(available) });
+
+      return { ok: true, available: nextAvailability(available) };
     });
-    Toast.success('Reservation approved.');
-  } catch (error) {
-    console.error('Firestore approve failed:', error);
-    Toast.error('Unable to approve reservation.');
-    return;
-  }
 
-  // The snapshot refresh is driven by Firestore, but re-read the request to
-  // find which room to decrement.
-  try {
-    const ref = firebaseFirestore.doc(db, 'reservations', reservationId);
-    const snap = await firebaseFirestore.getDoc(ref);
-    if (snap.exists() && snap.data().room) {
-      await decrementRoomAvailability(snap.data().room);
+    if (!result.ok) {
+      if (result.reason === 'already-decided') {
+        Toast.error('This reservation was already processed.');
+      } else if (result.reason === 'no-availability') {
+        Toast.error('Cannot approve: this room is fully booked.');
+      } else {
+        Toast.error('Could not approve this reservation.');
+      }
+      return false;
     }
+
+    Toast.success('Reservation approved.');
+    return true;
   } catch (error) {
-    console.error('Failed to decrement room availability:', error);
+    console.error('Firestore approve transaction failed:', error);
+    Toast.error('Unable to approve reservation.');
+    return false;
   }
 }
 
 /**
  * Declines a reservation, optionally recording a reason.
+ *
+ * Guarded against re-deciding an already-processed request, so a double-click
+ * or a second admin cannot overwrite an approval with a decline.
+ *
  * @param {string} reservationId
+ * @returns {Promise<boolean>}
  */
 export async function declineReservation(reservationId) {
   const reason = prompt('Enter reason for declining (optional):');
 
   if (!isFirestoreReady()) {
     Toast.error('Firestore is not available.');
-    return;
+    return false;
   }
 
   try {
     const ref = firebaseFirestore.doc(db, 'reservations', reservationId);
+    const snap = await firebaseFirestore.getDoc(ref);
+    if (!snap.exists()) {
+      Toast.error('This reservation no longer exists.');
+      return false;
+    }
+
+    const decision = canDecline(snap.data().status);
+    if (!decision.ok) {
+      Toast.error('This reservation was already processed.');
+      return false;
+    }
+
     await firebaseFirestore.updateDoc(ref, {
       status: 'Declined',
       declineReason: reason || null,
       decisionAt: firebaseFirestore.serverTimestamp()
     });
     Toast.success('Reservation declined.');
+    return true;
   } catch (error) {
     console.error('Firestore decline failed:', error);
     Toast.error('Unable to decline reservation.');
+    return false;
   }
 }
 

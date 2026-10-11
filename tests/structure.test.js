@@ -435,6 +435,58 @@ test('only the webhook writes tenants.amountDue', () => {
   );
 });
 
+test('reservation approval is a single atomic transaction', () => {
+  // Approving used to updateDoc the request and THEN decrement availability in a
+  // second call. That pair was not atomic, so a double-click or two admin tabs
+  // could decrement twice, and nothing stopped approving into a full room.
+  const res = readFileSync(join(ROOT, 'assets/js/render/reservations.js'), 'utf8');
+
+  assert.match(
+    res,
+    /firebaseFirestore\.runTransaction\(/,
+    'approveReservation must run inside a Firestore transaction'
+  );
+  assert.match(res, /canApprove\(/, 'approveReservation must capacity-check via canApprove()');
+  assert.match(
+    res,
+    /nextAvailability\(/,
+    'approveReservation must use nextAvailability() to compute the new count'
+  );
+
+  // The old non-atomic path must not creep back in.
+  assert.ok(
+    !/decrementRoomAvailability/.test(res),
+    'reservations.js must not import decrementRoomAvailability; the transaction owns the decrement'
+  );
+  assert.ok(
+    !/getReservationsRef\(\)[\s\S]*?updateDoc[\s\S]*?decrement/.test(res),
+    'reservations.js must not update-then-decrement outside a transaction'
+  );
+});
+
+test('the Firestore bridge exposes runTransaction', () => {
+  // The approval transaction depends on this being reachable through the
+  // single bridge in firebase-service.js.
+  const service = readFileSync(join(ROOT, 'assets/js/firebase-service.js'), 'utf8');
+  assert.match(
+    service,
+    /runTransaction,/,
+    'firebase-service.js must expose runTransaction on the firebaseFirestore bridge'
+  );
+});
+
+test('the reservation form checks availability before submitting', () => {
+  // Advisory client-side guard that stops queueing an obviously-impossible
+  // request. The real guarantee is the approval transaction; this is UX.
+  const forms = readFileSync(join(ROOT, 'assets/js/pages/public-forms.js'), 'utf8');
+  assert.match(
+    forms,
+    /readRoomAvailability\(/,
+    'the public reservation form must read availability before writing a request'
+  );
+  assert.match(forms, /fully booked/i, 'the reservation form must show a "fully booked" message');
+});
+
 test('inline event handlers are not growing', () => {
   // A ratchet rather than a hard ban: pages still use onclick for simple static
   // wiring. This fails if the count rises above the recorded baseline, so the

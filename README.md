@@ -123,6 +123,7 @@ assets/js/
 │   ├── qr.js               buildQrPhPayload
 │   ├── payment-return.js   Payment-redirect state machine
 │   ├── payment-verification.js  Webhook corroboration + balance derivation
+│   ├── booking.js          Reservation approval decisions
 │   ├── guard.js            Page-level auth guard
 │   ├── session.js          Staff logout + mobile back-button guard
 │   └── dom.js              byId, onClick, attr
@@ -153,6 +154,8 @@ npm run format       # Prettier
 | `tests/payment-verification.test.js`              | Webhook corroboration: a forged `?payment=success` stays Pending, cross-tenant and stale payments never confirm, the balance never comes from `localStorage`                                                                                                                               |
 | `tests/payment-flow.test.js`                      | Walks all four PayMongo return paths through the real modules; asserts a redirect alone never moves a balance and the webhook closes the loop                                                                                                                                              |
 | `tests/ledger.test.js`                            | Balance arithmetic: idempotent recompute, a voided payment restores the balance, an overpayment floors at 0                                                                                                                                                                                |
+| `tests/booking.test.js`                           | Approval decisions: refuses an already-decided request and a full room, never decrements below zero                                                                                                                                                                                        |
+| `tests/booking-race.test.js`                      | Concurrent approval: a second approve of the same request is refused, the last slot cannot be taken twice, and a full room cannot be overbooked                                                                                                                                            |
 | `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet, no dynamic inline handlers built in JS, role-hierarchy parity with the rules, no client-side "paid" claim, the webhook owns the balance |
 | `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                                                                                                                                                                       |
 | `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears; the API bridge refuses to boot without `WEBHOOK_SECRET`                                                                                                                                                                                      |
@@ -192,6 +195,10 @@ does.
   which `tests/structure.test.js` checks for.
 - **`WEBHOOK_SECRET` is mandatory.** The dev bridge refuses to boot without it,
   so the webhook endpoint cannot be forged from a browser.
+- **Room capacity is enforced atomically.** Approving a reservation reads the
+  request and the room in one Firestore transaction and refuses if the request
+  was already decided or no slot remains, so a double-click or two admins cannot
+  overbook a room.
 
 ## Room Availability CLI
 

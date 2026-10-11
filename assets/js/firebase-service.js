@@ -20,7 +20,8 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
-  getDocs
+  getDocs,
+  runTransaction
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import {
   getAuth,
@@ -53,6 +54,10 @@ const firebaseFirestore = {
   getDoc,
   setDoc,
   getDocs,
+  // Exposed so reservation approval can read-then-write atomically (see
+  // render/reservations.js). Firestore serializes and retries the transaction
+  // server-side, which is what makes approval exactly-once.
+  runTransaction,
   serverTimestamp
 };
 

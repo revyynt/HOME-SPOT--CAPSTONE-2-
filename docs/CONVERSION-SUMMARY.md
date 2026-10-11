@@ -79,6 +79,39 @@ now shows two live tables driven by `onSnapshot`:
 The hardcoded "View Payment" / "View Due Date" modals and their `data-open-modal`
 triggers were removed with the rows that used them.
 
+### Reservation approval is atomic and exactly-once
+
+`approveReservation` runs the decision and the write in a **single Firestore
+transaction**: it reads the request and the room, refuses if the request was
+already decided or the room is full, then writes `status: 'Approved'` and
+`rooms.available - 1` together.
+
+This replaces an update-then-decrement pair that was not atomic. That pair had
+two real bugs, both now closed:
+
+- **Double-approve.** Two admins (or one double-click) could both approve the
+  same request and decrement availability twice. Firestore serializes the
+  transaction, so the second one re-reads `Approved` and is refused.
+- **Approving into a full room.** Nothing checked that a slot remained, so an
+  admin could approve a request for a room at 0 availability and silently
+  overbook it. It is now refused.
+
+`declineReservation` is likewise guarded so it cannot re-decide an
+already-processed request or overwrite an approval.
+
+`assets/js/lib/booking.js` holds the decision logic (`canApprove`,
+`canDecline`, `nextAvailability`); `tests/booking.test.js` and
+`tests/booking-race.test.js` cover the branches and the concurrency scenarios.
+
+The **public reservation form** also reads availability before writing a request
+(`public-forms.js`), so an obviously-impossible request is not queued. That check
+is advisory and client-side — the transaction above is the actual guarantee.
+
+Still open in the booking flow (see the full list above): there is no _hold_ — a
+pending request does not reserve a slot, so several visitors can request the
+last one and all but the winner must be declined manually — and approving does
+not yet link the request to the tenant it creates.
+
 ### QR Ph flow was removed
 
 `initiateQrPhFlow()` had no call sites, so the whole QR modal

@@ -11,6 +11,7 @@ import {
   firebaseFirestore,
   getMessagesRef,
   getReservationsRef,
+  getRoomDocRef,
   isFirestoreReady,
   waitForFirebaseReady
 } from '../firebase-service.js';
@@ -100,6 +101,33 @@ async function handleInquirySubmit(event) {
 }
 
 /**
+ * Reads the current free-slot count for a room.
+ *
+ * Advisory only -- this is a client read that anyone can bypass, so it is only
+ * there to avoid queueing an obviously-impossible request. The real guarantee
+ * is the atomic, capacity-checked approval transaction in
+ * render/reservations.js. A room doc that has not been created yet (nothing has
+ * read it or run set-room.js) returns null, meaning "unknown" -- we then allow
+ * the request rather than blocking on missing data.
+ *
+ * @param {string} roomName
+ * @returns {Promise<number|null>}
+ */
+async function readRoomAvailability(roomName) {
+  try {
+    const roomRef = getRoomDocRef(roomName);
+    if (!roomRef) return null;
+    const snap = await firebaseFirestore.getDoc(roomRef);
+    if (!snap.exists()) return null;
+    const available = snap.data().available;
+    return typeof available === 'number' ? available : null;
+  } catch (error) {
+    console.warn('Could not read room availability:', error);
+    return null;
+  }
+}
+
+/**
  * @param {SubmitEvent} event
  */
 async function handleReservationSubmit(event) {
@@ -118,12 +146,19 @@ async function handleReservationSubmit(event) {
     return;
   }
 
+  const room = getRoomNameFromPage();
+  const available = await readRoomAvailability(room);
+  if (available !== null && available <= 0) {
+    Toast.error('This room is fully booked. Please check back later.');
+    return;
+  }
+
   // Field set pinned by firestore.rules for reservations.create.
   const reservation = {
     name,
     email,
     phone,
-    room: getRoomNameFromPage(),
+    room,
     moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
     message: form.querySelector('[name="message"]')?.value.trim() || null,
     additionalInfo: form.querySelector('[name="additionalInfo"]')?.value.trim() || null,
