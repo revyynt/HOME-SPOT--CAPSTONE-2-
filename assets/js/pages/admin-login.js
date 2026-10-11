@@ -66,9 +66,11 @@ function clearError() {
 async function readRole(uid) {
   try {
     const snap = await firebaseFirestore.getDoc(firebaseFirestore.doc(db, 'users', uid));
-    return snap.exists() ? (snap.data().role ?? null) : null;
+    return snap.exists() ? snap.data().role ?? null : null;
   } catch (error) {
-    console.error('Error reading role:', error);
+    // Previously swallowed, which made a denied read indistinguishable from a
+    // genuinely absent role document. Say which it was.
+    console.error('[auth] readRole failed for', uid, error?.code || error);
     return null;
   }
 }
@@ -152,39 +154,56 @@ function clearTenantSession() {
 }
 
 /**
+ * Guards against concurrent routing.
+ *
+ * Both `onAuthStateChanged` and the submit handler can fire for a single
+ * sign-in, which used to start two overlapping routeUser() runs -- two
+ * competing signOut() calls and two navigations. The second usually won the
+ * race and left the page sitting on the login screen with no visible error.
+ */
+let routing = false;
+
+/**
  * Routes a freshly authenticated user.
  * @param {import('firebase/auth').User} user
  * @returns {Promise<boolean>} whether the user was sent somewhere
  */
 async function routeUser(user) {
-  const email = user.email || '';
+  if (routing) return false;
+  routing = true;
 
-  const [role, profile] = await Promise.all([
-    readRole(user.uid),
-    loadTenantProfile(user.uid, email.toLowerCase())
-  ]);
+  try {
+    const email = user.email || '';
 
-  const destination = resolveDestination({
-    role,
-    hasTenantProfile: Boolean(profile.docId)
-  });
+    const [role, profile] = await Promise.all([
+      readRole(user.uid),
+      loadTenantProfile(user.uid, email.toLowerCase())
+    ]);
 
-  if (!destination) {
-    // A valid account with nowhere to go must not sit signed in.
-    clearTenantSession();
-    await signOut(auth);
-    showError(noDestinationMessage(role));
-    return false;
+    const destination = resolveDestination({
+      role,
+      hasTenantProfile: Boolean(profile.docId)
+    });
+
+    if (!destination) {
+      // A valid account with nowhere to go must not sit signed in.
+      clearTenantSession();
+      await signOut(auth);
+      showError(noDestinationMessage(role));
+      return false;
+    }
+
+    if (destination.includes('tenant-portal')) {
+      seedTenantSession(profile, email.toLowerCase());
+    } else {
+      clearTenantSession();
+    }
+
+    window.location.href = destination;
+    return true;
+  } finally {
+    routing = false;
   }
-
-  if (destination.includes('tenant-portal')) {
-    seedTenantSession(profile, email.toLowerCase());
-  } else {
-    clearTenantSession();
-  }
-
-  window.location.href = destination;
-  return true;
 }
 
 // Already signed in? Skip the form and go straight to the right place.

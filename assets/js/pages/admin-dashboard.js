@@ -26,6 +26,13 @@ initBackButtonGuard('admin');
 initDetailModals();
 initRoomControls();
 
+// Bound here, not inside the guard. These only attach event listeners and read
+// their own inputs -- no Firestore, no tenant data -- so there is nothing to
+// protect, and binding them behind `admin-access-granted` meant that if the
+// guard event ever failed to fire the controls were permanently dead with no
+// visible error. The writes they perform are still gated by firestore.rules.
+initUnitsEditor();
+
 // Firestore listeners are bound only once the guard passes -- binding them for
 // an anonymous visitor would attempt to read tenant PII.
 document.addEventListener(
@@ -44,9 +51,6 @@ document.addEventListener(
     // 3D building with per-unit occupancy.
     listenToBuilding();
     initBuildingTab();
-
-    // Creating units here uses the signed-in session -- no token required.
-    initUnitsEditor();
   },
   { once: true }
 );

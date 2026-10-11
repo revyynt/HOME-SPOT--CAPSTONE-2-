@@ -789,6 +789,59 @@ test('the login form routes every role to a real page', () => {
   }
 });
 
+test('the admin dashboard must not load firebase-service.js twice', () => {
+  // A duplicate module script is harmless in theory (the module map caches by
+  // URL) but it means the page fetches and re-resolves the same module graph,
+  // and it is the kind of thing that hides real loading problems.
+  const page = read('admin-dashboard.html');
+  const refs = [...page.matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]);
+
+  for (const src of new Set(refs)) {
+    const count = refs.filter((r) => r === src).length;
+    assert.equal(count, 1, `admin-dashboard.html loads ${src} ${count} times`);
+  }
+});
+
+test('dashboard controls bind outside the auth guard', () => {
+  // Binding these inside `admin-access-granted` meant that if the guard event
+  // failed to fire, the controls were dead with no visible error -- the
+  // symptom being "I press the button and nothing happens". They only attach
+  // listeners and read their own inputs, so there is nothing to protect.
+  const dash = readFileSync(join(ROOT, 'assets/js/pages/admin-dashboard.js'), 'utf8');
+
+  // Only the listener body counts -- the guardPage() call also mentions the
+  // event name, and it sits above the top-level initialisers.
+  const listenerStart = dash.indexOf("document.addEventListener(");
+  assert.ok(listenerStart > -1, 'expected the granted listener to exist');
+  const guardBlock = dash.slice(listenerStart);
+
+  for (const control of ['initUnitsEditor()', 'initRoomControls()', 'initLogoutButtons()']) {
+    assert.ok(
+      !guardBlock.includes(control),
+      `${control} must not be gated behind admin-access-granted`
+    );
+  }
+  assert.match(
+    dash,
+    /^initUnitsEditor\(\);/m,
+    'initUnitsEditor must be called at module top level'
+  );
+});
+
+test('the login page guards against concurrent routing', () => {
+  // onAuthStateChanged and the submit handler both fire for one sign-in.
+  // Without a guard they ran two overlapping routeUser() passes, and the
+  // competing signOut()/navigation left the page stuck on the login screen.
+  const login = readFileSync(join(ROOT, 'assets/js/pages/admin-login.js'), 'utf8');
+
+  assert.match(login, /let routing = false;/, 'a routing guard must exist');
+  assert.match(
+    login,
+    /if \(routing\) return false;/,
+    'routeUser must bail out when a routing pass is already in flight'
+  );
+});
+
 test('inline event handlers are not growing', () => {
   // A ratchet rather than a hard ban: pages still use onclick for simple static
   // wiring. This fails if the count rises above the recorded baseline, so the
