@@ -71,7 +71,13 @@ export default [
   // CommonJS Node servers (explicit paths -- `*.js` would match every depth)
   // ---------------------------------------------------------------------
   {
-    files: ['paymongo-api-server.js', 'set-room.js', 'functions/**/*.js', 'lib/**/*.js'],
+    files: [
+      'paymongo-api-server.js',
+      'set-room.js',
+      'seed-units.js',
+      'functions/**/*.js',
+      'lib/**/*.js'
+    ],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'commonjs',

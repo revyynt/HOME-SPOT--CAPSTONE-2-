@@ -18,6 +18,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGES = [
   'index.html',
   'property-detail.html',
+  'building.html',
   'start.html',
   'admin-login.html',
   'admin-dashboard.html',
@@ -606,6 +607,62 @@ test('room controls are delegated, never inline', () => {
   const dash = readFileSync(join(ROOT, 'assets/js/pages/admin-dashboard.js'), 'utf8');
   assert.match(dash, /initRoomControls\(\)/, 'the dashboard must wire the room steppers');
   assert.match(dash, /listenToRooms\(\)/, 'the dashboard must subscribe to rooms');
+});
+
+test('units are world-readable but never carry occupancy', () => {
+  // Privacy invariant. `units` is `allow read: if true` so a visitor can see the
+  // floor plan. If a unit document ever stored "available"/"booked"/"occupied",
+  // anyone could scrape which apartments in the building are vacant -- a real
+  // safety concern for a residence. Occupancy is derived from `tenants` instead.
+  const rules = readFileSync(join(ROOT, 'firestore.rules'), 'utf8');
+  const match = rules.match(/match \/units\/\{unitId\} \{[\s\S]*?\n {4}\}/);
+  assert.ok(match, 'firestore.rules must define a match block for units');
+
+  const block = match[0];
+  assert.match(block, /allow read: if true;/, 'units must be world-readable for the tour');
+  assert.match(block, /allow write: if isAdmin\(\);/, 'only staff may write units');
+
+  // No occupancy field may be written into a unit document anywhere.
+  const seed = readFileSync(join(ROOT, 'seed-units.js'), 'utf8');
+  for (const field of ['available', 'occupied', 'booked', 'status']) {
+    assert.ok(
+      !new RegExp(`${field}:\\s*\\{`, 'i').test(seed),
+      `seed-units.js must not seed an occupancy field ("${field}") into units`
+    );
+  }
+});
+
+test('the public building page never reads tenant PII', () => {
+  // building.html is world-accessible. It may read `units` (a floor plan) but
+  // must not query `tenants`/`payments`/`reservations`, which carry names,
+  // emails, balances and lease records.
+  const page = readFileSync(join(ROOT, 'assets/js/pages/building-page.js'), 'utf8');
+
+  for (const forbidden of ['tenants', 'reservations', 'payments', 'messages']) {
+    assert.ok(
+      !new RegExp(`collection\\([^)]*'${forbidden}'`).test(page),
+      `building-page.js must not read the "${forbidden}" collection`
+    );
+  }
+  assert.match(
+    page,
+    /showOccupancy:\s*false/,
+    'the public viewer must render with occupancy suppressed'
+  );
+});
+
+test('the building viewer publishes nothing to window', () => {
+  // Guarded by the custom homespot/no-global-leak rule, but the viewer is
+  // loaded as a module and easy to regress by adding a debug global.
+  const viewer = readFileSync(join(ROOT, 'assets/js/lib/building-viewer.js'), 'utf8');
+  assert.ok(
+    !/window\.[A-Za-z_$][\w$]*\s*=/.test(viewer),
+    'building-viewer.js must not assign to window'
+  );
+  assert.ok(
+    /import\s/.test(viewer),
+    'the viewer must reach Three.js via the documented loader, not a bare global'
+  );
 });
 
 test('inline event handlers are not growing', () => {

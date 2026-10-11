@@ -12,6 +12,7 @@ import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { listenToPayments } from './admin-dashboard/payments.js';
 import { initRoomControls, listenToRooms } from './admin-dashboard/rooms.js';
+import { initBuildingTab, listenToBuilding } from './admin-dashboard/building.js';
 
 guardPage({
   role: 'admin',
@@ -38,6 +39,10 @@ document.addEventListener(
 
     // Live room availability (replaces the former hardcoded Listings tab).
     listenToRooms();
+
+    // 3D building with per-unit occupancy.
+    listenToBuilding();
+    initBuildingTab();
   },
   { once: true }
 );

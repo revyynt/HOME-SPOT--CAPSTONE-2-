@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building Tour - MJP Residences | Homespot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/css/style.css" />
+  </head>
+  <body class="bg-slate-50">
+    <header class="bg-white border-b">
+      <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div>
+          <h1 class="text-xl font-bold">MJP Residences</h1>
+          <p class="text-sm text-gray-600">Interactive building tour</p>
+        </div>
+        <a href="index.html" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+          Back to Home
+        </a>
+      </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <p class="text-sm text-gray-600">
+          Drag to orbit &middot; scroll to zoom &middot; toggle X-ray to see inside
+        </p>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <input type="checkbox" id="buildingXrayToggle" checked class="h-4 w-4 rounded" />
+          X-ray view
+        </label>
+      </div>
+
+      <div id="buildingViewer" class="w-full h-[520px] rounded-lg border overflow-hidden"></div>
+
+      <div class="grid grid-cols-2 gap-4 mt-6">
+        <div class="bg-white border rounded-lg p-4">
+          <div class="text-xs text-gray-500 uppercase tracking-wider">Building</div>
+          <div id="buildingUnitCount" class="text-xl font-bold text-gray-900">—</div>
+        </div>
+        <div class="bg-white border rounded-lg p-4">
+          <div class="text-xs text-gray-500 uppercase tracking-wider">Levels</div>
+          <div id="buildingFloorCount" class="text-xl font-bold text-gray-900">—</div>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-500 mt-4">
+        Occupancy is intentionally not shown here. To check availability for a unit, please
+        <a href="property-detail.html?id=1" class="text-blue-600 underline">view the listing</a>
+        and submit an inquiry.
+      </p>
+    </main>
+
+    <script type="module" src="./assets/js/firebase-service.js"></script>
+    <script type="module" src="./assets/js/pages/building-page.js"></script>
+  </body>
+</html>

@@ -154,6 +154,39 @@ tell what has been onboarded. `Converted` requests leave the working list.
 (so the conversion branch cannot become unreachable again), and the tenant
 creation must record the link.
 
+### 3D building view (x-ray, per-unit occupancy)
+
+The admin dashboard has a **Building** tab showing a Three.js model of the
+building: one translucent box per unit, stacked by floor. Booked units glow red,
+units being onboarded amber, free ones teal. Drag to orbit, scroll to zoom,
+hover a room for its occupant, and toggle X-ray to switch between the glassy
+cutaway and a solid exterior.
+
+There is **no model file** — the geometry is generated from the `units`
+collection, so there is nothing to author in Blender and the building updates
+itself when Firestore changes.
+
+Occupancy is **derived at runtime** from `tenants` and `reservations`, never
+stored on the unit. That is deliberate: `units` is `allow read: if true` so a
+visitor can see the floor plan, and a world-readable "is this room empty" flag
+would let anyone scrape which apartments in the building are vacant — a real
+safety concern for a residence.
+
+For the same reason the public tour (`building.html`) renders with
+`showOccupancy: false` and reads only `units`. It never queries `tenants`,
+`reservations`, `payments`, or `messages`. `tests/structure.test.js` guards
+both halves of that: no occupancy field may be seeded into a unit, and the
+public page must not read a PII collection.
+
+Geometry maths lives in `assets/js/lib/units.js` (pure, 25 tests covering floor
+stacking, non-overlap, centring and determinism); `lib/building-viewer.js` only
+turns those numbers into meshes. That split is why the layout is verifiable in
+`node --test` even though Three.js needs a browser.
+
+Seed some units with `npm run seed-units` (needs an admin ID token, like
+`set-room.js`). Assign a tenant to a unit via the optional **Unit ID** field on
+the create-tenant form.
+
 ### QR Ph flow was removed
 
 `initiateQrPhFlow()` had no call sites, so the whole QR modal

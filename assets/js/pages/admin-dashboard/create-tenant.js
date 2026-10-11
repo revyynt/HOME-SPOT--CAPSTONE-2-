@@ -135,6 +135,9 @@ function readForm() {
     phone: value('tenantPhone'),
     emergencyContact: value('tenantEmergency'),
     room: value('tenantRoom'),
+    // Links the tenant to a physical unit for the 3D building view. Optional:
+    // existing tenants have none, and the viewer treats "unassigned" as free.
+    unitId: value('tenantUnitId'),
     dormName: document.getElementById('tenantDorm')?.value ?? '',
     moveInDate: value('tenantMoveInDate'),
     monthlyRent: parseFloat(document.getElementById('tenantMonthlyRent')?.value) || 0,
@@ -210,6 +213,9 @@ export async function createTenant() {
     status: 'Active',
     role: 'tenant',
     uid,
+    // Empty string rather than undefined so the field is simply absent when
+    // unassigned; the viewer treats falsy unitId as "not in a unit".
+    ...(form.unitId ? { unitId: form.unitId } : {}),
     createdAt: firebaseFirestore.serverTimestamp(),
     updatedAt: firebaseFirestore.serverTimestamp()
   });

@@ -64,6 +64,21 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
+    // units -- the physical floor plan (one doc per room: "201")
+    //
+    // Deliberately carries NO occupancy field. A publicly readable document
+    // saying "unit 201 is empty" would let anyone scrape which apartments in the
+    // building are vacant. Units hold only physical facts (number, floor, type);
+    // occupancy is derived at runtime from `tenants` and `reservations`, which
+    // are already restricted to staff.
+    // -------------------------------------------------------------------------
+    match /units/{unitId} {
+      // A floor plan is public information; occupancy is not stored here.
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // -------------------------------------------------------------------------
     // rooms -- public inventory
     // -------------------------------------------------------------------------
     match /rooms/{roomId} {

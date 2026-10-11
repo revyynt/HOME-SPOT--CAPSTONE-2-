@@ -14,6 +14,7 @@ the CDN.
 /
 ├── index.html                      # Public landing page
 ├── property-detail.html            # Room detail + inquiry/reservation forms
+├── building.html                   # Public 3D building tour (no occupancy data)
 ├── start.html                      # Dev launcher (navigation hub)
 ├── admin-login.html                # Admin / Super Admin login
 ├── admin-dashboard.html            # Admin dashboard (rooms, reservations, tenants,
@@ -23,6 +24,7 @@ the CDN.
 ├── tenant-portal.html              # Tenant portal (payments, chat, profile)
 ├── paymongo-api-server.js          # Local payment bridge (dev)
 ├── set-room.js                     # Room availability CLI (requires admin token)
+├── seed-units.js                   # Seeds `units` for the 3D building view
 ├── firebase.json                   # Hosting / Functions / Firestore config
 ├── firestore.rules                 # Per-collection security rules
 ├── firestore.indexes.json          # Composite indexes for the live queries
@@ -102,14 +104,15 @@ firebase deploy
 
 ### Firestore collections
 
-| Collection     | Written by                      | Read by                     |
-| -------------- | ------------------------------- | --------------------------- |
-| `rooms`        | Admin                           | Everyone (public inventory) |
-| `reservations` | Public form (constrained shape) | Admin                       |
-| `messages`     | Tenant + Admin                  | Participant + Admin         |
-| `tenants`      | Admin                           | Admin + the tenant themself |
-| `payments`     | Webhook only                    | Admin + the tenant themself |
-| `users`        | Admin / self-service            | Owner + Admin               |
+| Collection     | Written by                      | Read by                                      |
+| -------------- | ------------------------------- | -------------------------------------------- |
+| `rooms`        | Admin                           | Everyone (public inventory)                  |
+| `reservations` | Public form (constrained shape) | Admin                                        |
+| `units`        | `seed-units.js` / Admin         | Everyone (floor plan only — never occupancy) |
+| `messages`     | Tenant + Admin                  | Participant + Admin                          |
+| `tenants`      | Admin                           | Admin + the tenant themself                  |
+| `payments`     | Webhook only                    | Admin + the tenant themself                  |
+| `users`        | Admin / self-service            | Owner + Admin                                |
 
 ### Source layout
 
@@ -124,6 +127,8 @@ assets/js/
 │   ├── qr.js               buildQrPhPayload
 │   ├── payment-return.js   Payment-redirect state machine
 │   ├── payment-verification.js  Webhook corroboration + balance derivation
+│   ├── building-viewer.js      Three.js x-ray building renderer
+│   ├── units.js                Unit layout maths + occupancy derivation
 │   ├── booking.js          Reservation approval + availability decisions
 │   ├── guard.js            Page-level auth guard
 │   ├── session.js          Staff logout + mobile back-button guard
@@ -203,6 +208,38 @@ does.
 - **A request can only produce one tenant.** Onboarding from a reservation marks
   it `Converted` with the tenant's uid; `Converted` is terminal, so a repeat
   click cannot create a second account.
+- **The 3D building never leaks occupancy.** `units` is world-readable so a
+  visitor can see the floor plan, but unit documents hold only physical facts
+  (number, floor, type) — never an availability flag. Occupancy is derived from
+  `tenants`/`reservations` at render time, which are staff-only. The public tour
+  (`building.html`) renders with occupancy suppressed and reads no PII
+  collection. Guarded in `tests/structure.test.js`.
+
+## 3D Building View
+
+The admin dashboard's **Building** tab renders a Three.js model of the
+building — one translucent box per unit, stacked by floor, with booked units
+glowing red, units being onboarded amber, and free ones teal. Drag to orbit,
+scroll to zoom, hover a room for its occupant, and toggle X-ray between the
+glassy cutaway and a solid exterior.
+
+The geometry is **generated from the `units` collection**, so there is no model
+file to author and the building updates live as Firestore changes. The public
+tour at `building.html` shows the same model without occupancy.
+
+Seed units to get started:
+
+```bash
+export FIREBASE_ID_TOKEN=<token>   # from the admin console
+npm run seed-units -- --floors 3 --per-floor 4
+npm run seed-units -- --dry-run    # preview without writing
+```
+
+Assign a tenant to a unit via the optional **Unit ID** field on the
+create-tenant form.
+
+Geometry maths lives in `assets/js/lib/units.js` — pure and unit-tested — while
+`assets/js/lib/building-viewer.js` only turns those numbers into meshes.
 
 ## Room Availability
 
