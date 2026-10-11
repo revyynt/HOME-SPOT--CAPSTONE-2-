@@ -7,7 +7,8 @@ import {
   isOpen,
   canApprove,
   canDecline,
-  nextAvailability
+  nextAvailability,
+  clampAvailability
 } from '../assets/js/lib/booking.js';
 
 test('a pending request with a free slot can be approved', () => {
@@ -118,4 +119,49 @@ test('isOpen is true only for an undecided request', () => {
   assert.equal(isOpen('Approved'), false);
   assert.equal(isOpen('Declined'), false);
   assert.equal(isOpen('Converted'), false);
+});
+
+test('clampAvailability normalises an admin-supplied count', () => {
+  assert.equal(clampAvailability(3), 3);
+  assert.equal(clampAvailability('2'), 2);
+  assert.equal(clampAvailability(0), 0);
+});
+
+test('clampAvailability floors fractional counts', () => {
+  // A room cannot hold half a slot.
+  assert.equal(clampAvailability(2.7), 2);
+  assert.equal(clampAvailability(1.999), 1);
+});
+
+test('clampAvailability refuses negative and non-numeric values', () => {
+  assert.equal(clampAvailability(-5), 0);
+  assert.equal(clampAvailability(NaN), 0);
+  assert.equal(clampAvailability('lots'), 0);
+  assert.equal(clampAvailability(undefined), 0);
+  assert.equal(clampAvailability(null), 0);
+  assert.equal(clampAvailability(Infinity), 0);
+});
+
+test('clampAvailability respects a capacity ceiling', () => {
+  // Triple Occupancy Room holds 3; the stepper must not exceed it.
+  assert.equal(clampAvailability(5, 3), 3);
+  assert.equal(clampAvailability(3, 3), 3);
+  assert.equal(clampAvailability(2, 3), 2);
+});
+
+test('clampAvailability ignores a nonsensical ceiling', () => {
+  // A missing / unparseable ceiling means "no capacity recorded" -> no cap.
+  assert.equal(clampAvailability(7, null), 7);
+  assert.equal(clampAvailability(7, undefined), 7);
+  assert.equal(clampAvailability(7, 'x'), 7);
+  // A real number is always honoured, even a degenerate one: a 0 ceiling means
+  // "no slots", and a negative ceiling (nonsense) floors to 0 rather than
+  // letting an unbounded count through.
+  assert.equal(clampAvailability(7, 0), 0);
+  assert.equal(clampAvailability(7, -1), 0);
+});
+
+test('a stepper can never drive availability below zero', () => {
+  // Mirrors rooms.js adjustAvailability going from 0 with a -1 delta.
+  assert.equal(clampAvailability(0 - 1), 0);
 });

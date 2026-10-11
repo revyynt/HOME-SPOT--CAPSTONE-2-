@@ -11,6 +11,7 @@ import { initTenantTable, listenToTenants } from './admin-dashboard/tenants.js';
 import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { listenToPayments } from './admin-dashboard/payments.js';
+import { initRoomControls, listenToRooms } from './admin-dashboard/rooms.js';
 
 guardPage({
   role: 'admin',
@@ -21,6 +22,7 @@ guardPage({
 initLogoutButtons();
 initBackButtonGuard('admin');
 initDetailModals();
+initRoomControls();
 
 // Firestore listeners are bound only once the guard passes -- binding them for
 // an anonymous visitor would attempt to read tenant PII.
@@ -33,6 +35,9 @@ document.addEventListener(
 
     // The webhook's ledger, so staff can reconcile a missed payment.
     listenToPayments();
+
+    // Live room availability (replaces the former hardcoded Listings tab).
+    listenToRooms();
   },
   { once: true }
 );

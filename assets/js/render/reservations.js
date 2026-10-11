@@ -15,6 +15,7 @@ import {
 import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
 import { canApprove, canDecline, nextAvailability } from '../lib/booking.js';
+import { renderActivity } from '../pages/admin-dashboard/rooms.js';
 import { Toast } from './toast.js';
 
 const STATUS_CLASS = {
@@ -93,9 +94,17 @@ export function renderReservationRequests(docs) {
   });
 
   // Two sections so approved requests awaiting onboarding are visually distinct
-  // from fresh requests, without hiding either.
-  const pendingRows = entries.filter((e) => e.status === 'Pending').map((e) => e.row);
-  const approvedRows = entries.filter((e) => e.status === 'Approved').map((e) => e.row);
+  // from fresh requests, without hiding either. Declined and Converted rows are
+  // fetched (to feed the activity feed) but are not drawn here.
+  const actionable = entries.filter((e) => e.status === 'Pending' || e.status === 'Approved');
+  const pendingRows = actionable.filter((e) => e.status === 'Pending').map((e) => e.row);
+  const approvedRows = actionable.filter((e) => e.status === 'Approved').map((e) => e.row);
+
+  if (!pendingRows.length && !approvedRows.length) {
+    container.innerHTML =
+      '<div class="bg-white border rounded-lg p-6 text-gray-600">No pending reservation requests at the moment.</div>';
+    return;
+  }
 
   const sections = [];
   if (pendingRows.length) {
@@ -228,15 +237,17 @@ export async function declineReservation(reservationId) {
 }
 
 /**
- * Subscribes to the reservations the dashboard needs to act on.
+ * Subscribes to the reservations the dashboard needs.
  *
- * Deliberately includes 'Approved' as well as 'Pending'. The list previously
- * filtered to Pending only, which meant an approved request vanished from the
- * dashboard the instant it was approved -- taking the "Create Tenant Account"
- * button (which only renders for Approved) with it. The onboarding step was
- * therefore unreachable: approve, and the request disappeared.
+ * Deliberately includes 'Approved' (and the other terminal states) alongside
+ * 'Pending'. The list previously filtered to Pending only, which meant an
+ * approved request vanished the instant it was approved -- taking the "Create
+ * Tenant Account" button (which only renders for Approved) with it. The
+ * onboarding step was therefore unreachable: approve, and the request
+ * disappeared.
  *
- * 'Converted' is excluded so onboarded requests leave the working list.
+ * renderReservationRequests only draws rows for Pending and Approved, so the
+ * extra states are used solely to feed the overview's Recent Activity feed.
  *
  * @param {(count: number) => void} [onCount] - pending count for the badge
  */
@@ -246,7 +257,7 @@ export function watchPendingReservations(onCount) {
 
   const query = firebaseFirestore.query(
     ref,
-    firebaseFirestore.where('status', 'in', ['Pending', 'Approved'])
+    firebaseFirestore.where('status', 'in', ['Pending', 'Approved', 'Declined', 'Converted'])
   );
 
   return firebaseFirestore.onSnapshot(
@@ -256,6 +267,7 @@ export function watchPendingReservations(onCount) {
       // The badge counts only what still needs a decision.
       onCount?.(docs.filter((doc) => doc.data().status === 'Pending').length);
       renderReservationRequests(snapshot);
+      renderActivity(docs.map((doc) => doc.data()));
     },
     (error) => {
       console.error('Pending reservations snapshot failed:', error);

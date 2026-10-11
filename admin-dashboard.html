@@ -73,7 +73,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">Total Listings</p>
-              <p class="text-3xl font-bold">4</p>
+              <p id="statTotalListings" class="text-3xl font-bold">—</p>
             </div>
             <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">Active Bookings</p>
-              <p class="text-3xl font-bold">12</p>
+              <p id="statActiveBookings" class="text-3xl font-bold">—</p>
             </div>
             <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +111,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">Pending Requests</p>
-              <p id="pendingRequestsCount" class="text-3xl font-bold">5</p>
+              <p id="pendingRequestsCount" class="text-3xl font-bold">—</p>
             </div>
             <div class="bg-yellow-600 w-12 h-12 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@
           <div class="flex items-center justify-between">
             <div>
               <p class="text-sm text-gray-600 mb-1">Unread Messages</p>
-              <p id="unreadMessagesCount" class="text-3xl font-bold">3</p>
+              <p id="unreadMessagesCount" class="text-3xl font-bold">—</p>
             </div>
             <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,67 +188,7 @@
               <!-- Recent Activity -->
               <div class="bg-white border rounded-lg p-6">
                 <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
-                <div class="space-y-4">
-                  <div class="flex items-start gap-3 pb-4 border-b">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fill-rule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clip-rule="evenodd"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium">New booking confirmed</p>
-                      <p class="text-xs text-gray-500">Single Occupancy Room - 2 hours ago</p>
-                    </div>
-                  </div>
-                  <div class="flex items-start gap-3 pb-4 border-b">
-                    <div
-                      class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center"
-                    >
-                      <svg
-                        class="w-4 h-4 text-yellow-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium">New reservation request</p>
-                      <p class="text-xs text-gray-500">Double Occupancy Room - 5 hours ago</p>
-                    </div>
-                  </div>
-                  <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg
-                        class="w-4 h-4 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium">New message received</p>
-                      <p class="text-xs text-gray-500">From John Reyes - 10 mins ago</p>
-                    </div>
-                  </div>
-                </div>
+                <div id="overviewActivity" class="space-y-4"></div>
               </div>
 
               <!-- Quick Actions -->
@@ -256,6 +196,7 @@
                 <h3 class="text-xl font-bold mb-4">Quick Actions</h3>
                 <div class="grid grid-cols-2 gap-4">
                   <button
+                    data-tab-button="listings"
                     class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50"
                   >
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,10 +204,10 @@
                         stroke-linecap="round"
                         stroke-linejoin="round"
                         stroke-width="2"
-                        d="M12 4v16m8-8H4"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a2 2 0 002 2h3m10-11l2 2m-2-2v10a2 2 0 01-2 2h-3m-6 0a2 2 0 01-2-2v-4a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2z"
                       ></path>
                     </svg>
-                    <span class="text-sm font-medium">Add New Listing</span>
+                    <span class="text-sm font-medium">Manage Rooms</span>
                   </button>
                   <button
                     class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50"
@@ -314,175 +255,49 @@
 
           <!-- Listings Tab -->
           <div data-tab-content="listings" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-xl font-bold">My Dorm Listings</h3>
-              <button
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
-                Add New Listing
-              </button>
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-xl font-bold">Room Availability</h3>
+              <span id="roomsFirestoreStatus" class="text-xs text-gray-500">Connecting...</span>
             </div>
+            <p class="text-sm text-gray-600 mb-6">
+              Live inventory for every published room. Approving a reservation decrements
+              availability automatically; use the steppers to correct it manually.
+            </p>
 
-            <div class="space-y-4">
-              <!-- Listing 1 -->
-              <div class="bg-white border rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <h4 class="text-lg font-bold mb-1">Single Occupancy Room</h4>
-                      <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-                        <span>Occupancy: 2/4</span>
-                        <span class="text-green-600 font-medium">₱5,500/mo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        ></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        ></path>
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        ></path>
-                      </svg>
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Listing 2 -->
-              <div class="bg-white border rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <h4 class="text-lg font-bold mb-1">Double Occupancy Room</h4>
-                      <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-                        <span>Occupancy: 3/6</span>
-                        <span class="text-green-600 font-medium">₱4,000/mo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        ></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        ></path>
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        ></path>
-                      </svg>
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Listing 3 -->
-              <div class="bg-white border rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <h4 class="text-lg font-bold mb-1">Triple Occupancy Room</h4>
-                      <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-                        <span>Occupancy: 4/12</span>
-                        <span class="text-green-600 font-medium">₱3,200/mo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        ></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        ></path>
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        ></path>
-                      </svg>
-                      View
-                    </button>
-                  </div>
-                </div>
+            <div class="bg-white border rounded-lg">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Room
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Status
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Capacity
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Adjust
+                      </th>
+                      <th
+                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Doc ID
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody id="roomsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1113,8 +928,6 @@
                   class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
                 >
                   <option value="Triple Occupancy Room">Triple Occupancy Room</option>
-                  <option value="Single Occupancy Room">Single Occupancy Room</option>
-                  <option value="Double Occupancy Room">Double Occupancy Room</option>
                   <option value="Commercial Space">Commercial Space</option>
                 </select>
               </div>

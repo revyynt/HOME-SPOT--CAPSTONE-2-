@@ -31,16 +31,41 @@ These are real and still open:
 
 - `super-admin-dashboard.html` renders hardcoded statistics and has inert
   buttons (maintenance toggle, backup, add/edit admin).
-- The **Listings** and **Reviews** tabs on `admin-dashboard.html` are still
-  static markup. (Tenant Payments is now live — see below.)
+- The **Reviews** tab on `admin-dashboard.html` is still static markup.
 - Several UI areas still contain placeholder copy in `super-admin-dashboard.html`
   and `start.html`.
+- **Room capacity is read-only.** Availability is admin-editable, but total
+  capacity still lives in the hardcoded `roomsData` array in
+  `property-detail.js`, so prices and capacities can drift from Firestore. The
+  dashboard _displays_ a `capacity` field if one exists on the room document,
+  but nothing writes it.
 - The **balance is only as current as the webhook.** The portal derives what is
   owed from the `payments` collection plus a staff-set `tenants.amountDue`. If a
   PayMongo webhook is lost, the tenant's view stays at its last confirmed value
   until someone reconciles it. The admin **Tenant Payments** tab now shows the
   raw ledger, so a missed event is visible to staff; watch the `functions` logs
   for webhook failures.
+
+### Room availability is admin-editable
+
+The **Listings** tab used to render invented listings — "Single Occupancy Room,
+2/4, ₱5,500/mo" for a system that actually has two rooms — with inert
+Edit/View/Add buttons. It is now a Firestore-backed availability table driven by
+`onSnapshot`, with a −/n/+ stepper per room.
+
+Writes go through the single existing implementation in
+`room-availability.js` (`setRoomAvailability`); the dashboard deliberately opens
+no second write path for `rooms`. Counts are normalised by
+`clampAvailability` in `lib/booking.js`, so a room can never be stored negative,
+fractional, or above a recorded capacity.
+
+`firestore.rules` needed no change — `rooms` was already `allow write: if
+isAdmin()`. The `set-room.js` CLI remains useful for scripting and bulk resets,
+but it is no longer the only way to set availability.
+
+The **Overview** tab is live too: Total Listings and Active Bookings now come
+from the `rooms` snapshot, and Recent Activity is built from real reservation
+decisions rather than a static "New booking confirmed — 2 hours ago" list.
 
 ### Payment state is server-authoritative
 

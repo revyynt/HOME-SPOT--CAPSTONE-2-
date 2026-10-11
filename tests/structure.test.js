@@ -498,16 +498,27 @@ test('the reservations query must keep Approved requests reachable', () => {
   // query MUST include 'Approved' or that branch is unreachable.
   const res = readFileSync(join(ROOT, 'assets/js/render/reservations.js'), 'utf8');
 
+  // The 'Create Tenant' button is rendered for status === 'Approved', so the
+  // query MUST include 'Approved' or that branch is unreachable.
   assert.ok(
-    /where\('status',\s*'in',\s*\['Pending',\s*'Approved'\]\)/.test(res),
-    "the reservations query must use where('status','in',['Pending','Approved']) " +
+    /where\('status',\s*'in',\s*\[[^\]]*'Approved'/.test(res),
+    "the reservations query must include 'Approved' " +
       'so approved requests stay visible for onboarding'
   );
 
-  // Converted requests must leave the working list.
+  // Declined/Converted may be fetched for the activity feed, but must never be
+  // drawn as actionable rows.
+  const rendered = res.slice(
+    res.indexOf('renderReservationRequests'),
+    res.indexOf('export async function approveReservation')
+  );
   assert.ok(
-    !/where\('status',\s*'in',\s*\[[^\]]*'Converted'/.test(res),
-    'Converted requests should not stay in the actionable list'
+    !/status === 'Declined'/.test(rendered),
+    'Declined requests must not be rendered as actionable rows'
+  );
+  assert.ok(
+    !/status === 'Converted'/.test(rendered),
+    'Converted requests must not be rendered as actionable rows'
   );
 });
 
@@ -539,6 +550,62 @@ test('the reservation prefill carries the reservation id', () => {
     /reservationId:\s*doc\.id/,
     'the create-tenant prefill must include reservationId so the request can be linked'
   );
+});
+
+test('the admin Listings tab is backed by live rooms, not mock markup', () => {
+  // The tab used to render invented listings ("Single Occupancy Room 2/4
+  // ₱5,500/mo") with inert Edit/View buttons, for a system that actually has
+  // two rooms. It is now a Firestore-backed availability table.
+  const page = read('admin-dashboard.html');
+
+  assert.match(page, /id="roomsTableBody"/, 'the Listings tab must render into a live container');
+  assert.ok(
+    !/Single Occupancy Room/.test(page),
+    'the mock "Single Occupancy Room" listing must be gone'
+  );
+  assert.ok(!/Add New Listing/.test(page), 'the inert "Add New Listing" button must be gone');
+
+  // The overview figures were hardcoded fiction (4 listings, 12 bookings, 5
+  // pending, 3 unread) and are now filled from Firestore.
+  assert.match(page, /id="statTotalListings"/);
+  assert.match(page, /id="statActiveBookings"/);
+  assert.ok(
+    !/text-3xl font-bold">4</.test(page),
+    'the hardcoded "Total Listings: 4" placeholder must be gone'
+  );
+  assert.ok(
+    !/text-3xl font-bold">12</.test(page),
+    'the hardcoded "Active Bookings: 12" placeholder must be gone'
+  );
+});
+
+test('the rooms dashboard writes through the single availability implementation', () => {
+  // set-room.js, the dashboard stepper, and the approval transaction must not
+  // grow a second, divergent write path for `rooms`.
+  const rooms = readFileSync(join(ROOT, 'assets/js/pages/admin-dashboard/rooms.js'), 'utf8');
+
+  assert.match(
+    rooms,
+    /import \{ setRoomAvailability \} from '\.\.\/\.\.\/room-availability\.js'/,
+    'rooms.js must reuse setRoomAvailability rather than write to Firestore itself'
+  );
+  assert.ok(
+    !/firebaseFirestore\.setDoc|firebaseFirestore\.updateDoc/.test(rooms),
+    'rooms.js must not open a second write path for the rooms collection'
+  );
+  assert.match(rooms, /clampAvailability\(/, 'rooms.js must clamp counts before writing');
+});
+
+test('room controls are delegated, never inline', () => {
+  const rooms = readFileSync(join(ROOT, 'assets/js/pages/admin-dashboard/rooms.js'), 'utf8');
+
+  assert.match(rooms, /data-action="room-inc"/, 'the stepper must use data-* attributes');
+  assert.ok(!/\sonclick\s*=/.test(rooms), 'rooms.js must not build inline event handlers');
+
+  // And the dashboard must actually bind them.
+  const dash = readFileSync(join(ROOT, 'assets/js/pages/admin-dashboard.js'), 'utf8');
+  assert.match(dash, /initRoomControls\(\)/, 'the dashboard must wire the room steppers');
+  assert.match(dash, /listenToRooms\(\)/, 'the dashboard must subscribe to rooms');
 });
 
 test('inline event handlers are not growing', () => {

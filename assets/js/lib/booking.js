@@ -21,6 +21,33 @@ export const PENDING = 'Pending';
 export const DECIDED_STATUSES = ['Approved', 'Declined', 'Converted'];
 
 /**
+ * Normalises an admin-supplied availability count.
+ *
+ * The dashboard stepper and the `set-room.js` CLI both funnel through this, so
+ * the two can never disagree about what a valid count is. A room can never hold
+ * a negative or fractional number of slots.
+ *
+ * @param {unknown} value
+ * @param {number} [max] - optional ceiling (e.g. total capacity)
+ * @returns {number} a non-negative integer
+ */
+export function clampAvailability(value, max) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 0;
+
+  const whole = Math.max(0, Math.floor(parsed));
+
+  // `Number(null)` is 0, so a null/undefined ceiling ("this room has no
+  // recorded capacity") would otherwise clamp every count to zero. Treat a
+  // missing or nonsensical ceiling as "no ceiling".
+  const hasCeiling =
+    max !== null && max !== undefined && max !== '' && Number.isFinite(Number(max));
+  if (!hasCeiling) return whole;
+
+  return Math.min(whole, Math.max(0, Math.floor(Number(max))));
+}
+
+/**
  * Whether a request still needs a decision.
  * @param {string} status
  */

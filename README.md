@@ -16,7 +16,8 @@ the CDN.
 ├── property-detail.html            # Room detail + inquiry/reservation forms
 ├── start.html                      # Dev launcher (navigation hub)
 ├── admin-login.html                # Admin / Super Admin login
-├── admin-dashboard.html            # Admin dashboard
+├── admin-dashboard.html            # Admin dashboard (rooms, reservations, tenants,
+│                                  #   messages, tenant-payments, reviews)
 ├── super-admin-dashboard.html      # Platform management (superadmin only)
 ├── tenant-login.html               # Tenant sign-in
 ├── tenant-portal.html              # Tenant portal (payments, chat, profile)
@@ -123,7 +124,7 @@ assets/js/
 │   ├── qr.js               buildQrPhPayload
 │   ├── payment-return.js   Payment-redirect state machine
 │   ├── payment-verification.js  Webhook corroboration + balance derivation
-│   ├── booking.js          Reservation approval decisions
+│   ├── booking.js          Reservation approval + availability decisions
 │   ├── guard.js            Page-level auth guard
 │   ├── session.js          Staff logout + mobile back-button guard
 │   └── dom.js              byId, onClick, attr
@@ -154,8 +155,8 @@ npm run format       # Prettier
 | `tests/payment-verification.test.js`              | Webhook corroboration: a forged `?payment=success` stays Pending, cross-tenant and stale payments never confirm, the balance never comes from `localStorage`                                                                                                                               |
 | `tests/payment-flow.test.js`                      | Walks all four PayMongo return paths through the real modules; asserts a redirect alone never moves a balance and the webhook closes the loop                                                                                                                                              |
 | `tests/ledger.test.js`                            | Balance arithmetic: idempotent recompute, a voided payment restores the balance, an overpayment floors at 0                                                                                                                                                                                |
-| `tests/booking.test.js`                            | Approval decisions: refuses an already-decided request and a full room, never decrements below zero; `Converted` is terminal                                                                 |
-| `tests/booking-race.test.js`                       | Concurrent approval: a second approve of the same request is refused, the last slot cannot be taken twice, and a full room cannot be overbooked                                                     |
+| `tests/booking.test.js`                           | Approval decisions: refuses an already-decided request and a full room, never decrements below zero; `Converted` is terminal                                                                                                                                                               |
+| `tests/booking-race.test.js`                      | Concurrent approval: a second approve of the same request is refused, the last slot cannot be taken twice, and a full room cannot be overbooked                                                                                                                                            |
 | `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet, no dynamic inline handlers built in JS, role-hierarchy parity with the rules, no client-side "paid" claim, the webhook owns the balance |
 | `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                                                                                                                                                                       |
 | `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears; the API bridge refuses to boot without `WEBHOOK_SECRET`                                                                                                                                                                                      |
@@ -203,7 +204,17 @@ does.
   it `Converted` with the tenant's uid; `Converted` is terminal, so a repeat
   click cannot create a second account.
 
-## Room Availability CLI
+## Room Availability
+
+Staff adjust availability from the admin dashboard's **Listings** tab, using the
+−/n/+ stepper. Counts are validated (`clampAvailability`) so a room can never be
+stored negative, fractional, or above a recorded capacity, and every write goes
+through the one implementation in `room-availability.js`.
+
+Approving a reservation decrements availability automatically inside a
+transaction, so the stepper is for corrections rather than routine use.
+
+### CLI (scripting / bulk reset)
 
 ```bash
 # get an admin token from the browser console while signed in:
