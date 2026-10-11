@@ -18,31 +18,85 @@
  *   export FIREBASE_ID_TOKEN=<token>    (bash/macOS)
  *
  * Examples:
- *   node seed-units.js                  -> list existing units
- *   node seed-units.js --floors 3 --per-floor 4
- *   node seed-units.js --dry-run        -> show what would be written
+ *   npm run seed-units                      -> preview (no token needed)
+ *   npm run seed-units -- 3 4               -> create 3 floors x 4 units
+ *   npm run seed-units -- 2                 -> create 2 floors, default 4 per floor
+ *   node seed-units.js --floors 3 --per-floor 4 --dry-run   (flags work via node)
+ *
+ * Positional arguments are the documented form because npm's PowerShell wrapper
+ * strips dashed flags passed after `--`:
+ *   npm run seed-units -- --floors 3 --dry-run   ->   node seed-units.js 3
+ * Running with no token always previews and never writes.
  */
 
 const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'capstoneapt-b5681';
 const DOCS_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/units`;
 
 const ID_TOKEN = (process.env.FIREBASE_ID_TOKEN || '').trim();
-const DRY_RUN = process.argv.includes('--dry-run');
 
 const authHeaders = {
   'Content-Type': 'application/json',
   Authorization: `Bearer ${ID_TOKEN}`
 };
 
-function argValue(flag, fallback) {
-  const i = process.argv.indexOf(flag);
-  if (i === -1 || i + 1 >= process.argv.length) return fallback;
-  const parsed = Number(process.argv[i + 1]);
-  return Number.isFinite(parsed) ? parsed : fallback;
+const DEFAULT_FLOORS = 3;
+const DEFAULT_PER_FLOOR = 4;
+
+/**
+ * Parses the shape arguments.
+ *
+ * Accepts both `--floors 3 --per-floor 4` and bare `3 4`, because npm strips
+ * leading dashes from flags passed after `--` in some versions:
+ *
+ *   npm run seed-units -- --floors 3 --per-floor 4
+ *     -> node seed-units.js 3 4          <-- flags gone
+ *
+ * Supporting positionals means that mangling is harmless instead of silently
+ * falling back to the defaults.
+ *
+ * @param {string[]} argv
+ * @returns {{floors: number, perFloor: number, dryRun: boolean}}
+ */
+function parseArgs(argv) {
+  const positional = [];
+  let floors = null;
+  let perFloor = null;
+  let dryRun = false;
+
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+
+    if (arg === '--floors' || arg === '-f') {
+      floors = Number(argv[++i]);
+      continue;
+    }
+    if (arg === '--per-floor' || arg === '-p') {
+      perFloor = Number(argv[++i]);
+      continue;
+    }
+    if (arg === '--dry-run' || arg === '-n') {
+      dryRun = true;
+      continue;
+    }
+    if (/^\d+$/.test(arg)) {
+      positional.push(Number(arg));
+    }
+  }
+
+  // `3 4` positionally, then fall back to flags, then defaults.
+  const resolvedFloors =
+    positional[0] ?? floors ?? DEFAULT_FLOORS;
+  const resolvedPerFloor =
+    positional[1] ?? perFloor ?? DEFAULT_PER_FLOOR;
+
+  return {
+    floors: Math.max(1, Math.min(50, resolvedFloors)),
+    perFloor: Math.max(1, Math.min(20, resolvedPerFloor)),
+    dryRun: dryRun || argv.includes('--dry-run')
+  };
 }
 
-const FLOORS = argValue('--floors', 3);
-const PER_FLOOR = argValue('--per-floor', 4);
+const { floors: FLOORS, perFloor: PER_FLOOR, dryRun: DRY_RUN } = parseArgs(process.argv.slice(2));
 
 /**
  * Builds the unit list.
@@ -74,8 +128,17 @@ async function listUnits() {
   return data.documents || [];
 }
 
+const UNIT_FIELDS = ['number', 'floor', 'type', 'order'];
+
 async function createUnit(unit) {
-  const url = `${DOCS_URL}?documentId=${encodeURIComponent(unit.id)}`;
+  // PATCH the full document path with an update mask, which upserts: it creates
+  // the document if it is absent and updates it if it already exists. The
+  // previous form used `?documentId=` on the *collection* URL, which is not a
+  // valid Firestore parameter:
+  //   400 Unknown name "documentId": Cannot bind query parameter
+  const updateMask = UNIT_FIELDS.map((f) => `updateMask.fieldPaths=${f}`).join('&');
+  const url = `${DOCS_URL}/${encodeURIComponent(unit.id)}?${updateMask}`;
+
   const body = {
     fields: {
       number: { stringValue: unit.number },
@@ -99,22 +162,25 @@ async function createUnit(unit) {
 }
 
 async function main() {
-  if (!ID_TOKEN && !DRY_RUN) {
-    console.error('\n[auth] FIREBASE_ID_TOKEN is not set.');
-    console.error('[auth] Sign in at admin-login.html, then run:');
-    console.error('[auth]   await firebaseService.getIdToken()');
-    console.error('[auth] and export it before running this script.\n');
-    process.exit(1);
-  }
-
   const units = buildUnits();
 
+  // No token => preview and stop. Deliberately not an error exit: npm's
+  // PowerShell wrapper strips dashed flags (including --dry-run), so "was
+  // --dry-run passed?" is not a reliable signal here. The presence of a token
+  // is. Previewing without one keeps the command useful and can never write.
+  if (!ID_TOKEN) {
+    console.log(`\n[dry run] No FIREBASE_ID_TOKEN -- showing what WOULD be created:`);
+    console.log(`          ${units.length} units (${FLOORS} floors x ${PER_FLOOR})\n`);
+    units.forEach((u) => console.log(`  ${u.number}  floor ${u.floor}  ${u.type}`));
+    console.log('\nTo actually write them:');
+    console.error('[auth]   1. Sign in at admin-login.html');
+    console.error('[auth]   2. In the browser console:  copy(await firebaseService.getIdToken())');
+    console.error('[auth]   3. $env:FIREBASE_ID_TOKEN = "<paste>"   (PowerShell)');
+    console.error(`[auth]   4. npm run seed-units -- ${FLOORS} ${PER_FLOOR}\n`);
+    return;
+  }
+
   if (process.argv.length <= 2) {
-    if (!ID_TOKEN) {
-      console.log('\nNo token supplied -- showing the units that WOULD be created:');
-      units.forEach((u) => console.log(`  ${u.number}  floor ${u.floor}  ${u.type}`));
-      return;
-    }
     console.log('\n📐 Existing units in Firestore:');
     console.log('---------------------------------');
     try {
@@ -126,7 +192,7 @@ async function main() {
         console.log(`  ${id}  (floor ${floor})`);
       });
       console.log('---------------------------------');
-      console.log(`Run: node seed-units.js --floors ${FLOORS} --per-floor ${PER_FLOOR}\n`);
+      console.log(`Run: npm run seed-units -- ${FLOORS} ${PER_FLOOR}\n`);
     } catch (err) {
       console.error('Error:', err.message);
     }
