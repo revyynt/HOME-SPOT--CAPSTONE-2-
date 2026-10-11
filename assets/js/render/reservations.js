@@ -19,12 +19,13 @@ import { Toast } from './toast.js';
 
 const STATUS_CLASS = {
   Approved: 'px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800',
+  Converted: 'px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800',
   Declined: 'px-2 py-1 rounded text-xs font-semibold bg-red-100 text-red-800',
   Pending: 'px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800'
 };
 
 /**
- * Renders pending reservations into #reservationRequestsContainer.
+ * Renders the actionable reservations into #reservationRequestsContainer.
  *
  * Row actions are delegated (see wireReservationActions) rather than bound with
  * inline `onclick`, so Firestore values never end up inside a JS string.
@@ -41,33 +42,35 @@ export function renderReservationRequests(docs) {
     return;
   }
 
-  container.innerHTML = docs
-    .map((doc) => {
-      const data = doc.data();
-      const status = data.status || 'Pending';
-      const statusClass = STATUS_CLASS[status] ?? STATUS_CLASS.Pending;
-      const requestDate = data.moveInDate || 'Not specified';
-      const amount = data.amount ? `₱${Number(data.amount).toLocaleString()}` : 'TBD';
+  const entries = docs.map((doc) => {
+    const data = doc.data();
+    const status = data.status || 'Pending';
+    const statusClass = STATUS_CLASS[status] ?? STATUS_CLASS.Pending;
+    const requestDate = data.moveInDate || 'Not specified';
+    const amount = data.amount ? `₱${Number(data.amount).toLocaleString()}` : 'TBD';
 
-      // Carried on a data-* attribute so no value is interpolated into JS.
-      const prefill = escapeHtml(
-        JSON.stringify({
-          name: data.name || '',
-          email: data.email || '',
-          phone: data.phone || '',
-          room: data.room || '',
-          moveInDate: requestDate,
-          amount: data.amount || 5000
-        })
-      );
+    // Carried on a data-* attribute so no value is interpolated into JS.
+    // reservationId lets the modal mark this request Converted once the
+    // tenant account exists.
+    const prefill = escapeHtml(
+      JSON.stringify({
+        reservationId: doc.id,
+        name: data.name || '',
+        email: data.email || '',
+        phone: data.phone || '',
+        room: data.room || '',
+        moveInDate: requestDate,
+        amount: data.amount || 5000
+      })
+    );
 
-      const actions =
-        status === 'Approved'
-          ? `<button data-action="create-tenant" data-payload="${prefill}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm">Create Tenant Account</button>`
-          : `<button data-action="approve" data-id="${attr(doc.id)}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Approve</button>
+    const actions =
+      status === 'Approved'
+        ? `<button data-action="create-tenant" data-payload="${prefill}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm">Create Tenant Account</button>`
+        : `<button data-action="approve" data-id="${attr(doc.id)}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">Approve</button>
              <button data-action="decline" data-id="${attr(doc.id)}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">Decline</button>`;
 
-      return `
+    const row = `
         <div class="bg-white border rounded-lg p-6">
           <div class="flex items-center justify-between">
             <div class="flex-1">
@@ -85,8 +88,30 @@ export function renderReservationRequests(docs) {
             <div class="flex items-center gap-2">${actions}</div>
           </div>
         </div>`;
-    })
-    .join('');
+
+    return { row, status };
+  });
+
+  // Two sections so approved requests awaiting onboarding are visually distinct
+  // from fresh requests, without hiding either.
+  const pendingRows = entries.filter((e) => e.status === 'Pending').map((e) => e.row);
+  const approvedRows = entries.filter((e) => e.status === 'Approved').map((e) => e.row);
+
+  const sections = [];
+  if (pendingRows.length) {
+    sections.push(
+      `<h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">New Requests (${pendingRows.length})</h3>`,
+      pendingRows.join('')
+    );
+  }
+  if (approvedRows.length) {
+    sections.push(
+      `<h3 class="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-3 mt-6">Approved — awaiting tenant account (${approvedRows.length})</h3>`,
+      approvedRows.join('')
+    );
+  }
+
+  container.innerHTML = sections.join('');
 }
 
 /**
@@ -203,17 +228,33 @@ export async function declineReservation(reservationId) {
 }
 
 /**
- * Subscribes to pending reservations.
- * @param {(count: number) => void} [onCount]
+ * Subscribes to the reservations the dashboard needs to act on.
+ *
+ * Deliberately includes 'Approved' as well as 'Pending'. The list previously
+ * filtered to Pending only, which meant an approved request vanished from the
+ * dashboard the instant it was approved -- taking the "Create Tenant Account"
+ * button (which only renders for Approved) with it. The onboarding step was
+ * therefore unreachable: approve, and the request disappeared.
+ *
+ * 'Converted' is excluded so onboarded requests leave the working list.
+ *
+ * @param {(count: number) => void} [onCount] - pending count for the badge
  */
 export function watchPendingReservations(onCount) {
   const ref = getReservationsRef();
   if (!ref) return null;
 
+  const query = firebaseFirestore.query(
+    ref,
+    firebaseFirestore.where('status', 'in', ['Pending', 'Approved'])
+  );
+
   return firebaseFirestore.onSnapshot(
-    firebaseFirestore.query(ref, firebaseFirestore.where('status', '==', 'Pending')),
+    query,
     (snapshot) => {
-      onCount?.(snapshot.size);
+      const docs = snapshot.docs;
+      // The badge counts only what still needs a decision.
+      onCount?.(docs.filter((doc) => doc.data().status === 'Pending').length);
       renderReservationRequests(snapshot);
     },
     (error) => {

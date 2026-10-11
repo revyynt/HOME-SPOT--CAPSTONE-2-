@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   PENDING,
   DECIDED_STATUSES,
+  isOpen,
   canApprove,
   canDecline,
   nextAvailability
@@ -97,6 +98,24 @@ test('a decided request may not be declined again', () => {
 });
 
 test('DECIDED_STATUSES covers exactly the terminal states', () => {
-  assert.deepEqual(DECIDED_STATUSES, ['Approved', 'Declined']);
+  assert.deepEqual(DECIDED_STATUSES, ['Approved', 'Declined', 'Converted']);
   assert.ok(!DECIDED_STATUSES.includes(PENDING));
+});
+
+test('a converted request is terminal for both approve and decline', () => {
+  // Once the tenant account exists the request is finished. Re-touching it
+  // would let a repeat click spawn a second tenant.
+  assert.deepEqual(canApprove({ reservationStatus: 'Converted', available: 3 }), {
+    ok: false,
+    reason: 'already-decided'
+  });
+  assert.deepEqual(canDecline('Converted'), { ok: false, reason: 'already-decided' });
+});
+
+test('isOpen is true only for an undecided request', () => {
+  assert.equal(isOpen(PENDING), true);
+  assert.equal(isOpen(undefined), true);
+  assert.equal(isOpen('Approved'), false);
+  assert.equal(isOpen('Declined'), false);
+  assert.equal(isOpen('Converted'), false);
 });

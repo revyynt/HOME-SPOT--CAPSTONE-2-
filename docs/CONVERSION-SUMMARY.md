@@ -107,10 +107,27 @@ The **public reservation form** also reads availability before writing a request
 (`public-forms.js`), so an obviously-impossible request is not queued. That check
 is advisory and client-side — the transaction above is the actual guarantee.
 
-Still open in the booking flow (see the full list above): there is no _hold_ — a
-pending request does not reserve a slot, so several visitors can request the
-last one and all but the winner must be declined manually — and approving does
-not yet link the request to the tenant it creates.
+Still open in the booking flow: there is no _hold_ — a pending request does not
+reserve a slot, so several visitors can request the last one and all but the
+winner must be declined manually.
+
+### The reservation → tenant handoff used to be unreachable
+
+The dashboard queried `where('status', '==', 'Pending')`. An approved request
+therefore disappeared from the list the instant it was approved — taking the
+"Create Tenant Account" button (which only renders for `Approved`) with it.
+Approving a request ended the flow: the only way to onboard someone was the
+generic "Create Tenant" button, re-typed by hand and unlinked from the request.
+
+The query now includes `Approved` as well as `Pending`, and the list is split
+into **New Requests** and **Approved — awaiting tenant account**. Creating the
+tenant from a request writes `reservations/{id}.status = 'Converted'` plus
+`tenantUid`, so one approval cannot spawn a second tenant and the dashboard can
+tell what has been onboarded. `Converted` requests leave the working list.
+
+`tests/structure.test.js` guards both halves: the query must include `Approved`
+(so the conversion branch cannot become unreachable again), and the tenant
+creation must record the link.
 
 ### QR Ph flow was removed
 

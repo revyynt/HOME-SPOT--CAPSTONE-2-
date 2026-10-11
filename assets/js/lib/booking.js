@@ -12,8 +12,21 @@
 /** A reservation a visitor submitted and nobody has decided on yet. */
 export const PENDING = 'Pending';
 
-/** Statuses that mean "this request has already been decided". */
-export const DECIDED_STATUSES = ['Approved', 'Declined'];
+/**
+ * Statuses that mean "this request is finished -- stop touching it".
+ *
+ * 'Converted' is set once the tenant account has been created from an approved
+ * request, which is what stops one approval spawning two tenants.
+ */
+export const DECIDED_STATUSES = ['Approved', 'Declined', 'Converted'];
+
+/**
+ * Whether a request still needs a decision.
+ * @param {string} status
+ */
+export function isOpen(status) {
+  return !DECIDED_STATUSES.includes(String(status ?? '').trim());
+}
 
 /**
  * Whether a reservation request may be approved right now.

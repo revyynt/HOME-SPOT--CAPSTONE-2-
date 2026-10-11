@@ -25,6 +25,12 @@ import {
 let tenantCreationAuth = null;
 let initAttempted = false;
 
+/**
+ * The reservation this modal is converting, or null when the admin opened the
+ * form standalone. Set by openCreateTenantModalFromData().
+ */
+let sourceReservationId = null;
+
 function getTenantCreationAuth() {
   if (initAttempted) return tenantCreationAuth;
   initAttempted = true;
@@ -64,6 +70,8 @@ export function togglePasswordVisibility() {
 export function openCreateTenantModal() {
   document.getElementById('createTenantAlert')?.classList.add('hidden');
   document.getElementById('createTenantForm')?.reset();
+  // Standalone creation is not tied to a reservation request.
+  sourceReservationId = null;
 
   const moveIn = document.getElementById('tenantMoveInDate');
   if (moveIn && !moveIn.value) {
@@ -80,9 +88,14 @@ export function closeCreateTenantModal() {
 
 /**
  * Opens the modal pre-filled from an approved reservation request.
+ *
+ * `data.reservationId` is remembered so the request can be marked Converted
+ * once the tenant account exists. Without it the same approval could spawn a
+ * second tenant on a repeat click.
  */
 export function openCreateTenantModalFromData(data = {}) {
   openCreateTenantModal();
+  sourceReservationId = data.reservationId || null;
 
   const assign = (id, value) => {
     if (!value) return;
@@ -216,6 +229,26 @@ export async function createTenant() {
     },
     { merge: true }
   );
+
+  // Tie the approved request to the tenant it produced. Without this the same
+  // approval can spawn a second tenant on a repeat click, and the dashboard has
+  // no way to tell which request has been onboarded.
+  if (sourceReservationId) {
+    try {
+      await firebaseFirestore.updateDoc(
+        firebaseFirestore.doc(db, 'reservations', sourceReservationId),
+        {
+          status: 'Converted',
+          tenantUid: uid,
+          convertedAt: firebaseFirestore.serverTimestamp()
+        }
+      );
+    } catch (error) {
+      // The tenant exists and can sign in; only the audit link failed.
+      console.warn('Could not mark the reservation as converted:', error);
+    }
+    sourceReservationId = null;
+  }
 
   return { name: form.name, password: form.password };
 }

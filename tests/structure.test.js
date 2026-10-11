@@ -487,6 +487,60 @@ test('the reservation form checks availability before submitting', () => {
   assert.match(forms, /fully booked/i, 'the reservation form must show a "fully booked" message');
 });
 
+test('the reservations query must keep Approved requests reachable', () => {
+  // Regression guard for a dead-end in the booking flow. The dashboard
+  // subscribed with where('status','==','Pending'), so an approved request
+  // vanished the instant it was approved -- taking the "Create Tenant Account"
+  // button (which only renders for Approved) with it. Approving therefore ended
+  // the flow: there was no way to onboard the tenant from the request.
+  //
+  // The 'Create Tenant' button is rendered for status === 'Approved', so the
+  // query MUST include 'Approved' or that branch is unreachable.
+  const res = readFileSync(join(ROOT, 'assets/js/render/reservations.js'), 'utf8');
+
+  assert.ok(
+    /where\('status',\s*'in',\s*\['Pending',\s*'Approved'\]\)/.test(res),
+    "the reservations query must use where('status','in',['Pending','Approved']) " +
+      'so approved requests stay visible for onboarding'
+  );
+
+  // Converted requests must leave the working list.
+  assert.ok(
+    !/where\('status',\s*'in',\s*\[[^\]]*'Converted'/.test(res),
+    'Converted requests should not stay in the actionable list'
+  );
+});
+
+test('creating a tenant from a request marks it Converted', () => {
+  // Without this link one approval can spawn two tenants, and the dashboard
+  // cannot tell which requests have been onboarded.
+  const create = readFileSync(
+    join(ROOT, 'assets/js/pages/admin-dashboard/create-tenant.js'),
+    'utf8'
+  );
+
+  assert.match(
+    create,
+    /sourceReservationId/,
+    'create-tenant.js must remember which reservation it is converting'
+  );
+  assert.match(
+    create,
+    /status:\s*'Converted'/,
+    'creating the tenant must mark the reservation Converted'
+  );
+  assert.match(create, /tenantUid:\s*uid/, 'the reservation must record which tenant it produced');
+});
+
+test('the reservation prefill carries the reservation id', () => {
+  const res = readFileSync(join(ROOT, 'assets/js/render/reservations.js'), 'utf8');
+  assert.match(
+    res,
+    /reservationId:\s*doc\.id/,
+    'the create-tenant prefill must include reservationId so the request can be linked'
+  );
+});
+
 test('inline event handlers are not growing', () => {
   // A ratchet rather than a hard ban: pages still use onclick for simple static
   // wiring. This fails if the count rises above the recorded baseline, so the
