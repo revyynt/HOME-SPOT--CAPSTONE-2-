@@ -67,6 +67,11 @@ node_modules/
 .env.*
 !.env.example
 
+# Local Firebase project override (points the app at your own dev project).
+# Copy assets/js/firebase-config.local.example.js to
+# assets/js/firebase-config.local.js and fill it in -- never commit it.
+assets/js/firebase-config.local.js
+
 # dataconnect generated files (project removed; ignored if reintroduced)
 .dataconnect/
 

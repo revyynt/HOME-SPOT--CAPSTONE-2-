@@ -37,7 +37,53 @@ const firebaseConfig = {
   appId: '1:192229736140:web:20d0e4e603d6ca98dd4c69'
 };
 
-const app = initializeApp(firebaseConfig);
+/**
+ * Optional local override, so you can point the whole app at your own Firebase
+ * project without editing (or accidentally committing) this file.
+ *
+ * Create `assets/js/firebase-config.local.js` containing:
+ *
+ *   export default {
+ *     apiKey: 'AIza...',
+ *     authDomain: 'your-project.firebaseapp.com',
+ *     projectId: 'your-project',
+ *     storageBucket: 'your-project.appspot.com',
+ *     messagingSenderId: '...',
+ *     appId: '1:...'
+ *   };
+ *
+ * That file is gitignored. When it is absent this import rejects and the
+ * built-in config above is used unchanged, so the committed tree stays pointed
+ * at the real project.
+ *
+ * An unfilled-in copy of the template is ignored rather than honoured: a
+ * placeholder projectId would otherwise silently point the whole app at a
+ * project that does not exist.
+ */
+function usableOverride(config) {
+  const projectId = String(config?.projectId ?? '').trim();
+  if (!projectId) return false;
+  if (/^REPLACE/i.test(projectId)) {
+    console.warn(
+      '[firebase] firebase-config.local.js still has its placeholder values -- ignoring it.'
+    );
+    return false;
+  }
+  return true;
+}
+
+let activeConfig = firebaseConfig;
+try {
+  const override = await import('./firebase-config.local.js');
+  if (usableOverride(override?.default)) {
+    activeConfig = { ...firebaseConfig, ...override.default };
+    console.info(`[firebase] Using local override -> project "${activeConfig.projectId}"`);
+  }
+} catch {
+  // No override file. Expected in a normal checkout.
+}
+
+const app = initializeApp(activeConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 

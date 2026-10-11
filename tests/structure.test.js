@@ -214,7 +214,14 @@ test('the Firebase web config is declared in exactly one place', () => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('.js') && pattern.test(readFileSync(full, 'utf8'))) {
+      else if (
+        entry.name.endsWith('.js') &&
+        // `*.local.js` is the optional local-project override, gitignored and
+        // absent from a normal checkout, so it must not count as a second
+        // source of truth.
+        !entry.name.endsWith('.local.js') &&
+        pattern.test(readFileSync(full, 'utf8'))
+      ) {
         configFiles.push(relative(ROOT, full));
       }
     }
@@ -662,6 +669,31 @@ test('the building viewer publishes nothing to window', () => {
   assert.ok(
     /import\s/.test(viewer),
     'the viewer must reach Three.js via the documented loader, not a bare global'
+  );
+});
+
+test('the local Firebase project override can never be committed', () => {
+  // assets/js/firebase-config.local.js lets a developer point the app at their
+  // own Firebase project. It must stay gitignored, otherwise a personal
+  // project ID (and api key) lands in the repo.
+  const gitignore = readFileSync(join(ROOT, '.gitignore'), 'utf8');
+  assert.match(
+    gitignore,
+    /^assets\/js\/firebase-config\.local\.js$/m,
+    'firebase-config.local.js must be listed in .gitignore'
+  );
+
+  // And the committed default must still point at the real project.
+  const service = readFileSync(join(ROOT, 'assets/js/firebase-service.js'), 'utf8');
+  assert.match(
+    service,
+    /projectId:\s*'capstoneapt-b5681'/,
+    'the committed config must still point at capstoneapt-b5681'
+  );
+  assert.match(
+    service,
+    /import\('\.\/firebase-config\.local\.js'\)/,
+    'firebase-service.js must support the local override'
   );
 });
 

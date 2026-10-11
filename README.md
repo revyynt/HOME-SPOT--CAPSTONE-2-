@@ -29,6 +29,10 @@ the CDN.
 ├── firestore.rules                 # Per-collection security rules
 ├── firestore.indexes.json          # Composite indexes for the live queries
 ├── .env.example                    # Copy to .env and fill in
+├── docs/
+│   ├── QUICKSTART.md               # First-time setup
+│   ├── DEV-SWITCH-PROJECT.md       # Point the app at your own Firebase project
+│   └── CONVERSION-SUMMARY.md       # What is built, what is still stubbed
 ├── assets/
 │   ├── img/                        # All images, kebab-case
 │   ├── css/
@@ -39,9 +43,6 @@ the CDN.
 ├── lib/                            # CommonJS, shared by the Cloud Function + tests
 │   └── ledger.js                   # Rent balance arithmetic
 ├── tests/                          # node:test suites
-├── docs/
-│   ├── QUICKSTART.md               # First-time setup
-│   └── CONVERSION-SUMMARY.md       # What is built, what is still stubbed
 ├── functions/index.js              # Cloud Functions (PayMongo webhook)
 └── eslint.config.mjs               # Includes the homespot/* custom rules
 ```
@@ -52,6 +53,11 @@ and no bundler — edit a file and reload. Images live only under
 never leak into the published tree.
 
 ## Getting Started
+
+> **Using your own Firebase project instead of `capstoneapt-b5681`?** See
+> [docs/DEV-SWITCH-PROJECT.md](docs/DEV-SWITCH-PROJECT.md) — it covers the
+> browser override, the `.env` variables, deploying the rules, and creating the
+> first admin. Nothing in that flow has to be committed.
 
 ### 1. Configure secrets
 
