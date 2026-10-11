@@ -697,6 +697,44 @@ test('the local Firebase project override can never be committed', () => {
   );
 });
 
+test('firestore.indexes.json declares only real composite indexes', () => {
+  // Firestore auto-creates single-field indexes, and declaring one explicitly
+  // now fails the deploy outright:
+  //   HTTP 400, this index is not necessary, configure using single field index
+  //   controls
+  // That shipped once as a broken `firebase deploy`. Only a filter + orderBy
+  // pair needs a composite; a single-field query does not.
+  const json = JSON.parse(readFileSync(join(ROOT, 'firestore.indexes.json'), 'utf8'));
+  const indexes = json.indexes || [];
+
+  const single = indexes.filter((ix) => (ix.fields || []).length < 2);
+  assert.deepEqual(
+    single.map((ix) => `${ix.collectionGroup}: ${ix.fields?.map((f) => f.fieldPath).join(',')}`),
+    [],
+    'single-field indexes are automatic -- declaring one breaks `firebase deploy`'
+  );
+
+  // And it must stay in sync with the queries that actually need one.
+  const appJs = jsSources();
+  const needsComposite = appJs.filter((rel) => {
+    const src = readFileSync(join(ROOT, rel), 'utf8');
+    // A where(...) and an orderBy(...) inside the same query(...) call.
+    return /query\([\s\S]{0,400}?where\([\s\S]{0,400}?orderBy\(|query\([\s\S]{0,400}?orderBy\([\s\S]{0,400}?where\(/.test(
+      src
+    );
+  });
+
+  assert.ok(
+    indexes.length > 0,
+    'a query filters AND orders, so at least one composite index must be declared'
+  );
+  assert.equal(
+    needsComposite.length > 0,
+    indexes.length > 0,
+    'declared indexes and the queries that need them have diverged'
+  );
+});
+
 test('inline event handlers are not growing', () => {
   // A ratchet rather than a hard ban: pages still use onclick for simple static
   // wiring. This fails if the count rises above the recorded baseline, so the
