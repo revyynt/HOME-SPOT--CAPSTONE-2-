@@ -6,8 +6,7 @@
  * There is now one implementation used by both.
  */
 
-import { auth } from '../firebase-service.js';
-import { signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { supabase } from '../supabase-service.js';
 
 const SIGNOUT_TIMEOUT_MS = 2000;
 
@@ -22,7 +21,7 @@ const SIGNOUT_TIMEOUT_MS = 2000;
 export async function logoutStaff(redirectTo = './admin-login.html') {
   try {
     await Promise.race([
-      signOut(auth),
+      supabase.auth.signOut(),
       new Promise((resolve) => setTimeout(resolve, SIGNOUT_TIMEOUT_MS))
     ]);
   } catch (error) {

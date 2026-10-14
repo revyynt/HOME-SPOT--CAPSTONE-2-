@@ -2,18 +2,16 @@
  * Public forms: "Inquire Now" and "Reserve Apartment" (index.html and
  * property-detail.html).
  *
- * Both write to Firestore with the exact field set that firestore.rules
- * permits. The rules use `hasOnly`, so adding a field here without updating
- * firestore.rules will make the write fail.
+ * Both write the field sets allowed by the Supabase RLS policies.
  */
 
 import {
-  firebaseFirestore,
+  supabaseData,
   getMessagesRef,
   getReservationsRef,
-  isFirestoreReady,
-  waitForFirebaseReady
-} from '../firebase-service.js';
+  isDataReady,
+  waitForSupabaseReady
+} from '../supabase-service.js';
 import { getUrlParam } from '../lib/format.js';
 import { Toast } from '../render/toast.js';
 
@@ -32,11 +30,11 @@ export function getRoomNameFromPage() {
   return 'Triple Occupancy Room';
 }
 
-async function ensureFirestore(timeout = 7000) {
-  if (isFirestoreReady()) return true;
-  const ready = await waitForFirebaseReady(timeout);
+async function ensureSupabase(timeout = 7000) {
+  if (isDataReady()) return true;
+  const ready = await waitForSupabaseReady(timeout);
   if (!ready) {
-    Toast.error('Firebase is not ready. Please refresh the page and try again.');
+    Toast.error('Supabase is not ready. Please refresh the page and try again.');
     return false;
   }
   return true;
@@ -69,12 +67,12 @@ async function handleInquirySubmit(event) {
   }
 
   const messagesRef = getMessagesRef();
-  if (!(await ensureFirestore()) || !messagesRef) {
+  if (!(await ensureSupabase()) || !messagesRef) {
     Toast.error('Unable to submit inquiry. Please refresh the page and try again.');
     return;
   }
 
-  // Field set pinned by firestore.rules for the anonymous create path.
+  // Field set is constrained by the anonymous Supabase insert policy.
   const inquiry = {
     name,
     email,
@@ -83,14 +81,14 @@ async function handleInquirySubmit(event) {
     moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
     message: form.querySelector('[name="message"]')?.value.trim() || null,
     status: 'New',
-    createdAt: firebaseFirestore.serverTimestamp()
+    createdAt: supabaseData.serverTimestamp()
   };
 
   try {
-    await firebaseFirestore.addDoc(messagesRef, inquiry);
+    await supabaseData.addDoc(messagesRef, inquiry);
     Toast.success("Inquiry sent successfully! We'll contact you soon.");
   } catch (error) {
-    console.error('Firestore inquiry submit failed:', error);
+    console.error('Supabase inquiry submit failed:', error);
     Toast.error('Unable to submit inquiry. Please try again.');
     return;
   }
@@ -113,12 +111,12 @@ async function handleReservationSubmit(event) {
   }
 
   const reservationsRef = getReservationsRef();
-  if (!(await ensureFirestore()) || !reservationsRef) {
+  if (!(await ensureSupabase()) || !reservationsRef) {
     Toast.error('Unable to submit reservation. Please refresh the page and try again.');
     return;
   }
 
-  // Field set pinned by firestore.rules for reservations.create.
+  // Field set is constrained by the anonymous Supabase insert policy.
   const reservation = {
     name,
     email,
@@ -128,16 +126,16 @@ async function handleReservationSubmit(event) {
     message: form.querySelector('[name="message"]')?.value.trim() || null,
     additionalInfo: form.querySelector('[name="additionalInfo"]')?.value.trim() || null,
     status: 'Pending',
-    createdAt: firebaseFirestore.serverTimestamp()
+    createdAt: supabaseData.serverTimestamp()
   };
 
   try {
-    await firebaseFirestore.addDoc(reservationsRef, reservation);
+    await supabaseData.addDoc(reservationsRef, reservation);
     Toast.success(
       'Reservation request submitted! The admin will review your request and contact you.'
     );
   } catch (error) {
-    console.error('Firestore reservation submit failed:', error);
+    console.error('Supabase reservation submit failed:', error);
     Toast.error('Unable to submit reservation. Please try again.');
     return;
   }

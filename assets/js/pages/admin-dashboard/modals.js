@@ -100,7 +100,7 @@ export function initDetailModals() {
     if (!trigger) return;
 
     // The Tenant Payments tab currently renders static rows. Until it is
-    // Firestore-backed, the handler no-ops rather than showing invented data.
+    // Database-backed, the handler no-ops rather than showing invented data.
     const raw = trigger.dataset.tenant;
     if (!raw) return;
 

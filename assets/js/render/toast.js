@@ -2,7 +2,7 @@
  * Toast notifications.
  *
  * The icon is injected as HTML (it is a fixed literal), but the message is set
- * via textContent -- toast copy is routinely built from Firestore values such
+ * via textContent -- toast copy is routinely built from database values such
  * as tenant names, and parsing that as HTML was an XSS sink.
  */
 

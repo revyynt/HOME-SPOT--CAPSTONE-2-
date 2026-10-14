@@ -179,9 +179,12 @@
             </div>
 
             <!-- Available badge (top-right) -->
-            <div class="absolute top-3 right-3">
+            <div
+              class="absolute top-3 right-3"
+              data-availability-room="Triple Occupancy Room"
+              data-default-available="3"
+            >
               <span
-                id="tripleAvailabilityBadge"
                 class="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5"
               >
                 <span class="w-2 h-2 bg-white rounded-full animate-ping absolute"></span>
@@ -292,9 +295,12 @@
             </div>
 
             <!-- Available badge (top-right) -->
-            <div class="absolute top-3 right-3">
+            <div
+              class="absolute top-3 right-3"
+              data-availability-room="Commercial Space"
+              data-default-available="1"
+            >
               <span
-                id="commercialAvailabilityBadge"
                 class="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5"
               >
                 <span class="w-2 h-2 bg-white rounded-full animate-ping absolute"></span>
@@ -522,7 +528,8 @@
       </div>
     </footer>
 
-    <script type="module" src="./assets/js/firebase-service.js"></script>
+    <script type="module" src="./assets/js/supabase-service.js"></script>
     <script type="module" src="./assets/js/main.js"></script>
+    <script type="module" src="./assets/js/pages/availability-badges.jsx"></script>
   </body>
 </html>

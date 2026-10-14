@@ -9,16 +9,16 @@
  */
 
 import {
-  firebaseFirestore,
+  supabaseData,
   getRoomDocRef,
-  isFirestoreReady,
-  waitForFirebaseReady
-} from './firebase-service.js';
+  isDataReady,
+  waitForSupabaseReady
+} from './supabase-service.js';
 
 const DEFAULT_ROOM = 'Triple Occupancy Room';
 
 /**
- * Sets a room's available count in Firestore.
+ * Sets a room's available count in Supabase.
  *
  * Accepts either a count, or a room name plus a count:
  *   setRoomAvailability(3)
@@ -50,9 +50,9 @@ export async function setRoomAvailability(roomNameOrCount, maybeCount, options =
     return false;
   }
 
-  await waitForFirebaseReady();
-  if (!isFirestoreReady()) {
-    console.error('Firestore not initialized');
+  await waitForSupabaseReady();
+  if (!isDataReady()) {
+    console.error('Supabase is not ready');
     return false;
   }
 
@@ -62,7 +62,7 @@ export async function setRoomAvailability(roomNameOrCount, maybeCount, options =
     return false;
   }
 
-  await firebaseFirestore.setDoc(roomRef, { name: roomName, available: count }, { merge: true });
+  await supabaseData.setDoc(roomRef, { name: roomName, available: count }, { merge: true });
 
   console.log(`Updated "${roomName}" availability to ${count} rooms.`);
   return true;
@@ -75,19 +75,19 @@ export async function setRoomAvailability(roomNameOrCount, maybeCount, options =
  * @returns {Promise<void>}
  */
 export async function decrementRoomAvailability(roomName) {
-  if (!isFirestoreReady() || !roomName) return;
+  if (!isDataReady() || !roomName) return;
 
   try {
-    await waitForFirebaseReady();
+    await waitForSupabaseReady();
     const roomRef = getRoomDocRef(roomName);
     if (!roomRef) return;
 
-    const snap = await firebaseFirestore.getDoc(roomRef);
+    const snap = await supabaseData.getDoc(roomRef);
     if (!snap.exists()) return;
 
     const current = Number(snap.data().available ?? 0);
     const next = Math.max(0, current - 1);
-    await firebaseFirestore.setDoc(roomRef, { available: next }, { merge: true });
+    await supabaseData.setDoc(roomRef, { available: next }, { merge: true });
     console.log(`Decremented "${roomName}" availability ${current} -> ${next}`);
   } catch (error) {
     console.error('Failed to decrement room availability:', error);

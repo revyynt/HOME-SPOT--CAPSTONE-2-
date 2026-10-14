@@ -1,43 +1,11 @@
 /**
  * Create-tenant modal and form submission.
  *
- * The generated password is handed to Firebase Auth and shown to the admin
- * once. It is never written to Firestore -- `firestore.rules` rejects any
- * tenant document containing a `password` field.
+ * The generated password is sent to the tenant provisioning Edge Function
+ * and shown to the admin once. It is never written to application data.
  */
 
-import { db, firebaseFirestore } from '../../firebase-service.js';
-import {
-  getApps,
-  getApp,
-  initializeApp
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import {
-  createUserWithEmailAndPassword,
-  getAuth,
-  signOut
-} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-/**
- * A dedicated Auth instance, so creating a tenant account never signs the
- * admin out of their own session.
- */
-let tenantCreationAuth = null;
-let initAttempted = false;
-
-function getTenantCreationAuth() {
-  if (initAttempted) return tenantCreationAuth;
-  initAttempted = true;
-
-  try {
-    if (!getApps().length) return null;
-    const app = initializeApp(getApp().options, 'TenantAccountCreationApp');
-    tenantCreationAuth = getAuth(app);
-  } catch (error) {
-    console.warn('Secondary auth for tenant creation unavailable:', error);
-  }
-  return tenantCreationAuth;
-}
+import { supabase } from '../../supabase-service.js';
 
 const PASSWORD_WORDS = ['Home', 'Spot', 'Dorm', 'MJP', 'Stay'];
 
@@ -132,7 +100,7 @@ function readForm() {
 }
 
 /**
- * Creates the Firebase Auth account, then the Firestore profile.
+ * Creates a tenant through the role-checked Supabase Edge Function.
  * @returns {Promise<{name: string, password: string} | null>}
  */
 export async function createTenant() {
@@ -155,67 +123,17 @@ export async function createTenant() {
     return null;
   }
 
-  const auth = getTenantCreationAuth();
-  if (!auth) {
-    showFormError('Account creation is unavailable. Please reload and try again.');
-    return null;
-  }
-
-  let uid;
   try {
-    const credential = await createUserWithEmailAndPassword(auth, form.email, form.password);
-    uid = credential.user.uid;
+    const { data, error } = await supabase.functions.invoke('create-tenant', {
+      body: form
+    });
+    if (error) throw error;
+    if (!data?.userId) throw new Error(data?.error || 'Tenant account creation failed.');
   } catch (error) {
-    // Any failure here leaves a tenant with no way to sign in, so abort
-    // rather than creating an orphaned Firestore record.
-    const messages = {
-      'auth/email-already-in-use': 'An account already exists for that email address.',
-      'auth/weak-password': 'Password must be at least 6 characters.',
-      'auth/invalid-email': 'Please enter a valid email address.'
-    };
-    showFormError(
-      messages[error.code] || 'Could not create the sign-in account. Please try again.'
-    );
+    console.error('Supabase tenant creation failed:', error);
+    showFormError(error.message || 'Could not create the sign-in account. Please try again.');
     return null;
-  } finally {
-    await signOut(auth).catch(() => {});
   }
-
-  // No `password` field: Firebase Auth owns the credential.
-  await firebaseFirestore.addDoc(firebaseFirestore.collection(db, 'tenants'), {
-    name: form.name,
-    email: form.email,
-    phone: form.phone,
-    emergencyContact: form.emergencyContact,
-    room: form.room,
-    dormName: form.dormName,
-    moveInDate: form.moveInDate,
-    monthlyRent: form.monthlyRent,
-    dueDay: form.dueDay,
-    leaseTerm: form.leaseTerm,
-    notes: form.notes,
-    status: 'Active',
-    role: 'tenant',
-    uid,
-    createdAt: firebaseFirestore.serverTimestamp(),
-    updatedAt: firebaseFirestore.serverTimestamp()
-  });
-
-  // Lets the dashboards' auth guard read the role. firestore.rules permits an
-  // admin to create this only with role 'tenant'.
-  await firebaseFirestore.setDoc(
-    firebaseFirestore.doc(db, 'users', uid),
-    {
-      name: form.name,
-      email: form.email,
-      role: 'tenant',
-      room: form.room,
-      phone: form.phone,
-      dormName: form.dormName,
-      createdAt: firebaseFirestore.serverTimestamp()
-    },
-    { merge: true }
-  );
 
   return { name: form.name, password: form.password };
 }

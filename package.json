@@ -5,22 +5,32 @@
   "description": "Home-Spot apartment booking and management system",
   "type": "commonjs",
   "scripts": {
-    "start": "node paymongo-api-server.js 5050",
-    "set-room": "node set-room.js",
+    "dev": "vite --port 5173 --strictPort",
+    "build": "vite build",
+    "build:supabase": "vite build --base=/functions/v1/site/",
+    "deploy:supabase-site": "npm run build:supabase && node scripts/publish-site.mjs",
+    "preview": "vite preview",
     "test": "node --test \"tests/*.test.js\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run lint && npm test"
+    "check": "npm run lint && npm test && npm run build"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-react": "^6.1.2",
     "eslint": "^10.12.0",
     "globals": "^17.13.0",
-    "prettier": "^3.9.10"
+    "prettier": "^3.9.10",
+    "vite": "^8.3.4"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   }
 }

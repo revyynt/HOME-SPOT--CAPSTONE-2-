@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 import { normalizeRoomDocId, resolveRoom, ROOM_ALIASES } from '../assets/js/lib/rooms.js';
 
-test('normalizeRoomDocId matches the Firestore document ids in use', () => {
+test('normalizeRoomDocId matches the existing room document ids', () => {
   assert.equal(normalizeRoomDocId('Triple Occupancy Room'), 'triple-occupancy-room');
   assert.equal(normalizeRoomDocId('Commercial Space'), 'commercial-space');
 });
@@ -13,7 +13,7 @@ test('normalizeRoomDocId is case- and whitespace-insensitive', () => {
   assert.equal(normalizeRoomDocId('Triple\nOccupancy\tRoom'), 'triple-occupancy-room');
 });
 
-test('normalizeRoomDocId strips characters Firestore paths cannot contain', () => {
+test('normalizeRoomDocId strips invalid document id characters', () => {
   assert.equal(normalizeRoomDocId('Room #3 (A/B)'), 'room-3-ab');
   assert.equal(normalizeRoomDocId('a.b.c'), 'abc');
 });

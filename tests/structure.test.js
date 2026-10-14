@@ -132,18 +132,6 @@ test('the room gallery declares an image per room', () => {
   }
 });
 
-test('the service worker icon actually exists', () => {
-  // firebase-messaging-sw.js pointed at /assets/img/logo.png before that file
-  // existed; notification icons silently 404'd.
-  const sw = readFileSync(join(ROOT, 'firebase-messaging-sw.js'), 'utf8');
-  const icons = [...sw.matchAll(/icon:\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
-
-  for (const icon of icons) {
-    if (icon.includes('://')) continue;
-    assert.ok(existsSync(join(ROOT, icon)), `service worker icon missing: ${icon}`);
-  }
-});
-
 test('every tab pane has a matching tab button', () => {
   // A pane with no button is unreachable -- `setupTabs()` can never open it.
   const offenders = [];
@@ -173,8 +161,8 @@ test('no HTML page ships unresolved git merge-conflict markers', () => {
 });
 
 test('no page ships an inline <script> block', () => {
-  // Everything lives in assets/js/ as modules. An inline block is either a
-  // duplicate of the Firebase config or an unbound copy of module scope.
+  // Everything lives in assets/js/ as modules. Inline blocks are either a
+  // duplicate client config or an unbound copy of module scope.
   const offenders = [];
 
   for (const page of PAGES) {
@@ -184,40 +172,86 @@ test('no page ships an inline <script> block', () => {
   assert.deepEqual(offenders, [], `pages with inline scripts: ${offenders.join(', ')}`);
 });
 
-test('the Firebase web config is declared in exactly one place', () => {
-  // It used to be copy-pasted across six files, one of which had silently
-  // diverged on storageBucket.
-  const carriers = [];
-  const pattern = /apiKey:\s*["']AIza/;
-
-  for (const page of PAGES) {
-    if (pattern.test(read(page))) carriers.push(page);
+test('pages use Supabase and contain no legacy Firebase SDK configuration', () => {
+  const legacyFirebase =
+    /firebase-service\.js|firebase-app-compat|firebase-auth|firebase-firestore|firebaseapp\.com|apiKey:\s*["']AIza/;
+  const offenders = PAGES.filter((page) => legacyFirebase.test(read(page)));
+  assert.deepEqual(offenders, [], `legacy Firebase references in: ${offenders.join(', ')}`);
+  for (const page of PAGES.filter((candidate) => candidate !== 'start.html')) {
+    assert.match(read(page), /supabase-service\.js/, `${page} must load Supabase`);
   }
-
-  const configFiles = [];
-  const walk = (dir) => {
-    for (const entry of readdirSync(dir, { withFileTypes: true })) {
-      const full = join(dir, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (entry.name.endsWith('.js') && pattern.test(readFileSync(full, 'utf8'))) {
-        configFiles.push(relative(ROOT, full));
-      }
-    }
-  };
-  walk(join(ROOT, 'assets', 'js'));
-
-  const total = [...carriers, ...configFiles];
-  assert.equal(
-    total.length,
-    1,
-    `expected exactly 1 Firebase config, found ${total.length}: ${total.join(', ')}`
-  );
 });
 
 test('the deleted dead-scaffolding files are really gone', () => {
-  for (const path of ['dataconnect', 'src', 'admin-edit-listing.html', 'assets/js/firebase.js']) {
+  for (const path of [
+    'dataconnect',
+    'src',
+    'firebase.json',
+    '.firebaserc',
+    'admin-edit-listing.html',
+    'assets/js/firebase.js',
+    'firebase-messaging-sw.js',
+    'firestore.rules',
+    'firestore.indexes.json',
+    'database.rules.json',
+    'paymongo-api-server.js',
+    'set-room.js',
+    'functions/index.js'
+  ]) {
     assert.equal(existsSync(join(ROOT, path)), false, `${path} should have been deleted`);
   }
+});
+
+test('Supabase serves the public frontend through the site Edge Function', () => {
+  const config = readFileSync(join(ROOT, 'supabase', 'config.toml'), 'utf8');
+  const migrationDirectory = join(ROOT, 'supabase', 'migrations');
+  const migrations = readdirSync(migrationDirectory);
+  const storageMigration = migrations
+    .filter((file) => file.endsWith('_serve_frontend_assets_from_storage.sql'))
+    .map((file) => readFileSync(join(migrationDirectory, file), 'utf8'))
+    .join('\n');
+  const siteFunction = readFileSync(
+    join(ROOT, 'supabase', 'functions', 'site', 'index.ts'),
+    'utf8'
+  );
+  const packageJson = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+
+  assert.match(config, /\[functions\.site\]\s+verify_jwt = false/);
+  assert.match(storageMigration, /'homespot-site', 'homespot-site', true/);
+  assert.match(siteFunction, /\/storage\/v1\/object\/public\/\$\{STORAGE_BUCKET\}/);
+  assert.match(packageJson.scripts['deploy:supabase-site'], /publish-site\.mjs/);
+});
+
+test('Supabase migrations create the app data schema, RLS, room seeds, and realtime publication', () => {
+  const migrationDirectory = join(ROOT, 'supabase', 'migrations');
+  const migrations = readdirSync(migrationDirectory);
+  const appMigration = migrations
+    .filter((file) => file.endsWith('_homespot_app_documents.sql'))
+    .map((file) => readFileSync(join(migrationDirectory, file), 'utf8'))
+    .join('\n');
+
+  assert.ok(appMigration, 'the app_documents migration must exist');
+  assert.match(appMigration, /create table public\.app_documents/);
+  assert.match(appMigration, /alter table public\.app_documents enable row level security/);
+  assert.match(appMigration, /create policy "public and authorized users read documents"/);
+  assert.match(appMigration, /'triple-occupancy-room'/);
+  assert.match(appMigration, /'commercial-space'/);
+  assert.match(appMigration, /alter publication supabase_realtime add table public\.app_documents/);
+});
+
+test('PayMongo webhook is configured and validates event structure before writing', () => {
+  const config = readFileSync(join(ROOT, 'supabase', 'config.toml'), 'utf8');
+  const webhook = readFileSync(
+    join(ROOT, 'supabase', 'functions', 'paymongo-webhook', 'index.ts'),
+    'utf8'
+  );
+
+  assert.match(config, /\[functions\.paymongo-webhook\]\s+verify_jwt = false/);
+  assert.match(webhook, /WEBHOOK_SECRET/);
+  assert.match(webhook, /Invalid PayMongo event structure/);
+  assert.match(webhook, /checkout_session\.payment\.paid/);
+  assert.match(webhook, /checkout_session\.payment\.failed/);
+  assert.match(webhook, /\.from\('app_documents'\)/);
 });
 
 test('every relative ES module import resolves to a real file', () => {
@@ -246,29 +280,6 @@ test('every relative ES module import resolves to a real file', () => {
   }
 
   assert.deepEqual(broken, [], `unresolvable imports:\n${broken.join('\n')}`);
-});
-
-test('every page that uses a module also loads firebase-service.js first', () => {
-  // Modules execute in document order. A page whose own module reads the
-  // firebase-service globals before that file has run will see undefined.
-  const offenders = [];
-
-  for (const page of PAGES) {
-    const html = read(page);
-    const serviceAt = html.indexOf('./assets/js/firebase-service.js');
-    if (serviceAt === -1) continue;
-
-    const firstModule = html.search(
-      /<script[^>]*type="module"[^>]*src="\.\/assets\/js\/(?!firebase-service)/
-    );
-    if (firstModule === -1) continue;
-
-    if (firstModule < serviceAt) {
-      offenders.push(`${page}: a page module is declared before firebase-service.js`);
-    }
-  }
-
-  assert.deepEqual(offenders, [], offenders.join('\n'));
 });
 
 test('no inline event handler interpolates a dynamic value', () => {

@@ -849,7 +849,7 @@ body {
   }
 }
 
-/* Portal content stays hidden until the Firebase auth guard resolves. */
+/* Portal content stays hidden until the Supabase auth guard resolves. */
 html[data-auth-pending] body {
   visibility: hidden;
 }

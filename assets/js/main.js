@@ -2,7 +2,7 @@
  * Shared entry point for the public and admin pages.
  *
  * Previously a 800-line classic script that ran six initialisers on all five
- * pages that loaded it -- so the admin dashboard attached Firestore listeners
+ * pages that loaded it -- so the admin dashboard attached data listeners
  * on index.html and admin-login.html, where the target containers do not exist.
  *
  * It is now an ES module that imports what it needs and initialises only what
@@ -11,8 +11,8 @@
 
 import { initTabs } from './render/tabs.js';
 import { initPublicForms } from './pages/public-forms.js';
-import { initRoomAvailabilityBadges } from './pages/index-page.js';
 import { setRoomAvailability, decrementRoomAvailability } from './room-availability.js';
+import { supabase } from './supabase-service.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -102,22 +102,33 @@ async function initAdminActions() {
 }
 
 /**
- * Firestore connection status line on the admin dashboard.
+ * Supabase connection status line on the admin dashboard.
  */
-function initStatusLine() {
-  const el = byId('firestoreStatus');
-  if (el) el.textContent = 'Connected to Firestore.';
+async function initStatusLine() {
+  const el = byId('supabaseStatus');
+  if (!el) return;
+
+  el.textContent = 'Connecting to Supabase...';
+  try {
+    const { error } = await supabase
+      .from('app_documents')
+      .select('id')
+      .eq('collection', 'rooms')
+      .limit(1);
+    if (error) throw error;
+    el.textContent = 'Connected to Supabase.';
+    el.className = 'text-sm text-emerald-600 mb-4';
+  } catch (error) {
+    console.error('Supabase health check failed:', error);
+    el.textContent = 'Supabase is unavailable. Check the project configuration.';
+    el.className = 'text-sm text-red-600 mb-4';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   initSmoothScroll();
   initTabs();
   initPublicForms();
-
-  // index.html only.
-  if (byId('tripleAvailabilityBadge') || byId('commercialAvailabilityBadge')) {
-    initRoomAvailabilityBadges();
-  }
 
   // admin-dashboard.html only.
   if (byId('reservationRequestsContainer') || byId('messagesContainer')) {
@@ -127,9 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Availability helpers are intentionally exposed: the set-room CLI and manual
-// console use rely on them, and they were previously global from two different
-// files. TODO(maintainability): route the console path through the CLI instead
-// and drop these once no page loads two scripts defining the same global.
+// Availability helpers remain available for the browser console.
 window.setRoomAvailability = setRoomAvailability;
 window.decrementRoomAvailability = decrementRoomAvailability;

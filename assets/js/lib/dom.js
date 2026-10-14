@@ -33,7 +33,7 @@ export function qsa(selector, scope = document) {
 
 /**
  * Sets textContent only when the value actually changed, so we do not thrash
- * layout on Firestore snapshots.
+ * layout on database snapshots.
  *
  * @param {string} id
  * @param {string} value
@@ -48,7 +48,7 @@ export function setText(id, value) {
  *
  * Replaces inline `onclick` attributes, which is required for anything in a
  * module (module scope is not visible to inline handlers) and is what keeps
- * Firestore values out of JS string literals.
+ * data values out of JS string literals.
  *
  * @param {string} selector - e.g. 'button[data-action]'
  * @param {(element: HTMLElement, event: Event) => void} handler

@@ -2,14 +2,14 @@
  * Tenant <-> staff message rendering (admin dashboard).
  */
 
-import { db, firebaseFirestore, getMessagesRef, isFirestoreReady } from '../firebase-service.js';
+import { db, supabaseData, getMessagesRef, isDataReady } from '../supabase-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
 import { Toast } from './toast.js';
 
 /**
  * Renders messages into #messagesContainer.
- * @param {import('firebase/firestore').QuerySnapshot} docs
+ * @param {{ empty: boolean, map: (callback: (doc: {id: string, data: () => Object}) => string) => string[] }} docs
  */
 export function renderMessages(docs) {
   const container = document.getElementById('messagesContainer');
@@ -29,9 +29,12 @@ export function renderMessages(docs) {
         ? '<span class="bg-blue-600 text-white px-2 py-1 rounded text-xs">New</span>'
         : `<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">${escapeHtml(data.status || 'Read')}</span>`;
 
-      // createdAt is a Firestore Timestamp; tolerate a plain value too.
       const createdAt = data.createdAt
-        ? escapeHtml(new Date((data.createdAt.seconds ?? 0) * 1000).toLocaleString())
+        ? escapeHtml(
+            new Date(
+              data.createdAt.seconds ? data.createdAt.seconds * 1000 : data.createdAt
+            ).toLocaleString()
+          )
         : 'Just now';
 
       return `
@@ -66,21 +69,21 @@ export async function replyToMessage(messageId) {
   const response = prompt('Enter your reply:');
   if (!response) return;
 
-  if (!isFirestoreReady()) {
-    Toast.error('Firestore is not available.');
+  if (!isDataReady()) {
+    Toast.error('Supabase is not available.');
     return;
   }
 
   try {
-    const ref = firebaseFirestore.doc(db, 'messages', messageId);
-    await firebaseFirestore.updateDoc(ref, {
+    const ref = supabaseData.doc(db, 'messages', messageId);
+    await supabaseData.updateDoc(ref, {
       reply: response,
       status: 'Read',
-      repliedAt: firebaseFirestore.serverTimestamp()
+      repliedAt: supabaseData.serverTimestamp()
     });
     Toast.success('Reply saved and marked as read.');
   } catch (error) {
-    console.error('Firestore reply failed:', error);
+    console.error('Supabase reply failed:', error);
     Toast.error('Unable to send reply.');
   }
 }
@@ -90,17 +93,17 @@ export async function replyToMessage(messageId) {
  * @param {string} messageId
  */
 export async function deleteMessage(messageId) {
-  if (!isFirestoreReady()) {
-    Toast.error('Firestore is not available.');
+  if (!isDataReady()) {
+    Toast.error('Supabase is not available.');
     return;
   }
 
   try {
-    const ref = firebaseFirestore.doc(db, 'messages', messageId);
-    await firebaseFirestore.deleteDoc(ref);
+    const ref = supabaseData.doc(db, 'messages', messageId);
+    await supabaseData.deleteDoc(ref);
     Toast.success('Message deleted.');
   } catch (error) {
-    console.error('Firestore delete failed:', error);
+    console.error('Supabase delete failed:', error);
     Toast.error('Unable to delete message.');
   }
 }
@@ -113,9 +116,9 @@ export function watchMessages(onUnreadCount) {
   const ref = getMessagesRef();
   if (!ref) return null;
 
-  const query = firebaseFirestore.query(ref, firebaseFirestore.orderBy('createdAt', 'desc'));
+  const query = supabaseData.query(ref, supabaseData.orderBy('createdAt', 'desc'));
 
-  return firebaseFirestore.onSnapshot(
+  return supabaseData.onSnapshot(
     query,
     (snapshot) => {
       const unread = snapshot.docs.filter((doc) => doc.data().status === 'Unread').length;
@@ -123,7 +126,7 @@ export function watchMessages(onUnreadCount) {
       renderMessages(snapshot);
     },
     (error) => {
-      console.error('Messages snapshot failed:', error);
+      console.error('Messages subscription failed:', error);
     }
   );
 }

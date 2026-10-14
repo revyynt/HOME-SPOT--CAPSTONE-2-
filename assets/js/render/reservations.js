@@ -1,16 +1,10 @@
 /**
  * Reservation request rendering and decisions (admin dashboard).
  *
- * All Firestore access goes through firebase-service.js -- this module used to
- * carry its own copy of the service bridge.
+ * All data access goes through supabase-service.js.
  */
 
-import {
-  db,
-  firebaseFirestore,
-  getReservationsRef,
-  isFirestoreReady
-} from '../firebase-service.js';
+import { db, supabaseData, getReservationsRef, isDataReady } from '../supabase-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
 import { Toast } from './toast.js';
@@ -25,10 +19,10 @@ const STATUS_CLASS = {
 /**
  * Renders pending reservations into #reservationRequestsContainer.
  *
- * Row actions are delegated (see wireReservationActions) rather than bound with
- * inline `onclick`, so Firestore values never end up inside a JS string.
+ * Row actions are delegated (see wireReservationActions) rather than bound
+ * inline, so data values never end up inside JavaScript strings.
  *
- * @param {import('firebase/firestore').QuerySnapshot} docs
+ * @param {{ empty: boolean, map: (callback: (doc: {id: string, data: () => Object}) => string) => string[] }} docs
  */
 export function renderReservationRequests(docs) {
   const container = document.getElementById('reservationRequestsContainer');
@@ -93,29 +87,29 @@ export function renderReservationRequests(docs) {
  * @param {string} reservationId
  */
 export async function approveReservation(reservationId) {
-  if (!isFirestoreReady()) {
-    Toast.error('Firestore is not available.');
+  if (!isDataReady()) {
+    Toast.error('Supabase is not available.');
     return;
   }
 
   try {
-    const ref = firebaseFirestore.doc(db, 'reservations', reservationId);
-    await firebaseFirestore.updateDoc(ref, {
+    const ref = supabaseData.doc(db, 'reservations', reservationId);
+    await supabaseData.updateDoc(ref, {
       status: 'Approved',
-      decisionAt: firebaseFirestore.serverTimestamp()
+      decisionAt: supabaseData.serverTimestamp()
     });
     Toast.success('Reservation approved.');
   } catch (error) {
-    console.error('Firestore approve failed:', error);
+    console.error('Supabase approve failed:', error);
     Toast.error('Unable to approve reservation.');
     return;
   }
 
-  // The snapshot refresh is driven by Firestore, but re-read the request to
+  // The snapshot refresh is driven by Realtime, but re-read the request to
   // find which room to decrement.
   try {
-    const ref = firebaseFirestore.doc(db, 'reservations', reservationId);
-    const snap = await firebaseFirestore.getDoc(ref);
+    const ref = supabaseData.doc(db, 'reservations', reservationId);
+    const snap = await supabaseData.getDoc(ref);
     if (snap.exists() && snap.data().room) {
       await decrementRoomAvailability(snap.data().room);
     }
@@ -131,21 +125,21 @@ export async function approveReservation(reservationId) {
 export async function declineReservation(reservationId) {
   const reason = prompt('Enter reason for declining (optional):');
 
-  if (!isFirestoreReady()) {
-    Toast.error('Firestore is not available.');
+  if (!isDataReady()) {
+    Toast.error('Supabase is not available.');
     return;
   }
 
   try {
-    const ref = firebaseFirestore.doc(db, 'reservations', reservationId);
-    await firebaseFirestore.updateDoc(ref, {
+    const ref = supabaseData.doc(db, 'reservations', reservationId);
+    await supabaseData.updateDoc(ref, {
       status: 'Declined',
       declineReason: reason || null,
-      decisionAt: firebaseFirestore.serverTimestamp()
+      decisionAt: supabaseData.serverTimestamp()
     });
     Toast.success('Reservation declined.');
   } catch (error) {
-    console.error('Firestore decline failed:', error);
+    console.error('Supabase decline failed:', error);
     Toast.error('Unable to decline reservation.');
   }
 }
@@ -158,14 +152,14 @@ export function watchPendingReservations(onCount) {
   const ref = getReservationsRef();
   if (!ref) return null;
 
-  return firebaseFirestore.onSnapshot(
-    firebaseFirestore.query(ref, firebaseFirestore.where('status', '==', 'Pending')),
+  return supabaseData.onSnapshot(
+    supabaseData.query(ref, supabaseData.where('status', '==', 'Pending')),
     (snapshot) => {
       onCount?.(snapshot.size);
       renderReservationRequests(snapshot);
     },
     (error) => {
-      console.error('Pending reservations snapshot failed:', error);
+      console.error('Pending reservations subscription failed:', error);
     }
   );
 }

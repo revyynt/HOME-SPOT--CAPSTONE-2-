@@ -1,187 +1,153 @@
 # Home-Spot — Apartment Booking & Management System
 
-Vanilla HTML/CSS/JS front end with Firebase (Firestore + Auth) and a PayMongo
-payment bridge. No build step: every page loads the Firebase SDK straight from
-the CDN.
+Home-Spot is a multi-page HTML/CSS/JavaScript application built with Vite and
+React. Supabase provides Auth, Postgres-backed app data, Realtime, and Edge
+Functions. PayMongo payments and the public static frontend are served through
+Supabase Edge Functions, with frontend files stored in a public Supabase Storage
+bucket.
 
-> **Before deploying:** read [Security notes](#-security-notes). The Firestore
-> rules and the API server in this repo were hardened recently, and rotating the
-> PayMongo keys is a required manual step.
-
-## File Structure
-
-```
-/
-├── index.html                      # Public landing page
-├── property-detail.html            # Room detail + inquiry/reservation forms
-├── start.html                      # Dev launcher (navigation hub)
-├── admin-login.html                # Admin / Super Admin login
-├── admin-dashboard.html            # Admin dashboard
-├── super-admin-dashboard.html      # Platform management (superadmin only)
-├── tenant-login.html               # Tenant sign-in
-├── tenant-portal.html              # Tenant portal (payments, chat, profile)
-├── paymongo-api-server.js          # Local payment bridge (dev)
-├── set-room.js                     # Room availability CLI (requires admin token)
-├── firebase.json                   # Hosting / Functions / Firestore config
-├── firestore.rules                 # Per-collection security rules
-├── .env.example                    # Copy to .env and fill in
-├── assets/
-│   ├── img/                        # All images, kebab-case
-│   ├── css/
-│   │   ├── style.css               # Shared styles
-│   │   ├── tenant-portal.css
-│   │   └── tenant-login.css
-│   └── js/                         # See "Source layout" below
-├── tests/                          # node:test suites
-├── docs/
-│   ├── QUICKSTART.md               # First-time setup
-│   └── CONVERSION-SUMMARY.md       # What is built, what is still stubbed
-├── functions/index.js              # Cloud Functions (PayMongo webhook)
-└── eslint.config.mjs               # Includes the homespot/* custom rules
-```
-
-Every page is a static HTML file that loads ES modules. There is no build step
-and no bundler — edit a file and reload. Images live only under
-`assets/img/`; a structural test enforces that so a stray root-level photo can
-never leak into the published tree.
+The Supabase project is configured for a fresh start; existing Firebase users
+and data are not migrated.
 
 ## Getting Started
 
-### 1. Configure secrets
+### Configure the frontend
 
-```bash
-cp .env.example .env    # Windows: copy .env.example .env
+Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY`. Keep service-role/secret keys out of all
+`VITE_` variables and browser code. `.env.local` is gitignored.
+
+```powershell
+Copy-Item .env.example .env.local
+npm install
+npm run dev
 ```
 
-Fill in `PAYMONGO_SECRET_KEY` and `PAYMONGO_PUBLIC_KEY` from the
-[PayMongo dashboard](https://developers.paymongo.com). `.env` is gitignored and
-must never be committed.
+Open <http://localhost:5173>. Create a local production preview with
+`npm run build`; Vite writes the static site to `dist/`.
 
-### 2. Start the payment bridge
+### Prepare Supabase
 
-```bash
-npm start        # node paymongo-api-server.js 5050
+Install the Supabase CLI, link the project, then apply the schema:
+
+```sh
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+supabase db push
 ```
 
-The server refuses to start if `PAYMONGO_SECRET_KEY` is missing, and rejects any
-`/api/*` request that does not carry a valid Firebase ID token.
+The migrations create the `app_documents` table, row-level security policies,
+Realtime publication, initial public room records, and a public Storage bucket
+for the frontend assets.
 
-### 3. Serve the pages
+Set Edge Function secrets in the Supabase project; never commit these values:
 
-```bash
-npx http-server -p 5050 -c-1
-# or
-python -m http.server 5050
+```sh
+supabase secrets set PAYMONGO_SECRET_KEY=YOUR_PAYMONGO_SECRET_KEY
+supabase secrets set WEBHOOK_SECRET=YOUR_LONG_RANDOM_WEBHOOK_SECRET
+supabase secrets set ALLOWED_ORIGINS=https://YOUR_HOSTED_DOMAIN
 ```
 
-Open <http://localhost:5050>.
+Deploy the functions:
 
-### 4. Deploy (optional)
-
-```bash
-npm --prefix functions install
-firebase functions:secrets:set PAYMONGO_SECRET_KEY
-firebase functions:secrets:set WEBHOOK_SECRET
-firebase deploy
+```sh
+supabase functions deploy create-tenant
+supabase functions deploy delete-tenant
+supabase functions deploy paymongo-api
+supabase functions deploy paymongo-webhook
 ```
+
+Configure PayMongo to call
+`https://YOUR_PROJECT_REF.supabase.co/functions/v1/paymongo-webhook?secret=YOUR_LONG_RANDOM_WEBHOOK_SECRET`.
+Set the same secret in Supabase. In production, set `ALLOWED_ORIGINS` to the
+exact website origin(s), comma-separated if there is more than one.
+
+Create the first staff account in Supabase Auth, then assign its trusted
+`app_metadata.role` to `superadmin` from a trusted administrative environment.
+Disable public signups in the Supabase Auth settings; staff and tenant accounts
+are provisioned by trusted administrators. Do not assign roles through
+user-editable `user_metadata`. After that, staff can create tenant accounts
+from the admin dashboard.
+
+### Local Edge Function testing
+
+For local functions, copy `.env.functions.example` to `.env.functions.local`
+and fill the server-side values. Keep browser-safe values in `.env.local`.
+
+```sh
+cp .env.functions.example .env.functions.local
+supabase start
+supabase functions serve --env-file .env.functions.local
+```
+
+## Deployment
+
+Link the Supabase CLI to your project and apply the database migrations first.
+Copy `.env.publish.example` to `.env.publish.local`, set the project URL and
+server-side key there, and build/upload the static files to the `homespot-site`
+Storage bucket:
+
+```sh
+cp .env.publish.example .env.publish.local
+npm run deploy:supabase-site
+supabase functions deploy site
+```
+
+The publish script reads `SUPABASE_URL` and `SUPABASE_SECRET_KEY` (or
+`SUPABASE_SERVICE_ROLE_KEY`) from `.env.publish.local`. These privileged
+values are used only by the local publisher and must never be added to a
+`VITE_` variable or browser code. The public site URL is
+`https://YOUR_PROJECT_REF.supabase.co/functions/v1/site/`; page routes and
+assets are served from that path.
 
 ## Architecture
 
-| Concern       | Where it lives                                                                 |
-| ------------- | ------------------------------------------------------------------------------ |
-| Auth          | Firebase Auth. Roles live in `users/{uid}.role`                                |
-| Data          | Firestore: `rooms`, `reservations`, `messages`, `tenants`, `payments`, `users` |
-| Payments      | Client → `paymongo-api-server.js` → PayMongo                                   |
-| Payment truth | `functions.paymongoWebhook` writes `payments` (the only writer)                |
+| Concern          | Implementation                                                    |
+| ---------------- | ----------------------------------------------------------------- |
+| Frontend         | Vite multi-page build; React powers live room availability badges |
+| Authentication   | Supabase Auth; staff and tenant roles use trusted `app_metadata`  |
+| Application data | `public.app_documents` JSONB table, protected by RLS              |
+| Live updates     | Supabase Realtime                                                 |
+| Tenant creation  | `create-tenant` Edge Function with service-role access            |
+| Payments         | Browser → `paymongo-api` Edge Function → PayMongo                 |
+| Payment records  | `paymongo-webhook` Edge Function writes authoritative records     |
+| Static hosting   | Public Storage bucket served through the `site` Edge Function     |
 
-### Firestore collections
+The document adapter in `assets/js/supabase-service.js` preserves the
+application's collection/document interface while storing data in Postgres.
+Public room reads and reservation/inquiry submissions are constrained by RLS;
+tenant data visibility is scoped to the signed-in identity. Browser clients
+cannot write payment records or change tenant balances.
 
-| Collection     | Written by                      | Read by                     |
-| -------------- | ------------------------------- | --------------------------- |
-| `rooms`        | Admin                           | Everyone (public inventory) |
-| `reservations` | Public form (constrained shape) | Admin                       |
-| `messages`     | Tenant + Admin                  | Participant + Admin         |
-| `tenants`      | Admin                           | Admin + the tenant themself |
-| `payments`     | Webhook only                    | Admin + the tenant themself |
-| `users`        | Admin / self-service            | Owner + Admin               |
+## Source Layout
 
-### Source layout
-
-```
+```text
 assets/js/
-├── firebase-service.js   Sole owner of the Firebase config + auth helpers
-├── room-availability.js  Single implementation of setRoomAvailability
-├── main.js               Thin entry: initialises only what the page contains
-├── lib/                  Pure, DOM-free — directly unit-testable
-│   ├── format.js           escapeHtml, formatPHP, initials, avatarGradient
-│   ├── rooms.js            normalizeRoomDocId, resolveRoom
-│   ├── qr.js               buildQrPhPayload
-│   ├── payment-return.js   Payment-redirect state machine
-│   ├── guard.js            Page-level auth guard
-│   ├── session.js          Staff logout + mobile back-button guard
-│   └── dom.js              byId, onClick, attr
-├── render/               toast, tabs, reservations, messages
-└── pages/                One module per page
+├── supabase-service.js       Supabase client, auth, data adapter, Realtime
+├── paymongo-service.js       Supabase Edge Function payment client
+├── main.js                   Shared page initialization
+├── lib/                      Pure utilities and tested payment-return logic
+├── render/                   Reservations, messages, tabs, and toast UI
+└── pages/                    Page-specific modules; availability-badges.jsx is React
+supabase/
+├── config.toml
+├── migrations/               Schema and RLS
+└── functions/                Site, tenant, and PayMongo Edge Functions
+scripts/
+└── publish-site.mjs          Uploads the Vite build to Supabase Storage
+tests/                        node:test suites
 ```
 
-Two rules keep this from drifting:
+## Development and Validation
 
-- **`lib/` must stay pure** — no DOM, no Firebase, no network. That is what lets
-  `node --test` import the exact code the browser runs.
-- **Pages delegate, they don't assign to `window`.** Module scope is invisible
-  to inline `onclick`, so controls use `data-*` attributes. ESLint enforces
-  this with the custom `homespot/no-global-leak` rule.
-
-## Development
-
-```bash
-npm run check        # lint + test
-npm test             # unit, structural, smoke, and secret-scan tests
-npm run lint         # ESLint
-npm run format       # Prettier
+```sh
+npm run dev
+npm run check       # lint, tests, and production build
+npm test
+npm run lint
+npm run format:check
 ```
 
-| Test file                                         | Guards                                                                                                                                            |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/format\|rooms\|qr\|payment-return.test.js` | Pure logic, including every payment-redirect branch                                                                                               |
-| `tests/structure.test.js`                         | Div/script balance, orphaned tab panes, import resolution, module load order, a single Firebase config, no inline scripts, inline-handler ratchet |
-| `tests/smoke.test.js`                             | The DOM layer evaluates and behaves under a DOM stub                                                                                              |
-| `tests/secrets.test.js`                           | No committed keys; fails CI if one reappears                                                                                                      |
-
-`tests/structure.test.js` is the safety net for refactoring: if an edit breaks
-markup, an import path, or module ordering, the suite fails before the page
-does.
-
-## Security Notes
-
-- **`firestore.rules` denies by default.** Every collection is matched
-  explicitly; unmatched paths fall through to `allow read, write: if false`.
-- **Roles cannot be self-assigned.** Creating a `users/{uid}` document requires
-  an existing admin, and the role must be `tenant`. Only a superadmin can change
-  roles.
-- **No plaintext passwords.** Tenants authenticate through Firebase Auth. The
-  dashboard creates the Auth account and hands the temporary password to the
-  tenant once; it is never persisted in Firestore.
-- **Page guards.** `admin-dashboard.html`, `super-admin-dashboard.html`, and
-  `tenant-portal.html` all verify a live Firebase session before rendering.
-- **Payment calls are proxied.** The browser never holds the PayMongo secret key
-  and never talks to PayMongo directly.
-- **Client-side balance edits are denied.** A tenant cannot mark their own
-  account paid; the webhook is authoritative.
-
-## Room Availability CLI
-
-```bash
-# get an admin token from the browser console while signed in:
-#   await firebaseService.getIdToken()
-
-export FIREBASE_ID_TOKEN=<token>
-node set-room.js                  # list
-node set-room.js 3                # Triple Occupancy Room -> 3
-node set-room.js commercial 1     # Commercial Space -> 1
-```
-
-## License
-
-Capstone Project — Apartment Booking & Management System
-© 2026 Home-Spot. All rights reserved.
+All environment files are gitignored. Supabase publishable keys are intended
+for browser use; Supabase secret/service-role keys and PayMongo secret keys
+must remain server-side.

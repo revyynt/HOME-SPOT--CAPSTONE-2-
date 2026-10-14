@@ -6,13 +6,13 @@
  *
  *   - The auth guard no longer reads a `let userEmail` declared in a classic
  *     script and reassigned from a module. That only worked by accident of
- *     execution order. Identity now comes from the verified Firebase user.
+ *     execution order. Identity now comes from the verified Supabase user.
  *   - Row/tab/modal actions are delegated from data-* attributes, so module
  *     scope stays private instead of being published wholesale to window.
  */
 
 import { guardPage } from '../lib/guard.js';
-import { getCurrentUser } from '../firebase-service.js';
+import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
 
@@ -31,17 +31,18 @@ guardPage({
   role: 'tenant',
   redirectTo: 'tenant-login.html',
   grantedEvent: 'tenant-access-granted'
-}).then((allowed) => {
+}).then(async (allowed) => {
   if (!allowed) return;
   // The session email must belong to the verified account.
-  const user = getCurrentUser();
+  const user = await getCurrentUser();
   if (user && userEmail !== user.email) {
     userEmail = user.email || '';
     sessionStorage.setItem('tenantEmail', userEmail);
+    populateTenantUI();
   }
 });
 
-// Content stays hidden until the Firebase auth guard resolves.
+// Content stays hidden until the Supabase auth guard resolves.
 
 let userEmail = sessionStorage.getItem('tenantEmail') || '';
 let tenantName = sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
@@ -168,72 +169,71 @@ function populateTenantUI() {
 // Apply immediately from session storage
 populateTenantUI();
 
-// Also fetch up-to-date tenant profile from Firestore when ready
-async function fetchTenantFirestoreProfile() {
-  if (!window.firebaseDb || !window.firebaseFirestore) {
-    window.addEventListener('firebase-ready', fetchTenantFirestoreProfile, { once: true });
-    return;
-  }
+// Also fetch the current tenant profile from Supabase.
+async function fetchTenantSupabaseProfile() {
   try {
-    const tenantsRef = window.firebaseFirestore.collection(window.firebaseDb, 'tenants');
-    const q = window.firebaseFirestore.query(
-      tenantsRef,
-      window.firebaseFirestore.where('email', '==', userEmail)
-    );
+    const user = await getCurrentUser();
+    if (!user) return;
+    const tenantsRef = supabaseData.collection(supabase, 'tenants');
+    const q = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
 
-    window.firebaseFirestore.onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const tenantDoc = snapshot.docs[0];
-        currentTenantDocId = tenantDoc.id;
-        sessionStorage.setItem('tenantDocId', currentTenantDocId);
-        const docData = tenantDoc.data();
-        if (docData.name) {
-          tenantName = docData.name;
-          sessionStorage.setItem('tenantName', docData.name);
+    supabaseData.onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const tenantDoc = snapshot.docs[0];
+          currentTenantDocId = tenantDoc.id;
+          sessionStorage.setItem('tenantDocId', currentTenantDocId);
+          const docData = tenantDoc.data();
+          if (docData.name) {
+            tenantName = docData.name;
+            sessionStorage.setItem('tenantName', docData.name);
+          }
+          if (docData.phone) {
+            tenantPhone = docData.phone;
+            sessionStorage.setItem('tenantPhone', docData.phone);
+          }
+          if (docData.room) {
+            tenantRoom = docData.room;
+            sessionStorage.setItem('tenantRoom', docData.room);
+          }
+          if (docData.dormName) {
+            tenantDorm = docData.dormName;
+            sessionStorage.setItem('tenantDorm', docData.dormName);
+          }
+          if (docData.moveInDate) {
+            tenantMoveIn = docData.moveInDate;
+            sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
+          }
+          if (docData.dueDay) {
+            tenantDueDay = parseInt(docData.dueDay);
+            sessionStorage.setItem('tenantDueDay', tenantDueDay);
+          }
+          if (docData.monthlyRent) {
+            tenantRent = parseFloat(docData.monthlyRent);
+            sessionStorage.setItem('tenantMonthlyRent', tenantRent);
+          }
+          if (docData.amountDue !== undefined && docData.amountDue !== null) {
+            currentRemainingDue = parseFloat(docData.amountDue);
+            tenantExplicitAmountDueSet = true;
+            sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+            localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+          }
+          if (docData.emergencyContact) {
+            tenantEmergency = docData.emergencyContact;
+            sessionStorage.setItem('tenantEmergencyContact', docData.emergencyContact);
+          }
+          populateTenantUI();
         }
-        if (docData.phone) {
-          tenantPhone = docData.phone;
-          sessionStorage.setItem('tenantPhone', docData.phone);
-        }
-        if (docData.room) {
-          tenantRoom = docData.room;
-          sessionStorage.setItem('tenantRoom', docData.room);
-        }
-        if (docData.dormName) {
-          tenantDorm = docData.dormName;
-          sessionStorage.setItem('tenantDorm', docData.dormName);
-        }
-        if (docData.moveInDate) {
-          tenantMoveIn = docData.moveInDate;
-          sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
-        }
-        if (docData.dueDay) {
-          tenantDueDay = parseInt(docData.dueDay);
-          sessionStorage.setItem('tenantDueDay', tenantDueDay);
-        }
-        if (docData.monthlyRent) {
-          tenantRent = parseFloat(docData.monthlyRent);
-          sessionStorage.setItem('tenantMonthlyRent', tenantRent);
-        }
-        if (docData.amountDue !== undefined && docData.amountDue !== null) {
-          currentRemainingDue = parseFloat(docData.amountDue);
-          tenantExplicitAmountDueSet = true;
-          sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-          localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
-        }
-        if (docData.emergencyContact) {
-          tenantEmergency = docData.emergencyContact;
-          sessionStorage.setItem('tenantEmergencyContact', docData.emergencyContact);
-        }
-        populateTenantUI();
-      }
-    });
+      },
+      (error) => console.error('Tenant profile subscription failed:', error)
+    );
   } catch (err) {
-    console.warn('Could not sync tenant profile from Firestore:', err);
+    console.warn('Could not sync tenant profile from Supabase:', err);
   }
 }
 
-fetchTenantFirestoreProfile();
+fetchTenantSupabaseProfile();
 
 function switchTab(tabName, evt) {
   const tabs = document.querySelectorAll('.tab-content');
@@ -415,12 +415,11 @@ async function initiateQrPhFlow(amountVal, purpose, tenantName, tenantPhone) {
     tenantName: tenantName,
     tenantEmail: userEmail,
     dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
-    status: 'Paid'
+    status: 'Pending'
   };
 
-  // Try to get a real PayMongo session (optional — QR works without it)
+  // The QR modal is only available when PayMongo creates a real session.
   try {
-    // Ensure PayMongoService is ready
     const session = await PayMongo.createCheckoutSession({
       amount: amountVal,
       description: `${purpose} - MJP Residences (QR Ph)`,
@@ -484,7 +483,7 @@ function showQrModal(data) {
         const session = await PayMongo.getCheckoutSession(data.sessionId);
         if (session) {
           const payments = session.attributes?.payments || [];
-          const isPaid = session.attributes?.status === 'paid' || payments.length > 0;
+          const isPaid = session.attributes?.status === 'paid';
           if (isPaid) {
             clearInterval(qrStatusPollInterval);
             closeQrModal();
@@ -510,183 +509,50 @@ function closeQrModal() {
   document.getElementById('paymongoQrModal').style.display = 'none';
 }
 
-// Confirm QR Payment — executes live PayMongo test charge, saves record and shows receipt
+// Confirm QR Payment only after PayMongo reports the session as paid.
 async function confirmQrPayment() {
   if (!activeQrPaymentData) return;
-  if (qrStatusPollInterval) clearInterval(qrStatusPollInterval);
 
   const confirmBtn = document.getElementById('confirmQrBtn');
   if (confirmBtn) {
     confirmBtn.disabled = true;
-    confirmBtn.innerHTML = 'Processing in PayMongo...';
+    confirmBtn.innerHTML = 'Verifying with PayMongo...';
   }
 
-  // Ensure PayMongo service is ready
-
-  // Execute live test payment in PayMongo (creates real test payment visible in PayMongo Dashboard)
-  let pmResult = null;
   try {
-    if (PayMongo?.completeQrTestPayment) {
-      pmResult = await PayMongo.completeQrTestPayment({
-        amount: activeQrPaymentData.amount,
-        description: `${activeQrPaymentData.purpose || 'Rent Payment'} - MJP Residences`,
-        tenantName: activeQrPaymentData.tenantName,
-        tenantEmail: activeQrPaymentData.tenantEmail
-      });
+    if (!activeQrPaymentData.sessionId) {
+      throw new Error('No PayMongo checkout session was created.');
     }
-  } catch (err) {
-    console.warn('PayMongo test payment warning:', err.message);
-  }
-
-  if (pmResult && pmResult.paymentId) {
-    activeQrPaymentData.paymentMethodId = pmResult.paymentId;
-    activeQrPaymentData.referenceNumber =
-      pmResult.referenceNumber || 'PM-QR-' + pmResult.paymentId.slice(-6).toUpperCase();
+    const session = await PayMongo.getCheckoutSession(activeQrPaymentData.sessionId);
+    if (session?.attributes?.status !== 'paid') {
+      throw new Error('PayMongo has not confirmed this payment yet. Please try again shortly.');
+    }
+    const payments = session.attributes?.payments || [];
+    if (payments[0]?.id) activeQrPaymentData.paymentMethodId = payments[0].id;
     activeQrPaymentData.status = 'Paid';
+    closeQrModal();
+    await saveAndFinalizePayment({ ...activeQrPaymentData });
+    activeQrPaymentData = null;
+  } catch (error) {
+    alert(error.message || 'Unable to verify payment status.');
+    if (confirmBtn) {
+      confirmBtn.disabled = false;
+      confirmBtn.innerHTML = 'I Have Completed Payment';
+    }
   }
-
-  closeQrModal();
-
-  // Save to Firestore & localStorage, update balance, and show official receipt
-  const recordToSave = { ...activeQrPaymentData };
-  activeQrPaymentData = null;
-  await saveAndFinalizePayment(recordToSave);
 }
 
-// Save & Finalize Payment Record — always saves to Firestore & localStorage
+// The PayMongo webhook owns payment records; the browser never writes them.
 async function saveAndFinalizePayment(record) {
-  // Ensure PayMongoService is available
-
-  if (PayMongo?.savePaymentRecord) {
-    try {
-      await PayMongo.savePaymentRecord(record);
-    } catch (e) {
-      // Fallback: save directly to localStorage
-      try {
-        const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
-        const arr = JSON.parse(localStorage.getItem(k) || '[]');
-        arr.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem(k, JSON.stringify(arr));
-        const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
-        all.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-      } catch (_) {}
-    }
-  } else {
-    // Direct localStorage save if service never loaded
-    try {
-      const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
-      const arr = JSON.parse(localStorage.getItem(k) || '[]');
-      arr.unshift({ ...record, timestamp: new Date().toISOString() });
-      localStorage.setItem(k, JSON.stringify(arr));
-      const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
-      all.unshift({ ...record, timestamp: new Date().toISOString() });
-      localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-    } catch (_) {}
-  }
-
-  // Deduct from Amount Due & Persist
-  currentRemainingDue = Math.max(0, currentRemainingDue - record.amount);
-  tenantExplicitAmountDueSet = true;
-  sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-  localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
-
-  // Update Firestore tenant document with current remaining due & payment status.
-  // firestore.rules deliberately denies tenant writes here: a browser must
-  // not be able to zero out its own balance. The authoritative balance is
-  // reconciled server-side from the PayMongo webhook / by an admin, so a
-  // permission error below is expected for tenants.
-  if (currentTenantDocId && window.firebaseDb && window.firebaseFirestore) {
-    try {
-      const { doc, updateDoc, serverTimestamp } = window.firebaseFirestore;
-      const tenantDocRef = doc(window.firebaseDb, 'tenants', currentTenantDocId);
-      await updateDoc(tenantDocRef, {
-        amountDue: currentRemainingDue,
-        paymentStatus: currentRemainingDue <= 0 ? 'Paid' : 'Pending',
-        lastPaymentDate: new Date().toISOString(),
-        lastPaymentAmount: record.amount,
-        lastPaymentReference: record.referenceNumber,
-        updatedAt: serverTimestamp()
-      });
-    } catch (fsErr) {
-      console.info('Balance left for server reconciliation:', fsErr.code || fsErr.message);
-    }
-  }
-
-  // Update UI
-  updateAmountDueUI();
-
-  // Reset Form
-  document.getElementById('paymentNotes').value = '';
-  updateSubmitButton();
-
-  // Refresh history table
+  if (record?.status !== 'Paid') throw new Error('Payment has not been verified by PayMongo.');
   await loadTenantPaymentHistory();
-
-  // Display Receipt
+  updateAmountDueUI();
   showReceiptModal(record);
 }
 
-// Save Failed Payment Record — logs in Firestore & localStorage, refreshes history, shows Failed Receipt
+// Failed payment state is recorded by the provider webhook, not the browser.
 async function saveFailedPayment(record) {
-  if (PayMongo?.savePaymentRecord) {
-    try {
-      await PayMongo.savePaymentRecord(record);
-    } catch (e) {
-      // Fallback: save to localStorage
-      try {
-        const k = `tenant_payments_${record.tenantEmail || 'guest'}`;
-        const arr = JSON.parse(localStorage.getItem(k) || '[]');
-        arr.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem(k, JSON.stringify(arr));
-        const all = JSON.parse(localStorage.getItem('all_tenant_payments') || '[]');
-        all.unshift({ ...record, timestamp: new Date().toISOString() });
-        localStorage.setItem('all_tenant_payments', JSON.stringify(all));
-      } catch (_) {}
-    }
-  }
-
-  // Fire a synthetic payment.failed webhook event to our local server
-  // so it appears in the admin webhook events log
-  try {
-    const webhookPayload = {
-      data: {
-        id: 'evt_homespot_' + Date.now(),
-        attributes: {
-          type: 'payment.failed',
-          data: {
-            id: record.paymentMethodId || 'pay_fail_' + Date.now(),
-            attributes: {
-              amount: Math.round(parseFloat(record.amount || 0) * 100),
-              currency: 'PHP',
-              description: record.purpose || 'Monthly Rent',
-              failed_code: 'card_declined',
-              failed_message:
-                record.failureReason || 'Payment declined or 3DS authentication failed.',
-              billing: {
-                name: record.tenantName || 'Tenant',
-                email: record.tenantEmail || ''
-              }
-            }
-          }
-        }
-      }
-    };
-    const apiBase = window.location.origin.startsWith('file:')
-      ? 'http://localhost:5050'
-      : window.location.origin;
-    fetch(`${apiBase}/api/paymongo-webhook`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(webhookPayload)
-    }).catch(() => {});
-  } catch (_) {}
-
-  // CRITICAL: For failed payment, do NOT deduct from currentRemainingDue!
-  // Refresh history table so the failed record is immediately visible
   await loadTenantPaymentHistory();
-
-  // Display Official Receipt in Failed Payment state
   showReceiptModal(record);
 }
 
@@ -884,10 +750,23 @@ async function loadTenantPaymentHistory() {
 
   let payments = [];
   if (PayMongo) {
-    payments = await PayMongo.getTenantPayments(userEmail);
+    try {
+      payments = await PayMongo.getTenantPayments();
+    } catch (error) {
+      console.error('Failed to load payment history:', error);
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="7" style="text-align: center; color: #b91c1c; padding: 24px;">
+            Unable to load payment history. Please refresh and try again.
+          </td>
+        </tr>
+      `;
+      if (countBadge) countBadge.textContent = 'Unavailable';
+      return;
+    }
   }
 
-  // If tenant document did not have an explicit amountDue set in Firestore,
+  // If tenant document did not have an explicit amountDue set in Supabase,
   // calculate remaining amount due from existing payment records
   if (!tenantExplicitAmountDueSet && payments && payments.length > 0) {
     const totalPaid = payments
@@ -955,8 +834,6 @@ async function loadTenantPaymentHistory() {
 
 // Check for return from PayMongo (Direct 3DS Card Intent OR Hosted Checkout Session)
 async function checkUrlPaymentReturn() {
-  // Ensure PayMongoService is ready
-
   const urlParams = new URLSearchParams(window.location.search);
   let paymentIntentId = urlParams.get('payment_intent_id');
   if (!paymentIntentId) {
@@ -1007,14 +884,15 @@ async function checkUrlPaymentReturn() {
     localStorage.removeItem('pending_paymongo_payment');
 
     let sessionStatus = null;
+    let checkedSession = null;
     let failureDetail = 'Card declined or 3DS authentication failed.';
     try {
       if (PayMongo?.getCheckoutSession) {
-        const sessionData = await PayMongo.getCheckoutSession(sessionId);
-        console.log('[PayReturn] Session data:', sessionData);
-        if (sessionData) {
-          sessionStatus = sessionData.attributes?.status;
-          const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
+        checkedSession = await PayMongo.getCheckoutSession(sessionId);
+        console.log('[PayReturn] Session data:', checkedSession);
+        if (checkedSession) {
+          sessionStatus = checkedSession.attributes?.status;
+          const lastErr = checkedSession.attributes?.payment_intent?.attributes?.last_payment_error;
           if (lastErr && (lastErr.failed_message || lastErr.detail)) {
             failureDetail = lastErr.failed_message || lastErr.detail;
           }
@@ -1027,7 +905,17 @@ async function checkUrlPaymentReturn() {
     console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
 
     if (sessionStatus === 'paid') {
-      const amountParam2 = parseFloat(pending?.amount) || 5000;
+      const amountParam2 =
+        ((checkedSession?.attributes?.line_items || []).reduce(
+          (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
+          0
+        ) || 0) / 100;
+      if (!Number.isFinite(amountParam2) || amountParam2 <= 0) {
+        alert(
+          'PayMongo confirmed payment, but its amount could not be verified. Contact management.'
+        );
+        return;
+      }
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
@@ -1050,8 +938,7 @@ async function checkUrlPaymentReturn() {
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
       await saveAndFinalizePayment(record2);
-    } else {
-      // Session not paid — card was declined or 3DS failed
+    } else if (sessionStatus === 'expired') {
       const amountParam2 = parseFloat(pending?.amount) || 5000;
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
@@ -1077,10 +964,12 @@ async function checkUrlPaymentReturn() {
       switchTab('payment');
       // Save receipt first, then expire session in background (non-blocking)
       await saveFailedPayment(record2);
-      // Fire-and-forget: expire session in PayMongo dashboard
-      if (PayMongo?.expireCheckoutSession && sessionStatus !== 'expired') {
-        PayMongo.expireCheckoutSession(sessionId).catch(() => {});
-      }
+    } else {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      switchTab('payment');
+      alert(
+        'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
+      );
     }
     return;
   }
@@ -1159,13 +1048,42 @@ async function checkUrlPaymentReturn() {
 
   // SCENARIO 2: RETURN FROM PAYMONGO HOSTED CHECKOUT (SUCCESS)
   if (paymentStatus === 'success') {
+    const sessionId = pending?.sessionId || urlParams.get('sessionId');
+    let session = null;
+    try {
+      if (sessionId) session = await PayMongo.getCheckoutSession(sessionId);
+    } catch (error) {
+      console.error('Could not verify the checkout session:', error);
+    }
+    if (session?.attributes?.status !== 'paid') {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      switchTab('payment');
+      alert(
+        'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
+      );
+      return;
+    }
+
     const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
     const refNumber = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
+    const actualAmount =
+      (session.attributes?.line_items || []).reduce(
+        (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
+        0
+      ) / 100;
+    if (!Number.isFinite(actualAmount) || actualAmount <= 0) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      switchTab('payment');
+      alert(
+        'PayMongo confirmed payment, but its amount could not be verified. Contact management.'
+      );
+      return;
+    }
     const record = {
       referenceNumber: refNumber,
-      paymentMethodId: pending?.sessionId || 'pm_success_' + Date.now().toString(36),
+      paymentMethodId: sessionId,
       method: methodParam,
-      amount: amountParam,
+      amount: actualAmount,
       purpose: purposeParam,
       notes: pending?.notes || 'Completed via PayMongo Official Checkout',
       tenantName: tenantNameVal,
@@ -1268,7 +1186,7 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById('messageInput');
   const messageText = input.value.trim();
   if (!messageText) return;
@@ -1292,21 +1210,19 @@ function sendMessage() {
 
   const tenantName = sessionStorage.getItem('tenantName') || userEmail.split('@')[0] || 'Tenant';
 
-  if (window.firebaseDb && window.firebaseFirestore) {
-    try {
-      const messagesRef = window.firebaseFirestore.collection(window.firebaseDb, 'messages');
-      window.firebaseFirestore.addDoc(messagesRef, {
-        name: tenantName,
-        email: userEmail,
-        message: messageText,
-        status: 'Unread',
-        sender: 'tenant',
-        createdAt: window.firebaseFirestore.serverTimestamp(),
-        reply: null
-      });
-    } catch (error) {
-      console.error('Firestore send message failed:', error);
-    }
+  try {
+    const messagesRef = supabaseData.collection(supabase, 'messages');
+    await supabaseData.addDoc(messagesRef, {
+      name: tenantName,
+      email: userEmail,
+      message: messageText,
+      status: 'Unread',
+      sender: 'tenant',
+      createdAt: supabaseData.serverTimestamp(),
+      reply: null
+    });
+  } catch (error) {
+    console.error('Supabase send message failed:', error);
   }
 }
 

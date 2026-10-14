@@ -1,68 +1,36 @@
 # Conversion Summary
 
-> For architecture and the full guide see [README.md](../README.md). This file
-> records what is built and — more usefully — what is still stubbed.
+Home-Spot retains its original multi-page screens and workflows while using
+Vite, React for live room availability badges, and Supabase for its backend.
+Supabase Storage and an Edge Function serve the static frontend.
 
-## What this project is
+## Current Architecture
 
-A plain HTML/CSS/JavaScript apartment booking and management system backed by
-Firebase (Firestore + Auth), with PayMongo handling rent payments through a
-small local Node bridge.
+- Supabase Auth manages staff and tenant sign-in. Trusted roles are stored in
+  `app_metadata`.
+- Supabase Postgres stores the existing Firebase-shaped records in
+  `public.app_documents`; RLS policies control reads and writes.
+- Supabase Realtime drives live room availability and dashboard updates.
+- Edge Functions provision tenants, proxy PayMongo requests, and record
+  webhook events.
+- A public Supabase Storage bucket stores the Vite build; the `site` Edge
+  Function serves page routes and assets.
 
-There is **no build step**. The Firebase SDK is loaded from the CDN at runtime,
-and every page is a static file.
+The project starts fresh on Supabase. Existing Firebase accounts, Firestore
+data, and Firebase Functions are not migrated.
 
-## Pages
+## Remaining Product Work
 
-| Page                         | Audience           |
-| ---------------------------- | ------------------ |
-| `index.html`                 | Public             |
-| `property-detail.html`       | Public             |
-| `start.html`                 | Dev launcher       |
-| `admin-login.html`           | Admin / superadmin |
-| `admin-dashboard.html`       | Admin              |
-| `super-admin-dashboard.html` | Superadmin         |
-| `tenant-login.html`          | Tenant             |
-| `tenant-portal.html`         | Tenant             |
+- Several super-admin statistics and management actions are still placeholders.
+- Some admin tabs are static UI rather than data-backed workflows.
+- Tenant profile editing is not yet persisted.
+- The QR modal flow is not wired into the active rent-payment form; payment
+  completion must always be confirmed by PayMongo.
+- Webhook payment records are authoritative; balance changes remain an
+  administrative reconciliation task.
 
-## Known gaps
+## Verification
 
-These are real and still open:
-
-- `super-admin-dashboard.html` renders hardcoded statistics and has inert
-  buttons (maintenance toggle, backup, add/edit admin).
-- The **Listings**, **Tenant Payments**, and **Reviews** tabs on
-  `admin-dashboard.html` are static markup, not Firestore-backed. The Tenant
-  Payments rows still open modals from hardcoded names.
-- Tenant chat in `tenant-portal.html` writes to Firestore but never reads
-  messages back, so it is not actually realtime.
-- `saveProfile()` in `tenant-portal.html` only shows an alert; it does not
-  persist.
-- `admin-edit-listing.html` was deleted as dead (0 bytes, never linked).
-- The `dataconnect/` directory and `src/dataconnect-generated/` were deleted:
-  they were the unmodified Firebase movie-review quickstart and no application
-  code referenced them.
-- Several UI areas still contain placeholder PII (`Juan Dela Cruz`,
-  `+63 912 345 6789`, …).
-- Payment QR codes are rendered by `api.qrserver.com`, which receives the
-  amount and reference number.
-
-### QR Ph flow is unreachable
-
-`initiateQrPhFlow()` in `assets/js/pages/tenant-portal.js` has no call sites,
-and it is the only thing that opens the QR modal. That makes `showQrModal()`,
-`confirmQrPayment()`, and the "I Have Completed Payment" button unreachable too.
-
-This needs a decision rather than a refactor: either wire the QR method up, or
-delete the flow. Note that the unreachable path was also the one that marked a
-payment `Paid` on button press, without gateway confirmation.
-
-### Payment-redirect refactor is half-done
-
-`checkUrlPaymentReturn()` still carries its own parameter parsing and scenario
-cascade. The tested decision logic already exists in
-`assets/js/lib/payment-return.js` and is covered by
-`tests/payment-return.test.js` — only `interpretPaymentIntent()` has been
-swapped in. Finishing this should be one change, verified by a manual
-walkthrough of all four return paths (pending-session, card 3DS, hosted
-success, hosted failure).
+Run `npm run check` for lint, tests, and the production build. Apply
+`supabase/migrations/` to the target project and configure/deploy the Edge
+Functions before testing authenticated or payment workflows end-to-end.

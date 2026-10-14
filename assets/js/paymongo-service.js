@@ -2,9 +2,11 @@
  * PayMongo client service for HomeSpot.
  *
  * The PayMongo secret key is NEVER referenced here. Every gateway call is
- * proxied through paymongo-api-server.js, which holds the key server-side and
- * verifies the caller's Firebase ID token.
+ * proxied through Supabase Edge Functions, which hold the key server-side and
+ * verify the caller's Supabase session.
  */
+
+import { supabase } from './supabase-service.js';
 
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',
@@ -35,125 +37,43 @@ export function toCentavos(amountInPesos) {
 }
 
 /**
- * Candidate hosts for the HomeSpot payment bridge.
- * Only the same-origin page host and the known local dev ports.
+ * Calls the Supabase payment Edge Function using the current signed-in session.
  */
-function apiCandidates() {
-  const candidates = [
-    'http://localhost:5050',
-    'http://127.0.0.1:5050',
-    'http://localhost:5000',
-    'http://127.0.0.1:5000'
-  ];
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  if (origin && !origin.startsWith('file:') && !candidates.includes(origin)) {
-    candidates.push(origin);
+async function callBridge(endpoint, payload) {
+  const parsedUrl = new URL(endpoint, 'https://homespot.invalid');
+  const routes = {
+    '/api/create-checkout': 'create-checkout',
+    '/api/create-link': 'create-link',
+    '/api/checkout-status': 'checkout-status',
+    '/api/expire-checkout': 'expire-checkout',
+    '/api/payment-intent-status': 'payment-intent-status',
+    '/api/complete-qr-payment': 'complete-qr-payment'
+  };
+  const action = routes[parsedUrl.pathname];
+  if (!action) throw new Error('Unsupported payment operation.');
+
+  const id = parsedUrl.searchParams.get('id');
+  const { data, error } = await supabase.functions.invoke('paymongo-api', {
+    body: { action, ...(id ? { id } : {}), ...(payload || {}) }
+  });
+  if (error) {
+    const detail =
+      error.context instanceof Response ? await error.context.json().catch(() => ({})) : {};
+    throw new Error(detail.error || error.message || 'Supabase payment request failed.');
   }
-  return candidates;
+  if (data?.error) throw new Error(data.error);
+  return data;
 }
 
 /**
- * Reads a Firebase ID token for the signed-in user.
- * The bridge rejects any /api/* request without one.
- */
-async function getAuthHeaders() {
-  const token = await window.firebaseService?.getIdToken?.();
-  if (!token) {
-    throw new Error('You must be signed in to make a payment.');
-  }
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-}
-
-class PaymentApiError extends Error {
-  constructor(message, status) {
-    super(message);
-    this.name = 'PaymentApiError';
-    this.status = status;
-  }
-}
-
-/**
- * POSTs to the payment bridge, trying each candidate host in turn.
- * A 401/403 is a real auth decision and is surfaced immediately rather than
- * being retried against the next host.
- */
-async function callBridge(endpoint, payload, method = 'POST') {
-  const headers = await getAuthHeaders();
-  const candidates = apiCandidates();
-  let lastNetworkError = null;
-
-  for (const base of candidates) {
-    let res;
-    try {
-      res = await fetch(`${base}${endpoint}`, {
-        method,
-        headers,
-        body: method === 'GET' ? undefined : JSON.stringify(payload)
-      });
-    } catch (e) {
-      // Connection refused / host unreachable -> try the next candidate.
-      lastNetworkError = e;
-      continue;
-    }
-
-    // Static dev servers without this route.
-    if (res.status === 404 || res.status === 405) continue;
-
-    const json = await res.json().catch(() => ({}));
-
-    if (res.ok) return json;
-
-    if (res.status === 401 || res.status === 403) {
-      throw new PaymentApiError(
-        json.error || 'Payment request was rejected. Please sign in again.',
-        res.status
-      );
-    }
-
-    throw new PaymentApiError(
-      json.errors?.[0]?.detail || json.error || `Payment gateway error (${res.status})`,
-      res.status
-    );
-  }
-
-  if (lastNetworkError) {
-    throw new Error(
-      'Cannot reach the HomeSpot payment server. Start it with: node paymongo-api-server.js'
-    );
-  }
-  throw new Error('Payment server is unavailable.');
-}
-
-/**
- * GETs from the payment bridge.
+ * Reads a payment resource through the Supabase Edge Function.
  */
 async function getFromBridge(endpoint) {
-  const headers = await getAuthHeaders();
-
-  for (const base of apiCandidates()) {
-    let res;
-    try {
-      res = await fetch(`${base}${endpoint}`, { method: 'GET', headers });
-    } catch (e) {
-      continue;
-    }
-    if (res.status === 404 || res.status === 405) continue;
-    if (res.status === 401 || res.status === 403) {
-      throw new PaymentApiError(
-        (await res.json().catch(() => ({}))).error || 'Not authorized.',
-        res.status
-      );
-    }
-    if (!res.ok) continue;
-    const json = await res.json();
-    return json.data;
-  }
-
-  return null;
+  return (await callBridge(endpoint, null))?.data || null;
 }
 
 /**
- * Queries Checkout Session status via the bridge.
+ * Queries Checkout Session status.
  * @param {string} sessionId
  * @returns {Promise<Object|null>}
  */
@@ -173,7 +93,7 @@ export async function expireCheckoutSession(sessionId) {
 }
 
 /**
- * Retrieves Payment Intent status via the bridge.
+ * Retrieves Payment Intent status.
  * @param {string} paymentIntentId
  * @returns {Promise<Object|null>}
  */
@@ -263,26 +183,6 @@ export async function createCheckoutSession({
 }
 
 /**
- * Settles a QR Ph payment.
- *
- * This is only available when the bridge is explicitly started with
- * ALLOW_TEST_AUTO_CHARGE=true. In every other configuration QR payments settle
- * through the PayMongo redirect or webhook and this call surfaces the error --
- * it never invents a successful payment.
- *
- * @returns {Promise<{success: boolean, paymentId: string, referenceNumber: string, amount: number}>}
- */
-export async function completeQrTestPayment({ amount, description = 'Rent Payment' }) {
-  const res = await callBridge('/api/complete-qr-payment', { amount, description });
-
-  if (res && res.success && typeof res.paymentId === 'string' && res.paymentId.startsWith('pay_')) {
-    return res;
-  }
-
-  throw new Error(res?.error || 'QR payment could not be settled.');
-}
-
-/**
  * Generates QR image URL for QR Ph / GCash / Maya scan.
  * @param {Object} params
  * @returns {string}
@@ -293,69 +193,22 @@ export function generateQrPhImageUrl({ amount, reference, merchant }) {
 }
 
 /**
- * Saves a payment transaction to Firestore and LocalStorage.
- *
- * Note: this is a local convenience cache only. Firestore rules reject writes
- * here from the browser, so the localStorage mirror is what the portal reads.
- * Authoritative payment state comes from the PayMongo webhook.
- *
- * @param {Object} paymentRecord
- * @returns {Promise<{id: string, ...paymentRecord}>}
- */
-export async function savePaymentRecord(paymentRecord) {
-  const record = {
-    ...paymentRecord,
-    timestamp: new Date().toISOString(),
-    status: paymentRecord.status || 'Paid',
-    merchant: PAYMONGO_CONFIG.merchantName
-  };
-
-  try {
-    const cacheKey = `tenant_payments_${record.tenantEmail || 'guest'}`;
-    const existing = JSON.parse(localStorage.getItem(cacheKey) || '[]');
-    existing.unshift(record);
-    localStorage.setItem(cacheKey, JSON.stringify(existing));
-
-    const allKey = 'all_tenant_payments';
-    const all = JSON.parse(localStorage.getItem(allKey) || '[]');
-    all.unshift(record);
-    localStorage.setItem(allKey, JSON.stringify(all));
-  } catch (err) {
-    console.error('LocalStorage save error:', err);
-  }
-
-  return record;
-}
-
-/**
- * Retrieves payment history for a tenant from the local cache.
- * @param {string} tenantEmail
+ * Retrieves only payment records visible to the current user's RLS policies.
  * @returns {Promise<Array>}
  */
-export async function getTenantPayments(tenantEmail) {
-  const cacheKey = `tenant_payments_${tenantEmail || 'guest'}`;
-  try {
-    const local = localStorage.getItem(cacheKey);
-    return local ? JSON.parse(local) : [];
-  } catch (e) {
-    console.error(e);
-    return [];
-  }
-}
+export async function getTenantPayments() {
+  const {
+    data: { session },
+    error: sessionError
+  } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  if (!session) return [];
 
-// Make globally accessible for scripts that do not use modules
-if (typeof window !== 'undefined') {
-  window.PayMongoService = {
-    PAYMONGO_CONFIG,
-    formatPHP,
-    toCentavos,
-    createCheckoutSession,
-    getCheckoutSession,
-    expireCheckoutSession,
-    getPaymentIntentStatus,
-    completeQrTestPayment,
-    generateQrPhImageUrl,
-    savePaymentRecord,
-    getTenantPayments
-  };
+  const { data, error } = await supabase
+    .from('app_documents')
+    .select('data')
+    .eq('collection', 'payments')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row) => row.data);
 }
