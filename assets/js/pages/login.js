@@ -132,16 +132,6 @@ signupModal?.addEventListener('click', (e) => {
   if (e.target === signupModal) closeModal();
 });
 
-// Auto-redirect if already signed in
-supabase.auth.onAuthStateChange(async (_event, session) => {
-  if (session?.user && !isSubmitting) {
-    try {
-      await routeUser(session.user, session.user.email);
-    } catch {
-      // Ignored if role not active or invalid
-    }
-  }
-});
 
 // Form submission
 loginForm?.addEventListener('submit', async (event) => {
