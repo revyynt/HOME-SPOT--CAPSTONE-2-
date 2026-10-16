@@ -17,6 +17,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 /** Every page that ships. `admin-edit-listing.html` was deleted as dead. */
 const PAGES = [
   'index.html',
+  'login.html',
   'property-detail.html',
   'start.html',
   'admin-login.html',

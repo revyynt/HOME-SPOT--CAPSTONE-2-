@@ -204,7 +204,7 @@ export function closeViewTenantModal() {
  */
 export function copyTenantLoginInfo(email, name, room) {
   const portalUrl =
-    window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'tenant-login.html';
+    window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'login.html';
 
   const text =
     `MJP Residences - Tenant Portal Access\n` +

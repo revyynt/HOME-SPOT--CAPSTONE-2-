@@ -11,7 +11,7 @@ import { initBackButtonGuard, initLogoutButtons } from '../lib/session.js';
 
 guardPage({
   role: 'superadmin',
-  redirectTo: 'admin-login.html',
+  redirectTo: 'login.html',
   grantedEvent: 'superadmin-access-granted'
 });
 

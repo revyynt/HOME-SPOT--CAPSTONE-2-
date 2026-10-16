@@ -257,14 +257,14 @@ async function requireRole(requiredRole, redirectTo) {
   await authReady;
   const user = await getCurrentUser();
   if (!user) {
-    window.location.replace(redirectTo || 'tenant-login.html');
+    window.location.replace(redirectTo || 'login.html');
     return false;
   }
 
   const role = user.app_metadata?.role;
   if (role !== requiredRole) {
     console.warn(`[auth] role mismatch: required ${requiredRole}, found ${role || 'none'}`);
-    window.location.replace(redirectTo || 'admin-login.html');
+    window.location.replace(redirectTo || 'login.html');
     return false;
   }
   return true;

@@ -29,7 +29,7 @@ document.documentElement.dataset.authPending = 'true';
 
 guardPage({
   role: 'tenant',
-  redirectTo: 'tenant-login.html',
+  redirectTo: 'login.html',
   grantedEvent: 'tenant-access-granted'
 }).then(async (allowed) => {
   if (!allowed) return;
@@ -266,7 +266,7 @@ function switchTab(tabName, evt) {
 function logout() {
   sessionStorage.removeItem('tenantLoggedIn');
   sessionStorage.removeItem('tenantEmail');
-  window.location.href = 'tenant-login.html';
+  window.location.href = 'login.html';
 }
 
 function saveProfile() {

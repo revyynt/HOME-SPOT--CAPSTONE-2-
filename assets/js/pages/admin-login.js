@@ -1,5 +1,7 @@
 import { setPersistence, supabase } from '../supabase-service.js';
 
+window.location.replace('./login.html');
+
 const ROLE_DESTINATIONS = {
   superadmin: './super-admin-dashboard.html',
   admin: './admin-dashboard.html'

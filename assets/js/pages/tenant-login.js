@@ -1,5 +1,7 @@
 import { db, supabase, supabaseData } from '../supabase-service.js';
 
+window.location.replace('./login.html');
+
 const ERROR_MESSAGES = {
   invalid_credentials: 'Account not found or password incorrect.',
   user_not_found: 'Account not found or password incorrect.',

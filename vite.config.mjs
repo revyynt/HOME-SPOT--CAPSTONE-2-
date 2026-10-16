@@ -7,6 +7,7 @@ import { defineConfig } from 'vite';
 const root = dirname(fileURLToPath(import.meta.url));
 const pages = [
   'index.html',
+  'login.html',
   'property-detail.html',
   'start.html',
   'admin-login.html',

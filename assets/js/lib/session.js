@@ -18,7 +18,7 @@ const SIGNOUT_TIMEOUT_MS = 2000;
  *
  * @param {string} [redirectTo]
  */
-export async function logoutStaff(redirectTo = './admin-login.html') {
+export async function logoutStaff(redirectTo = './login.html') {
   try {
     await Promise.race([
       supabase.auth.signOut(),

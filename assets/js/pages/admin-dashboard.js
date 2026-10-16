@@ -13,7 +13,7 @@ import { initDetailModals } from './admin-dashboard/modals.js';
 
 guardPage({
   role: 'admin',
-  redirectTo: 'admin-login.html',
+  redirectTo: 'login.html',
   grantedEvent: 'admin-access-granted'
 });
 
