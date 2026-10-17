@@ -1,3 +1,10 @@
+declare const Deno: {
+  env: {
+    get(name: string): string | undefined;
+  };
+  serve(handler: (request: Request) => Promise<Response> | Response): void;
+};
+
 import { authenticatedUser } from '../_shared/auth.ts';
 import { jsonResponse, optionsResponse } from '../_shared/http.ts';
 
@@ -59,13 +66,13 @@ function allowedReturnUrl(value: unknown) {
   }
   const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin: string) => origin.trim())
     .filter(Boolean);
   const allowed = new Set([...DEFAULT_ORIGINS, ...configured]);
   return allowed.has(url.origin) ? url.toString() : null;
 }
 
-Deno.serve(async (request) => {
+Deno.serve(async (request: Request) => {
   if (request.method === 'OPTIONS') return optionsResponse(request);
   if (request.method !== 'POST') {
     return jsonResponse(request, { error: 'Method not allowed.' }, 405);
