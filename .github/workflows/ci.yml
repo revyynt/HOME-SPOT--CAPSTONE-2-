@@ -24,9 +24,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: |
-          npm ci
-          npm --prefix functions ci || npm --prefix functions install
+        run: npm ci
 
       - name: Check formatting
         run: npx prettier --check .
@@ -38,6 +36,9 @@ jobs:
       # ever committed again.
       - name: Unit, structural, and secret-scan tests
         run: npm test
+
+      - name: Build frontend
+        run: npm run build
 
       - name: Verify no .env is tracked
         run: |

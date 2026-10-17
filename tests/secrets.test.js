@@ -6,7 +6,7 @@
  * being discovered months later.
  *
  * Only REAL key shapes are rejected -- the documented placeholders in
- * .env.example are allowed.
+ * .env.functions.example is allowed.
  */
 
 import test from 'node:test';
@@ -17,7 +17,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const SKIP_DIRS = new Set(['node_modules', '.git', '.firebase', 'coverage']);
+const SKIP_DIRS = new Set(['node_modules', '.git', 'coverage']);
 const TEXT_EXTENSIONS = new Set([
   '.js',
   '.mjs',
@@ -29,11 +29,14 @@ const TEXT_EXTENSIONS = new Set([
   '.yml',
   '.yaml',
   '.css',
-  '.gql'
+  '.gql',
+  '.toml',
+  '.ts',
+  '.tsx',
+  '.jsx',
+  '.sql',
+  '.example'
 ]);
-
-/** Files that legitimately contain key-shaped strings. */
-const ALLOWED_FILES = new Set(['.env.example']);
 
 /**
  * PayMongo secret keys. The placeholder value is explicitly excluded so
@@ -82,8 +85,6 @@ function collectFindings() {
   const findings = [];
   for (const file of walk(ROOT)) {
     const rel = relative(ROOT, file);
-    if (ALLOWED_FILES.has(rel)) continue;
-
     const dot = rel.lastIndexOf('.');
     const ext = dot === -1 ? '' : rel.slice(dot);
     if (!TEXT_EXTENSIONS.has(ext)) continue;
@@ -116,10 +117,16 @@ test('no secret keys are committed to the working tree', () => {
   );
 });
 
-test('.env.example documents the PayMongo keys without real values', () => {
-  const example = readFileSync(join(ROOT, '.env.example'), 'utf8');
+test('.env.functions.example documents PayMongo keys without real values', () => {
+  const example = readFileSync(join(ROOT, '.env.functions.example'), 'utf8');
   assert.match(example, /PAYMONGO_SECRET_KEY=sk_test_REPLACE_ME/);
   assert.ok(!/sk_(live|test)_[A-Za-z0-9]{16,}/.test(example.replace(/REPLACE_ME/g, '')));
+});
+
+test('.env.publish.example keeps the publishing key server-side', () => {
+  const example = readFileSync(join(ROOT, '.env.publish.example'), 'utf8');
+  assert.match(example, /SUPABASE_SECRET_KEY=sb_secret_REPLACE_ME/);
+  assert.doesNotMatch(example, /VITE_SUPABASE_SECRET_KEY/);
 });
 
 test('.env is gitignored and not present in the working tree', () => {

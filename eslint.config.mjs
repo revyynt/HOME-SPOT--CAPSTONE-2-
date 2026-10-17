@@ -11,7 +11,7 @@ import globals from 'globals';
  */
 export default [
   {
-    ignores: ['node_modules/**', 'functions/node_modules/**', '.firebase/**', '.git/**']
+    ignores: ['node_modules/**', '.git/**', 'dist/**']
   },
 
   js.configs.recommended,
@@ -25,13 +25,7 @@ export default [
       ecmaVersion: 2023,
       sourceType: 'module',
       globals: {
-        ...globals.browser,
-        // Hand-offs published by firebase-service.js for classic consumers.
-        firebaseDb: 'readonly',
-        firebaseFirestore: 'readonly',
-        firebaseAuth: 'readonly',
-        firebaseService: 'readonly',
-        firebaseReady: 'readonly'
+        ...globals.browser
       }
     },
     rules: {
@@ -54,31 +48,17 @@ export default [
     }
   },
 
-  // Service worker gets its own global set.
   {
-    files: ['firebase-messaging-sw.js'],
+    files: ['assets/js/**/*.jsx'],
     languageOptions: {
       ecmaVersion: 2023,
-      sourceType: 'script',
-      globals: { ...globals.serviceworker, firebase: 'readonly' }
+      sourceType: 'module',
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: { ...globals.browser }
     },
     rules: {
-      'no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }]
-    }
-  },
-
-  // ---------------------------------------------------------------------
-  // CommonJS Node servers (explicit paths -- `*.js` would match every depth)
-  // ---------------------------------------------------------------------
-  {
-    files: ['paymongo-api-server.js', 'set-room.js', 'functions/**/*.js'],
-    languageOptions: {
-      ecmaVersion: 2023,
-      sourceType: 'commonjs',
-      globals: { ...globals.node }
-    },
-    rules: {
-      'no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }]
+      'no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }],
+      eqeqeq: ['error', 'smart']
     }
   },
 
@@ -93,6 +73,18 @@ export default [
       // smoke.test.js installs a DOM stub on globalThis, so browser globals
       // are legitimately referenced from tests.
       globals: { ...globals.node, ...globals.browser }
+    },
+    rules: {
+      'no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }]
+    }
+  },
+
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node }
     },
     rules: {
       'no-unused-vars': ['warn', { args: 'none', caughtErrors: 'none' }]
@@ -156,23 +148,6 @@ export default [
         'warn',
         {
           allow: [
-            // Deliberate, documented hand-offs to classic (non-module) scripts.
-            // tenant-portal.html still runs a classic inline script until its
-            // module extraction lands; it reads PayMongoService and Toast.
-            'PayMongoService',
-            'Toast',
-
-            // firebase-service.js publishes its handles for the classic
-            // scripts that have not been converted yet. Once every page is a
-            // module these go, and so do these allowlist entries.
-            'firebaseDb',
-            'firebaseFirestore',
-            'firebaseAuth',
-            'firebaseService',
-            'firebaseReady',
-            'firebaseReadyPromise',
-            'firebaseCurrentUser',
-
             // Console/CLI affordance. Both assignments delegate to the single
             // implementation in assets/js/room-availability.js; the later one
             // (property-detail.js) simply adds a page-specific room default.

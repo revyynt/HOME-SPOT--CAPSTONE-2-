@@ -1,11 +1,9 @@
 /**
  * Smoke test: evaluates the DOM-touching modules under a minimal DOM stub.
  *
- * Scope note: modules that import the Firebase SDK from gstatic CDN URLs cannot
- * be loaded by Node (bare URL specifiers are not resolvable), so their import
- * graph is verified statically in structure.test.js instead. What this file
- * covers is the CDN-free DOM layer -- the part most likely to throw at
- * evaluation time or on first call.
+ * Scope note: Node does not provide the browser DOM APIs used by page modules,
+ * so their import graph is verified statically in structure.test.js instead.
+ * This file covers the DOM layer under a minimal test stub.
  */
 
 import test from 'node:test';

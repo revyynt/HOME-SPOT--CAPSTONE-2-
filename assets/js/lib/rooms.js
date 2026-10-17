@@ -1,13 +1,13 @@
 /**
  * Room identity helpers.
  *
- * Room documents live in Firestore under a slug derived from the display name.
- * This was previously duplicated in firebase-service.js, main.js, and
+ * Room documents live in app_documents under a slug derived from the display name.
+ * This was previously duplicated in the data service, main.js, and
  * property-detail.js; this module is the single source of truth.
  */
 
 /**
- * Converts a room display name into its Firestore document id.
+ * Converts a room display name into its document id.
  *
  *   "Triple Occupancy Room" -> "triple-occupancy-room"
  *   "Commercial Space"      -> "commercial-space"

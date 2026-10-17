@@ -1,21 +1,11 @@
-/**
- * Tenant sign-in.
- *
- * Extracted from a 161-line inline script that carried its own copy of the
- * Firebase config. It now imports the shared instances from firebase-service.js.
- *
- * Sign-in is verified by Firebase Auth only -- there is no plaintext-password
- * fallback, and no password is stored in Firestore.
- */
+import { db, supabase, supabaseData } from '../supabase-service.js';
 
-import { auth, db, firebaseFirestore } from '../firebase-service.js';
-import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+window.location.replace('./login.html');
 
 const ERROR_MESSAGES = {
-  'auth/invalid-credential': 'Account not found or password incorrect.',
-  'auth/wrong-password': 'Account not found or password incorrect.',
-  'auth/user-not-found': 'Account not found or password incorrect.',
-  'auth/too-many-requests': 'Too many failed attempts. Please wait a moment.'
+  invalid_credentials: 'Account not found or password incorrect.',
+  user_not_found: 'Account not found or password incorrect.',
+  over_request_rate_limit: 'Too many failed attempts. Please wait a moment.'
 };
 
 const signupModal = document.getElementById('signupModal');
@@ -33,7 +23,6 @@ function showAlert(message, isSuccess = false) {
     alertBox.style.color = '#991b1b';
     alertBox.style.border = '1px solid #fecaca';
   }
-  // textContent, not innerHTML: the message is shown to the user verbatim.
   alertBox.textContent = message;
 }
 
@@ -43,21 +32,15 @@ function clearAlert() {
   alertBox.textContent = '';
 }
 
-/** Loads the tenant profile. firestore.rules scopes this read to the signer. */
-async function loadProfile(uid, email) {
-  try {
-    const query = firebaseFirestore.query(
-      firebaseFirestore.collection(db, 'tenants'),
-      firebaseFirestore.where('email', '==', email)
-    );
-    const snapshot = await firebaseFirestore.getDocs(query);
-    if (snapshot.empty) return { data: {}, docId: null };
-    return { data: snapshot.docs[0].data(), docId: snapshot.docs[0].id };
-  } catch (error) {
-    // A missing profile is not a login failure.
-    console.warn('Tenant profile lookup failed:', error);
-    return { data: {}, docId: null };
-  }
+async function loadProfile(uid) {
+  const snapshot = await supabaseData.getDocs(
+    supabaseData.query(
+      supabaseData.collection(db, 'tenants'),
+      supabaseData.where('uid', '==', uid)
+    )
+  );
+  if (snapshot.empty) return { data: {}, docId: null };
+  return { data: snapshot.docs[0].data(), docId: snapshot.docs[0].id };
 }
 
 function seedSession({ data, docId }, email) {
@@ -80,8 +63,6 @@ function seedSession({ data, docId }, email) {
   if (docId) sessionStorage.setItem('tenantDocId', docId);
 }
 
-// --- Page controls ----------------------------------------------------------
-// Delegated: module scope is not visible to inline onclick attributes.
 document.addEventListener('click', (event) => {
   const trigger = event.target instanceof Element ? event.target.closest('[data-action]') : null;
   if (!trigger) return;
@@ -102,7 +83,6 @@ document.addEventListener('click', (event) => {
   }
 });
 
-// --- Signup modal -----------------------------------------------------------
 document.getElementById('signupLink')?.addEventListener('click', (event) => {
   event.preventDefault();
   if (signupModal) signupModal.style.display = 'flex';
@@ -116,7 +96,6 @@ signupModal?.addEventListener('click', (event) => {
   if (event.target === signupModal) signupModal.style.display = 'none';
 });
 
-// --- Sign-in ----------------------------------------------------------------
 document.getElementById('tenantLoginForm')?.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearAlert();
@@ -135,11 +114,16 @@ document.getElementById('tenantLoginForm')?.addEventListener('submit', async (ev
   submitBtn.style.opacity = '0.7';
 
   try {
-    const { user } = await signInWithEmailAndPassword(auth, email, password);
-    const signedInEmail = user.email || email;
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    const user = data.user;
+    if (user.app_metadata?.role !== 'tenant') {
+      await supabase.auth.signOut();
+      throw new Error('This account is not configured as a tenant.');
+    }
 
-    const profile = await loadProfile(user.uid, signedInEmail);
-    seedSession(profile, signedInEmail);
+    const profile = await loadProfile(user.id);
+    seedSession(profile, user.email || email);
 
     showAlert('Login successful! Redirecting to your Tenant Portal...', true);
     setTimeout(() => {

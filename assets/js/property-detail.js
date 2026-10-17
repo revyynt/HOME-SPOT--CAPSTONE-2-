@@ -1,10 +1,10 @@
 // Property Detail Page JavaScript
 import {
-  ensureRoomDocument as ensureRoomDocumentInFirestore,
-  firebaseFirestore,
-  isFirestoreReady,
-  waitForFirebaseReady
-} from './firebase-service.js';
+  ensureRoomDocument as ensureRoomDocumentInSupabase,
+  supabaseData,
+  isDataReady,
+  waitForSupabaseReady
+} from './supabase-service.js';
 import { setRoomAvailability } from './room-availability.js';
 import { getUrlParam } from './lib/format.js';
 
@@ -109,11 +109,11 @@ function updateAvailabilityUI(room, availableCount) {
 }
 
 async function loadRemoteRoomAvailability(room) {
-  if (!isFirestoreReady()) return;
-  const roomRef = await ensureRoomDocumentInFirestore(room);
+  if (!isDataReady()) return;
+  const roomRef = await ensureRoomDocumentInSupabase(room);
   if (!roomRef) return;
 
-  const roomSnap = await firebaseFirestore.getDoc(roomRef);
+  const roomSnap = await supabaseData.getDoc(roomRef);
   if (roomSnap.exists()) {
     const data = roomSnap.data();
     if (typeof data.available === 'number') {
@@ -121,7 +121,7 @@ async function loadRemoteRoomAvailability(room) {
     }
   }
 
-  firebaseFirestore.onSnapshot(
+  supabaseData.onSnapshot(
     roomRef,
     (snapshot) => {
       if (!snapshot.exists()) return;
@@ -433,7 +433,7 @@ document.addEventListener('keydown', (e) => {
 // only adds a fallback to the room shown in the #roomName heading.
 window.setRoomAvailability = async function (roomNameOrCount, maybeCount) {
   const currentRoomNameEl = document.getElementById('roomName');
-  await waitForFirebaseReady();
+  await waitForSupabaseReady();
   return setRoomAvailability(roomNameOrCount, maybeCount, {
     fallbackRoomName: currentRoomNameEl?.textContent.trim()
   });

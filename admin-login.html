@@ -73,9 +73,8 @@
               <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
                 <p class="text-xs text-gray-700 font-semibold mb-2">Staff access</p>
                 <p class="text-xs text-blue-700">
-                  Accounts are provisioned by a superadmin in Firebase Auth. Your role is read from
-                  the <code class="bg-blue-100 px-1 rounded">users</code> document linked to your
-                  account.
+                  Accounts are provisioned by a superadmin in Supabase Auth. Your role is read from
+                  trusted app metadata.
                 </p>
               </div>
             </div>
@@ -91,7 +90,7 @@
       </div>
     </div>
 
-    <script type="module" src="./assets/js/firebase-service.js"></script>
+    <script type="module" src="./assets/js/supabase-service.js"></script>
     <script type="module" src="./assets/js/pages/admin-login.js"></script>
     <script type="module" src="./assets/js/main.js"></script>
   </body>

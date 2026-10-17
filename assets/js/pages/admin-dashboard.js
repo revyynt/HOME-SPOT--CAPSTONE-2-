@@ -13,7 +13,7 @@ import { initDetailModals } from './admin-dashboard/modals.js';
 
 guardPage({
   role: 'admin',
-  redirectTo: 'admin-login.html',
+  redirectTo: 'login.html',
   grantedEvent: 'admin-access-granted'
 });
 
@@ -21,7 +21,7 @@ initLogoutButtons();
 initBackButtonGuard('admin');
 initDetailModals();
 
-// Firestore listeners are bound only once the guard passes -- binding them for
+// Realtime listeners are bound only once the guard passes -- binding them for
 // an anonymous visitor would attempt to read tenant PII.
 document.addEventListener(
   'admin-access-granted',

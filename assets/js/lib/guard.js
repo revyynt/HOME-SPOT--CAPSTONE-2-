@@ -6,7 +6,7 @@
  * content for an anonymous visitor before the redirect fires.
  */
 
-import { authReady, requireRole } from '../firebase-service.js';
+import { authReady, requireRole } from '../supabase-service.js';
 
 /**
  * Blocks rendering until the session and role check passes.
