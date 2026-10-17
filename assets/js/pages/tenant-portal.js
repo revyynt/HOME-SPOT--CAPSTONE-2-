@@ -15,6 +15,7 @@ import { guardPage } from '../lib/guard.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
+import { escapeHtml } from '../lib/format.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
 // parsing and scenario cascade. The tested decision logic already exists in
@@ -40,6 +41,7 @@ guardPage({
     sessionStorage.setItem('tenantEmail', userEmail);
     populateTenantUI();
   }
+  subscribeTenantMessages();
 });
 
 // Content stays hidden until the Supabase auth guard resolves.
@@ -60,6 +62,7 @@ let activeQrPaymentData = null;
 let qrTimerInterval = null;
 let qrStatusPollInterval = null;
 let tenantExplicitAmountDueSet = false;
+let cachedPayments = [];
 
 // Restore initial remaining due from session or local storage
 let initialDue =
@@ -263,14 +266,70 @@ function switchTab(tabName, evt) {
   }
 }
 
-function logout() {
-  sessionStorage.removeItem('tenantLoggedIn');
-  sessionStorage.removeItem('tenantEmail');
-  window.location.href = 'login.html';
+async function logout() {
+  try {
+    await Promise.race([
+      supabase.auth.signOut(),
+      new Promise((resolve) => setTimeout(resolve, 2000))
+    ]);
+  } catch (error) {
+    console.error('Error signing out:', error);
+  } finally {
+    sessionStorage.clear();
+    localStorage.removeItem('tenantLoggedIn');
+    window.location.href = 'tenant-login.html';
+  }
 }
 
-function saveProfile() {
-  alert('Profile updated successfully!');
+async function saveProfile() {
+  const saveBtn = document.querySelector('[data-action="save-profile"]');
+  const nameInput = document.getElementById('fullName');
+  const phoneInput = document.getElementById('phone');
+  const emergencyInput = document.getElementById('emergencyContact');
+
+  const newName = (nameInput?.value || '').trim();
+  const newPhone = (phoneInput?.value || '').trim();
+  const newEmergency = (emergencyInput?.value || '').trim();
+
+  if (!newName) {
+    alert('Please enter your full name.');
+    return;
+  }
+
+  const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+  }
+
+  try {
+    if (currentTenantDocId) {
+      const ref = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
+      await supabaseData.updateDoc(ref, {
+        name: newName,
+        phone: newPhone,
+        emergencyContact: newEmergency,
+        updatedAt: supabaseData.serverTimestamp()
+      });
+    }
+
+    tenantName = newName;
+    tenantPhone = newPhone;
+    tenantEmergency = newEmergency;
+    sessionStorage.setItem('tenantName', newName);
+    sessionStorage.setItem('tenantPhone', newPhone);
+    sessionStorage.setItem('tenantEmergencyContact', newEmergency);
+    populateTenantUI();
+    alert('Profile updated successfully!');
+  } catch (err) {
+    console.error('Failed to update tenant profile:', err);
+    alert('Failed to save profile: ' + (err.message || 'Unknown error'));
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
+  }
 }
 
 // Update Submit Button State and Text
@@ -752,6 +811,7 @@ async function loadTenantPaymentHistory() {
   if (PayMongo) {
     try {
       payments = await PayMongo.getTenantPayments();
+      cachedPayments = payments || [];
     } catch (error) {
       console.error('Failed to load payment history:', error);
       tableBody.innerHTML = `
@@ -822,7 +882,7 @@ async function loadTenantPaymentHistory() {
             <td style="font-weight: 600; color: ${amountColor};">₱${parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td>${statusBadge}</td>
             <td>
-                <button class="btn-view-receipt" onclick='showReceiptModal(${JSON.stringify(p).replace(/'/g, '&apos;')})'>
+                <button class="btn-view-receipt" data-action="view-receipt" data-index="${idx}">
                     Receipt
                 </button>
             </td>
@@ -1186,9 +1246,86 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+function subscribeTenantMessages() {
+  if (!userEmail) return;
+  try {
+    const messagesRef = supabaseData.collection(supabase, 'messages');
+    const q = supabaseData.query(messagesRef, supabaseData.where('email', '==', userEmail));
+    supabaseData.onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot || snapshot.empty) return;
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const docs = snapshot.docs.map((doc) => doc.data());
+        docs.sort((a, b) => {
+          const timeA = a.createdAt?.seconds
+            ? a.createdAt.seconds * 1000
+            : new Date(a.createdAt || 0).getTime();
+          const timeB = b.createdAt?.seconds
+            ? b.createdAt.seconds * 1000
+            : new Date(b.createdAt || 0).getTime();
+          return timeA - timeB;
+        });
+
+        if (!docs.length) {
+          chatMessages.innerHTML = `
+            <div class="no-messages-placeholder" style="text-align: center; color: #94a3b8; padding: 40px 20px; font-size: 14px;">
+              No messages yet. Send a message below to reach the property administrator.
+            </div>`;
+          return;
+        }
+
+        chatMessages.innerHTML = '';
+        docs.forEach((item) => {
+          const msgBubble = document.createElement('div');
+          msgBubble.className =
+            item.sender === 'tenant' ? 'message-bubble sent' : 'message-bubble received';
+          const dateObj = item.createdAt?.seconds
+            ? new Date(item.createdAt.seconds * 1000)
+            : new Date(item.createdAt || Date.now());
+          const timeStr = dateObj.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+
+          const textDiv = document.createElement('div');
+          textDiv.textContent = item.message || '';
+          const timeDiv = document.createElement('div');
+          timeDiv.className = 'message-time-stamp';
+          timeDiv.textContent = timeStr;
+
+          msgBubble.appendChild(textDiv);
+          msgBubble.appendChild(timeDiv);
+          chatMessages.appendChild(msgBubble);
+
+          if (item.reply) {
+            const replyBubble = document.createElement('div');
+            replyBubble.className = 'message-bubble received';
+            const replyText = document.createElement('div');
+            replyText.textContent = item.reply;
+            const replyTime = document.createElement('div');
+            replyTime.className = 'message-time-stamp';
+            replyTime.textContent = 'Admin response';
+            replyBubble.appendChild(replyText);
+            replyBubble.appendChild(replyTime);
+            chatMessages.appendChild(replyBubble);
+          }
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      },
+      (err) => console.warn('Messages subscription error:', err)
+    );
+  } catch (err) {
+    console.warn('Could not sync messages:', err);
+  }
+}
+
 async function sendMessage() {
   const input = document.getElementById('messageInput');
-  const messageText = input.value.trim();
+  const messageText = (input?.value || '').trim();
   if (!messageText) return;
 
   const chatMessages = document.getElementById('chatMessages');
@@ -1201,7 +1338,7 @@ async function sendMessage() {
     hour12: true
   });
   messageDiv.innerHTML = `
-        <div>${messageText}</div>
+        <div>${escapeHtml(messageText)}</div>
         <div class="message-time-stamp">Today, ${timeStr}</div>
     `;
   chatMessages.appendChild(messageDiv);
@@ -1264,6 +1401,29 @@ document.addEventListener('click', function (event) {
     case 'save-profile':
       saveProfile();
       break;
+    case 'view-receipt': {
+      const idx = parseInt(button.dataset.index, 10);
+      const record = cachedPayments[idx];
+      if (record) {
+        showReceiptModal(record);
+      }
+      break;
+    }
+    case 'quick-amount': {
+      const amtAttr = button.dataset.amount;
+      const paymentAmountInput = document.getElementById('paymentAmount');
+      if (paymentAmountInput) {
+        if (amtAttr === 'full') {
+          paymentAmountInput.value = (
+            currentRemainingDue > 0 ? currentRemainingDue : tenantRent
+          ).toString();
+        } else {
+          paymentAmountInput.value = amtAttr;
+        }
+        updateSubmitButton();
+      }
+      break;
+    }
     case 'close-qr-modal':
       closeQrModal();
       break;

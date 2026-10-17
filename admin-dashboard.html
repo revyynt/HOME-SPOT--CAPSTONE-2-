@@ -172,8 +172,27 @@
           <button data-tab-button="tenant-payments" class="tab-button px-6 py-3 font-medium">
             Tenant Payments
           </button>
-          <button data-tab-button="messages" class="tab-button px-6 py-3 font-medium">
-            Inquiries
+          <button
+            data-tab-button="tenant-messages"
+            class="tab-button px-6 py-3 font-medium flex items-center gap-2"
+          >
+            <span>Tenant Messages</span>
+            <span
+              id="unreadTenantMessagesCount"
+              class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2 py-0.5 rounded-full hidden"
+              >0</span
+            >
+          </button>
+          <button
+            data-tab-button="messages"
+            class="tab-button px-6 py-3 font-medium flex items-center gap-2"
+          >
+            <span>Inquiries</span>
+            <span
+              id="unreadInquiriesCount"
+              class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full hidden"
+              >0</span
+            >
           </button>
           <button data-tab-button="reviews" class="tab-button px-6 py-3 font-medium">
             Reviews
@@ -677,9 +696,26 @@
             </div>
           </div>
 
-          <!-- Messages Tab -->
+          <!-- Tenant Messages Tab -->
+          <div data-tab-content="tenant-messages" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-bold">Tenant Messages</h3>
+                <p class="text-sm text-gray-500">Direct conversations with registered tenants</p>
+              </div>
+            </div>
+
+            <div id="tenantMessagesContainer" class="space-y-4"></div>
+          </div>
+
+          <!-- Messages Tab (Public Inquiries) -->
           <div data-tab-content="messages" class="hidden">
-            <h3 class="text-xl font-bold mb-6">Inquiries (Real-time Updates)</h3>
+            <div class="flex items-center justify-between mb-6">
+              <div>
+                <h3 class="text-xl font-bold">Public Inquiries</h3>
+                <p class="text-sm text-gray-500">Inquiries submitted from public property listings</p>
+              </div>
+            </div>
 
             <div id="messagesContainer" class="space-y-4"></div>
           </div>

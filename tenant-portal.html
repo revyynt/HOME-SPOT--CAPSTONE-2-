@@ -29,48 +29,19 @@
       <div id="messages-tab" class="tab-content active">
         <div class="messages-container">
           <div class="chat-header">
-            <div class="owner-avatar">MJ</div>
+            <div class="owner-avatar">AD</div>
             <div class="owner-info">
-              <div class="owner-name">Maria Santos (Owner)</div>
+              <div class="owner-name">Maria Santos (Admin)</div>
               <div class="owner-status">● Online</div>
             </div>
           </div>
 
           <div class="chat-messages" id="chatMessages">
-            <div class="message-bubble received">
-              <div>
-                Hi Juan! Welcome to Triple Occupancy Room. Your reservation for the Room has been
-                confirmed.
-              </div>
-              <div class="message-time-stamp">Today, 9:30 AM</div>
-            </div>
-            <div class="message-bubble received">
-              <div>
-                Check-in is available starting May 1, 2026. Please bring a valid ID and your payment
-                confirmation.
-              </div>
-              <div class="message-time-stamp">Today, 9:32 AM</div>
-            </div>
-            <div class="message-bubble sent">
-              <div>Thank you! What time can I check in on May 1?</div>
-              <div class="message-time-stamp">Today, 10:15 AM</div>
-            </div>
-            <div class="message-bubble received">
-              <div>
-                Check-in is available anytime from 9:00 AM to 6:00 PM. Just let me know when you're
-                coming so I can prepare the keys.
-              </div>
-              <div class="message-time-stamp">Today, 10:20 AM</div>
-            </div>
-            <div class="message-bubble sent">
-              <div>Perfect! I'll arrive around 2:00 PM. Is parking available?</div>
-              <div class="message-time-stamp">Today, 10:45 AM</div>
-            </div>
-            <div class="message-bubble received">
-              <div>
-                Yes, we have parking space. It's ₱500/month additional. Let me know if you need it.
-              </div>
-              <div class="message-time-stamp">Today, 11:00 AM</div>
+            <div
+              class="no-messages-placeholder"
+              style="text-align: center; color: #94a3b8; padding: 40px 20px; font-size: 14px;"
+            >
+              No messages yet. Send a message below to reach the property administrator.
             </div>
           </div>
 
@@ -146,6 +117,13 @@
             <div class="payment-field">
               <label for="paymentAmount">Amount (₱)</label>
               <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required />
+              <div class="quick-amounts-bar">
+                <span class="quick-amount-label">Quick select:</span>
+                <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="full">Full Balance</button>
+                <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="1000">₱1,000</button>
+                <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="2500">₱2,500</button>
+                <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="5000">₱5,000</button>
+              </div>
             </div>
 
             <div class="payment-field">

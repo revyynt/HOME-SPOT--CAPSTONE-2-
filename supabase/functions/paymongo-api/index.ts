@@ -54,7 +54,14 @@ function amountToCentavos(value: unknown) {
   return Math.round(amount * 100);
 }
 
-const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const DEFAULT_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000'
+];
 
 function allowedReturnUrl(value: unknown) {
   if (typeof value !== 'string') return null;

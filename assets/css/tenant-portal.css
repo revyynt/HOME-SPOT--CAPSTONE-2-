@@ -596,6 +596,42 @@ body {
   color: white;
 }
 
+.quick-amounts-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quick-amount-label {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.quick-amount-pill {
+  padding: 5px 12px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-amount-pill:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.quick-amount-pill:active {
+  transform: scale(0.96);
+}
+
 /* PayMongo Modals */
 .paymongo-modal-backdrop {
   position: fixed;
