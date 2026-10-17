@@ -47,7 +47,9 @@ function amountToCentavos(value: unknown) {
   return Math.round(amount * 100);
 }
 
-function allowedReturnUrl(value: unknown, request: Request) {
+const DEFAULT_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
+function allowedReturnUrl(value: unknown) {
   if (typeof value !== 'string') return null;
   let url: URL;
   try {
@@ -55,10 +57,12 @@ function allowedReturnUrl(value: unknown, request: Request) {
   } catch {
     return null;
   }
-  const allowed = (Deno.env.get('ALLOWED_ORIGINS') || 'http://localhost:5173')
+  const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
     .split(',')
-    .map((origin) => origin.trim());
-  return allowed.includes(url.origin) ? url.toString() : null;
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  const allowed = new Set([...DEFAULT_ORIGINS, ...configured]);
+  return allowed.has(url.origin) ? url.toString() : null;
 }
 
 Deno.serve(async (request) => {
@@ -84,8 +88,8 @@ Deno.serve(async (request) => {
     switch (input.action) {
       case 'create-checkout': {
         const amount = amountToCentavos(input.amount);
-        const successUrl = allowedReturnUrl(input.successUrl, request);
-        const cancelUrl = allowedReturnUrl(input.cancelUrl, request);
+        const successUrl = allowedReturnUrl(input.successUrl);
+        const cancelUrl = allowedReturnUrl(input.cancelUrl);
         if (amount === null || !successUrl || !cancelUrl) {
           return jsonResponse(request, { error: 'Invalid amount or return URL.' }, 400);
         }
@@ -194,9 +198,13 @@ Deno.serve(async (request) => {
           return jsonResponse(request, { error: 'Invalid payment intent.' }, 400);
         }
         const data = await payMongoRequest(`/v1/payment_intents/${encodeURIComponent(input.id)}`);
-        const ownerId = data.data?.attributes?.metadata?.supabaseUserId;
+        const metadata = data.data?.attributes?.metadata;
+        const ownerId = metadata?.supabaseUserId;
+        const tenantEmail = metadata?.tenantEmail;
         const isStaff = ['admin', 'superadmin'].includes(auth.user.app_metadata?.role);
-        if (ownerId !== auth.user.id && !isStaff) {
+        const isOwner =
+          ownerId === auth.user.id || (Boolean(tenantEmail) && tenantEmail === auth.user.email);
+        if (!isOwner && !isStaff) {
           return jsonResponse(request, { error: 'Payment intent not found.' }, 404);
         }
         return jsonResponse(request, { data: data.data });
