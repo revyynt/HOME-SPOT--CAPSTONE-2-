@@ -11,7 +11,7 @@ import { supabase } from './supabase-service.js';
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',
   currency: 'PHP',
-  supportedMethods: ['card', 'paymaya', 'grab_pay', 'qrph']
+  supportedMethods: ['card', 'paymaya', 'grab_pay', 'gcash', 'qrph']
 };
 
 /**

@@ -105,8 +105,8 @@ Deno.serve(async (request: Request) => {
         const notes = typeof input.notes === 'string' ? input.notes.slice(0, 500) : '';
         const requestedMethods = Array.isArray(input.payment_method_types)
           ? input.payment_method_types
-          : ['card', 'paymaya', 'grab_pay', 'qrph'];
-        const allowedMethods = ['card', 'paymaya', 'grab_pay', 'qrph'];
+          : ['card', 'paymaya', 'grab_pay', 'gcash', 'qrph'];
+        const allowedMethods = ['card', 'paymaya', 'grab_pay', 'gcash', 'qrph'];
         const methods = requestedMethods.filter(
           (method): method is string =>
             typeof method === 'string' && allowedMethods.includes(method)

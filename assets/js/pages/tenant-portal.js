@@ -356,7 +356,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       tenantName: tenantName,
       tenantEmail: userEmail,
       tenantPhone: tenantPhone,
-      paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'qrph'],
+      paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'gcash', 'qrph'],
       successUrl: successUrl,
       cancelUrl: cancelUrl
     });
