@@ -15,53 +15,169 @@ body {
 .header {
   background: white;
   border-bottom: 1px solid #e5e5e5;
-  padding: 16px 24px;
+  padding: 14px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 40;
 }
 
-.logo h1 {
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.brand-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-title-wrap h1 {
   font-size: 20px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.role-badge {
+  background: #16a34a;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
 }
 
 .logo p {
   font-size: 12px;
-  color: #666;
+  color: #64748b;
+  margin-top: 1px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .user-email {
-  font-size: 14px;
-  color: #666;
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
 }
 
 .logout-btn {
-  padding: 8px 16px;
-  background-color: #f3f4f6;
-  color: #333;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background-color: #f8fafc;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .logout-btn:hover {
-  background-color: #e5e7eb;
+  background-color: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+.logout-btn svg {
+  color: inherit;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 24px;
+}
+
+/* Tenant Welcome Banner */
+.tenant-welcome-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);
+}
+
+.welcome-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.welcome-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981, #047857);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+  flex-shrink: 0;
+}
+
+.welcome-text h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.welcome-text p {
+  font-size: 13px;
+  color: #059669;
+  font-weight: 500;
+}
+
+.tenant-status-pill {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #86efac;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 640px) {
+  .tenant-welcome-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
 }
 
 .tabs {
@@ -71,29 +187,49 @@ body {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
 .tab {
   flex: 1;
-  padding: 12px 24px;
+  padding: 11px 20px;
   background: transparent;
   border: none;
   border-radius: 8px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #666;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
   cursor: pointer;
   transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tab svg {
+  flex-shrink: 0;
+  transition: transform 0.2s;
 }
 
 .tab.active {
   background: #10b981;
   color: white;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.tab.active svg {
+  stroke: white;
 }
 
 .tab:hover:not(.active) {
-  background: #f3f4f6;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.tab:hover:not(.active) svg {
+  transform: translateY(-1px);
 }
 
 .tab-content {

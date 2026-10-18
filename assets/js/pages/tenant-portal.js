@@ -163,6 +163,24 @@ function populateTenantUI() {
   const summaryRent = document.getElementById('summaryRent');
   if (summaryRent) summaryRent.textContent = '₱' + tenantRent.toLocaleString() + '.00';
 
+  const welcomeTenantName = document.getElementById('welcomeTenantName');
+  if (welcomeTenantName) welcomeTenantName.textContent = `Welcome back, ${tenantName}! 👋`;
+
+  const welcomeTenantSub = document.getElementById('welcomeTenantSub');
+  if (welcomeTenantSub) welcomeTenantSub.textContent = `${tenantRoom} • ${tenantDorm}`;
+
+  const welcomeAvatar = document.getElementById('welcomeAvatar');
+  if (welcomeAvatar) {
+    const initials = (tenantName || 'Juan Dela Cruz')
+      .split(' ')
+      .map((n) => n[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+    welcomeAvatar.textContent = initials || 'JD';
+  }
+
   updateAmountDueUI();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
