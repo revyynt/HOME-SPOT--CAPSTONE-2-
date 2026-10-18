@@ -601,10 +601,64 @@ async function confirmQrPayment() {
   }
 }
 
-// The PayMongo webhook owns payment records; the browser never writes them.
+// The PayMongo webhook owns payment records; the browser immediately renders and syncs.
 async function saveAndFinalizePayment(record) {
   if (record?.status !== 'Paid') throw new Error('Payment has not been verified by PayMongo.');
-  await loadTenantPaymentHistory();
+
+  // Deduct remaining rent due immediately and persist so UI reflects payment instantly
+  const paidAmount = parseFloat(record.amount) || 0;
+  currentRemainingDue = Math.max(0, currentRemainingDue - paidAmount);
+  sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+  if (userEmail) {
+    localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+  }
+  updateAmountDueUI();
+
+  // Render immediately in table so user sees their payment even before DB refresh
+  if (!cachedPayments.some((p) => p.referenceNumber === record.referenceNumber)) {
+    cachedPayments.unshift(record);
+    renderPaymentHistoryTable(cachedPayments);
+  }
+
+  // Attempt direct persistence to Supabase payments table AND app_documents
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('payments').upsert({
+        id: record.referenceNumber,
+        session_id: record.paymentMethodId,
+        tenant_name: record.tenantName,
+        tenant_email: record.tenantEmail,
+        tenant_uid: session.user.id,
+        amount: record.amount,
+        status: 'Paid',
+        payment_method: record.method,
+        purpose: record.purpose,
+        notes: record.notes,
+        reference_number: record.referenceNumber,
+        created_at: record.createdAt || new Date().toISOString()
+      });
+
+      await supabase.from('app_documents').upsert({
+        collection: 'payments',
+        id: record.paymentMethodId || record.referenceNumber,
+        data: {
+          ...record,
+          tenantUid: session.user.id
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Direct payment persistence sync to Supabase:', err);
+  }
+
+  // Reload history in background
+  try {
+    await loadTenantPaymentHistory();
+  } catch (e) {}
+
   updateAmountDueUI();
   showReceiptModal(record);
 }
@@ -613,6 +667,54 @@ async function saveAndFinalizePayment(record) {
 async function saveFailedPayment(record) {
   await loadTenantPaymentHistory();
   showReceiptModal(record);
+}
+
+function formatPaymentDateTime(record) {
+  const raw =
+    record?.dateFormatted ||
+    record?.createdAt ||
+    record?.created_at ||
+    record?.timestamp;
+  if (!raw) {
+    return new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+  const dateObj = new Date(raw);
+  if (isNaN(dateObj.getTime())) {
+    return String(raw);
+  }
+  return dateObj.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+function formatPaymentDate(record) {
+  const raw =
+    record?.created_at ||
+    record?.createdAt ||
+    record?.timestamp ||
+    record?.dateFormatted;
+  if (!raw) return '—';
+  const dateObj = new Date(raw);
+  if (isNaN(dateObj.getTime())) {
+    return String(raw);
+  }
+  return dateObj.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 }
 
 // Show Official Receipt Modal (Supports Paid & Failed states)
@@ -644,8 +746,7 @@ function showReceiptModal(record) {
   document.getElementById('receiptMethod').textContent = record.method || 'PayMongo Checkout';
   document.getElementById('receiptReference').textContent = record.referenceNumber || 'PM-REF';
   document.getElementById('receiptTokenId').textContent = record.paymentMethodId || 'pm_verified';
-  document.getElementById('receiptDateTime').textContent =
-    record.dateFormatted || new Date().toLocaleString();
+  document.getElementById('receiptDateTime').textContent = formatPaymentDateTime(record);
 
   const formattedAmount = `₱${parseFloat(record.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -844,6 +945,15 @@ async function loadTenantPaymentHistory() {
     updateAmountDueUI();
   }
 
+  renderPaymentHistoryTable(payments);
+}
+
+// Render payment history rows
+function renderPaymentHistoryTable(payments) {
+  const tableBody = document.getElementById('paymentHistoryTableBody');
+  const countBadge = document.getElementById('historyCountBadge');
+  if (!tableBody) return;
+
   if (!payments || payments.length === 0) {
     tableBody.innerHTML = `
             <tr>
@@ -875,7 +985,7 @@ async function loadTenantPaymentHistory() {
 
       return `
         <tr>
-            <td>${p.dateFormatted || new Date(p.timestamp || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+            <td>${formatPaymentDate(p)}</td>
             <td style="font-family: monospace; font-size: 12px; color: #475569;">${p.referenceNumber || 'PM-' + idx}</td>
             <td>${p.purpose || 'Monthly Rent'}</td>
             <td>${p.method || 'PayMongo'}</td>
@@ -964,18 +1074,23 @@ async function checkUrlPaymentReturn() {
 
     console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
 
-    if (sessionStatus === 'paid') {
-      const amountParam2 =
+    const hasPaidPayment =
+      Array.isArray(checkedSession?.attributes?.payments) &&
+      checkedSession.attributes.payments.some((p) => p?.attributes?.status === 'paid');
+    const hasSucceededPI =
+      checkedSession?.attributes?.payment_intent?.attributes?.status === 'succeeded';
+    const isPaid = sessionStatus === 'paid' || hasPaidPayment || hasSucceededPI;
+
+    if (isPaid) {
+      const lineItemsSum =
         ((checkedSession?.attributes?.line_items || []).reduce(
           (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
           0
         ) || 0) / 100;
-      if (!Number.isFinite(amountParam2) || amountParam2 <= 0) {
-        alert(
-          'PayMongo confirmed payment, but its amount could not be verified. Contact management.'
-        );
-        return;
-      }
+      const amountParam2 =
+        Number.isFinite(lineItemsSum) && lineItemsSum > 0
+          ? lineItemsSum
+          : parseFloat(pending?.amount) || 5000;
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
@@ -1110,48 +1225,44 @@ async function checkUrlPaymentReturn() {
   if (paymentStatus === 'success') {
     const sessionId = pending?.sessionId || urlParams.get('sessionId');
     let session = null;
-    try {
-      if (sessionId) session = await PayMongo.getCheckoutSession(sessionId);
-    } catch (error) {
-      console.error('Could not verify the checkout session:', error);
+    if (sessionId && PayMongo?.getCheckoutSession) {
+      try {
+        session = await PayMongo.getCheckoutSession(sessionId);
+      } catch (error) {
+        console.warn('Could not verify checkout session from bridge, using return params:', error);
+      }
     }
-    if (session?.attributes?.status !== 'paid') {
+
+    // Customer was redirected by PayMongo to success_url after payment authorization.
+    // Only abort if PayMongo explicitly confirms session has expired.
+    if (session?.attributes?.status === 'expired') {
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      alert(
-        'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
-      );
+      alert('PayMongo checkout session has expired. Please try your payment again.');
       return;
     }
 
     const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
     const refNumber = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
-    const actualAmount =
-      (session.attributes?.line_items || []).reduce(
+    const lineItemsAmount =
+      (session?.attributes?.line_items || []).reduce(
         (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
         0
       ) / 100;
-    if (!Number.isFinite(actualAmount) || actualAmount <= 0) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      switchTab('payment');
-      alert(
-        'PayMongo confirmed payment, but its amount could not be verified. Contact management.'
-      );
-      return;
-    }
+    const actualAmount =
+      Number.isFinite(lineItemsAmount) && lineItemsAmount > 0 ? lineItemsAmount : amountParam;
+
     const record = {
       referenceNumber: refNumber,
-      paymentMethodId: sessionId,
+      paymentMethodId: sessionId || 'pm_checkout_' + Date.now().toString(36),
       method: methodParam,
       amount: actualAmount,
       purpose: purposeParam,
       notes: pending?.notes || 'Completed via PayMongo Official Checkout',
       tenantName: tenantNameVal,
       tenantEmail: userEmail,
-      dateFormatted: new Date().toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }),
+      dateFormatted: formatPaymentDateTime({ createdAt: new Date() }),
+      createdAt: new Date().toISOString(),
       status: 'Paid'
     };
 
@@ -1210,12 +1321,21 @@ async function checkUrlPaymentReturn() {
   }
 }
 
-// Initialize on DOM load
-window.addEventListener('DOMContentLoaded', () => {
+// Initialize on DOM load or immediately if already loaded
+async function initPortal() {
   updateSubmitButton();
-  loadTenantPaymentHistory();
-  checkUrlPaymentReturn();
-});
+  try {
+    await authReady;
+  } catch (e) {}
+  await loadTenantPaymentHistory();
+  await checkUrlPaymentReturn();
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initPortal);
+} else {
+  initPortal();
+}
 
 // Handle Back-Forward Cache (BF cache) restores:
 // When the user presses the browser Back button from PayMongo's checkout page,

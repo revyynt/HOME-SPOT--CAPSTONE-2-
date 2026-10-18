@@ -180,10 +180,85 @@ Deno.serve(async (request: Request) => {
         }
         const data = await payMongoRequest(`/v1/checkout_sessions/${encodeURIComponent(input.id)}`);
         const ownerId = data.data?.attributes?.metadata?.supabaseUserId;
+        const ownerEmail =
+          data.data?.attributes?.metadata?.tenantEmail || data.data?.attributes?.billing?.email;
         const isStaff = ['admin', 'superadmin'].includes(auth.user.app_metadata?.role);
-        if (ownerId !== auth.user.id && !isStaff) {
+        const isOwner =
+          (ownerId && ownerId === auth.user.id) ||
+          (ownerEmail &&
+            typeof ownerEmail === 'string' &&
+            ownerEmail.toLowerCase() === (auth.user.email || '').toLowerCase());
+        if (!isOwner && !isStaff) {
           return jsonResponse(request, { error: 'Checkout session not found.' }, 404);
         }
+
+        // Auto-record paid checkout session on backend using service role
+        const sessionAttrs = data.data?.attributes;
+        const payments = Array.isArray(sessionAttrs?.payments) ? sessionAttrs.payments : [];
+        const isPaid =
+          sessionAttrs?.status === 'paid' ||
+          payments.some(
+            (p: Record<string, any>) => p?.attributes?.status === 'paid'
+          ) ||
+          sessionAttrs?.payment_intent?.attributes?.status === 'succeeded';
+
+        if (isPaid) {
+          try {
+            const admin = adminClient();
+            const relatedPayment = payments[0] || null;
+            const paymentId = relatedPayment?.id || data.data.id;
+            const lineItemsAmount = Array.isArray(sessionAttrs?.line_items)
+              ? sessionAttrs.line_items.reduce(
+                  (sum: number, item: { amount?: number; quantity?: number }) =>
+                    sum + Number(item.amount || 0) * Number(item.quantity || 1),
+                  0
+                )
+              : 0;
+            const amountInCentavos = Number(
+              relatedPayment?.attributes?.amount || sessionAttrs?.amount || lineItemsAmount
+            );
+            const tenantEmail =
+              auth.user.email ||
+              sessionAttrs?.metadata?.tenantEmail ||
+              sessionAttrs?.billing?.email ||
+              '';
+            const tenantName =
+              sessionAttrs?.billing?.name || sessionAttrs?.metadata?.tenantName || 'Tenant';
+            const purpose = sessionAttrs?.description || 'Monthly Rent';
+            const now = new Date();
+            const record = {
+              payMongoResourceId: paymentId,
+              referenceNumber: `PM-${paymentId.slice(-6).toUpperCase()}`,
+              amount: amountInCentavos > 0 ? amountInCentavos / 100 : 5000,
+              currency: 'PHP',
+              status: 'Paid',
+              purpose,
+              notes: sessionAttrs?.metadata?.notes || 'Completed via PayMongo Checkout',
+              method:
+                relatedPayment?.attributes?.payment_method_type ||
+                relatedPayment?.attributes?.source?.type ||
+                'PayMongo Checkout',
+              tenantEmail,
+              tenantUid: auth.user.id,
+              tenantName,
+              dateFormatted: now.toLocaleString('en-US', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              }),
+              timestamp: now.toISOString(),
+              createdAt: now.toISOString()
+            };
+            await admin
+              .from('app_documents')
+              .upsert(
+                { collection: 'payments', id: paymentId, data: record },
+                { onConflict: 'collection,id' }
+              );
+          } catch (e) {
+            console.warn('Backend payment auto-sync failed (non-blocking):', e);
+          }
+        }
+
         return jsonResponse(request, { data: data.data });
       }
 

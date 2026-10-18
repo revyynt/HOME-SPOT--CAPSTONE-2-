@@ -131,11 +131,21 @@
               <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026" />
             </div>
 
+            <!-- Accepted Payment Methods Bar -->
+            <div class="payment-methods-strip" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 14px; margin-bottom: 6px;">
+              <span style="font-size: 11px; color: #64748b; font-weight: 500;">Accepted via PayMongo:</span>
+              <span style="background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600;">💳 Card (Visa/MC)</span>
+              <span style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600;">📱 GCash</span>
+              <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600;">🟢 Maya</span>
+              <span style="background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600;">🏁 GrabPay</span>
+              <span style="background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 600;">🔳 QR Ph</span>
+            </div>
+
             <button
               type="submit"
               class="submit-payment-btn"
               id="submitPaymentBtn"
-              style="margin-top: 20px"
+              style="margin-top: 14px"
             >
               <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path

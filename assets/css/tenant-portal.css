@@ -196,15 +196,25 @@ body {
 
 .chat-input {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid #ddd;
+  padding: 12px 18px;
+  border: 1.5px solid #cbd5e1;
   border-radius: 24px;
   font-size: 14px;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
   outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .chat-input:focus {
-  border-color: #10b981;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+  color: #0f172a !important;
+}
+
+.chat-input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
 }
 
 .send-button {
@@ -438,20 +448,57 @@ body {
 }
 
 .payment-field input,
-.payment-field select {
+.payment-field select,
+.profile-field input {
   width: 100%;
   padding: 11px 14px;
   font-size: 14px;
-  border: 1px solid #ddd;
+  font-family: inherit;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border: 1.5px solid #cbd5e1;
   border-radius: 8px;
-  transition: border-color 0.2s;
-  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.payment-field select option {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  padding: 8px;
 }
 
 .payment-field input:focus,
-.payment-field select:focus {
+.payment-field select:focus,
+.profile-field input:focus {
   outline: none;
-  border-color: #10b981;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+  color: #0f172a !important;
+}
+
+.payment-field input::placeholder,
+.profile-field input::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1;
+}
+
+.profile-field {
+  margin-bottom: 16px;
+}
+
+.profile-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.profile-field input:disabled {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
 }
 
 .submit-payment-btn {
