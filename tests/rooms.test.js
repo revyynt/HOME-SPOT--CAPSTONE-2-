@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { normalizeRoomDocId, resolveRoom, ROOM_ALIASES } from '../assets/js/lib/rooms.js';
+import {
+  normalizeRoomDocId,
+  resolveRoom,
+  ROOM_ALIASES,
+  formatRoomPrice,
+  mergeRoomData
+} from '../assets/js/lib/rooms.js';
 
 test('normalizeRoomDocId matches the existing room document ids', () => {
   assert.equal(normalizeRoomDocId('Triple Occupancy Room'), 'triple-occupancy-room');
@@ -43,4 +49,17 @@ test('every ROOM_ALIASES entry is internally consistent', () => {
   for (const [key, room] of Object.entries(ROOM_ALIASES)) {
     assert.equal(room.id, normalizeRoomDocId(room.name), `alias "${key}" id mismatch`);
   }
+});
+
+test('mergeRoomData and formatRoomPrice merge remote Supabase fields over defaults', () => {
+  const merged = mergeRoomData('triple-occupancy-room', {
+    price: '11500',
+    features: '3 People, WiFi, Aircon',
+    image: 'https://example.com/room.jpg'
+  });
+  assert.equal(merged.price, 11500);
+  assert.equal(formatRoomPrice(merged.price), '₱11,500');
+  assert.equal(formatRoomPrice(merged.price, true), '₱11,500/month');
+  assert.deepEqual(merged.features, ['3 People', 'WiFi', 'Aircon']);
+  assert.equal(merged.image, 'https://example.com/room.jpg');
 });

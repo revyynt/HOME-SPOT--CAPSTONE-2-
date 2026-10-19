@@ -91,7 +91,9 @@ export function renderMessages(docs) {
   if (container) {
     const targetDocs = tenantContainer ? inquiryDocs : docList;
     container.innerHTML = targetDocs.length
-      ? targetDocs.map((doc) => renderCard(doc, !tenantContainer && doc.data().sender === 'tenant')).join('')
+      ? targetDocs
+          .map((doc) => renderCard(doc, !tenantContainer && doc.data().sender === 'tenant'))
+          .join('')
       : '<div class="bg-white border rounded-lg p-6 text-gray-600 text-center">No public inquiries available.</div>';
   }
 }

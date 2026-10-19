@@ -34,9 +34,11 @@ function showAlert(message, isSuccess = false) {
   if (!loginAlert) return;
   loginAlert.classList.remove('hidden');
   if (isSuccess) {
-    loginAlert.className = 'mb-6 p-4 rounded-xl text-sm leading-relaxed border bg-emerald-50 text-emerald-800 border-emerald-200';
+    loginAlert.className =
+      'mb-6 p-4 rounded-xl text-sm leading-relaxed border bg-emerald-50 text-emerald-800 border-emerald-200';
   } else {
-    loginAlert.className = 'mb-6 p-4 rounded-xl text-sm leading-relaxed border bg-red-50 text-red-800 border-red-200';
+    loginAlert.className =
+      'mb-6 p-4 rounded-xl text-sm leading-relaxed border bg-red-50 text-red-800 border-red-200';
   }
   loginAlert.textContent = message;
 }
@@ -49,10 +51,7 @@ function clearAlert() {
 
 async function loadProfile(uid) {
   const snapshot = await supabaseData.getDocs(
-    supabaseData.query(
-      supabaseData.collection(db, 'tenants'),
-      supabaseData.where('uid', '==', uid)
-    )
+    supabaseData.query(supabaseData.collection(db, 'tenants'), supabaseData.where('uid', '==', uid))
   );
   if (snapshot.empty) return { data: {}, docId: null };
   return { data: snapshot.docs[0].data(), docId: snapshot.docs[0].id };
@@ -84,7 +83,9 @@ async function routeUser(user, fallbackEmail) {
 
   if (!destination) {
     await supabase.auth.signOut();
-    throw new Error('Your account does not have a portal role assigned. Please contact management.');
+    throw new Error(
+      'Your account does not have a portal role assigned. Please contact management.'
+    );
   }
 
   if (role === 'tenant') {
@@ -132,7 +133,6 @@ signupModal?.addEventListener('click', (e) => {
   if (e.target === signupModal) closeModal();
 });
 
-
 // Form submission
 loginForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -162,11 +162,14 @@ loginForm?.addEventListener('submit', async (event) => {
     console.error('Portal sign in error:', error);
     showAlert(
       ERROR_MESSAGES[error.code] ||
-        (error.message ? error.message : 'Login failed. Please check your connection and try again.')
+        (error.message
+          ? error.message
+          : 'Login failed. Please check your connection and try again.')
     );
     isSubmitting = false;
     loginSubmitBtn.disabled = false;
-    loginSubmitBtn.innerHTML = '<span>Sign In to Account</span><span class="transition-transform group-hover:translate-x-1">→</span>';
+    loginSubmitBtn.innerHTML =
+      '<span>Sign In to Account</span><span class="transition-transform group-hover:translate-x-1">→</span>';
     loginSubmitBtn.style.opacity = '1';
   }
 });

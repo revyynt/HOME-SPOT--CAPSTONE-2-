@@ -34,10 +34,7 @@ function clearAlert() {
 
 async function loadProfile(uid) {
   const snapshot = await supabaseData.getDocs(
-    supabaseData.query(
-      supabaseData.collection(db, 'tenants'),
-      supabaseData.where('uid', '==', uid)
-    )
+    supabaseData.query(supabaseData.collection(db, 'tenants'), supabaseData.where('uid', '==', uid))
   );
   if (snapshot.empty) return { data: {}, docId: null };
   return { data: snapshot.docs[0].data(), docId: snapshot.docs[0].id };

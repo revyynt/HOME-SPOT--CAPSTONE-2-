@@ -120,7 +120,7 @@ test('every image referenced from JS exists under assets/img/', () => {
 });
 
 test('the room gallery declares an image per room', () => {
-  const source = readFileSync(join(ROOT, 'assets', 'js', 'property-detail.js'), 'utf8');
+  const source = readFileSync(join(ROOT, 'assets', 'js', 'lib', 'rooms.js'), 'utf8');
   // Accept either quote style -- Prettier normalises to single quotes.
   const panoramas = [...source.matchAll(/panorama:\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
 
@@ -323,6 +323,6 @@ test('inline event handlers are not growing', () => {
   assert.ok(
     total <= BASELINE,
     `Inline handler count rose to ${total} (baseline ${BASELINE}). ` +
-      'Convert them to data-* attributes with event delegation.'
+    'Convert them to data-* attributes with event delegation.'
   );
 });

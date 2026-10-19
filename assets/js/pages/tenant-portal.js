@@ -688,11 +688,7 @@ async function saveFailedPayment(record) {
 }
 
 function formatPaymentDateTime(record) {
-  const raw =
-    record?.dateFormatted ||
-    record?.createdAt ||
-    record?.created_at ||
-    record?.timestamp;
+  const raw = record?.dateFormatted || record?.createdAt || record?.created_at || record?.timestamp;
   if (!raw) {
     return new Date().toLocaleString('en-US', {
       month: 'short',
@@ -718,11 +714,7 @@ function formatPaymentDateTime(record) {
 }
 
 function formatPaymentDate(record) {
-  const raw =
-    record?.created_at ||
-    record?.createdAt ||
-    record?.timestamp ||
-    record?.dateFormatted;
+  const raw = record?.created_at || record?.createdAt || record?.timestamp || record?.dateFormatted;
   if (!raw) return '—';
   const dateObj = new Date(raw);
   if (isNaN(dateObj.getTime())) {

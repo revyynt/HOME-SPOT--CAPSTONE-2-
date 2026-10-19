@@ -12,9 +12,69 @@
 import { initTabs } from './render/tabs.js';
 import { initPublicForms } from './pages/public-forms.js';
 import { setRoomAvailability, decrementRoomAvailability } from './room-availability.js';
-import { supabase } from './supabase-service.js';
+import { supabase, supabaseData } from './supabase-service.js';
+import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData } from './lib/rooms.js';
+import { escapeHtml } from './lib/format.js';
 
 const byId = (id) => document.getElementById(id);
+
+function renderFeaturePills(features = []) {
+  return features
+    .map((feature, index) => {
+      const tone =
+        index % 2 === 0
+          ? 'bg-green-50 text-green-700 border-green-200'
+          : 'bg-blue-50 text-blue-700 border-blue-200';
+      return `<span class="inline-flex items-center gap-1.5 ${tone} px-3 py-1.5 rounded-full text-xs font-medium border">${escapeHtml(feature)}</span>`;
+    })
+    .join('');
+}
+
+function applyRoomToCard(card, room) {
+  const img = card.querySelector('[data-room-image]');
+  if (img && room.image) {
+    if (img.getAttribute('src') !== room.image) img.setAttribute('src', room.image);
+    img.setAttribute('alt', room.name);
+  }
+  const badge = card.querySelector('[data-room-badge]');
+  if (badge) {
+    badge.textContent = room.badge || '';
+    badge.parentElement?.classList.toggle('hidden', !room.badge);
+  }
+  const nameEl = card.querySelector('[data-room-name]');
+  if (nameEl) nameEl.textContent = room.name;
+  const typeEl = card.querySelector('[data-room-type]');
+  if (typeEl) typeEl.textContent = room.type;
+  const priceEl = card.querySelector('[data-room-price]');
+  if (priceEl) priceEl.textContent = formatRoomPrice(room.price, false);
+  const featuresEl = card.querySelector('[data-room-features]');
+  if (featuresEl && Array.isArray(room.features)) {
+    featuresEl.innerHTML = renderFeaturePills(room.features);
+  }
+}
+
+function initLandingRooms() {
+  const grid = document.querySelector('[data-rooms-grid]');
+  if (!grid) return;
+
+  for (const base of DEFAULT_ROOMS) {
+    const card = grid.querySelector(`[data-room-card="${base.id}"]`);
+    if (card) applyRoomToCard(card, base);
+  }
+
+  const roomsRef = supabaseData.collection(supabase, 'rooms');
+  supabaseData.onSnapshot(
+    roomsRef,
+    (snapshot) => {
+      snapshot.forEach((doc) => {
+        const room = mergeRoomData(doc.id, { id: doc.id, ...doc.data() });
+        const card = grid.querySelector(`[data-room-card="${doc.id}"]`);
+        if (card) applyRoomToCard(card, room);
+      });
+    },
+    (error) => console.error('Failed to sync landing room cards:', error)
+  );
+}
 
 /** Smooth-scroll for in-page anchors. */
 function initSmoothScroll() {
@@ -129,6 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSmoothScroll();
   initTabs();
   initPublicForms();
+  initLandingRooms();
 
   // admin-dashboard.html only.
   if (byId('reservationRequestsContainer') || byId('messagesContainer')) {

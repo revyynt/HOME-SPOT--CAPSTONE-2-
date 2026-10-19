@@ -49,3 +49,132 @@ export function resolveRoom(key) {
   if (ROOM_ALIASES[normalized]) return { ...ROOM_ALIASES[normalized] };
   return { id: normalizeRoomDocId(normalized), name: String(key || '') };
 }
+
+/**
+ * Canonical default room catalog used as fallback and initial seed.
+ */
+export const DEFAULT_ROOMS = [
+  {
+    id: 'triple-occupancy-room',
+    detailId: 1,
+    name: 'Triple Occupancy Room',
+    type: 'Living Space',
+    badge: 'Most Popular',
+    price: 10000,
+    beds: 1,
+    capacity: 3,
+    available: 3,
+    size: '30 sqm',
+    image: 'assets/img/triple-occupancy-panorama.png',
+    mainImage: 'assets/img/triple-occupancy.jpg',
+    panorama: 'assets/img/triple-occupancy-panorama.png',
+    description:
+      'Spacious apartment unit that can accommodate up to 3 people. Perfect for small families or groups of students looking for a comfortable shared living space.',
+    features: ['3 People', 'Bathroom', 'Aircon Space']
+  },
+  {
+    id: 'commercial-space',
+    detailId: 4,
+    name: 'Commercial Space',
+    type: 'Space for Business Operations',
+    badge: 'Premium',
+    price: 12000,
+    beds: 0,
+    capacity: 4,
+    available: 1,
+    size: '35 sqm',
+    image: 'assets/img/commercial-space.jpg',
+    mainImage: 'assets/img/commercial-space.jpg',
+    panorama: 'assets/img/commercial-space-panorama.png',
+    description:
+      'Premium commercial space ideal for business operations. Spacious unit suitable for small offices, retail, or service-based businesses with comfortable working capacity.',
+    features: ['4 People', 'Bathroom']
+  }
+];
+
+/**
+ * Formats a numeric or string room price (e.g. 10000 -> "₱10,000" or "₱10,000/month").
+ *
+ * @param {number|string} price
+ * @param {boolean} [withSuffix=false]
+ * @returns {string}
+ */
+export function formatRoomPrice(price, withSuffix = false) {
+  const raw = String(price ?? '')
+    .replace(/[₱,\s]/g, '')
+    .replace(/\/month$/i, '');
+  const num = Number(raw);
+  if (Number.isFinite(num) && raw !== '') {
+    const formatted = `₱${num.toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
+    return withSuffix ? `${formatted}/month` : formatted;
+  }
+  const str = String(price ?? '').trim();
+  if (!str) return withSuffix ? '₱0/month' : '₱0';
+  return withSuffix && !str.endsWith('/month') ? `${str}/month` : str.replace(/\/month$/i, '');
+}
+
+/**
+ * Merges remote Supabase room document fields over a base room definition.
+ *
+ * @param {string|number|Object} baseOrKey
+ * @param {Object} [remote]
+ * @returns {Object}
+ */
+export function mergeRoomData(baseOrKey, remote = {}) {
+  const base =
+    typeof baseOrKey === 'object' && baseOrKey !== null
+      ? baseOrKey
+      : DEFAULT_ROOMS.find(
+        (r) =>
+          r.id === baseOrKey ||
+          r.detailId === Number(baseOrKey) ||
+          r.id === normalizeRoomDocId(baseOrKey)
+      ) || DEFAULT_ROOMS[0];
+
+  const data = remote || {};
+  const features = Array.isArray(data.features)
+    ? data.features.filter(Boolean)
+    : typeof data.features === 'string' && data.features.trim()
+      ? data.features
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      : Array.isArray(data.amenities) && data.amenities.length > 0
+        ? data.amenities
+        : base.features;
+
+  const rawPrice = data.price ?? base.price;
+  const numericPrice = Number(
+    String(rawPrice)
+      .replace(/[₱,\s]/g, '')
+      .replace(/\/month$/i, '')
+  );
+
+  return {
+    ...base,
+    id: data.id || base.id || normalizeRoomDocId(data.name || base.name),
+    detailId: Number(data.detailId ?? base.detailId ?? 1),
+    name: data.name || base.name,
+    type: data.type || base.type,
+    badge: data.badge ?? base.badge,
+    price: Number.isFinite(numericPrice) && String(rawPrice) !== '' ? numericPrice : base.price,
+    available:
+      typeof data.available === 'number'
+        ? data.available
+        : Number.isFinite(Number(data.available)) && data.available !== '' && data.available != null
+          ? Number(data.available)
+          : base.available,
+    capacity:
+      typeof data.capacity === 'number'
+        ? data.capacity
+        : Number.isFinite(Number(data.capacity)) && data.capacity !== '' && data.capacity != null
+          ? Number(data.capacity)
+          : base.capacity,
+    size: data.size || base.size,
+    image: data.image || base.image,
+    mainImage: data.mainImage || data.image || base.mainImage,
+    panorama: data.panorama || base.panorama,
+    description: data.description || base.description,
+    features
+  };
+}

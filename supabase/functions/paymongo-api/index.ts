@@ -197,9 +197,7 @@ Deno.serve(async (request: Request) => {
         const payments = Array.isArray(sessionAttrs?.payments) ? sessionAttrs.payments : [];
         const isPaid =
           sessionAttrs?.status === 'paid' ||
-          payments.some(
-            (p: Record<string, any>) => p?.attributes?.status === 'paid'
-          ) ||
+          payments.some((p: Record<string, any>) => p?.attributes?.status === 'paid') ||
           sessionAttrs?.payment_intent?.attributes?.status === 'succeeded';
 
         if (isPaid) {

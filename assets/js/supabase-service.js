@@ -296,9 +296,16 @@ export function getMessagesRef() {
 
 export async function ensureRoomDocument(room) {
   if (!room) return null;
-  const ref = getRoomDocRef(room.name);
-  const snapshot = await getDoc(ref);
-  if (!snapshot.exists()) await setDoc(ref, { name: room.name, available: room.available });
+  const ref = room.id ? documentRef('rooms', room.id) : getRoomDocRef(room.name);
+  if (!ref) return null;
+  try {
+    const snapshot = await getDoc(ref);
+    if (!snapshot.exists()) {
+      await setDoc(ref, { ...room });
+    }
+  } catch {
+    // Anonymous visitors can read rooms but cannot insert; ignore write failure.
+  }
   return ref;
 }
 

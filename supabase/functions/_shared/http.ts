@@ -10,7 +10,7 @@ export function corsHeaders(request: Request) {
   const origin = request.headers.get('origin');
   const allowed = (Deno.env.get('ALLOWED_ORIGINS') || LOCAL_ORIGINS.join(','))
     .split(',')
-    .map((value: string) => value.trim())
+    .map((value: string) => value.trim());
   const headers: Record<string, string> = {
     'Access-Control-Allow-Headers':
       'authorization, apikey, content-type, x-client-info, x-region, x-webhook-secret',
