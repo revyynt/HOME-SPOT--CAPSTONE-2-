@@ -5,7 +5,7 @@ declare const Deno: {
   serve(handler: (request: Request) => Promise<Response> | Response): void;
 };
 
-import { authenticatedUser } from '../_shared/auth.ts';
+import { adminClient, authenticatedUser } from '../_shared/auth.ts';
 import { jsonResponse, optionsResponse } from '../_shared/http.ts';
 
 const MAX_AMOUNT_PHP = Number(Deno.env.get('MAX_PAYMENT_AMOUNT') || 200000);
@@ -75,8 +75,15 @@ function allowedReturnUrl(value: unknown) {
     .split(',')
     .map((origin: string) => origin.trim())
     .filter(Boolean);
-  const allowed = new Set([...DEFAULT_ORIGINS, ...configured]);
-  return allowed.has(url.origin) ? url.toString() : null;
+  let sbOrigins: string[] = [];
+  try {
+    const sbUrl = Deno.env.get('SUPABASE_URL');
+    if (sbUrl) sbOrigins = [new URL(sbUrl).origin];
+  } catch {
+    // ignore
+  }
+  const allowed = new Set([...DEFAULT_ORIGINS, ...sbOrigins, ...configured]);
+  return allowed.has(url.origin) || allowed.has('*') ? url.toString() : null;
 }
 
 Deno.serve(async (request: Request) => {
@@ -207,10 +214,10 @@ Deno.serve(async (request: Request) => {
             const paymentId = relatedPayment?.id || data.data.id;
             const lineItemsAmount = Array.isArray(sessionAttrs?.line_items)
               ? sessionAttrs.line_items.reduce(
-                  (sum: number, item: { amount?: number; quantity?: number }) =>
-                    sum + Number(item.amount || 0) * Number(item.quantity || 1),
-                  0
-                )
+                (sum: number, item: { amount?: number; quantity?: number }) =>
+                  sum + Number(item.amount || 0) * Number(item.quantity || 1),
+                0
+              )
               : 0;
             const amountInCentavos = Number(
               relatedPayment?.attributes?.amount || sessionAttrs?.amount || lineItemsAmount

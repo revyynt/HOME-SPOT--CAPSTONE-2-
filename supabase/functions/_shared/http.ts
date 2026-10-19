@@ -4,20 +4,38 @@ declare const Deno: {
   };
 };
 
-const LOCAL_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const LOCAL_ORIGINS = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173'
+];
+
+function getSupabaseOrigin() {
+  try {
+    const sbUrl = Deno.env.get('SUPABASE_URL');
+    return sbUrl ? [new URL(sbUrl).origin] : [];
+  } catch {
+    return [];
+  }
+}
 
 export function corsHeaders(request: Request) {
   const origin = request.headers.get('origin');
-  const allowed = (Deno.env.get('ALLOWED_ORIGINS') || LOCAL_ORIGINS.join(','))
+  const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
     .split(',')
-    .map((value: string) => value.trim());
+    .map((value: string) => value.trim())
+    .filter(Boolean);
+  const allowed = new Set([...LOCAL_ORIGINS, ...getSupabaseOrigin(), ...configured]);
   const headers: Record<string, string> = {
     'Access-Control-Allow-Headers':
       'authorization, apikey, content-type, x-client-info, x-region, x-webhook-secret',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin'
   };
-  if (origin && allowed.includes(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  if (origin && (allowed.has(origin) || allowed.has('*'))) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
   return headers;
 }
 

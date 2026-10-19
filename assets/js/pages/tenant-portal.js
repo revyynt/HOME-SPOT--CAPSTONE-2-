@@ -28,7 +28,7 @@ import { escapeHtml } from '../lib/format.js';
 // Hide the portal until the session check resolves.
 document.documentElement.dataset.authPending = 'true';
 
-guardPage({
+const authReady = guardPage({
   role: 'tenant',
   redirectTo: 'login.html',
   grantedEvent: 'tenant-access-granted'
@@ -529,10 +529,10 @@ function showQrModal(data) {
   // Always generate a proper QR Ph code using payment reference data
   const qrContent = PayMongo
     ? PayMongo.generateQrPhImageUrl({
-        amount: data.amount,
-        reference: data.referenceNumber,
-        merchant: 'MJP Residences'
-      })
+      amount: data.amount,
+      reference: data.referenceNumber,
+      merchant: 'MJP Residences'
+    })
     : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent('PAYMONGO-QRPH-' + data.referenceNumber + '-' + data.amount)}`;
   document.getElementById('qrModalImage').src = qrContent;
 
@@ -675,7 +675,7 @@ async function saveAndFinalizePayment(record) {
   // Reload history in background
   try {
     await loadTenantPaymentHistory();
-  } catch (e) {}
+  } catch (e) { }
 
   updateAmountDueUI();
   showReceiptModal(record);
@@ -1038,7 +1038,7 @@ async function checkUrlPaymentReturn() {
       sessionStorage.getItem('pending_paymongo_payment') ||
       localStorage.getItem('pending_paymongo_payment');
     if (saved) pending = JSON.parse(saved);
-  } catch (e) {}
+  } catch (e) { }
 
   console.log(
     '[PayReturn] URL params - paymentIntentId:',
@@ -1326,7 +1326,7 @@ async function checkUrlPaymentReturn() {
     await saveFailedPayment(record);
     // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
     if (sessionId && PayMongo?.expireCheckoutSession) {
-      PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+      PayMongo.expireCheckoutSession(sessionId).catch(() => { });
     }
   }
 }
@@ -1336,7 +1336,7 @@ async function initPortal() {
   updateSubmitButton();
   try {
     await authReady;
-  } catch (e) {}
+  } catch (e) { }
   await loadTenantPaymentHistory();
   await checkUrlPaymentReturn();
 }

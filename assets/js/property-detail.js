@@ -132,19 +132,30 @@ function applyRoomDetails(room) {
 }
 
 async function loadRemoteRoomData(room) {
-  if (!isDataReady()) return;
+  if (!isDataReady()) {
+    applyRoomDetails(room);
+    return;
+  }
   const roomRef = await ensureRoomDocumentInSupabase(room);
-  if (!roomRef) return;
+  if (!roomRef) {
+    applyRoomDetails(room);
+    return;
+  }
 
   const applySnapshot = (snapshot) => {
-    if (!snapshot.exists()) return;
-    const merged = mergeRoomData(room, snapshot.data());
-    Object.assign(room, merged);
+    if (snapshot.exists()) {
+      const merged = mergeRoomData(room, snapshot.data());
+      Object.assign(room, merged);
+    }
     applyRoomDetails(room);
   };
 
-  const roomSnap = await supabaseData.getDoc(roomRef);
-  applySnapshot(roomSnap);
+  try {
+    const roomSnap = await supabaseData.getDoc(roomRef);
+    applySnapshot(roomSnap);
+  } catch {
+    applyRoomDetails(room);
+  }
 
   supabaseData.onSnapshot(roomRef, applySnapshot, (error) =>
     console.error('Room detail subscription failed:', error)
@@ -155,7 +166,6 @@ async function loadRemoteRoomData(room) {
 document.addEventListener('DOMContentLoaded', () => {
   const rawParam = getUrlParam('id') || '1';
   const room = { ...mergeRoomData(rawParam) };
-  applyRoomDetails(room);
   loadRemoteRoomData(room);
 });
 
@@ -167,6 +177,8 @@ function initPanoramaViewer(imageUrl) {
   if (!container) return;
 
   // Clean up any previous instance
+  container._panoramaCleanup?.();
+  container._targetPanoramaUrl = imageUrl;
   container.innerHTML = '';
   container.style.position = 'relative';
   container.style.overflow = 'hidden';
@@ -175,6 +187,7 @@ function initPanoramaViewer(imageUrl) {
 
   // Inject Three.js if not already loaded
   function setup() {
+    if (container._targetPanoramaUrl !== imageUrl) return;
     const THREE = window.THREE;
 
     const W = container.clientWidth;
@@ -200,7 +213,9 @@ function initPanoramaViewer(imageUrl) {
     // Sphere (inside-out)
     const geo = new THREE.SphereGeometry(500, 60, 40);
     geo.scale(-1, 1, 1);
-    const texture = new THREE.TextureLoader().load(imageUrl);
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    const texture = loader.load(imageUrl);
     const mat = new THREE.MeshBasicMaterial({ map: texture });
     scene.add(new THREE.Mesh(geo, mat));
 

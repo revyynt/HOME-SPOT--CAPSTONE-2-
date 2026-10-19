@@ -68,6 +68,7 @@ export const DEFAULT_ROOMS = [
     image: 'assets/img/triple-occupancy-panorama.png',
     mainImage: 'assets/img/triple-occupancy.jpg',
     panorama: 'assets/img/triple-occupancy-panorama.png',
+    images: ['assets/img/triple-occupancy.jpg', 'assets/img/triple-occupancy-panorama.png'],
     description:
       'Spacious apartment unit that can accommodate up to 3 people. Perfect for small families or groups of students looking for a comfortable shared living space.',
     features: ['3 People', 'Bathroom', 'Aircon Space']
@@ -86,6 +87,7 @@ export const DEFAULT_ROOMS = [
     image: 'assets/img/commercial-space.jpg',
     mainImage: 'assets/img/commercial-space.jpg',
     panorama: 'assets/img/commercial-space-panorama.png',
+    images: ['assets/img/commercial-space.jpg', 'assets/img/commercial-space-panorama.png'],
     description:
       'Premium commercial space ideal for business operations. Spacious unit suitable for small offices, retail, or service-based businesses with comfortable working capacity.',
     features: ['4 People', 'Bathroom']
@@ -125,23 +127,34 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     typeof baseOrKey === 'object' && baseOrKey !== null
       ? baseOrKey
       : DEFAULT_ROOMS.find(
-        (r) =>
-          r.id === baseOrKey ||
-          r.detailId === Number(baseOrKey) ||
-          r.id === normalizeRoomDocId(baseOrKey)
-      ) || DEFAULT_ROOMS[0];
+          (r) =>
+            r.id === baseOrKey ||
+            r.detailId === Number(baseOrKey) ||
+            r.id === normalizeRoomDocId(baseOrKey)
+        ) || DEFAULT_ROOMS[0];
 
   const data = remote || {};
   const features = Array.isArray(data.features)
     ? data.features.filter(Boolean)
     : typeof data.features === 'string' && data.features.trim()
       ? data.features
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : Array.isArray(data.amenities) && data.amenities.length > 0
         ? data.amenities
         : base.features;
+
+  const images = Array.isArray(data.images)
+    ? data.images.map((s) => String(s).trim()).filter(Boolean)
+    : typeof data.images === 'string'
+      ? data.images
+          .split(/[\n,]+/)
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : Array.isArray(base.images)
+        ? [...base.images]
+        : [data.mainImage || base.mainImage || base.image].filter(Boolean);
 
   const rawPrice = data.price ?? base.price;
   const numericPrice = Number(
@@ -174,6 +187,7 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     image: data.image || base.image,
     mainImage: data.mainImage || data.image || base.mainImage,
     panorama: data.panorama || base.panorama,
+    images,
     description: data.description || base.description,
     features
   };

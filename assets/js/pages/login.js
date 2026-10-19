@@ -136,6 +136,7 @@ signupModal?.addEventListener('click', (e) => {
 // Form submission
 loginForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (isSubmitting) return;
   clearAlert();
 
   const email = emailInput?.value.trim().toLowerCase() ?? '';
@@ -162,9 +163,9 @@ loginForm?.addEventListener('submit', async (event) => {
     console.error('Portal sign in error:', error);
     showAlert(
       ERROR_MESSAGES[error.code] ||
-        (error.message
-          ? error.message
-          : 'Login failed. Please check your connection and try again.')
+      (error.message
+        ? error.message
+        : 'Login failed. Please check your connection and try again.')
     );
     isSubmitting = false;
     loginSubmitBtn.disabled = false;
