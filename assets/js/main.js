@@ -145,6 +145,9 @@ async function initAdminActions() {
       case 'delete-message':
         messages.deleteMessage(id);
         break;
+      case 'select-chat':
+        messages.selectTenantChat(button.dataset.email);
+        break;
       case 'create-tenant': {
         // The payload is a JSON string in a data-* attribute, so no tenant
         // value is ever interpolated into a JS string literal.
@@ -158,6 +161,18 @@ async function initAdminActions() {
       default:
         break;
     }
+  });
+
+  document.addEventListener('submit', (event) => {
+    const form =
+      event.target instanceof Element ? event.target.closest('form#adminChatForm') : null;
+    if (!form) return;
+    event.preventDefault();
+    const input = form.querySelector('input[name="message"]');
+    const text = (input?.value || '').trim();
+    if (!text) return;
+    input.value = '';
+    messages.sendAdminChatMessage(form.dataset.email, form.dataset.name, text);
   });
 }
 

@@ -10,6 +10,7 @@
 import { db, supabase, supabaseData } from '../../supabase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
+import { refreshTenantMessenger } from '../../render/messages.js';
 
 /** @type {Array<Object & {id: string}>} */
 let loadedTenants = [];
@@ -43,6 +44,7 @@ export function listenToTenants() {
     }
     renderFiltered();
     updateTenantStats(loadedTenants);
+    refreshTenantMessenger();
   };
 
   return supabaseData.onSnapshot(
