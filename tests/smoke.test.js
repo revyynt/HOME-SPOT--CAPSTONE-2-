@@ -255,3 +255,52 @@ test('buildTenantThreads merges tenants, orders messages chronologically, and co
   assert.equal(threads[0].lastMessage.text, 'Hi Juan!');
   assert.equal(threads[1].email, 'maria@example.com', 'tenant without messages is still selectable');
 });
+
+test('buildPaymentCalendar tracks paid, overdue, and future scheduled tenant payments', async () => {
+  const { buildPaymentCalendar } = await import('../assets/js/lib/payment-calendar.js');
+  const today = new Date(2026, 4, 10); // May 10, 2026
+  const tenants = [
+    {
+      id: 't1',
+      name: 'Juan Dela Cruz',
+      email: 'juan@example.com',
+      room: 'Room 201',
+      monthlyRent: 5000,
+      dueDay: 5,
+      moveInDate: '2026-01-10'
+    },
+    {
+      id: 't2',
+      name: 'Maria Santos',
+      email: 'maria@example.com',
+      room: 'Room 105',
+      monthlyRent: 4500,
+      dueDay: 15,
+      moveInDate: '2026-01-01'
+    }
+  ];
+  const payments = [
+    {
+      id: 'p1',
+      tenantName: 'Maria Santos',
+      tenantEmail: 'maria@example.com',
+      amount: 4500,
+      status: 'Paid',
+      createdAt: '2026-05-03T10:00:00Z'
+    }
+  ];
+
+  // Current month (May 2026): Juan (due May 5) is Overdue; Maria (paid May 3) is Paid
+  const mayCal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 4, today });
+  assert.equal(mayCal.monthLabel, 'May 2026');
+  assert.equal(mayCal.days.length, 42);
+  assert.equal(mayCal.monthSummary.totalExpected, 9500);
+  assert.equal(mayCal.monthSummary.totalPaid, 4500);
+  assert.equal(mayCal.monthSummary.totalOverdue, 5000);
+
+  // Future month (June 2026): both tenants are Scheduled as future payments
+  const juneCal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 5, today });
+  assert.equal(juneCal.monthLabel, 'June 2026');
+  assert.equal(juneCal.monthSummary.rows.every((r) => r.status === 'Scheduled'), true);
+  assert.ok(mayCal.upcomingSchedule.length >= 2, 'upcoming schedule includes future due dates');
+});

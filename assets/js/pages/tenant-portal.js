@@ -16,6 +16,7 @@ import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
 import { escapeHtml } from '../lib/format.js';
+import { buildPaymentCalendar } from '../lib/payment-calendar.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
 // parsing and scenario cascade. The tested decision logic already exists in
@@ -182,9 +183,128 @@ function populateTenantUI() {
   }
 
   updateAmountDueUI();
+  renderTenantPaymentCalendar();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+let tenantCalYear = new Date().getFullYear();
+let tenantCalMonth = new Date().getMonth();
+let tenantSelectedDateKey = '';
+
+function renderTenantPaymentCalendar() {
+  const gridEl = document.getElementById('tenantCalendarGrid');
+  const monthLabelEl = document.getElementById('tenantCalendarMonthLabel');
+  const upcomingEl = document.getElementById('tenantUpcomingScheduleList');
+  const detailEl = document.getElementById('tenantCalendarDayDetail');
+  if (!gridEl || !monthLabelEl) return;
+
+  const tenantRecord = {
+    id: currentTenantDocId || userEmail || 'tenant',
+    name: tenantName,
+    email: userEmail,
+    room: tenantRoom,
+    dormName: tenantDorm,
+    monthlyRent: tenantRent,
+    dueDay: tenantDueDay,
+    moveInDate: tenantMoveIn,
+    amountDue: currentRemainingDue
+  };
+
+  const cal = buildPaymentCalendar({
+    tenants: [tenantRecord],
+    payments: cachedPayments,
+    year: tenantCalYear,
+    month: tenantCalMonth
+  });
+
+  monthLabelEl.textContent = cal.monthLabel;
+
+  const chipClass = (status) => {
+    if (status === 'Paid') return 'cal-chip-paid';
+    if (status === 'Overdue' || status === 'Failed') return 'cal-chip-overdue';
+    if (status === 'Scheduled') return 'cal-chip-scheduled';
+    return 'cal-chip-pending';
+  };
+
+  gridEl.innerHTML = cal.days
+    .map((cell) => {
+      const classes = ['cal-cell'];
+      if (!cell.inCurrentMonth) classes.push('outside');
+      if (cell.isToday) classes.push('today');
+      if (cell.dateKey === tenantSelectedDateKey) classes.push('selected');
+
+      const dueChips = cell.dueEvents
+        .map((ev) => {
+          const label =
+            ev.status === 'Paid'
+              ? `✓ Paid ₱${ev.amount.toLocaleString()}`
+              : ev.status === 'Overdue'
+                ? `! Overdue ₱${ev.remaining.toLocaleString()}`
+                : ev.status === 'Scheduled'
+                  ? `Future ₱${ev.amount.toLocaleString()}`
+                  : `Due ₱${ev.remaining.toLocaleString()}`;
+          return `<div class="cal-chip ${chipClass(ev.status)}" title="${escapeHtml(ev.dueDate)}">${escapeHtml(label)}</div>`;
+        })
+        .join('');
+
+      const payChips = cell.paymentEvents
+        .map((p) => {
+          const pLabel = `${p.status === 'Paid' ? '✓' : p.status === 'Failed' ? '✕' : '⏱'} ₱${p.amount.toLocaleString()}`;
+          return `<div class="cal-chip ${chipClass(p.status)}" title="${escapeHtml(p.purpose)}">${escapeHtml(pLabel)}</div>`;
+        })
+        .join('');
+
+      return `
+        <div class="${classes.join(' ')}" data-action="tenant-cal-select-day" data-date-key="${escapeHtml(cell.dateKey)}">
+          <div class="cal-day-num">${cell.dayNumber}</div>
+          ${dueChips}
+          ${payChips}
+        </div>`;
+    })
+    .join('');
+
+  if (detailEl) {
+    const selectedCell = cal.days.find((d) => d.dateKey === tenantSelectedDateKey);
+    if (selectedCell && (selectedCell.dueEvents.length || selectedCell.paymentEvents.length)) {
+      const items = [
+        ...selectedCell.dueEvents.map(
+          (ev) =>
+            `<div><strong>Rent Due (${escapeHtml(ev.status)}):</strong> ₱${ev.amount.toLocaleString()} (${escapeHtml(ev.room)}) — Remaining: ₱${ev.remaining.toLocaleString()}</div>`
+        ),
+        ...selectedCell.paymentEvents.map(
+          (p) =>
+            `<div><strong>Payment (${escapeHtml(p.status)}):</strong> ₱${p.amount.toLocaleString()} • ${escapeHtml(p.purpose)} (${escapeHtml(p.referenceNumber || p.method)})</div>`
+        )
+      ].join('');
+      detailEl.style.display = 'block';
+      detailEl.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">Details for ${escapeHtml(selectedCell.dateKey)}</div>${items}`;
+    } else {
+      detailEl.style.display = 'none';
+      detailEl.innerHTML = '';
+    }
+  }
+
+  if (upcomingEl) {
+    if (!cal.upcomingSchedule.length) {
+      upcomingEl.innerHTML =
+        '<div style="color:#64748b;font-size:12px;">All scheduled dues settled.</div>';
+    } else {
+      upcomingEl.innerHTML = cal.upcomingSchedule
+        .map(
+          (item) => `
+          <div class="cal-upcoming-item">
+            <div>
+              <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
+              <div style="color:#64748b;font-size:11px;">₱${item.amount.toLocaleString()} • ${escapeHtml(item.room)}</div>
+            </div>
+            <span class="cal-chip ${chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
+          </div>`
+        )
+        .join('');
+    }
+  }
 }
 
 // Apply immediately from session storage
@@ -956,6 +1076,7 @@ async function loadTenantPaymentHistory() {
   }
 
   renderPaymentHistoryTable(payments);
+  renderTenantPaymentCalendar();
 }
 
 // Render payment history rows
@@ -1565,6 +1686,32 @@ document.addEventListener('click', function (event) {
       break;
     case 'print-receipt':
       printReceipt();
+      break;
+    case 'tenant-cal-prev':
+      tenantCalMonth -= 1;
+      if (tenantCalMonth < 0) {
+        tenantCalMonth = 11;
+        tenantCalYear -= 1;
+      }
+      renderTenantPaymentCalendar();
+      break;
+    case 'tenant-cal-next':
+      tenantCalMonth += 1;
+      if (tenantCalMonth > 11) {
+        tenantCalMonth = 0;
+        tenantCalYear += 1;
+      }
+      renderTenantPaymentCalendar();
+      break;
+    case 'tenant-cal-today':
+      tenantCalYear = new Date().getFullYear();
+      tenantCalMonth = new Date().getMonth();
+      tenantSelectedDateKey = '';
+      renderTenantPaymentCalendar();
+      break;
+    case 'tenant-cal-select-day':
+      tenantSelectedDateKey = button.dataset.dateKey || '';
+      renderTenantPaymentCalendar();
       break;
     default:
       break;

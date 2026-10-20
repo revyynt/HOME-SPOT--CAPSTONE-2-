@@ -200,7 +200,8 @@
                   </svg>
                   <span class="text-sm font-medium">Add New Listing</span>
                 </button>
-                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                <button data-tab-button="tenant-payments"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -414,21 +415,79 @@
 
         <!-- Tenant Payments Tab -->
         <div data-tab-content="tenant-payments" class="hidden">
-          <h3 class="text-xl font-bold mb-6">Tenant Payment Management</h3>
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-bold">Tenant Payment &amp; Future Schedule Calendar</h3>
+              <p class="text-sm text-gray-500">
+                Track past tenant payments, current monthly collections, and future scheduled due dates.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="adminCalendarTenantFilter" class="text-xs font-semibold text-gray-600">Tenant:</label>
+              <select id="adminCalendarTenantFilter" class="px-3 py-2 border rounded-lg text-sm bg-white">
+                <option value="">All Tenants</option>
+              </select>
+            </div>
+          </div>
 
           <!-- Payment Summary Cards -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white border rounded-lg p-4">
-              <div class="text-sm text-gray-600 mb-1">Total Expected This Month</div>
-              <div class="text-2xl font-bold text-gray-900">₱60,000</div>
+              <div class="text-sm text-gray-600 mb-1">Total Expected (Selected Month)</div>
+              <div id="adminPaymentExpected" class="text-2xl font-bold text-gray-900">₱60,000</div>
             </div>
             <div class="bg-white border rounded-lg p-4">
-              <div class="text-sm text-gray-600 mb-1">Paid This Month</div>
-              <div class="text-2xl font-bold text-green-600">₱45,000</div>
+              <div class="text-sm text-gray-600 mb-1">Paid (Selected Month)</div>
+              <div id="adminPaymentPaid" class="text-2xl font-bold text-green-600">₱45,000</div>
             </div>
             <div class="bg-white border rounded-lg p-4">
               <div class="text-sm text-gray-600 mb-1">Overdue Payments</div>
-              <div class="text-2xl font-bold text-red-600">₱5,000</div>
+              <div id="adminPaymentOverdue" class="text-2xl font-bold text-red-600">₱5,000</div>
+            </div>
+          </div>
+
+          <!-- Interactive Admin Payment Calendar -->
+          <div id="adminPaymentCalendarSection" class="bg-white border rounded-lg p-6 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div class="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Paid</span>
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Due This Month</span>
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Future Payment</span>
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Overdue</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" data-action="admin-cal-prev"
+                  class="px-3 py-1.5 border rounded-lg hover:bg-gray-50 text-sm font-bold">&lsaquo;</button>
+                <span id="adminCalendarMonthLabel"
+                  class="text-sm font-bold text-gray-900 min-w-[140px] text-center">Month Year</span>
+                <button type="button" data-action="admin-cal-next"
+                  class="px-3 py-1.5 border rounded-lg hover:bg-gray-50 text-sm font-bold">&rsaquo;</button>
+                <button type="button" data-action="admin-cal-today"
+                  class="px-3 py-1.5 border rounded-lg hover:bg-gray-50 text-xs font-semibold">Today</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-7 text-center text-xs font-bold uppercase text-gray-500 pb-2 border-b">
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
+            <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1.5 mt-2"></div>
+
+            <div id="adminCalendarDayDetail"
+              class="hidden mt-4 p-4 rounded-lg bg-slate-50 border text-sm text-gray-800"></div>
+
+            <div class="mt-5 pt-4 border-t">
+              <h5 class="text-xs font-bold uppercase text-gray-500 mb-3">Upcoming &amp; Future Scheduled Payments</h5>
+              <div id="adminUpcomingScheduleList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
           </div>
 
@@ -461,7 +520,7 @@
                     </th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody id="adminPaymentDueTableBody" class="bg-white divide-y divide-gray-200">
                   <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">

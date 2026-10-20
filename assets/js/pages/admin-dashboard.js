@@ -12,7 +12,8 @@ import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData } from '../lib/rooms.js';
-import { escapeHtml } from '../lib/format.js';
+import { escapeHtml, formatPHP, initials } from '../lib/format.js';
+import { buildPaymentCalendar } from '../lib/payment-calendar.js';
 import { Toast } from '../render/toast.js';
 
 const ROOM_MEDIA_BUCKET = 'room-media';
@@ -466,6 +467,273 @@ function initAdminListings() {
   });
 }
 
+function initAdminPaymentCalendar() {
+  const section = document.getElementById('adminPaymentCalendarSection');
+  const gridEl = document.getElementById('adminCalendarGrid');
+  const monthLabelEl = document.getElementById('adminCalendarMonthLabel');
+  const filterSelect = document.getElementById('adminCalendarTenantFilter');
+  const detailEl = document.getElementById('adminCalendarDayDetail');
+  const upcomingEl = document.getElementById('adminUpcomingScheduleList');
+  const dueTableBody = document.getElementById('adminPaymentDueTableBody');
+  if (!section || !gridEl || !monthLabelEl) return;
+
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
+  let selectedDateKey = '';
+  let tenantFilter = '';
+  let calTenants = [];
+  let calPayments = [];
+
+  const badgeStyle = (status) => {
+    if (status === 'Paid') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (status === 'Overdue' || status === 'Failed')
+      return 'bg-red-100 text-red-800 border-red-200';
+    if (status === 'Scheduled') return 'bg-blue-100 text-blue-800 border-blue-200';
+    return 'bg-amber-100 text-amber-800 border-amber-200';
+  };
+
+  const renderCalendar = () => {
+    const cal = buildPaymentCalendar({
+      tenants: calTenants,
+      payments: calPayments,
+      year: calYear,
+      month: calMonth,
+      tenantFilter
+    });
+
+    monthLabelEl.textContent = cal.monthLabel;
+
+    const expectedEl = document.getElementById('adminPaymentExpected');
+    const paidEl = document.getElementById('adminPaymentPaid');
+    const overdueEl = document.getElementById('adminPaymentOverdue');
+    if (expectedEl) expectedEl.textContent = formatPHP(cal.monthSummary.totalExpected);
+    if (paidEl) paidEl.textContent = formatPHP(cal.monthSummary.totalPaid);
+    if (overdueEl) overdueEl.textContent = formatPHP(cal.monthSummary.totalOverdue);
+
+    gridEl.innerHTML = cal.days
+      .map((cell) => {
+        const baseCls = [
+          'min-h-[82px] border rounded-lg p-1.5 flex flex-col gap-1 cursor-pointer transition-colors'
+        ];
+        if (!cell.inCurrentMonth) baseCls.push('bg-gray-50 opacity-45');
+        else baseCls.push('bg-white hover:bg-gray-50');
+        if (cell.isToday) baseCls.push('ring-2 ring-emerald-500 border-emerald-500');
+        if (cell.dateKey === selectedDateKey) baseCls.push('ring-2 ring-blue-600 bg-blue-50/40');
+
+        const dueHtml = cell.dueEvents
+          .slice(0, 3)
+          .map((ev) => {
+            const prefix =
+              ev.status === 'Paid'
+                ? '✓'
+                : ev.status === 'Overdue'
+                  ? '!'
+                  : ev.status === 'Scheduled'
+                    ? '📅'
+                    : '•';
+            return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(ev.status)}" title="${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)}) - ${escapeHtml(formatPHP(ev.amount))} [${escapeHtml(ev.status)}]">${prefix} ${escapeHtml(ev.tenantName)}: ${escapeHtml(formatPHP(ev.amount))}</div>`;
+          })
+          .join('');
+
+        const payHtml = cell.paymentEvents
+          .slice(0, 2)
+          .map(
+            (p) =>
+              `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(p.status)}" title="Payment by ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))} (${escapeHtml(p.status)})">💳 ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))}</div>`
+          )
+          .join('');
+
+        const extraCount =
+          Math.max(0, cell.dueEvents.length - 3) + Math.max(0, cell.paymentEvents.length - 2);
+        const moreHtml =
+          extraCount > 0
+            ? `<div class="text-[10px] text-gray-500 font-medium">+${extraCount} more</div>`
+            : '';
+
+        return `
+          <div class="${baseCls.join(' ')}" data-action="admin-cal-select-day" data-date-key="${escapeHtml(cell.dateKey)}">
+            <div class="text-xs font-bold text-gray-700">${cell.dayNumber}</div>
+            ${dueHtml}
+            ${payHtml}
+            ${moreHtml}
+          </div>`;
+      })
+      .join('');
+
+    if (detailEl) {
+      const selectedCell = cal.days.find((d) => d.dateKey === selectedDateKey);
+      if (selectedCell && (selectedCell.dueEvents.length || selectedCell.paymentEvents.length)) {
+        const lines = [
+          ...selectedCell.dueEvents.map(
+            (ev) =>
+              `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
+                <span><strong>${escapeHtml(ev.tenantName)}</strong> (${escapeHtml(ev.room)}) — Scheduled Rent Due</span>
+                <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(ev.status)}">${escapeHtml(ev.status)} • ${escapeHtml(formatPHP(ev.amount))}</span>
+              </div>`
+          ),
+          ...selectedCell.paymentEvents.map(
+            (p) =>
+              `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
+                <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(p.referenceNumber || p.method)})</span>
+                <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
+              </div>`
+          )
+        ].join('');
+        detailEl.classList.remove('hidden');
+        detailEl.innerHTML = `<div class="font-bold text-gray-900 mb-2">Events on ${escapeHtml(selectedCell.dateKey)}</div><div class="space-y-1">${lines}</div>`;
+      } else {
+        detailEl.classList.add('hidden');
+        detailEl.innerHTML = '';
+      }
+    }
+
+    if (upcomingEl) {
+      if (!cal.upcomingSchedule.length) {
+        upcomingEl.innerHTML =
+          '<p class="text-xs text-gray-400 italic">No upcoming unpaid tenant schedules found.</p>';
+      } else {
+        upcomingEl.innerHTML = cal.upcomingSchedule
+          .map(
+            (item) => `
+            <div class="p-3 rounded-lg border bg-gray-50 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs font-bold text-gray-900">${escapeHtml(item.tenantName)} • ${escapeHtml(item.room)}</div>
+                <div class="text-xs text-gray-600">${escapeHtml(item.dueDate)} — <strong>${escapeHtml(formatPHP(item.amount))}</strong></div>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeStyle(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
+            </div>`
+          )
+          .join('');
+      }
+    }
+
+    if (dueTableBody && cal.monthSummary.rows.length > 0) {
+      dueTableBody.innerHTML = cal.monthSummary.rows
+        .map((row) => {
+          const payload = encodeURIComponent(
+            JSON.stringify({
+              name: row.tenantName,
+              room: row.room,
+              amount: row.amount,
+              dueDate: row.dueDate,
+              status: row.status
+            })
+          );
+          const pillCls =
+            row.status === 'Paid'
+              ? 'bg-green-100 text-green-800'
+              : row.status === 'Overdue'
+                ? 'bg-red-100 text-red-800'
+                : row.status === 'Scheduled'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-yellow-100 text-yellow-800';
+          return `
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
+                    ${escapeHtml(initials(row.tenantName))}
+                  </div>
+                  <div class="text-sm font-medium text-gray-900">${escapeHtml(row.tenantName)}</div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.room)}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${escapeHtml(formatPHP(row.amount))}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.dueDate)}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${pillCls}">${escapeHtml(row.status)}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <button data-open-modal="payment" data-tenant="${payload}" class="text-blue-600 hover:text-blue-800 mr-3">
+                  View Payment
+                </button>
+                <button data-open-modal="dueDate" data-tenant="${payload}" class="text-green-600 hover:text-green-800">
+                  View Due Date
+                </button>
+              </td>
+            </tr>`;
+        })
+        .join('');
+    }
+  };
+
+  const syncTenantDropdown = () => {
+    if (!filterSelect) return;
+    const prev = filterSelect.value;
+    filterSelect.innerHTML =
+      '<option value="">All Tenants</option>' +
+      calTenants
+        .map(
+          (t) =>
+            `<option value="${escapeHtml(t.email || t.id)}">${escapeHtml(t.name || 'Tenant')} (${escapeHtml(t.room || 'Unassigned')})</option>`
+        )
+        .join('');
+    filterSelect.value = prev;
+  };
+
+  supabaseData.onSnapshot(
+    supabaseData.collection(supabase, 'tenants'),
+    (snap) => {
+      calTenants = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      syncTenantDropdown();
+      renderCalendar();
+    },
+    (err) => console.error('Calendar tenants listener failed:', err)
+  );
+
+  supabaseData.onSnapshot(
+    supabaseData.collection(supabase, 'payments'),
+    (snap) => {
+      calPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      renderCalendar();
+    },
+    (err) => console.error('Calendar payments listener failed:', err)
+  );
+
+  filterSelect?.addEventListener('change', () => {
+    tenantFilter = filterSelect.value;
+    renderCalendar();
+  });
+
+  section.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const btn = target?.closest('[data-action]');
+    if (!btn) return;
+    switch (btn.dataset.action) {
+      case 'admin-cal-prev':
+        calMonth -= 1;
+        if (calMonth < 0) {
+          calMonth = 11;
+          calYear -= 1;
+        }
+        renderCalendar();
+        break;
+      case 'admin-cal-next':
+        calMonth += 1;
+        if (calMonth > 11) {
+          calMonth = 0;
+          calYear += 1;
+        }
+        renderCalendar();
+        break;
+      case 'admin-cal-today':
+        calYear = new Date().getFullYear();
+        calMonth = new Date().getMonth();
+        selectedDateKey = '';
+        renderCalendar();
+        break;
+      case 'admin-cal-select-day':
+        selectedDateKey = btn.dataset.dateKey || '';
+        renderCalendar();
+        break;
+      default:
+        break;
+    }
+  });
+
+  renderCalendar();
+}
+
 guardPage({
   role: 'admin',
   redirectTo: 'login.html',
@@ -485,6 +753,7 @@ document.addEventListener(
     initCreateTenant();
     listenToTenants();
     initAdminListings();
+    initAdminPaymentCalendar();
   },
   { once: true }
 );
