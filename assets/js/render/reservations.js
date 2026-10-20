@@ -123,7 +123,15 @@ export async function approveReservation(reservationId) {
  * @param {string} reservationId
  */
 export async function declineReservation(reservationId) {
-  const reason = prompt('Enter reason for declining (optional):');
+  const reason = await Toast.prompt({
+    title: 'Decline Reservation Request',
+    message: 'Enter a reason for declining (optional):',
+    placeholder: 'e.g. Selected room is currently unavailable',
+    confirmText: 'Decline Reservation',
+    cancelText: 'Cancel',
+    danger: true
+  });
+  if (reason === null) return;
 
   if (!isDataReady()) {
     Toast.error('Supabase is not available.');

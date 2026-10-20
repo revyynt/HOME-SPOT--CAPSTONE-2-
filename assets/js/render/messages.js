@@ -331,7 +331,13 @@ export function renderMessages(docs) {
  * @param {string} messageId
  */
 export async function replyToMessage(messageId) {
-  const response = prompt('Enter your reply:');
+  const response = await Toast.prompt({
+    title: 'Reply to Inquiry',
+    message: 'Enter your reply to this inquiry below:',
+    placeholder: 'Type your reply here...',
+    confirmText: 'Send Reply',
+    cancelText: 'Cancel'
+  });
   if (!response) return;
 
   if (!isDataReady()) {

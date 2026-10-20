@@ -1,4 +1,5 @@
 -- Migration: Allow authenticated tenants to insert their verified payment records
+drop policy if exists "tenants can insert own payments" on public.payments;
 create policy "tenants can insert own payments"
   on public.payments for insert to authenticated
   with check (
@@ -7,6 +8,7 @@ create policy "tenants can insert own payments"
     or public.is_staff()
   );
 
+drop policy if exists "tenants can insert own payment documents" on public.app_documents;
 create policy "tenants can insert own payment documents"
   on public.app_documents for insert to authenticated
   with check (

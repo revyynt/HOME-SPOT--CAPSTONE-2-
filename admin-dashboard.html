@@ -33,7 +33,7 @@
     </div>
   </header>
 
-  <div class="p-6 max-w-7xl mx-auto">
+  <div class="p-6 max-w-[1600px] w-full mx-auto">
     <!-- Welcome Section -->
     <div class="mb-8">
       <h2 class="text-3xl font-bold mb-2">Welcome back, Admin!</h2>
@@ -62,7 +62,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600 mb-1">Active Bookings</p>
-            <p class="text-3xl font-bold">12</p>
+            <p id="activeBookingsCount" class="text-3xl font-bold">0</p>
           </div>
           <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +77,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600 mb-1">Pending Requests</p>
-            <p id="pendingRequestsCount" class="text-3xl font-bold">5</p>
+            <p id="pendingRequestsCount" class="text-3xl font-bold">0</p>
           </div>
           <div class="bg-yellow-600 w-12 h-12 rounded-lg flex items-center justify-center">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,7 +92,7 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm text-gray-600 mb-1">Unread Messages</p>
-            <p id="unreadMessagesCount" class="text-3xl font-bold">3</p>
+            <p id="unreadMessagesCount" class="text-3xl font-bold">0</p>
           </div>
           <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,45 +148,8 @@
             <!-- Recent Activity -->
             <div class="bg-white border rounded-lg p-6">
               <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
-              <div class="space-y-4">
-                <div class="flex items-start gap-3 pb-4 border-b">
-                  <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium">New booking confirmed</p>
-                    <p class="text-xs text-gray-500">Single Occupancy Room - 2 hours ago</p>
-                  </div>
-                </div>
-                <div class="flex items-start gap-3 pb-4 border-b">
-                  <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium">New reservation request</p>
-                    <p class="text-xs text-gray-500">Double Occupancy Room - 5 hours ago</p>
-                  </div>
-                </div>
-                <div class="flex items-start gap-3">
-                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-                      </path>
-                    </svg>
-                  </div>
-                  <div>
-                    <p class="text-sm font-medium">New message received</p>
-                    <p class="text-xs text-gray-500">From John Reyes - 10 mins ago</p>
-                  </div>
-                </div>
+              <div id="adminRecentActivityList" class="space-y-4">
+                <p class="text-sm text-gray-500 py-4 text-center">Loading recent activity from Supabase...</p>
               </div>
             </div>
 
@@ -194,21 +157,23 @@
             <div class="bg-white border rounded-lg p-6">
               <h3 class="text-xl font-bold mb-4">Quick Actions</h3>
               <div class="grid grid-cols-2 gap-4">
-                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                <button type="button" data-tab-button="listings"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                   </svg>
                   <span class="text-sm font-medium">Add New Listing</span>
                 </button>
-                <button data-tab-button="tenant-payments"
-                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                <button type="button" data-tab-button="tenant-payments"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
                   <span class="text-sm font-medium">Manage Calendar</span>
                 </button>
-                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                <button type="button" data-tab-button="tenant-messages"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
@@ -216,13 +181,14 @@
                   </svg>
                   <span class="text-sm font-medium">View Messages</span>
                 </button>
-                <button class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50">
+                <button type="button" data-action="open-create-tenant"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
                   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
                     </path>
                   </svg>
-                  <span class="text-sm font-medium">View Reports</span>
+                  <span class="text-sm font-medium">Create Tenant Account</span>
                 </button>
               </div>
             </div>
@@ -358,22 +324,22 @@
 
           <!-- Tenants Table Container -->
           <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
+            <div class="w-full">
+              <table class="w-full text-left border-collapse table-auto">
                 <thead class="bg-gray-50/80 border-b text-xs font-semibold text-gray-500 uppercase tracking-wider">
                   <tr>
-                    <th class="px-6 py-3.5">Tenant</th>
-                    <th class="px-6 py-3.5">Assigned Room</th>
-                    <th class="px-6 py-3.5">Contact</th>
-                    <th class="px-6 py-3.5">Move-in Date</th>
-                    <th class="px-6 py-3.5">Monthly Rent</th>
-                    <th class="px-6 py-3.5">Status</th>
-                    <th class="px-6 py-3.5 text-right">Actions</th>
+                    <th class="px-4 py-3.5">Tenant</th>
+                    <th class="px-4 py-3.5">Assigned Room</th>
+                    <th class="px-4 py-3.5">Contact</th>
+                    <th class="px-4 py-3.5">Move-in Date</th>
+                    <th class="px-4 py-3.5">Monthly Rent</th>
+                    <th class="px-4 py-3.5">Status</th>
+                    <th class="px-4 py-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="tenantsTableBody" class="divide-y divide-gray-100 text-sm">
                   <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                    <td colspan="7" class="px-4 py-12 text-center text-gray-500">
                       <div class="flex flex-col items-center justify-center gap-2">
                         <div class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full">
                         </div>
@@ -434,15 +400,15 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div class="bg-white border rounded-lg p-4">
               <div class="text-sm text-gray-600 mb-1">Total Expected (Selected Month)</div>
-              <div id="adminPaymentExpected" class="text-2xl font-bold text-gray-900">₱60,000</div>
+              <div id="adminPaymentExpected" class="text-2xl font-bold text-gray-900">₱0.00</div>
             </div>
             <div class="bg-white border rounded-lg p-4">
               <div class="text-sm text-gray-600 mb-1">Paid (Selected Month)</div>
-              <div id="adminPaymentPaid" class="text-2xl font-bold text-green-600">₱45,000</div>
+              <div id="adminPaymentPaid" class="text-2xl font-bold text-green-600">₱0.00</div>
             </div>
             <div class="bg-white border rounded-lg p-4">
               <div class="text-sm text-gray-600 mb-1">Overdue Payments</div>
-              <div id="adminPaymentOverdue" class="text-2xl font-bold text-red-600">₱5,000</div>
+              <div id="adminPaymentOverdue" class="text-2xl font-bold text-red-600">₱0.00</div>
             </div>
           </div>
 
@@ -522,165 +488,8 @@
                 </thead>
                 <tbody id="adminPaymentDueTableBody" class="bg-white divide-y divide-gray-200">
                   <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div
-                          class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
-                          JD
-                        </div>
-                        <div class="text-sm font-medium text-gray-900">Juan Dela Cruz</div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 201</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      ₱5,000
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 5, 2026</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <button data-open-modal="payment"
-                        data-tenant="%7B%22name%22%3A%22Juan%20Dela%20Cruz%22%2C%22room%22%3A%22Room%20201%22%2C%22amount%22%3A5000%2C%22dueDate%22%3A%22May%205%2C%202026%22%2C%22status%22%3A%22Pending%22%7D"
-                        class="text-blue-600 hover:text-blue-800 mr-3">
-                        View Payment
-                      </button>
-                      <button data-open-modal="dueDate"
-                        data-tenant="%7B%22name%22%3A%22Juan%20Dela%20Cruz%22%2C%22room%22%3A%22Room%20201%22%2C%22dueDate%22%3A%22May%205%2C%202026%22%7D"
-                        class="text-green-600 hover:text-green-800">
-                        View Due Date
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div
-                          class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-semibold text-sm mr-3">
-                          MS
-                        </div>
-                        <div class="text-sm font-medium text-gray-900">Maria Santos</div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 105</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      ₱4,500
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 3, 2026</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Paid</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <button data-open-modal="payment"
-                        data-tenant="%7B%22name%22%3A%22Maria%20Santos%22%2C%22room%22%3A%22Room%20105%22%2C%22amount%22%3A4500%2C%22dueDate%22%3A%22May%203%2C%202026%22%2C%22status%22%3A%22Paid%22%7D"
-                        class="text-blue-600 hover:text-blue-800 mr-3">
-                        View Payment
-                      </button>
-                      <button data-open-modal="dueDate"
-                        data-tenant="%7B%22name%22%3A%22Maria%20Santos%22%2C%22room%22%3A%22Room%20105%22%2C%22dueDate%22%3A%22May%203%2C%202026%22%7D"
-                        class="text-green-600 hover:text-green-800">
-                        View Due Date
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div
-                          class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm mr-3">
-                          AR
-                        </div>
-                        <div class="text-sm font-medium text-gray-900">Anna Reyes</div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 302</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      ₱5,500
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 1, 2026</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Paid</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <button data-open-modal="payment"
-                        data-tenant="%7B%22name%22%3A%22Anna%20Reyes%22%2C%22room%22%3A%22Room%20302%22%2C%22amount%22%3A5500%2C%22dueDate%22%3A%22May%201%2C%202026%22%2C%22status%22%3A%22Paid%22%7D"
-                        class="text-blue-600 hover:text-blue-800 mr-3">
-                        View Payment
-                      </button>
-                      <button data-open-modal="dueDate"
-                        data-tenant="%7B%22name%22%3A%22Anna%20Reyes%22%2C%22room%22%3A%22Room%20302%22%2C%22dueDate%22%3A%22May%201%2C%202026%22%7D"
-                        class="text-green-600 hover:text-green-800">
-                        View Due Date
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div
-                          class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-semibold text-sm mr-3">
-                          PT
-                        </div>
-                        <div class="text-sm font-medium text-gray-900">Pedro Torres</div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 410</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      ₱5,000
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      Apr 25, 2026
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Overdue</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <button data-open-modal="payment"
-                        data-tenant="%7B%22name%22%3A%22Pedro%20Torres%22%2C%22room%22%3A%22Room%20410%22%2C%22amount%22%3A5000%2C%22dueDate%22%3A%22Apr%2025%2C%202026%22%2C%22status%22%3A%22Overdue%22%7D"
-                        class="text-blue-600 hover:text-blue-800 mr-3">
-                        View Payment
-                      </button>
-                      <button data-open-modal="dueDate"
-                        data-tenant="%7B%22name%22%3A%22Pedro%20Torres%22%2C%22room%22%3A%22Room%20410%22%2C%22dueDate%22%3A%22Apr%2025%2C%202026%22%7D"
-                        class="text-green-600 hover:text-green-800">
-                        View Due Date
-                      </button>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="flex items-center">
-                        <div
-                          class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold text-sm mr-3">
-                          LG
-                        </div>
-                        <div class="text-sm font-medium text-gray-900">Lisa Garcia</div>
-                      </div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 208</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                      ₱4,000
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 8, 2026</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                      <span
-                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                      <button data-open-modal="payment"
-                        data-tenant="%7B%22name%22%3A%22Lisa%20Garcia%22%2C%22room%22%3A%22Room%20208%22%2C%22amount%22%3A4000%2C%22dueDate%22%3A%22May%208%2C%202026%22%2C%22status%22%3A%22Pending%22%7D"
-                        class="text-blue-600 hover:text-blue-800 mr-3">
-                        View Payment
-                      </button>
-                      <button data-open-modal="dueDate"
-                        data-tenant="%7B%22name%22%3A%22Lisa%20Garcia%22%2C%22room%22%3A%22Room%20208%22%2C%22dueDate%22%3A%22May%208%2C%202026%22%7D"
-                        class="text-green-600 hover:text-green-800">
-                        View Due Date
-                      </button>
+                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
+                      Loading tenant payment schedule from Supabase...
                     </td>
                   </tr>
                 </tbody>
@@ -816,24 +625,16 @@
             </div>
             <div class="flex justify-between">
               <span class="text-gray-600">Payment Method:</span>
-              <span class="font-medium">GCash</span>
+              <span id="modalPaymentMethod" class="font-medium">PayMongo</span>
             </div>
           </div>
 
           <div class="border-t pt-4">
             <h4 class="font-semibold mb-3">Payment History</h4>
-            <div class="space-y-2">
+            <div id="modalPaymentHistoryList" class="space-y-2">
               <div class="flex justify-between text-sm">
                 <span class="text-gray-600">April 2026</span>
                 <span class="text-green-600 font-medium">✓ Paid on Apr 3, 2026</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">March 2026</span>
-                <span class="text-green-600 font-medium">✓ Paid on Mar 5, 2026</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">February 2026</span>
-                <span class="text-green-600 font-medium">✓ Paid on Feb 2, 2026</span>
               </div>
             </div>
           </div>
@@ -847,7 +648,7 @@
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
                   </path>
                 </svg>
-                <span class="text-gray-600">Email: tenant@example.com</span>
+                <span id="modalTenantEmail" class="text-gray-600">Email: tenant@example.com</span>
               </div>
               <div class="flex items-center gap-2">
                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -855,19 +656,31 @@
                     d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
                   </path>
                 </svg>
-                <span class="text-gray-600">Phone: +63 912 345 6789</span>
+                <span id="modalTenantPhone" class="text-gray-600">Phone: +63 912 345 6789</span>
               </div>
             </div>
           </div>
+
+          <div id="modalReminderStatus"
+            class="hidden rounded-lg p-3 text-xs border bg-blue-50 text-blue-800 border-blue-200"></div>
         </div>
       </div>
-      <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
-        <button data-action="close-payment-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
-          Close
-        </button>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-          Send Reminder
-        </button>
+      <div class="p-6 border-t bg-gray-50 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button type="button" data-action="send-reminder-gmail"
+            class="px-3 py-1.5 border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold">
+            Gmail Compose
+          </button>
+        </div>
+        <div class="flex items-center gap-3">
+          <button data-action="close-payment-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+            Close
+          </button>
+          <button type="button" data-action="send-payment-reminder" id="sendPaymentReminderBtn"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+            Send Reminder
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -910,15 +723,20 @@
           <div class="space-y-2">
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">Monthly Rent:</span>
-              <span class="font-semibold">₱5,000.00</span>
+              <span id="dueDateModalRent" class="font-semibold">₱5,000.00</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">Payment Cycle:</span>
-              <span class="font-medium">Monthly (5th of each month)</span>
+              <span id="dueDateModalCycle" class="font-medium">Monthly (5th of each month)</span>
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-gray-600">Next Due Date:</span>
-              <span class="font-medium">June 5, 2026</span>
+              <span id="dueDateModalNextDate" class="font-medium">June 5, 2026</span>
+            </div>
+            <div class="pt-2 border-t flex items-center justify-between gap-3 text-sm">
+              <label for="dueDateModalDayInput" class="text-gray-700 font-medium">Set Monthly Due Day (1–31):</label>
+              <input id="dueDateModalDayInput" type="number" min="1" max="31" value="5"
+                class="w-24 px-3 py-1.5 border rounded-lg text-sm font-semibold text-right" />
             </div>
           </div>
 
@@ -943,7 +761,8 @@
         <button data-action="close-due-date-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
           Close
         </button>
-        <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+        <button type="button" data-action="save-due-date" id="saveDueDateBtn"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
           Update Due Date
         </button>
       </div>
@@ -1144,6 +963,48 @@
           </button>
         </div>
       </form>
+
+      <!-- In-Modal Tenant Account Created Confirmation -->
+      <div id="createTenantSuccess" class="hidden p-6 space-y-5">
+        <div class="flex items-start gap-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+          <div
+            class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 font-bold text-lg">
+            ✓
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-emerald-950">
+              Tenant account created for <span id="createdTenantNameLabel"></span>
+            </h4>
+            <p class="text-xs text-emerald-800 mt-0.5">
+              Share these sign-in credentials with the tenant now — the temporary password is shown only once and is not
+              stored anywhere.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-sm">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-gray-500 font-medium">Login Email:</span>
+            <span id="createdTenantEmailValue" class="font-mono font-semibold text-gray-900"></span>
+          </div>
+          <div class="flex items-center justify-between gap-2 border-t pt-3">
+            <span class="text-gray-500 font-medium">Temporary Password:</span>
+            <span id="createdTenantPasswordValue"
+              class="font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded border border-blue-200"></span>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t flex items-center justify-between gap-3">
+          <button type="button" data-action="copy-created-tenant-password" id="copyCreatedTenantBtn"
+            class="px-4 py-2.5 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold transition-colors">
+            Copy Login &amp; Password
+          </button>
+          <button type="button" data-action="finish-create-tenant"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors">
+            Done
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 

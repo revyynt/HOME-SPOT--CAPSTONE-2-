@@ -95,7 +95,7 @@ create table if not exists public.tenants (
   name text not null,
   email text not null,
   phone text null,
-  room_id text null references public.rooms(id) on delete set null,
+  room_id text null,
   monthly_rent numeric(10, 2) not null default 0,
   due_day integer not null default 1 check (due_day between 1 and 31),
   move_in_date date null,
@@ -103,6 +103,8 @@ create table if not exists public.tenants (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.tenants drop constraint if exists tenants_room_id_fkey;
 
 create index if not exists tenants_email_idx on public.tenants (lower(email));
 create index if not exists tenants_room_idx on public.tenants (room_id);
@@ -114,7 +116,7 @@ create table if not exists public.reservations (
   name text not null,
   email text not null,
   phone text null,
-  room_id text null references public.rooms(id) on delete set null,
+  room_id text null,
   move_in_date date null,
   message text null,
   additional_info text null,
@@ -122,6 +124,8 @@ create table if not exists public.reservations (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.reservations drop constraint if exists reservations_room_id_fkey;
 
 create index if not exists reservations_email_idx on public.reservations (lower(email));
 create index if not exists reservations_status_idx on public.reservations (status);
@@ -133,7 +137,7 @@ create table if not exists public.messages (
   name text not null,
   email text not null,
   phone text null,
-  room_id text null references public.rooms(id) on delete set null,
+  room_id text null,
   message text not null,
   reply text null,
   sender text not null default 'tenant' check (sender in ('tenant', 'admin', 'guest')),
@@ -141,6 +145,8 @@ create table if not exists public.messages (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.messages drop constraint if exists messages_room_id_fkey;
 
 create index if not exists messages_email_idx on public.messages (lower(email));
 create index if not exists messages_status_idx on public.messages (status);
@@ -307,7 +313,7 @@ create policy "staff can write room and reservation records"
   to authenticated
   with check (
     (select auth.jwt()) -> 'app_metadata' ->> 'role' in ('admin', 'superadmin')
-    and collection = 'rooms'
+    and collection in ('rooms', 'tenants', 'reservations', 'messages', 'payments', 'adminTokens', 'inquiries')
   );
 
 drop policy if exists "users can create their own tenant profile" on public.app_documents;
@@ -659,6 +665,8 @@ begin
       updated_at = now();
   end if;
 
+  return NEW;
+exception when others then
   return NEW;
 end;
 $$;

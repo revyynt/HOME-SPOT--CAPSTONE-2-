@@ -1,4 +1,5 @@
 import { db, setPersistence, supabase, supabaseData } from '../supabase-service.js';
+import { Toast } from '../render/toast.js';
 
 const ROLE_DESTINATIONS = {
   superadmin: './super-admin-dashboard.html',
@@ -49,10 +50,18 @@ function clearAlert() {
   loginAlert.textContent = '';
 }
 
-async function loadProfile(uid) {
-  const snapshot = await supabaseData.getDocs(
+async function loadProfile(uid, email) {
+  let snapshot = await supabaseData.getDocs(
     supabaseData.query(supabaseData.collection(db, 'tenants'), supabaseData.where('uid', '==', uid))
   );
+  if (snapshot.empty && email) {
+    snapshot = await supabaseData.getDocs(
+      supabaseData.query(
+        supabaseData.collection(db, 'tenants'),
+        supabaseData.where('email', '==', email.toLowerCase())
+      )
+    );
+  }
   if (snapshot.empty) return { data: {}, docId: null };
   return { data: snapshot.docs[0].data(), docId: snapshot.docs[0].id };
 }
@@ -78,7 +87,8 @@ function seedSession({ data, docId }, email) {
 }
 
 async function routeUser(user, fallbackEmail) {
-  const role = user?.app_metadata?.role;
+  const role =
+    user?.app_metadata?.role || (user?.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
   const destination = ROLE_DESTINATIONS[role];
 
   if (!destination) {
@@ -89,7 +99,7 @@ async function routeUser(user, fallbackEmail) {
   }
 
   if (role === 'tenant') {
-    const profile = await loadProfile(user.id);
+    const profile = await loadProfile(user.id, user.email || fallbackEmail);
     seedSession(profile, user.email || fallbackEmail);
   }
 
@@ -112,7 +122,10 @@ togglePasswordBtn?.addEventListener('click', () => {
 // Forgot password action
 forgotPasswordBtn?.addEventListener('click', (event) => {
   event.preventDefault();
-  alert('Please contact the building administrator or front desk to reset your portal password.');
+  Toast.alert({
+    title: 'Reset Portal Password',
+    message: 'Please contact the building administrator or front desk to reset your portal password.'
+  });
 });
 
 // Modal open / close

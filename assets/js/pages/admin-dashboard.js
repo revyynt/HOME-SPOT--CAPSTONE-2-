@@ -607,53 +607,65 @@ function initAdminPaymentCalendar() {
       }
     }
 
-    if (dueTableBody && cal.monthSummary.rows.length > 0) {
-      dueTableBody.innerHTML = cal.monthSummary.rows
-        .map((row) => {
-          const payload = encodeURIComponent(
-            JSON.stringify({
-              name: row.tenantName,
-              room: row.room,
-              amount: row.amount,
-              dueDate: row.dueDate,
-              status: row.status
-            })
-          );
-          const pillCls =
-            row.status === 'Paid'
-              ? 'bg-green-100 text-green-800'
-              : row.status === 'Overdue'
-                ? 'bg-red-100 text-red-800'
-                : row.status === 'Scheduled'
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-yellow-100 text-yellow-800';
-          return `
-            <tr>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
-                    ${escapeHtml(initials(row.tenantName))}
+    if (dueTableBody) {
+      if (!cal.monthSummary.rows.length) {
+        dueTableBody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
+              No tenant payment schedules found for this month.
+            </td>
+          </tr>`;
+      } else {
+        dueTableBody.innerHTML = cal.monthSummary.rows
+          .map((row) => {
+            const payload = encodeURIComponent(
+              JSON.stringify({
+                id: row.tenantId,
+                name: row.tenantName,
+                email: row.tenantEmail,
+                room: row.room,
+                amount: row.amount,
+                dueDay: row.dueDay,
+                dueDate: row.dueDate,
+                status: row.status
+              })
+            );
+            const pillCls =
+              row.status === 'Paid'
+                ? 'bg-green-100 text-green-800'
+                : row.status === 'Overdue'
+                  ? 'bg-red-100 text-red-800'
+                  : row.status === 'Scheduled'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-yellow-100 text-yellow-800';
+            return `
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
+                      ${escapeHtml(initials(row.tenantName))}
+                    </div>
+                    <div class="text-sm font-medium text-gray-900">${escapeHtml(row.tenantName)}</div>
                   </div>
-                  <div class="text-sm font-medium text-gray-900">${escapeHtml(row.tenantName)}</div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.room)}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${escapeHtml(formatPHP(row.amount))}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.dueDate)}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${pillCls}">${escapeHtml(row.status)}</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button data-open-modal="payment" data-tenant="${payload}" class="text-blue-600 hover:text-blue-800 mr-3">
-                  View Payment
-                </button>
-                <button data-open-modal="dueDate" data-tenant="${payload}" class="text-green-600 hover:text-green-800">
-                  View Due Date
-                </button>
-              </td>
-            </tr>`;
-        })
-        .join('');
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.room)}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${escapeHtml(formatPHP(row.amount))}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.dueDate)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${pillCls}">${escapeHtml(row.status)}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  <button data-open-modal="payment" data-tenant="${payload}" class="text-blue-600 hover:text-blue-800 mr-3">
+                    View Payment
+                  </button>
+                  <button data-open-modal="dueDate" data-tenant="${payload}" class="text-green-600 hover:text-green-800">
+                    View Due Date
+                  </button>
+                </td>
+              </tr>`;
+          })
+          .join('');
+      }
     }
   };
 
@@ -734,6 +746,150 @@ function initAdminPaymentCalendar() {
   renderCalendar();
 }
 
+function formatTimeAgo(rawDate) {
+  const ts = rawDate ? new Date(rawDate).getTime() : NaN;
+  if (!Number.isFinite(ts)) return 'Recently';
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return 'Just now';
+  const mins = Math.floor(diffSec / 60);
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function initAdminOverviewActivity() {
+  const listEl = document.getElementById('adminRecentActivityList');
+  if (!listEl) return;
+
+  const state = {
+    tenants: [],
+    reservations: [],
+    messages: [],
+    payments: []
+  };
+
+  const renderActivity = () => {
+    const events = [];
+
+    for (const t of state.tenants) {
+      const time = new Date(t.createdAt || t.moveInDate || 0).getTime() || 0;
+      events.push({
+        time,
+        rawDate: t.createdAt || t.moveInDate,
+        type: 'tenant',
+        tab: 'tenants',
+        title: `Tenant account enrolled: ${t.name || 'Tenant'}`,
+        subtitle: `${t.room || 'Unassigned'} • ${formatTimeAgo(t.createdAt || t.moveInDate)}`
+      });
+    }
+
+    for (const p of state.payments) {
+      const raw = p.createdAt || p.paidAt || p.dateFormatted;
+      const time = new Date(raw || 0).getTime() || 0;
+      const isPaid = String(p.status || '').toLowerCase() === 'paid';
+      events.push({
+        time,
+        rawDate: raw,
+        type: isPaid ? 'tenant' : 'reservation',
+        tab: 'tenant-payments',
+        title: `Payment ${p.status || 'Recorded'} (${formatPHP(Number(p.amount) || 0)})`,
+        subtitle: `${p.tenantName || p.tenantEmail || 'Tenant'} • ${formatTimeAgo(raw)}`
+      });
+    }
+
+    for (const r of state.reservations) {
+      const raw = r.decisionAt || r.createdAt;
+      const time = new Date(raw || 0).getTime() || 0;
+      events.push({
+        time,
+        rawDate: raw,
+        type: r.status === 'Approved' ? 'tenant' : 'reservation',
+        tab: 'reservations',
+        title:
+          r.status === 'Approved'
+            ? `Booking confirmed for ${r.name || 'Guest'}`
+            : `Reservation request (${r.status || 'Pending'})`,
+        subtitle: `${r.room || 'Room'} • ${formatTimeAgo(raw)}`
+      });
+    }
+
+    for (const m of state.messages) {
+      if (m.sender === 'admin') continue;
+      const raw = m.createdAt;
+      const time = new Date(raw || 0).getTime() || 0;
+      const isTenant = m.sender === 'tenant';
+      events.push({
+        time,
+        rawDate: raw,
+        type: 'message',
+        tab: isTenant ? 'tenant-messages' : 'messages',
+        title: isTenant ? 'New tenant message received' : 'New public inquiry received',
+        subtitle: `From ${m.name || m.email || 'Visitor'} • ${formatTimeAgo(raw)}`
+      });
+    }
+
+    events.sort((a, b) => b.time - a.time);
+    const topEvents = events.slice(0, 6);
+
+    if (!topEvents.length) {
+      listEl.innerHTML =
+        '<p class="text-sm text-gray-500 py-6 text-center">No recent activity yet. New tenants, reservations, payments, and messages will appear here automatically.</p>';
+      return;
+    }
+
+    listEl.innerHTML = topEvents
+      .map((ev, idx) => {
+        const borderCls = idx < topEvents.length - 1 ? 'pb-4 border-b' : '';
+        let iconHtml;
+        if (ev.type === 'tenant') {
+          iconHtml = `
+            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+            </div>`;
+        } else if (ev.type === 'reservation') {
+          iconHtml = `
+            <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+            </div>`;
+        } else {
+          iconHtml = `
+            <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>`;
+        }
+
+        return `
+          <button type="button" data-tab-button="${escapeHtml(ev.tab)}" class="w-full text-left flex items-start gap-3 ${borderCls} hover:bg-gray-50/80 rounded-lg p-1.5 -m-1.5 transition-colors">
+            ${iconHtml}
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate">${escapeHtml(ev.title)}</p>
+              <p class="text-xs text-gray-500 truncate">${escapeHtml(ev.subtitle)}</p>
+            </div>
+          </button>`;
+      })
+      .join('');
+  };
+
+  for (const col of ['tenants', 'reservations', 'messages', 'payments']) {
+    supabaseData.onSnapshot(
+      supabaseData.collection(supabase, col),
+      (snap) => {
+        state[col] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderActivity();
+      },
+      (err) => console.warn(`Overview activity listener (${col}) failed:`, err)
+    );
+  }
+}
+
 guardPage({
   role: 'admin',
   redirectTo: 'login.html',
@@ -754,6 +910,7 @@ document.addEventListener(
     listenToTenants();
     initAdminListings();
     initAdminPaymentCalendar();
+    initAdminOverviewActivity();
   },
   { once: true }
 );

@@ -17,6 +17,7 @@ import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
+import { Toast } from '../render/toast.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
 // parsing and scenario cascade. The tested decision logic already exists in
@@ -430,7 +431,7 @@ async function saveProfile() {
   const newEmergency = (emergencyInput?.value || '').trim();
 
   if (!newName) {
-    alert('Please enter your full name.');
+    Toast.alert({ title: 'Missing Name', message: 'Please enter your full name.' });
     return;
   }
 
@@ -458,10 +459,13 @@ async function saveProfile() {
     sessionStorage.setItem('tenantPhone', newPhone);
     sessionStorage.setItem('tenantEmergencyContact', newEmergency);
     populateTenantUI();
-    alert('Profile updated successfully!');
+    Toast.alert({ title: 'Profile Updated', message: 'Your profile has been updated successfully!' });
   } catch (err) {
     console.error('Failed to update tenant profile:', err);
-    alert('Failed to save profile: ' + (err.message || 'Unknown error'));
+    Toast.alert({
+      title: 'Update Failed',
+      message: 'Failed to save profile: ' + (err.message || 'Unknown error')
+    });
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
@@ -518,11 +522,13 @@ document.getElementById('paymentForm').addEventListener('submit', async function
 
   if (!amountVal || amountVal <= 0) {
     if (currentRemainingDue <= 0) {
-      alert(
-        'Your rent for this cycle is already settled! If you wish to make an advance payment, please enter the advance amount in the payment amount box.'
-      );
+      Toast.alert({
+        title: 'Rent Settled',
+        message:
+          'Your rent for this cycle is already settled! If you wish to make an advance payment, please enter the advance amount in the payment amount box.'
+      });
     } else {
-      alert('Please enter a valid payment amount.');
+      Toast.alert({ title: 'Invalid Amount', message: 'Please enter a valid payment amount.' });
     }
     return;
   }
@@ -585,7 +591,10 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     }
   } catch (err) {
     console.error('Payment processing failed:', err);
-    alert('Payment processing error: ' + err.message);
+    Toast.alert({
+      title: 'Payment Processing Error',
+      message: err.message || 'Unable to start payment.'
+    });
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalBtnText;
   }
@@ -668,7 +677,10 @@ function showQrModal(data) {
     if (timeLeft <= 0) {
       clearInterval(qrTimerInterval);
       closeQrModal();
-      alert('Payment session expired. Please generate a new QR code.');
+      Toast.alert({
+        title: 'Session Expired',
+        message: 'Payment session expired. Please generate a new QR code.'
+      });
     }
   }, 1000);
 
@@ -731,7 +743,10 @@ async function confirmQrPayment() {
     await saveAndFinalizePayment({ ...activeQrPaymentData });
     activeQrPaymentData = null;
   } catch (error) {
-    alert(error.message || 'Unable to verify payment status.');
+    Toast.alert({
+      title: 'Verification Pending',
+      message: error.message || 'Unable to verify payment status.'
+    });
     if (confirmBtn) {
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = 'I Have Completed Payment';
@@ -1273,9 +1288,11 @@ async function checkUrlPaymentReturn() {
     } else {
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      alert(
-        'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
-      );
+      Toast.alert({
+        title: 'Payment Status Pending',
+        message:
+          'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
+      });
     }
     return;
   }
@@ -1369,7 +1386,10 @@ async function checkUrlPaymentReturn() {
     if (session?.attributes?.status === 'expired') {
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      alert('PayMongo checkout session has expired. Please try your payment again.');
+      Toast.alert({
+        title: 'Checkout Session Expired',
+        message: 'PayMongo checkout session has expired. Please try your payment again.'
+      });
       return;
     }
 

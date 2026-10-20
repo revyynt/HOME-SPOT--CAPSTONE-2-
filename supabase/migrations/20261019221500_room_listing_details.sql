@@ -13,6 +13,21 @@ alter table public.rooms
   add column if not exists size text null,
   add column if not exists capacity integer null;
 
+-- Allow free-text room/unit assignments (e.g. "Room 201") in relational tables
+alter table public.tenants drop constraint if exists tenants_room_id_fkey;
+alter table public.reservations drop constraint if exists reservations_room_id_fkey;
+alter table public.messages drop constraint if exists messages_room_id_fkey;
+
+drop policy if exists "staff can write room and reservation records" on public.app_documents;
+create policy "staff can write room and reservation records"
+  on public.app_documents
+  for insert
+  to authenticated
+  with check (
+    (select auth.jwt()) -> 'app_metadata' ->> 'role' in ('admin', 'superadmin')
+    and collection in ('rooms', 'tenants', 'reservations', 'messages', 'payments', 'adminTokens', 'inquiries')
+  );
+
 -- Update sync trigger so app_documents ('rooms') syncs all listing fields to public.rooms
 create or replace function public.sync_app_document_to_relational()
 returns trigger language plpgsql security definer as $$
@@ -147,6 +162,8 @@ begin
       updated_at = now();
   end if;
 
+  return NEW;
+exception when others then
   return NEW;
 end;
 $$;

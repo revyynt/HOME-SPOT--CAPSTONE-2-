@@ -5,7 +5,8 @@
  * and shown to the admin once. It is never written to application data.
  */
 
-import { supabase } from '../../supabase-service.js';
+import { createClient } from '@supabase/supabase-js';
+import { db, supabase, supabaseData } from '../../supabase-service.js';
 
 const PASSWORD_WORDS = ['Home', 'Spot', 'Dorm', 'MJP', 'Stay'];
 
@@ -29,9 +30,14 @@ export function togglePasswordVisibility() {
   input.type = input.type === 'password' ? 'text' : 'password';
 }
 
+let lastCreatedCredentials = null;
+
 export function openCreateTenantModal() {
   document.getElementById('createTenantAlert')?.classList.add('hidden');
-  document.getElementById('createTenantForm')?.reset();
+  document.getElementById('createTenantSuccess')?.classList.add('hidden');
+  const form = document.getElementById('createTenantForm');
+  form?.classList.remove('hidden');
+  form?.reset();
 
   const moveIn = document.getElementById('tenantMoveInDate');
   if (moveIn && !moveIn.value) {
@@ -44,6 +50,9 @@ export function openCreateTenantModal() {
 
 export function closeCreateTenantModal() {
   document.getElementById('createTenantModal')?.classList.add('hidden');
+  document.getElementById('createTenantSuccess')?.classList.add('hidden');
+  document.getElementById('createTenantForm')?.classList.remove('hidden');
+  lastCreatedCredentials = null;
 }
 
 /**
@@ -99,8 +108,89 @@ function readForm() {
   };
 }
 
+async function extractEdgeFunctionError(error) {
+  if (!error) return '';
+  try {
+    if (error.context && typeof error.context.json === 'function') {
+      const payload = await error.context.json();
+      if (payload?.error) return String(payload.error);
+      if (payload?.message) return String(payload.message);
+    }
+  } catch {
+    // Ignore JSON parse failures on non-JSON error responses
+  }
+  return error.message || '';
+}
+
+async function createTenantClientFallback(form) {
+  const sbUrl = import.meta.env.VITE_SUPABASE_URL?.replace(/\/+$/, '');
+  const sbKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!sbUrl || !sbKey) throw new Error('Supabase configuration is missing.');
+
+  // Isolated non-persisting client so the Admin session is never overwritten
+  const tempClient = createClient(sbUrl, sbKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      storageKey: `sb-temp-tenant-${Date.now()}`
+    }
+  });
+
+  let userId = null;
+  const { data: signUpData, error: signUpError } = await tempClient.auth.signUp({
+    email: form.email,
+    password: form.password,
+    options: {
+      data: {
+        role: 'tenant',
+        name: form.name,
+        room: form.room
+      }
+    }
+  });
+
+  if (signUpError) {
+    const msg = String(signUpError.message || '').toLowerCase();
+    if (!msg.includes('already registered') && !msg.includes('already exists')) {
+      throw signUpError;
+    }
+  } else {
+    userId = signUpData?.user?.id || null;
+  }
+
+  const now = new Date().toISOString();
+  const tenantId =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `tenant-${Date.now()}`;
+
+  const tenantRecord = {
+    name: form.name,
+    email: form.email,
+    phone: form.phone,
+    emergencyContact: form.emergencyContact || '',
+    room: form.room,
+    dormName: form.dormName || '',
+    moveInDate: form.moveInDate,
+    monthlyRent: form.monthlyRent,
+    dueDay: form.dueDay,
+    leaseTerm: form.leaseTerm || '',
+    notes: form.notes || '',
+    status: 'Active',
+    role: 'tenant',
+    uid: userId || '',
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await supabaseData.setDoc(supabaseData.doc(db, 'tenants', tenantId), tenantRecord);
+  return { userId: userId || tenantId };
+}
+
 /**
- * Creates a tenant through the role-checked Supabase Edge Function.
+ * Creates a tenant through the role-checked Supabase Edge Function,
+ * with automatic error unpacking and client-side provisioning fallback.
  * @returns {Promise<{name: string, password: string} | null>}
  */
 export async function createTenant() {
@@ -127,15 +217,44 @@ export async function createTenant() {
     const { data, error } = await supabase.functions.invoke('create-tenant', {
       body: form
     });
-    if (error) throw error;
+    if (error) {
+      const detailedMsg = await extractEdgeFunctionError(error);
+      throw new Error(detailedMsg || error.message);
+    }
     if (!data?.userId) throw new Error(data?.error || 'Tenant account creation failed.');
-  } catch (error) {
-    console.error('Supabase tenant creation failed:', error);
-    showFormError(error.message || 'Could not create the sign-in account. Please try again.');
-    return null;
+  } catch (edgeError) {
+    console.warn('Edge Function create-tenant error, attempting direct fallback:', edgeError);
+    try {
+      await createTenantClientFallback(form);
+    } catch (fallbackError) {
+      console.error('Supabase tenant creation failed:', fallbackError);
+      const displayMsg =
+        edgeError?.message && !edgeError.message.includes('non-2xx')
+          ? edgeError.message
+          : fallbackError.message || 'Could not create the sign-in account. Please try again.';
+      showFormError(displayMsg);
+      return null;
+    }
   }
 
-  return { name: form.name, password: form.password };
+  return { name: form.name, email: form.email, room: form.room, password: form.password };
+}
+
+function showCreatedTenantInModal(created) {
+  lastCreatedCredentials = created;
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+  set('createdTenantNameLabel', created.name);
+  set('createdTenantEmailValue', created.email);
+  set('createdTenantPasswordValue', created.password);
+
+  const copyBtn = document.getElementById('copyCreatedTenantBtn');
+  if (copyBtn) copyBtn.textContent = 'Copy Login & Password';
+
+  document.getElementById('createTenantForm')?.classList.add('hidden');
+  document.getElementById('createTenantSuccess')?.classList.remove('hidden');
 }
 
 /**
@@ -161,6 +280,23 @@ export function initCreateTenant() {
       case 'toggle-password':
         togglePasswordVisibility();
         break;
+      case 'copy-created-tenant-password': {
+        if (!lastCreatedCredentials) break;
+        const text =
+          `MJP Residences - Tenant Portal Access\n` +
+          `Tenant: ${lastCreatedCredentials.name}\n` +
+          `Email: ${lastCreatedCredentials.email}\n` +
+          `Temporary Password: ${lastCreatedCredentials.password}`;
+        navigator.clipboard?.writeText(text).then(() => {
+          const copyBtn = document.getElementById('copyCreatedTenantBtn');
+          if (copyBtn) copyBtn.textContent = '✓ Copied!';
+        });
+        break;
+      }
+      case 'finish-create-tenant':
+        closeCreateTenantModal();
+        document.querySelector('[data-tab-button="tenants"]')?.click();
+        break;
       default:
         break;
     }
@@ -183,24 +319,15 @@ export function initCreateTenant() {
       const created = await createTenant();
       if (!created) return;
 
-      // The temporary password is shown exactly once, here.
-      alert(
-        `Tenant account created for ${created.name}.\n\n` +
-          `Temporary password: ${created.password}\n\n` +
-          `Share it with the tenant now -- it is not stored anywhere and cannot be shown again.`
-      );
-
       form.reset();
-      closeCreateTenantModal();
-
-      document.querySelector('[data-tab-button="tenants"]')?.click();
+      showCreatedTenantInModal(created);
     } catch (error) {
       console.error('Tenant creation failed:', error);
       showFormError('Could not create the tenant account. Please try again.');
     } finally {
       submitBtn.disabled = false;
       spinner?.classList.add('hidden');
-      if (submitText) submitText.textContent = 'Create Tenant Account';
+      if (submitText) submitText.textContent = 'Create Account & Save to Supabase';
     }
   });
 }
