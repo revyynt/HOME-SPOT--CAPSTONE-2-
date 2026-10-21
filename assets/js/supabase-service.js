@@ -132,11 +132,14 @@ async function setDoc(ref, value, options = {}) {
     const existing = await getDoc(ref);
     data = { ...(existing.exists() ? existing.data() : {}), ...value };
   }
-  const { error } = await supabase.from('app_documents').upsert({
-    collection: ref.name,
-    id: ref.id,
-    data
-  });
+  const { error } = await supabase.from('app_documents').upsert(
+    {
+      collection: ref.name,
+      id: ref.id,
+      data
+    },
+    { onConflict: 'collection,id' }
+  );
   if (error) throw error;
 }
 
@@ -180,8 +183,13 @@ function onSnapshot(ref, onData, onError) {
     }
     pending = true;
     try {
-      const snapshot = await getDocs(ref);
-      if (active) onData(snapshot);
+      if (target.type === 'document') {
+        const docSnapshot = await getDoc(target);
+        if (active) onData(docSnapshot);
+      } else {
+        const snapshot = await getDocs(ref);
+        if (active) onData(snapshot);
+      }
     } catch (error) {
       if (active) onError?.(error);
     } finally {
@@ -192,6 +200,9 @@ function onSnapshot(ref, onData, onError) {
       }
     }
   };
+
+  // Immediately fetch current state via HTTP REST without waiting for WebSocket handshake
+  void refresh();
 
   const channel = supabase
     .channel(`app-documents:${target.name}:${crypto.randomUUID()}`)
