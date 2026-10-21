@@ -13,7 +13,7 @@ import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData } from '../lib/rooms.js';
 import { escapeHtml, formatPHP, initials } from '../lib/format.js';
-import { buildPaymentCalendar } from '../lib/payment-calendar.js';
+import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
 import { Toast } from '../render/toast.js';
 
 const ROOM_MEDIA_BUCKET = 'room-media';
@@ -509,6 +509,121 @@ function initAdminPaymentCalendar() {
     if (expectedEl) expectedEl.textContent = formatPHP(cal.monthSummary.totalExpected);
     if (paidEl) paidEl.textContent = formatPHP(cal.monthSummary.totalPaid);
     if (overdueEl) overdueEl.textContent = formatPHP(cal.monthSummary.totalOverdue);
+
+    // Current Month Collection Statistics Chart
+    const collectionBadge = document.getElementById('adminPaymentCollectionRateBadge');
+    if (collectionBadge) {
+      collectionBadge.textContent = `${cal.monthSummary.collectionRate}% Collected`;
+    }
+
+    const totalExp = cal.monthSummary.totalExpected || 0;
+    const paidAmt = cal.monthSummary.totalPaid || 0;
+    const overdueAmt = cal.monthSummary.totalOverdue || 0;
+    const pendingAmt = cal.monthSummary.totalPending || 0;
+
+    const pctPaid =
+      totalExp > 0 ? Math.min(100, Math.round((paidAmt / totalExp) * 100)) : paidAmt > 0 ? 100 : 0;
+    const pctOverdue =
+      totalExp > 0 ? Math.min(100 - pctPaid, Math.round((overdueAmt / totalExp) * 100)) : 0;
+    const pctPending = totalExp > 0 ? Math.max(0, 100 - pctPaid - pctOverdue) : 0;
+
+    const barPaid = document.getElementById('adminStatBarPaid');
+    const barPending = document.getElementById('adminStatBarPending');
+    const barOverdue = document.getElementById('adminStatBarOverdue');
+    if (barPaid) barPaid.style.width = `${pctPaid}%`;
+    if (barPending) barPending.style.width = `${pctPending}%`;
+    if (barOverdue) barOverdue.style.width = `${pctOverdue}%`;
+
+    const labelPaid = document.getElementById('adminStatLabelPaid');
+    const labelPending = document.getElementById('adminStatLabelPending');
+    const labelOverdue = document.getElementById('adminStatLabelOverdue');
+    if (labelPaid) labelPaid.textContent = formatPHP(paidAmt);
+    if (labelPending) labelPending.textContent = formatPHP(pendingAmt);
+    if (labelOverdue) labelOverdue.textContent = formatPHP(overdueAmt);
+
+    const statPctPaid = document.getElementById('adminStatPctPaid');
+    const statPctPending = document.getElementById('adminStatPctPending');
+    const statPctOverdue = document.getElementById('adminStatPctOverdue');
+    if (statPctPaid) statPctPaid.textContent = `${pctPaid}%`;
+    if (statPctPending) statPctPending.textContent = `${pctPending}%`;
+    if (statPctOverdue) statPctOverdue.textContent = `${pctOverdue}%`;
+
+    const roomBreakdownEl = document.getElementById('adminStatRoomBreakdown');
+    if (roomBreakdownEl) {
+      if (!cal.monthSummary.roomBreakdown || !cal.monthSummary.roomBreakdown.length) {
+        roomBreakdownEl.innerHTML =
+          '<span class="text-gray-400 italic">No room allocations active for this month</span>';
+      } else {
+        roomBreakdownEl.innerHTML = cal.monthSummary.roomBreakdown
+          .map((rb) => {
+            const rmPct =
+              rb.expected > 0 ? Math.min(100, Math.round((rb.paid / rb.expected) * 100)) : 0;
+            return `<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 border text-xs">
+              <span class="font-bold text-gray-800">${escapeHtml(rb.room)}:</span>
+              <span class="text-emerald-700 font-semibold">${escapeHtml(formatPHP(rb.paid))}</span>
+              <span class="text-gray-400">/</span>
+              <span class="text-gray-600">${escapeHtml(formatPHP(rb.expected))}</span>
+              <span class="text-[10px] text-gray-500 font-medium bg-white px-1.5 py-0.5 rounded border">(${rmPct}%)</span>
+            </div>`;
+          })
+          .join('');
+      }
+    }
+
+    // 6-Month Sales & Revenue Forecast
+    const forecast = buildSalesForecast({
+      tenants: calTenants,
+      monthsAhead: 6,
+      today: new Date(calYear, calMonth, 1)
+    });
+
+    const runRateEl = document.getElementById('adminForecastRunRate');
+    const inflowEl = document.getElementById('adminForecastTotalInflow');
+    const activeTenantsEl = document.getElementById('adminForecastActiveTenants');
+    if (runRateEl) runRateEl.textContent = formatPHP(forecast.monthlyRunRate);
+    if (inflowEl) inflowEl.textContent = formatPHP(forecast.totalProjectedInflow);
+    if (activeTenantsEl) {
+      activeTenantsEl.textContent = `${forecast.activeTenantCount} Active ${forecast.activeTenantCount === 1 ? 'Contract' : 'Contracts'}`;
+    }
+
+    const forecastChartEl = document.getElementById('adminSalesForecastChart');
+    if (forecastChartEl) {
+      forecastChartEl.innerHTML = forecast.projectedMonths
+        .map((m) => {
+          const heightPct =
+            forecast.maxProjected > 0
+              ? Math.max(12, Math.round((m.projectedAmount / forecast.maxProjected) * 100))
+              : 12;
+          const isCurr = m.isCurrentMonth;
+          const barBg = isCurr
+            ? 'bg-gradient-to-t from-emerald-600 to-emerald-400 border-emerald-500'
+            : 'bg-gradient-to-t from-blue-600 to-blue-400 border-blue-500';
+          const cardBg = isCurr
+            ? 'bg-emerald-50/40 border-emerald-200'
+            : 'bg-gray-50/70 border-gray-200';
+          const badgeText = isCurr
+            ? 'Current Month'
+            : `${m.tenantCount} ${m.tenantCount === 1 ? 'Contract' : 'Contracts'}`;
+
+          return `
+            <div class="flex flex-col items-center justify-between p-3 rounded-xl border ${cardBg} transition-all hover:shadow-sm">
+              <div class="text-[11px] font-bold text-gray-700 uppercase tracking-tight text-center mb-2">${escapeHtml(m.label)}</div>
+              
+              <!-- Vertical Forecast Column Container -->
+              <div class="w-full h-32 flex items-end justify-center py-1">
+                <div class="w-9/12 rounded-t-lg border-t border-x transition-all duration-700 shadow-sm flex items-start justify-center pt-1.5 ${barBg}" style="height: ${heightPct}%">
+                  <span class="text-[9px] font-extrabold text-white leading-none drop-shadow">₱</span>
+                </div>
+              </div>
+
+              <div class="text-center mt-2 w-full">
+                <div class="text-xs font-extrabold text-gray-900">${escapeHtml(formatPHP(m.projectedAmount))}</div>
+                <div class="text-[10px] text-gray-500 mt-0.5 truncate">${escapeHtml(badgeText)}</div>
+              </div>
+            </div>`;
+        })
+        .join('');
+    }
 
     gridEl.innerHTML = cal.days
       .map((cell) => {

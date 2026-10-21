@@ -397,7 +397,7 @@
           </div>
 
           <!-- Payment Summary Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div class="bg-white border rounded-lg p-4">
               <div class="text-sm text-gray-600 mb-1">Total Expected (Selected Month)</div>
               <div id="adminPaymentExpected" class="text-2xl font-bold text-gray-900">₱0.00</div>
@@ -410,6 +410,57 @@
               <div class="text-sm text-gray-600 mb-1">Overdue Payments</div>
               <div id="adminPaymentOverdue" class="text-2xl font-bold text-red-600">₱0.00</div>
             </div>
+          </div>
+
+          <!-- Current Month Collection Statistics Chart -->
+          <div class="bg-white border rounded-xl p-5 mb-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                  Monthly Collection Health &amp; Statistics
+                </h4>
+                <p class="text-xs text-gray-500">Real-time breakdown of payment realization for the selected month</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span id="adminPaymentCollectionRateBadge"
+                  class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  0% Collected
+                </span>
+              </div>
+            </div>
+
+            <!-- Visual Multi-segment Progress Bar -->
+            <div class="space-y-2">
+              <div class="w-full h-3.5 bg-gray-100 rounded-full overflow-hidden flex">
+                <div id="adminStatBarPaid" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"
+                  title="Paid"></div>
+                <div id="adminStatBarPending" class="bg-amber-400 h-full transition-all duration-500" style="width: 0%"
+                  title="Pending / Due"></div>
+                <div id="adminStatBarOverdue" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"
+                  title="Overdue"></div>
+              </div>
+              <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600 pt-1">
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="inline-flex items-center gap-1.5"><span
+                      class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Paid: <strong
+                      id="adminStatLabelPaid" class="text-gray-900">₱0.00</strong> (<span
+                      id="adminStatPctPaid">0%</span>)</span>
+                  <span class="inline-flex items-center gap-1.5"><span
+                      class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Pending Due: <strong
+                      id="adminStatLabelPending" class="text-gray-900">₱0.00</strong> (<span
+                      id="adminStatPctPending">0%</span>)</span>
+                  <span class="inline-flex items-center gap-1.5"><span
+                      class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Overdue: <strong
+                      id="adminStatLabelOverdue" class="text-gray-900">₱0.00</strong> (<span
+                      id="adminStatPctOverdue">0%</span>)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Room / Space Revenue Breakdown Pills -->
+            <div id="adminStatRoomBreakdown"
+              class="mt-4 pt-3 border-t flex flex-wrap items-center gap-2.5 text-xs text-gray-600"></div>
           </div>
 
           <!-- Interactive Admin Payment Calendar -->
@@ -454,6 +505,61 @@
             <div class="mt-5 pt-4 border-t">
               <h5 class="text-xs font-bold uppercase text-gray-500 mb-3">Upcoming &amp; Future Scheduled Payments</h5>
               <div id="adminUpcomingScheduleList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+          </div>
+
+          <!-- 6-Month Sales & Revenue Forecast Section -->
+          <div class="bg-white border rounded-xl p-6 mb-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                  </svg>
+                  6-Month Sales &amp; Revenue Forecast
+                </h4>
+                <p class="text-sm text-gray-500">
+                  Projected revenue inflows and cash-flow forecast based on active tenant contracts
+                </p>
+              </div>
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                Forward-Looking Contract Projection
+              </div>
+            </div>
+
+            <!-- Forecast Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div class="p-4 rounded-xl bg-gradient-to-br from-blue-50/60 to-white border border-blue-100">
+                <div class="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">Contracted Monthly Run
+                  Rate</div>
+                <div id="adminForecastRunRate" class="text-2xl font-extrabold text-blue-900">₱0.00</div>
+                <div class="text-[11px] text-gray-500 mt-1">Base monthly recurring billing</div>
+              </div>
+              <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50/60 to-white border border-emerald-100">
+                <div class="text-xs font-semibold text-emerald-800 uppercase tracking-wider mb-1">6-Month Projected
+                  Inflow</div>
+                <div id="adminForecastTotalInflow" class="text-2xl font-extrabold text-emerald-900">₱0.00</div>
+                <div class="text-[11px] text-gray-500 mt-1">Cumulative projected rent realization</div>
+              </div>
+              <div class="p-4 rounded-xl bg-gradient-to-br from-purple-50/60 to-white border border-purple-100">
+                <div class="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">Active Paying Contracts
+                </div>
+                <div id="adminForecastActiveTenants" class="text-2xl font-extrabold text-purple-900">0 Tenants</div>
+                <div class="text-[11px] text-gray-500 mt-1">Contributing to future projections</div>
+              </div>
+            </div>
+
+            <!-- Visual 6-Month Forecast Chart -->
+            <div>
+              <div class="flex items-center justify-between text-xs text-gray-500 font-semibold mb-3 px-1">
+                <span>Month-by-Month Projected Inflow</span>
+                <span>Scaled to highest projected monthly volume</span>
+              </div>
+              <div id="adminSalesForecastChart"
+                class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t"></div>
             </div>
           </div>
 

@@ -204,6 +204,7 @@ export function buildPaymentCalendar({
   let totalExpected = 0;
   let totalPaid = 0;
   let totalOverdue = 0;
+  const roomBreakdownMap = {};
   const rows = [];
 
   const isCurrentMonth = year === todayYear && month === todayMonth;
@@ -254,6 +255,16 @@ export function buildPaymentCalendar({
     totalPaid += effectivePaid;
     if (status === 'Overdue') {
       totalOverdue += remaining;
+    }
+
+    const roomName = tenant.room || 'Unassigned';
+    if (!roomBreakdownMap[roomName]) {
+      roomBreakdownMap[roomName] = { room: roomName, expected: 0, paid: 0, overdue: 0 };
+    }
+    roomBreakdownMap[roomName].expected += rent;
+    roomBreakdownMap[roomName].paid += effectivePaid;
+    if (status === 'Overdue') {
+      roomBreakdownMap[roomName].overdue += remaining;
     }
 
     const dueEvent = {
@@ -326,6 +337,14 @@ export function buildPaymentCalendar({
     }
   }
 
+  const collectionRate =
+    totalExpected > 0
+      ? Math.min(100, Math.round((totalPaid / totalExpected) * 100))
+      : totalPaid > 0
+        ? 100
+        : 0;
+  const totalPending = Math.max(0, totalExpected - totalPaid - totalOverdue);
+
   return {
     monthLabel: `${MONTH_NAMES[month]} ${year}`,
     year,
@@ -335,8 +354,78 @@ export function buildPaymentCalendar({
       totalExpected,
       totalPaid,
       totalOverdue,
+      totalPending,
+      collectionRate,
+      roomBreakdown: Object.values(roomBreakdownMap),
       rows
     },
     upcomingSchedule: upcomingSchedule.slice(0, 6)
+  };
+}
+
+/**
+ * Computes forward-looking sales & revenue forecast for the next N months.
+ *
+ * @param {Object} options
+ * @param {Array<Object>} [options.tenants]
+ * @param {number} [options.monthsAhead=6]
+ * @param {Date} [options.today]
+ * @returns {Object}
+ */
+export function buildSalesForecast({
+  tenants = [],
+  monthsAhead = 6,
+  today = new Date()
+}) {
+  const activeTenants = tenants.filter((t) => (t.status || 'Active') !== 'Archived');
+  const todayYear = today.getFullYear();
+  const todayMonth = today.getMonth();
+
+  const monthlyRunRate = activeTenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
+
+  const months = [];
+  let totalProjectedInflow = 0;
+
+  for (let i = 0; i < monthsAhead; i++) {
+    const d = new Date(todayYear, todayMonth + i, 1);
+    const targetYear = d.getFullYear();
+    const targetMonth = d.getMonth();
+    const monthKey = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}`;
+    const label = `${SHORT_MONTHS[targetMonth]} ${targetYear}`;
+
+    let projectedAmount = 0;
+    let tenantCount = 0;
+    const roomBreakdown = {};
+
+    for (const t of activeTenants) {
+      if (isBeforeMoveIn(targetYear, targetMonth, t.moveInDate)) continue;
+      const rent = Number(t.monthlyRent) || 0;
+      projectedAmount += rent;
+      tenantCount++;
+      const room = t.room || 'Other';
+      roomBreakdown[room] = (roomBreakdown[room] || 0) + rent;
+    }
+
+    totalProjectedInflow += projectedAmount;
+    months.push({
+      monthKey,
+      label,
+      year: targetYear,
+      month: targetMonth,
+      isCurrentMonth: i === 0,
+      projectedAmount,
+      tenantCount,
+      roomBreakdown
+    });
+  }
+
+  const maxProjected = Math.max(...months.map((m) => m.projectedAmount), 1);
+
+  return {
+    monthlyRunRate,
+    totalProjectedInflow,
+    projectedMonths: months,
+    maxProjected,
+    activeTenantCount: activeTenants.length
   };
 }

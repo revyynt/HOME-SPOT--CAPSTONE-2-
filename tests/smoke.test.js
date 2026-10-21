@@ -297,10 +297,53 @@ test('buildPaymentCalendar tracks paid, overdue, and future scheduled tenant pay
   assert.equal(mayCal.monthSummary.totalExpected, 9500);
   assert.equal(mayCal.monthSummary.totalPaid, 4500);
   assert.equal(mayCal.monthSummary.totalOverdue, 5000);
+  assert.equal(mayCal.monthSummary.collectionRate, 47);
+  assert.equal(mayCal.monthSummary.roomBreakdown.length, 2);
 
   // Future month (June 2026): both tenants are Scheduled as future payments
   const juneCal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 5, today });
   assert.equal(juneCal.monthLabel, 'June 2026');
   assert.equal(juneCal.monthSummary.rows.every((r) => r.status === 'Scheduled'), true);
   assert.ok(mayCal.upcomingSchedule.length >= 2, 'upcoming schedule includes future due dates');
+});
+
+test('buildSalesForecast computes run rate, 6-month projected inflow, and monthly bars', async () => {
+  const { buildSalesForecast } = await import('../assets/js/lib/payment-calendar.js');
+  const today = new Date(2026, 4, 1); // May 1, 2026
+  const tenants = [
+    {
+      id: 't1',
+      name: 'Juan Dela Cruz',
+      room: 'Triple Occupancy Room',
+      monthlyRent: 10000,
+      status: 'Active',
+      moveInDate: '2026-01-01'
+    },
+    {
+      id: 't2',
+      name: 'Maria Santos',
+      room: 'Commercial Space',
+      monthlyRent: 12000,
+      status: 'Active',
+      moveInDate: '2026-01-01'
+    },
+    {
+      id: 't3',
+      name: 'Archived Tenant',
+      room: 'Old Room',
+      monthlyRent: 8000,
+      status: 'Archived',
+      moveInDate: '2025-01-01'
+    }
+  ];
+
+  const forecast = buildSalesForecast({ tenants, monthsAhead: 6, today });
+  assert.equal(forecast.monthlyRunRate, 22000, 'excludes archived tenants');
+  assert.equal(forecast.activeTenantCount, 2);
+  assert.equal(forecast.totalProjectedInflow, 22000 * 6);
+  assert.equal(forecast.projectedMonths.length, 6);
+  assert.equal(forecast.projectedMonths[0].label, 'May 2026');
+  assert.equal(forecast.projectedMonths[0].isCurrentMonth, true);
+  assert.equal(forecast.projectedMonths[0].projectedAmount, 22000);
+  assert.equal(forecast.projectedMonths[5].label, 'Oct 2026');
 });
