@@ -123,6 +123,7 @@ function setActiveMediaSlide(index, roomName = 'Room') {
     if (mainImg) {
       mainImg.src = active.src;
       mainImg.alt = `${roomName} - ${active.label}`;
+      mainImg.classList.remove('hidden');
     }
     if (counterEl) {
       counterEl.textContent = `${active.label} • ${activeSlideIndex + 1} / ${mediaSlides.length}`;
@@ -307,6 +308,12 @@ function applyRoomDetails(room) {
   }
 
   document.getElementById('roomPrice').textContent = formatRoomPrice(room.price, true);
+  const priceSubtitle = document.getElementById('roomPriceSubtitle');
+  if (priceSubtitle) {
+    const isCommercial =
+      room.id === 'commercial-space' || /commercial|business/i.test(`${room.name} ${room.type}`);
+    priceSubtitle.textContent = isCommercial ? 'per space / month' : 'per unit / month';
+  }
   updateAvailabilityUI(room, room.available);
 }
 
@@ -345,6 +352,7 @@ async function loadRemoteRoomData(room) {
 document.addEventListener('DOMContentLoaded', () => {
   const rawParam = getUrlParam('id') || '1';
   const room = { ...mergeRoomData(rawParam) };
+  applyRoomDetails(room);
   loadRemoteRoomData(room);
 });
 
