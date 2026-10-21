@@ -10,6 +10,188 @@ import { escapeHtml, getUrlParam } from './lib/format.js';
 import { formatRoomPrice, mergeRoomData } from './lib/rooms.js';
 
 let currentPanoramaUrl = null;
+let mediaSlides = [];
+let activeSlideIndex = 0;
+
+function buildMediaSlides(room) {
+  const seen = new Set();
+  const photos = [];
+  const candidates = [room.mainImage, ...(Array.isArray(room.images) ? room.images : []), room.image];
+  for (const raw of candidates) {
+    const url = String(raw || '').trim();
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    photos.push({
+      type: 'photo',
+      src: url,
+      label: photos.length === 0 ? 'Main Photo' : `Photo ${photos.length + 1}`
+    });
+  }
+
+  const panoUrl = String(room.panorama || room.image || '').trim();
+  if (panoUrl) {
+    photos.push({
+      type: 'panorama',
+      src: panoUrl,
+      label: '360° Panoramic View'
+    });
+  }
+  return photos;
+}
+
+function renderMediaShowcase(room) {
+  mediaSlides = buildMediaSlides(room);
+  if (activeSlideIndex >= mediaSlides.length) {
+    activeSlideIndex = 0;
+  }
+
+  const strip = document.getElementById('mediaThumbnailStrip');
+  if (strip) {
+    strip.innerHTML = mediaSlides
+      .map((slide, idx) => {
+        const isActive = idx === activeSlideIndex;
+        const frameCls = isActive
+          ? 'border-blue-600 bg-blue-50/40 shadow-md opacity-100'
+          : 'border-slate-200/90 bg-white opacity-75 hover:opacity-100 hover:border-slate-300';
+
+        if (slide.type === 'panorama') {
+          return `
+            <button
+              type="button"
+              data-slide-index="${idx}"
+              title="Interactive 360° Panoramic View"
+              class="w-28 sm:w-full h-24 p-1 rounded-2xl border-2 transition-all flex-shrink-0 group ${frameCls}"
+            >
+              <div class="relative w-full h-full rounded-xl overflow-hidden">
+                <img src="${escapeHtml(slide.src)}" alt="360° Panorama" class="w-full h-full object-cover brightness-75 group-hover:scale-110 transition-transform duration-300" />
+                <div class="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-black/30 to-transparent flex flex-col items-center justify-center text-white">
+                  <span class="px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-[11px] font-extrabold tracking-wide shadow">360°</span>
+                  <span class="text-[10px] font-semibold mt-0.5">Virtual Tour</span>
+                </div>
+              </div>
+            </button>`;
+        }
+
+        return `
+          <button
+            type="button"
+            data-slide-index="${idx}"
+            title="${escapeHtml(slide.label)}"
+            class="w-28 sm:w-full h-24 p-1 rounded-2xl border-2 transition-all flex-shrink-0 group ${frameCls}"
+          >
+            <div class="relative w-full h-full rounded-xl overflow-hidden">
+              <img src="${escapeHtml(slide.src)}" alt="${escapeHtml(slide.label)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
+              <span class="absolute bottom-1.5 right-1.5 bg-black/65 backdrop-blur-xs text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none">${idx + 1}</span>
+            </div>
+          </button>`;
+      })
+      .join('');
+  }
+
+  setActiveMediaSlide(activeSlideIndex, room.name);
+}
+
+function setActiveMediaSlide(index, roomName = 'Room') {
+  if (!mediaSlides.length) return;
+  activeSlideIndex = ((index % mediaSlides.length) + mediaSlides.length) % mediaSlides.length;
+  const active = mediaSlides[activeSlideIndex];
+
+  const photoStage = document.getElementById('mediaPhotoStage');
+  const panoStage = document.getElementById('mediaPanoramaStage');
+  const mainImg = document.getElementById('mainImage');
+  const counterEl = document.getElementById('mediaSlideCounter');
+  const jumpBtn = document.getElementById('mediaJump360Btn');
+
+  if (active.type === 'panorama') {
+    photoStage?.classList.add('hidden');
+    panoStage?.classList.remove('hidden');
+    if (active.src && active.src !== currentPanoramaUrl) {
+      currentPanoramaUrl = active.src;
+      initPanoramaViewer(active.src);
+    } else {
+      window.dispatchEvent(new Event('resize'));
+    }
+    if (counterEl) {
+      counterEl.textContent = `360° Panoramic View (${activeSlideIndex + 1} / ${mediaSlides.length})`;
+    }
+    if (jumpBtn) {
+      jumpBtn.querySelector('span').textContent = 'Back to Photos';
+    }
+  } else {
+    panoStage?.classList.add('hidden');
+    photoStage?.classList.remove('hidden');
+    if (mainImg) {
+      mainImg.src = active.src;
+      mainImg.alt = `${roomName} - ${active.label}`;
+    }
+    if (counterEl) {
+      counterEl.textContent = `${active.label} • ${activeSlideIndex + 1} / ${mediaSlides.length}`;
+    }
+    if (jumpBtn) {
+      jumpBtn.querySelector('span').textContent = '360° Panorama';
+    }
+  }
+
+  const strip = document.getElementById('mediaThumbnailStrip');
+  if (strip) {
+    strip.querySelectorAll('button[data-slide-index]').forEach((btn) => {
+      const idx = Number(btn.dataset.slideIndex);
+      const isAct = idx === activeSlideIndex;
+      btn.classList.toggle('border-blue-600', isAct);
+      btn.classList.toggle('bg-blue-50/40', isAct);
+      btn.classList.toggle('shadow-md', isAct);
+      btn.classList.toggle('opacity-100', isAct);
+      btn.classList.toggle('border-slate-200/90', !isAct);
+      btn.classList.toggle('bg-white', !isAct);
+      btn.classList.toggle('opacity-75', !isAct);
+    });
+  }
+}
+
+function initMediaShowcaseControls() {
+  const showcase = document.getElementById('propertyMediaShowcase');
+  if (!showcase || showcase.dataset.bound === 'true') return;
+  showcase.dataset.bound = 'true';
+
+  showcase.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    const thumb = target.closest('button[data-slide-index]');
+    if (thumb) {
+      const idx = Number(thumb.dataset.slideIndex);
+      if (Number.isFinite(idx)) {
+        setActiveMediaSlide(idx, document.getElementById('roomName')?.textContent || 'Room');
+      }
+      return;
+    }
+
+    const actionBtn = target.closest('button[data-action]');
+    if (!actionBtn) return;
+
+    const roomName = document.getElementById('roomName')?.textContent || 'Room';
+    switch (actionBtn.dataset.action) {
+      case 'media-prev':
+        setActiveMediaSlide(activeSlideIndex - 1, roomName);
+        break;
+      case 'media-next':
+        setActiveMediaSlide(activeSlideIndex + 1, roomName);
+        break;
+      case 'media-jump-360': {
+        const panoIdx = mediaSlides.findIndex((s) => s.type === 'panorama');
+        if (panoIdx === -1) break;
+        if (activeSlideIndex === panoIdx) {
+          setActiveMediaSlide(0, roomName);
+        } else {
+          setActiveMediaSlide(panoIdx, roomName);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  });
+}
 
 function updateAvailabilityUI(room, availableCount) {
   const badge = document.getElementById('availabilityBadge');
@@ -91,11 +273,8 @@ function applyRoomDetails(room) {
   document.title = `${room.name} - MJP Residences | homespot AR`;
   document.getElementById('roomBreadcrumb').textContent = room.name;
 
-  const mainImg = document.getElementById('mainImage');
-  if (mainImg) {
-    mainImg.src = room.mainImage || room.image;
-    mainImg.alt = room.name;
-  }
+  initMediaShowcaseControls();
+  renderMediaShowcase(room);
 
   document.getElementById('roomName').textContent = room.name;
   document.getElementById('roomTypeSize').textContent = `${room.type} • ${room.size}`;
@@ -190,8 +369,8 @@ function initPanoramaViewer(imageUrl) {
     if (container._targetPanoramaUrl !== imageUrl) return;
     const THREE = window.THREE;
 
-    const W = container.clientWidth;
-    const H = container.clientHeight;
+    const W = container.clientWidth || 720;
+    const H = container.clientHeight || 430;
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -327,8 +506,9 @@ function initPanoramaViewer(imageUrl) {
 
     // ── Resize ──
     const ro = new ResizeObserver(() => {
-      const nw = container.clientWidth,
-        nh = container.clientHeight;
+      const nw = container.clientWidth;
+      const nh = container.clientHeight;
+      if (!nw || !nh) return;
       renderer.setSize(nw, nh);
       camera.aspect = nw / nh;
       camera.updateProjectionMatrix();

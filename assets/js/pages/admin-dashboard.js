@@ -235,7 +235,7 @@ function renderListings(rooms) {
 
         <!-- Detail Page Main Image (Pure File Upload) -->
         <div class="bg-gray-50 p-4 rounded-xl border space-y-2">
-          <label class="block text-xs font-semibold text-gray-700">Property Detail Main Image</label>
+          <label class="block text-xs font-semibold text-gray-700">Property Detail Main Image (Slide 1)</label>
           <input type="hidden" name="mainImage" value="${escapeHtml(room.mainImage)}" />
           <div class="flex items-center gap-4">
             <img data-preview-for="mainImage" src="${escapeHtml(room.mainImage)}" alt="Main preview" class="w-24 h-16 object-cover rounded-lg border bg-white flex-shrink-0 shadow-sm" />
@@ -244,7 +244,7 @@ function renderListings(rooms) {
                 <span>Upload Main Image</span>
                 <input type="file" accept="image/*" class="hidden" data-upload-field="mainImage" data-room-id="${escapeHtml(room.id)}" />
               </label>
-              <p data-status-for="mainImage" class="text-[11px] text-gray-500">Stored in Supabase Storage (room-media)</p>
+              <p data-status-for="mainImage" class="text-[11px] text-gray-500">First image shown on the Property Detail showcase</p>
             </div>
           </div>
         </div>
@@ -253,8 +253,8 @@ function renderListings(rooms) {
         <div class="md:col-span-2 bg-gray-50 p-4 rounded-xl border space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <label class="block text-xs font-semibold text-gray-700">360° Panoramic Viewer</label>
-              <p data-status-for="panorama" class="text-[11px] text-gray-500">Upload an equirectangular 360° photo to Supabase Storage and drag below to test.</p>
+              <label class="block text-xs font-semibold text-gray-700">360° Panoramic Viewer (Last Slide on Property Detail)</label>
+              <p data-status-for="panorama" class="text-[11px] text-gray-500">Shown as the final interactive 360° slide in the Property Detail left-side thumbnail row.</p>
             </div>
             <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors">
               <span>Upload 360° Panorama</span>
@@ -272,8 +272,8 @@ function renderListings(rooms) {
         <div class="md:col-span-2 bg-gray-50 p-4 rounded-xl border space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
-              <label class="block text-xs font-semibold text-gray-700">Property Listing Gallery Images (for Slider)</label>
-              <p class="text-[11px] text-gray-500">Upload one or multiple photos directly to Supabase Storage.</p>
+              <label class="block text-xs font-semibold text-gray-700">Property Detail Left-Side Thumbnail Row &amp; Slider Gallery</label>
+              <p class="text-[11px] text-gray-500">Photos added here appear in the left-side thumbnail rail on the Property Detail page (before the final 360° slide) and in the landing card slider.</p>
             </div>
             <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3.5 py-2 rounded-lg shadow-sm transition-colors">
               <span>+ Upload Gallery Photos</span>
