@@ -1,5 +1,5 @@
 -- ==============================================================================
--- HomeSpot (MJP Residences) - Complete Supabase Backup Schema
+-- HomeSpot (MJP Residences) - Complete Supabase Backup Schema (Updated Oct 22, 2026)
 -- ==============================================================================
 -- How to restore if your Supabase project is ever deleted or reset:
 -- 1. Open Supabase Dashboard -> SQL Editor -> New Query
@@ -249,6 +249,16 @@ create policy "public and authorized users read documents"
       and collection = 'users'
       and id = (select auth.uid())::text
     )
+  );
+
+drop policy if exists "anyone can read system settings" on public.app_documents;
+create policy "anyone can read system settings"
+  on public.app_documents
+  for select
+  to anon, authenticated
+  using (
+    collection = 'adminTokens'
+    and id = 'system_settings'
   );
 
 drop policy if exists "public can submit reservations" on public.app_documents;
@@ -719,6 +729,19 @@ values
       'images', jsonb_build_array('assets/img/commercial-space.jpg', 'assets/img/commercial-space-panorama.png'),
       'features', jsonb_build_array('4 People', 'Bathroom'),
       'description', 'Premium commercial space ideal for business operations. Spacious unit suitable for small offices, retail, or service-based businesses with comfortable working capacity.'
+    )
+  ),
+  (
+    'adminTokens',
+    'system_settings',
+    jsonb_build_object(
+      'maintenanceMode', false,
+      'minBooking', 1,
+      'maxBooking', 12,
+      'cancellationDays', 7,
+      'supportEmail', 'info@mjpresidences.com',
+      'supportPhone', '(02) 1234-5678',
+      'updatedAt', now()
     )
   )
 on conflict (collection, id) do update set
