@@ -239,17 +239,23 @@ export async function sendAdminChatMessage(email, name, messageText) {
  * Renders messages into #messagesContainer and #tenantMessagesContainer.
  * @param {{ empty: boolean, map: (callback: (doc: {id: string, data: () => Object}) => string) => string[] }} docs
  */
+export function isSupportDoc(doc) {
+  const d = typeof doc?.data === 'function' ? doc.data() : doc || {};
+  return d.room === 'Customer Support' || d.source === 'customer-support' || Boolean(d.subject && !d.property);
+}
+
 export function renderMessages(docs) {
   const container = document.getElementById('messagesContainer');
   const tenantContainer = document.getElementById('tenantMessagesContainer');
-  if (!container && !tenantContainer) return;
+  const supportContainer = document.getElementById('customerSupportContainer');
+  if (!container && !tenantContainer && !supportContainer) return;
 
   const docList = Array.isArray(docs) ? docs : docs?.docs || [];
   latestMessageDocs = docList;
 
-  const renderCard = (doc, isTenant) => {
+  const renderCard = (doc, isTenant, isSupport = false) => {
     const data = doc.data();
-    const unread = data.status === 'Unread';
+    const unread = data.status === 'Unread' || data.status === 'New';
     const badge = unread
       ? '<span class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-semibold">New</span>'
       : `<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">${escapeHtml(data.status || 'Read')}</span>`;
@@ -273,9 +279,14 @@ export function renderMessages(docs) {
          </div>`
       : '';
 
+    const subjectBadge = data.subject
+      ? `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-xs font-semibold">Topic: ${escapeHtml(data.subject)}</span>`
+      : '';
+
     const metaHtml =
-      !isTenant && (data.property || data.email || data.phone)
-        ? `<div class="flex flex-wrap gap-2 text-xs text-gray-500 mt-1">
+      !isTenant && (data.property || data.email || data.phone || data.subject)
+        ? `<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1.5">
+           ${subjectBadge}
            ${data.property ? `<span class="bg-gray-100 px-2 py-0.5 rounded">Property: ${escapeHtml(data.property)}</span>` : ''}
            ${data.email ? `<span class="bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(data.email)}</span>` : ''}
            ${data.phone ? `<span class="bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(data.phone)}</span>` : ''}
@@ -283,6 +294,31 @@ export function renderMessages(docs) {
         : data.email
           ? `<div class="text-xs text-gray-500 mt-1">${escapeHtml(data.email)}</div>`
           : '';
+
+    const actionButtons = isSupport
+      ? `
+        <button
+          type="button"
+          data-action="gcompose"
+          data-id="${attr(doc.id)}"
+          data-email="${attr(data.email || '')}"
+          data-name="${attr(data.name || '')}"
+          data-subject="${attr(data.subject || 'Customer Support Inquiry')}"
+          data-message="${attr(data.message || '')}"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+          Reply via Gmail
+        </button>
+        <button data-action="reply" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Quick Reply</button>
+        <button data-action="delete-message" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600 text-sm font-medium">Delete</button>
+      `
+      : `
+        <button data-action="reply" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Reply</button>
+        <button data-action="delete-message" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600 text-sm font-medium">Delete</button>
+      `;
 
     return `
         <div class="bg-white border rounded-lg p-6 ${unread ? 'shadow-lg border-blue-200' : ''}">
@@ -301,27 +337,33 @@ export function renderMessages(docs) {
               </div>
             </div>
             <div class="flex flex-col gap-2">
-              <button data-action="reply" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Reply</button>
-              <button data-action="delete-message" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600 text-sm font-medium">Delete</button>
+              ${actionButtons}
             </div>
           </div>
         </div>`;
   };
 
+  const supportDocs = docList.filter(
+    (doc) => isSupportDoc(doc) && doc.data().sender !== 'tenant' && doc.data().sender !== 'admin'
+  );
+
   const inquiryDocs = docList.filter(
-    (doc) => doc.data().sender !== 'tenant' && doc.data().sender !== 'admin'
+    (doc) => !isSupportDoc(doc) && doc.data().sender !== 'tenant' && doc.data().sender !== 'admin'
   );
 
   if (tenantContainer) {
     renderTenantMessenger(tenantContainer, docList);
   }
 
+  if (supportContainer) {
+    supportContainer.innerHTML = supportDocs.length
+      ? supportDocs.map((doc) => renderCard(doc, false, true)).join('')
+      : '<div class="bg-white border rounded-lg p-6 text-gray-600 text-center">No customer support messages received yet.</div>';
+  }
+
   if (container) {
-    const targetDocs = tenantContainer ? inquiryDocs : docList;
-    container.innerHTML = targetDocs.length
-      ? targetDocs
-        .map((doc) => renderCard(doc, !tenantContainer && doc.data().sender === 'tenant'))
-        .join('')
+    container.innerHTML = inquiryDocs.length
+      ? inquiryDocs.map((doc) => renderCard(doc, false, false)).join('')
       : '<div class="bg-white border rounded-lg p-6 text-gray-600 text-center">No public inquiries available.</div>';
   }
 }
@@ -330,6 +372,38 @@ export function renderMessages(docs) {
  * Prompts for a reply and saves it, marking the message read.
  * @param {string} messageId
  */
+
+/**
+ * Opens Gmail compose in a new tab with recipient, subject, and quoted inquiry message.
+ * Also marks the message read in Supabase.
+ * @param {{ email: string, name?: string, subject?: string, message?: string, id?: string }} params
+ */
+export function openGCompose({ email, name, subject, message, id }) {
+  if (!email) {
+    Toast.error('No email address available for this message.');
+    return;
+  }
+  const cleanSubject = subject || 'Customer Support Inquiry';
+  const su = encodeURIComponent(`Re: [HomeSpot Support] ${cleanSubject}`);
+  const bodyText = `Hi ${name || 'Customer'},` +
+    `\n\nThank you for reaching out to HomeSpot Customer Support.` +
+    `\n\nRegarding your inquiry:` +
+    `\n"${message || ''}"` +
+    `\n\n\n\nBest regards,\nHomeSpot Support Team\nMJP Residences`;
+  const body = encodeURIComponent(bodyText);
+  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
+
+  window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+
+  if (id && isDataReady()) {
+    const ref = supabaseData.doc(db, 'messages', id);
+    supabaseData.updateDoc(ref, {
+      status: 'Read',
+      updatedAt: supabaseData.serverTimestamp()
+    }).catch((err) => console.warn('Could not mark message as read on gcompose:', err));
+  }
+}
+
 export async function replyToMessage(messageId) {
   const response = await Toast.prompt({
     title: 'Reply to Inquiry',
@@ -412,6 +486,18 @@ export function watchMessages(onUnreadCount) {
       if (inquiryBadge) {
         inquiryBadge.textContent = inquiryUnread;
         inquiryBadge.classList.toggle('hidden', inquiryUnread === 0);
+      }
+      const supportUnread = allDocs.filter(
+        (doc) =>
+          (doc.data().status === 'Unread' || doc.data().status === 'New') &&
+          isSupportDoc(doc) &&
+          doc.data().sender !== 'tenant' &&
+          doc.data().sender !== 'admin'
+      ).length;
+      const supportBadge = document.getElementById('unreadSupportCount');
+      if (supportBadge) {
+        supportBadge.textContent = supportUnread;
+        supportBadge.classList.toggle('hidden', supportUnread === 0);
       }
 
       onUnreadCount?.(tenantUnread + inquiryUnread);

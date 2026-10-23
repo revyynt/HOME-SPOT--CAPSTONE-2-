@@ -74,20 +74,24 @@ async function handleInquirySubmit(event) {
   }
 
   // Field set is constrained by the anonymous Supabase insert policy.
+  const roomName = getRoomNameFromPage();
+  const subjectVal = form.querySelector('[name="subject"]')?.value || (roomName ? `Inquiry: ${roomName}` : 'General Inquiry');
   const inquiry = {
     name,
     email,
     phone,
-    room: getRoomNameFromPage(),
-    moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
-    message: form.querySelector('[name="message"]')?.value.trim() || null,
+    room: roomName || 'Customer Support',
+    subject: subjectVal,
+    message: form.querySelector('[name="message"]')?.value.trim() || '',
+    sender: 'guest',
+    source: 'customer-support',
     status: 'New',
     createdAt: supabaseData.serverTimestamp()
   };
 
   try {
     await supabaseData.addDoc(messagesRef, inquiry);
-    Toast.success("Inquiry sent successfully! We'll contact you soon.");
+    Toast.success("Support inquiry sent successfully! Our team will contact you soon.");
   } catch (error) {
     console.error('Supabase inquiry submit failed:', error);
     Toast.error('Unable to submit inquiry. Please try again.');
