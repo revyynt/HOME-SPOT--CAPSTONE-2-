@@ -126,13 +126,16 @@ async function initAdminActions() {
   const tenantModal = await import('./pages/admin-dashboard/create-tenant.js');
 
   document.addEventListener('click', (event) => {
-    const button =
-      event.target instanceof Element ? event.target.closest('button[data-action]') : null;
-    if (!button) return;
+    const trigger =
+      event.target instanceof Element ? event.target.closest('[data-action]') : null;
+    if (!trigger) return;
 
-    const { action, id } = button.dataset;
+    const { action, id, src, title } = trigger.dataset;
 
     switch (action) {
+      case 'view-id':
+        if (src) reservations.openImageModal(src, title);
+        break;
       case 'approve':
         reservations.approveReservation(id);
         break;
@@ -146,13 +149,13 @@ async function initAdminActions() {
         messages.deleteMessage(id);
         break;
       case 'select-chat':
-        messages.selectTenantChat(button.dataset.email);
+        messages.selectTenantChat(trigger.dataset.email);
         break;
       case 'create-tenant': {
         // The payload is a JSON string in a data-* attribute, so no tenant
         // value is ever interpolated into a JS string literal.
         try {
-          tenantModal.openCreateTenantModalFromData(JSON.parse(button.dataset.payload || '{}'));
+          tenantModal.openCreateTenantModalFromData(JSON.parse(trigger.dataset.payload || '{}'));
         } catch (error) {
           console.error('Failed to parse tenant prefill payload:', error);
         }
