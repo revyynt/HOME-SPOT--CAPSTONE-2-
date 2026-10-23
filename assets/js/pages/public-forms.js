@@ -107,6 +107,54 @@ async function handleInquirySubmit(event) {
 /**
  * @param {SubmitEvent} event
  */
+/**
+ * Compresses an image file to a JPEG data URL.
+ * Scales to max 1200px and quality 0.8 to keep payload compact (~80-120KB)
+ * while preserving high legibility for text/photos on ID cards.
+ *
+ * @param {File} file
+ * @param {number} [maxDimension]
+ * @param {number} [quality]
+ * @returns {Promise<string>}
+ */
+export async function compressImageToDataUrl(file, maxDimension = 1200, quality = 0.8) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read image file'));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to load image for compression'));
+      img.onload = () => {
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas 2D context unavailable'));
+          return;
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function handleReservationSubmit(event) {
   event.preventDefault();
   const form = event.target;
@@ -117,11 +165,44 @@ async function handleReservationSubmit(event) {
     return;
   }
 
+  const fileInput = form.querySelector('[name="validId"]');
+  const validIdFile = fileInput?.files?.[0];
+  if (!validIdFile) {
+    Toast.error('Please upload a clear photo of your valid ID');
+    return;
+  }
+
   const reservationsRef = getReservationsRef();
   if (!(await ensureSupabase()) || !reservationsRef) {
     Toast.error('Unable to submit reservation. Please refresh the page and try again.');
     return;
   }
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Processing ID & Submitting...';
+  }
+
+  let compressedValidId;
+  try {
+    compressedValidId = await compressImageToDataUrl(validIdFile);
+  } catch (err) {
+    console.error('Valid ID compression failed:', err);
+    Toast.error('Unable to process the uploaded ID. Please try another image.');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
+    }
+    return;
+  }
+
+  const notes = form.querySelector('[name="additionalInfo"]')?.value.trim() || '';
+  const additionalInfoPayload = JSON.stringify({
+    notes,
+    validId: compressedValidId
+  });
 
   // Field set is constrained by the anonymous Supabase insert policy.
   const reservation = {
@@ -131,7 +212,7 @@ async function handleReservationSubmit(event) {
     room: getRoomNameFromPage(),
     moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
     message: form.querySelector('[name="message"]')?.value.trim() || null,
-    additionalInfo: form.querySelector('[name="additionalInfo"]')?.value.trim() || null,
+    additionalInfo: additionalInfoPayload,
     status: 'Pending',
     createdAt: supabaseData.serverTimestamp()
   };
@@ -139,15 +220,26 @@ async function handleReservationSubmit(event) {
   try {
     await supabaseData.addDoc(reservationsRef, reservation);
     Toast.success(
-      'Reservation request submitted! The admin will review your request and contact you.'
+      'Reservation request submitted! The admin will review your valid ID and contact you.'
     );
   } catch (error) {
     console.error('Supabase reservation submit failed:', error);
     Toast.error('Unable to submit reservation. Please try again.');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalBtnHtml;
+    }
     return;
   }
 
+  if (submitBtn) {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = originalBtnHtml;
+  }
+
   form.reset();
+  const resetBtn = document.getElementById('validIdRemoveBtn');
+  resetBtn?.click();
   hidePanel('reservationForm');
 }
 
@@ -205,6 +297,69 @@ export function initPublicFormToggles() {
 /**
  * Binds the public forms if they exist on the current page.
  */
+/**
+ * Handles the Valid ID file picker preview and reset in the reservation modal.
+ */
+function initValidIdUploader() {
+  const fileInput = document.getElementById('reservationValidId');
+  const preview = document.getElementById('validIdPreview');
+  const placeholder = document.getElementById('validIdPlaceholder');
+  const meta = document.getElementById('validIdMeta');
+  const filenameEl = document.getElementById('validIdFilename');
+  const removeBtn = document.getElementById('validIdRemoveBtn');
+
+  if (!fileInput) return;
+
+  const resetUploader = () => {
+    fileInput.value = '';
+    if (preview) {
+      preview.src = '';
+      preview.classList.add('hidden');
+    }
+    placeholder?.classList.remove('hidden');
+    meta?.classList.add('hidden');
+    meta?.classList.remove('flex');
+    if (filenameEl) filenameEl.textContent = '';
+  };
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) {
+      resetUploader();
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      Toast.error('Please select an image file (PNG, JPG, or WEBP).');
+      resetUploader();
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      Toast.error('Image file is too large. Please select an image under 10MB.');
+      resetUploader();
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    if (preview) {
+      preview.src = objectUrl;
+      preview.classList.remove('hidden');
+    }
+    placeholder?.classList.add('hidden');
+    if (filenameEl) filenameEl.textContent = file.name;
+    if (meta) {
+      meta.classList.remove('hidden');
+      meta.classList.add('flex');
+    }
+  });
+
+  removeBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    resetUploader();
+  });
+}
+
 export function initPublicForms() {
   const inquiryForm = document.getElementById('inquiryFormElement');
   if (inquiryForm) inquiryForm.addEventListener('submit', handleInquirySubmit);
@@ -213,4 +368,5 @@ export function initPublicForms() {
   if (reservationForm) reservationForm.addEventListener('submit', handleReservationSubmit);
 
   initPublicFormToggles();
+  initValidIdUploader();
 }

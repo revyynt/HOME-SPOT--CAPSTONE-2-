@@ -600,11 +600,37 @@
             placeholder="Additional Information (optional) - e.g., emergency contact, special requirements" rows="3"
             class="form-input border-2 border-gray-200 focus:border-blue-500 rounded-lg transition-all"></textarea>
         </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">
+            Valid ID <span class="text-red-500">*</span>
+            <span class="text-gray-500 font-normal ml-1">(Gov't ID, Student ID, or Passport)</span>
+          </label>
+          <div class="mt-1">
+            <label for="reservationValidId"
+              class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 hover:border-blue-500 rounded-xl cursor-pointer bg-blue-50/50 hover:bg-blue-50 transition-colors relative overflow-hidden group">
+              <div id="validIdPlaceholder" class="flex flex-col items-center justify-center p-4 text-center">
+                <svg class="w-8 h-8 mb-2 text-blue-500 group-hover:scale-110 transition-transform" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <p class="text-xs font-semibold text-blue-700">Click to upload Valid ID</p>
+                <p class="text-[11px] text-gray-500 mt-0.5">PNG, JPG, or WEBP (Max 10MB)</p>
+              </div>
+              <img id="validIdPreview" class="hidden absolute inset-0 w-full h-full object-contain bg-white/90 p-2"
+                alt="Valid ID Preview" />
+              <input type="file" name="validId" id="reservationValidId" accept="image/png, image/jpeg, image/webp"
+                class="sr-only" required />
+            </label>
+            <div id="validIdMeta" class="hidden items-center justify-between text-xs text-gray-600 bg-white p-2 mt-2 rounded-lg border border-blue-200">
+              <span id="validIdFilename" class="truncate font-medium text-blue-700 max-w-[240px]"></span>
+              <button type="button" id="validIdRemoveBtn" class="text-red-500 hover:text-red-700 font-semibold text-xs ml-2">Remove</button>
+            </div>
+          </div>
+        </div>
         <div class="bg-gradient-to-r from-blue-100 to-green-100 border-2 border-blue-300 rounded-xl p-4 shadow-sm">
           <p class="text-xs text-gray-700 font-medium leading-relaxed">
-            <strong class="text-blue-700 font-bold">Note:</strong> After submitting, you'll need
-            to provide valid ID for verification. The admin will contact you via email or phone to
-            proceed with the booking.
+            <strong class="text-blue-700 font-bold">Note:</strong> Please upload a clear photo of your valid ID for identity verification. The admin will review and verify your details before approving your reservation.
           </p>
         </div>
         <button type="submit"

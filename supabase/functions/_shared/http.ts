@@ -25,7 +25,12 @@ export function isOriginAllowed(origin: string | null): boolean {
   if (origin === '*' || LOCAL_ORIGINS.includes(origin)) return true;
   try {
     const url = new URL(origin);
-    if (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app') return true;
+    if (
+      url.hostname.endsWith('.vercel.app') ||
+      url.hostname === 'vercel.app' ||
+      url.hostname.endsWith('.home-spot.online') ||
+      url.hostname === 'home-spot.online'
+    ) return true;
     if (getSupabaseOrigin().includes(url.origin)) return true;
     const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
       .split(',')
