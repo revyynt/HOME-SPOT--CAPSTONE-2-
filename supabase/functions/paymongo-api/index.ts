@@ -71,6 +71,9 @@ function allowedReturnUrl(value: unknown) {
   } catch {
     return null;
   }
+  if (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app') {
+    return url.toString();
+  }
   const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
     .split(',')
     .map((origin: string) => origin.trim())
