@@ -1,8 +1,9 @@
 /**
  * Create-tenant modal and form submission.
  *
- * The generated password is sent to the tenant provisioning Edge Function
- * and shown to the admin once. It is never written to application data.
+ * The generated password is handed to Firebase Auth and shown to the admin
+ * once. It is never written to Firestore -- `firestore.rules` rejects any
+ * tenant document containing a `password` field.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -214,7 +215,7 @@ export async function createTenant() {
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('create-tenant', {
+    const { error: edgeError } = await supabase.functions.invoke('create-tenant', {
       body: form
     });
     if (error) {
