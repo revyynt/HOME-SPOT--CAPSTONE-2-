@@ -71,7 +71,12 @@ function allowedReturnUrl(value: unknown) {
   } catch {
     return null;
   }
-  if (url.hostname.endsWith('.vercel.app') || url.hostname === 'vercel.app') {
+  if (
+    url.hostname.endsWith('.vercel.app') ||
+    url.hostname === 'vercel.app' ||
+    url.hostname.endsWith('.home-spot.online') ||
+    url.hostname === 'home-spot.online'
+  ) {
     return url.toString();
   }
   const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
