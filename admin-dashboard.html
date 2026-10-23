@@ -490,8 +490,8 @@
           <!-- Reservations Tab -->
           <div data-tab-content="reservations" class="hidden">
             <h3 class="text-xl font-bold mb-6">Reservation Requests</h3>
-            <div id="supabaseStatus" class="text-sm text-gray-500 mb-4">
-              Connecting to Supabase...
+            <div id="firestoreStatus" class="text-sm text-gray-500 mb-4">
+              Connecting to Firestore...
             </div>
 
             <div id="reservationRequestsContainer" class="space-y-4"></div>
@@ -636,7 +636,7 @@
                   <option value="Commercial">Commercial</option>
                 </select>
                 <span
-                  id="tenantsSupabaseStatus"
+                  id="tenantsFirestoreStatus"
                   class="text-xs text-gray-500 hidden sm:inline-block"
                   >Syncing...</span
                 >
@@ -667,7 +667,7 @@
                           <div
                             class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"
                           ></div>
-                          <span>Loading tenants from Supabase...</span>
+                          <span>Loading tenants from Firestore...</span>
                         </div>
                       </td>
                     </tr>
@@ -1589,7 +1589,7 @@
                 id="submitTenantSpinner"
                 class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
               ></span>
-              <span id="submitTenantText">Create Account & Save to Supabase</span>
+              <span id="submitTenantText">Create Account & Save to Firestore</span>
             </button>
           </div>
         </form>

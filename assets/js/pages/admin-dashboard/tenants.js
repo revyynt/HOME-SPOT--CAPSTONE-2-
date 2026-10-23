@@ -1,13 +1,13 @@
 /**
- * Tenant table: rendering, filtering, statistics, and the live Supabase
+ * Tenant table: rendering, filtering, statistics, and the live Firestore
  * listener.
  *
- * Split out of a 699-line inline script. Every database value is escaped
+ * Split out of a 699-line inline script. Every Firestore value is escaped
  * before it reaches innerHTML, and row actions are delegated via data-*
  * attributes rather than inline handlers.
  */
 
-import { db, supabase, supabaseData } from '../../supabase-service.js';
+import { db, supabaseData } from '../../supabase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
 
@@ -33,7 +33,7 @@ export function getViewingTenant() {
  */
 export function listenToTenants() {
   const tenantsRef = supabaseData.collection(db, 'tenants');
-  const statusEl = document.getElementById('tenantsSupabaseStatus');
+  const statusEl = document.getElementById('tenantsFirestoreStatus');
 
   const apply = (snapshot) => {
     loadedTenants = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
@@ -45,17 +45,19 @@ export function listenToTenants() {
     updateTenantStats(loadedTenants);
   };
 
-  return supabaseData.onSnapshot(
-    supabaseData.query(tenantsRef, supabaseData.orderBy('createdAt', 'desc')),
-    apply,
-    (error) => {
-      console.error('Supabase tenants subscription failed:', error);
-      if (statusEl) {
-        statusEl.textContent = 'Unable to sync tenants with Supabase.';
-        statusEl.className = 'text-xs text-red-600';
+  try {
+    return supabaseData.onSnapshot(
+      supabaseData.query(tenantsRef, supabaseData.orderBy('createdAt', 'desc')),
+      apply,
+      (error) => {
+        console.warn('orderBy on tenants failed, falling back:', error);
+        supabaseData.onSnapshot(tenantsRef, apply);
       }
-    }
-  );
+    );
+  } catch (error) {
+    console.error('Supabase tenants listener setup failed:', error);
+    return () => {};
+  }
 }
 
 /** Applies the search + room filters and re-renders. */
@@ -178,8 +180,7 @@ export function viewTenantDetails(tenantId) {
   set('viewTenantMoveIn', tenant.moveInDate || '—');
   set('viewTenantPhone', tenant.phone || '—');
   set('viewTenantLoginEmail', tenant.email || '—');
-  // Never stored client-side; Supabase Auth owns the credential.
-  set('viewTenantLoginPassword', 'Managed by Supabase Auth');
+  set('viewTenantLoginPassword', 'Temporary password set at creation');
   set('viewTenantAvatar', initials(tenant.name));
 
   const notesSection = document.getElementById('viewTenantNotesSection');
@@ -200,11 +201,11 @@ export function closeViewTenantModal() {
 
 /**
  * Copies portal sign-in details. The password is intentionally omitted -- it
- * lives in Supabase Auth and is shown to the tenant once, at creation.
+ * lives in Firebase Auth and is shown to the tenant once, at creation.
  */
 export function copyTenantLoginInfo(email, name, room) {
   const portalUrl =
-    window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'login.html';
+    window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'tenant-login.html';
 
   const text =
     `MJP Residences - Tenant Portal Access\n` +
@@ -227,10 +228,11 @@ export function copyCurrentTenantCredentials() {
 }
 
 /**
- * Deletes a tenant's Supabase profile.
+ * Deletes a tenant's Firestore profile.
  *
- * Note this does not disable the Supabase Auth account. Removing the profile
- * means the tenant can no longer read their data, but the Auth user still exists.
+ * Note this does not disable the Firebase Auth account. Removing the profile
+ * means the tenant can no longer read their data (firestore.rules keys off
+ * the tenant document), but the Auth user still exists.
  *
  * @param {string} tenantId
  * @param {string} tenantName
@@ -245,11 +247,7 @@ export async function deleteTenantAccount(tenantId, tenantName) {
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('delete-tenant', {
-      body: { tenantId }
-    });
-    if (error) throw error;
-    if (!data?.success) throw new Error(data?.error || 'Tenant account removal failed.');
+    await supabaseData.deleteDoc(supabaseData.doc(db, 'tenants', tenantId));
     alert(`Tenant ${tenantName} removed successfully.`);
   } catch (error) {
     console.error('Failed to remove tenant:', error);

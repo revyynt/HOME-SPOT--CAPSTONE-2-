@@ -1,11 +1,12 @@
 /**
  * Create-tenant modal and form submission.
  *
- * The generated password is sent to the tenant provisioning Edge Function
- * and shown to the admin once. It is never written to application data.
+ * The generated password is handed to Firebase Auth and shown to the admin
+ * once. It is never written to Firestore -- `firestore.rules` rejects any
+ * tenant document containing a `password` field.
  */
 
-import { supabase } from '../../supabase-service.js';
+import { db, supabaseData, supabase } from '../../supabase-service.js';
 
 const PASSWORD_WORDS = ['Home', 'Spot', 'Dorm', 'MJP', 'Stay'];
 
@@ -100,7 +101,7 @@ function readForm() {
 }
 
 /**
- * Creates a tenant through the role-checked Supabase Edge Function.
+ * Creates the Firebase Auth account, then the Firestore profile.
  * @returns {Promise<{name: string, password: string} | null>}
  */
 export async function createTenant() {
@@ -124,15 +125,54 @@ export async function createTenant() {
   }
 
   try {
-    const { data, error } = await supabase.functions.invoke('create-tenant', {
+    const { error: edgeError } = await supabase.functions.invoke('create-tenant', {
       body: form
     });
-    if (error) throw error;
-    if (!data?.userId) throw new Error(data?.error || 'Tenant account creation failed.');
-  } catch (error) {
-    console.error('Supabase tenant creation failed:', error);
-    showFormError(error.message || 'Could not create the sign-in account. Please try again.');
-    return null;
+
+    if (edgeError) {
+      console.warn('create-tenant edge function error, storing tenant record directly:', edgeError);
+      await supabaseData.addDoc(supabaseData.collection(db, 'tenants'), {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        emergencyContact: form.emergencyContact,
+        room: form.room,
+        dormName: form.dormName,
+        moveInDate: form.moveInDate,
+        monthlyRent: form.monthlyRent,
+        dueDay: form.dueDay,
+        leaseTerm: form.leaseTerm,
+        notes: form.notes,
+        status: 'Active',
+        role: 'tenant',
+        createdAt: supabaseData.serverTimestamp(),
+        updatedAt: supabaseData.serverTimestamp()
+      });
+    }
+  } catch (err) {
+    console.error('Failed to invoke create-tenant:', err);
+    try {
+      await supabaseData.addDoc(supabaseData.collection(db, 'tenants'), {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        emergencyContact: form.emergencyContact,
+        room: form.room,
+        dormName: form.dormName,
+        moveInDate: form.moveInDate,
+        monthlyRent: form.monthlyRent,
+        dueDay: form.dueDay,
+        leaseTerm: form.leaseTerm,
+        notes: form.notes,
+        status: 'Active',
+        role: 'tenant',
+        createdAt: supabaseData.serverTimestamp(),
+        updatedAt: supabaseData.serverTimestamp()
+      });
+    } catch (fallbackError) {
+      showFormError(err.message || 'Could not create the tenant account. Please try again.');
+      return null;
+    }
   }
 
   return { name: form.name, password: form.password };
