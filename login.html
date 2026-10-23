@@ -1,226 +1,158 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Portal Login - MJP Residences</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./assets/css/style.css" />
-  </head>
-  <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased">
-    <div class="w-full max-w-md">
-      <!-- Portal Header -->
-      <div class="text-center mb-6">
-        <div class="w-10 h-1.5 bg-blue-100 rounded-full mx-auto mb-6"></div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-          Welcome to Portal
-        </h1>
-      </div>
 
-      <!-- Alert Message -->
-      <div
-        id="loginAlert"
-        class="hidden mb-6 p-4 rounded-xl text-sm leading-relaxed border"
-        role="alert"
-      ></div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portal Login - MJP Residences</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css" />
+</head>
 
-      <!-- Login Card / Form -->
-      <form id="loginForm" class="space-y-5">
-        <!-- Email Address -->
-        <div>
-          <label
-            for="email"
-            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
-          >
-            Email Address
-          </label>
-          <div class="relative flex items-center">
-            <span class="absolute left-4 text-gray-400 font-medium select-none text-base">@</span>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              autocomplete="email"
-              placeholder="name@example.com"
-              class="w-full pl-10 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
-            />
-          </div>
-        </div>
-
-        <!-- Password -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <label
-              for="password"
-              class="block text-xs font-bold text-gray-500 uppercase tracking-wider"
-            >
-              Password
-            </label>
-            <button
-              type="button"
-              id="forgotPasswordBtn"
-              class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              Forgot password?
-            </button>
-          </div>
-          <div class="relative flex items-center">
-            <span class="absolute left-4 text-gray-400 flex items-center pointer-events-none">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                ></path>
-              </svg>
-            </span>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              autocomplete="current-password"
-              placeholder="••••••••"
-              class="w-full pl-11 pr-11 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
-            />
-            <button
-              type="button"
-              id="togglePasswordBtn"
-              class="absolute right-3.5 text-gray-400 hover:text-gray-600 p-1 focus:outline-none"
-              aria-label="Toggle password visibility"
-            >
-              <svg
-                id="eyeIcon"
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                ></path>
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                ></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Keep me signed in -->
-        <div class="flex items-center">
-          <input
-            type="checkbox"
-            id="rememberMe"
-            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-          />
-          <label for="rememberMe" class="ml-2.5 text-sm text-gray-600 cursor-pointer select-none">
-            Keep me signed in
-          </label>
-        </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          id="loginSubmitBtn"
-          class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group"
-        >
-          <span>Sign In to Account</span>
-          <span class="transition-transform group-hover:translate-x-1">→</span>
-        </button>
-      </form>
-
-      <!-- Quick Access & Info Divider -->
-      <div class="relative my-8">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-200"></div>
-        </div>
-        <div
-          class="relative flex justify-center text-xs uppercase tracking-widest font-semibold text-gray-400"
-        >
-          <span class="bg-slate-50 px-3">QUICK ACCESS &amp; INFO</span>
-        </div>
-      </div>
-
-      <!-- Account Info Link -->
-      <div class="text-center text-sm text-gray-600">
-        <span>New tenant moving in?</span>
-        <button
-          type="button"
-          id="signupLink"
-          class="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline ml-1"
-        >
-          Account creation info
-        </button>
-      </div>
-
-      <!-- Back to Home -->
-      <div class="text-center mt-6">
-        <a href="./index.html" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-          ← Back to Home
-        </a>
-      </div>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased">
+  <div class="w-full max-w-md">
+    <!-- Portal Header -->
+    <div class="text-center mb-6">
+      <div class="w-10 h-1.5 bg-blue-100 rounded-full mx-auto mb-6"></div>
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+        Welcome to Portal
+      </h1>
     </div>
 
-    <!-- Tenant Account Notice Modal -->
-    <div
-      id="signupModal"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      style="display: none"
-    >
-      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 class="text-lg font-bold text-gray-900">Tenant Account Notice</h2>
-          <button
-            type="button"
-            id="closeModalBtn"
-            class="text-gray-400 hover:text-gray-600 text-2xl leading-none"
-          >
-            &times;
+    <!-- Alert Message -->
+    <div id="loginAlert" class="hidden mb-6 p-4 rounded-xl text-sm leading-relaxed border" role="alert"></div>
+
+    <!-- Login Card / Form -->
+    <form id="loginForm" class="space-y-5">
+      <!-- Email Address -->
+      <div>
+        <label for="email" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+          Email Address
+        </label>
+        <div class="relative flex items-center">
+          <span class="absolute left-4 text-gray-400 font-medium select-none text-base">@</span>
+          <input type="email" id="email" name="email" required autocomplete="email" placeholder="name@example.com"
+            class="w-full pl-10 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm" />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label for="password" class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
+            Password
+          </label>
+          <button type="button" id="forgotPasswordBtn"
+            class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+            Forgot password?
           </button>
         </div>
-        <div class="p-6 text-gray-600 text-sm leading-relaxed">
-          <div
-            class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              ></path>
+        <div class="relative flex items-center">
+          <span class="absolute left-4 text-gray-400 flex items-center pointer-events-none">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+              </path>
             </svg>
-          </div>
-          <h3 class="text-base font-bold text-gray-900 mb-2">Moving into MJP Residences?</h3>
-          <p class="mb-3">
-            Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
-            to link your assigned room, lease term, and monthly rent schedule.
-          </p>
-          <p class="mb-6 text-xs text-gray-500">
-            If you have moved in or finalized your reservation, please ask the admin for your
-            official login credentials.
-          </p>
-          <button
-            type="button"
-            id="understoodBtn"
-            class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
-          >
-            Understood
+          </span>
+          <input type="password" id="password" name="password" required autocomplete="current-password"
+            placeholder="••••••••"
+            class="w-full pl-11 pr-11 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm" />
+          <button type="button" id="togglePasswordBtn"
+            class="absolute right-3.5 text-gray-400 hover:text-gray-600 p-1 focus:outline-none"
+            aria-label="Toggle password visibility">
+            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+              </path>
+            </svg>
           </button>
         </div>
       </div>
+
+      <!-- Keep me signed in -->
+      <div class="flex items-center">
+        <input type="checkbox" id="rememberMe"
+          class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer" />
+        <label for="rememberMe" class="ml-2.5 text-sm text-gray-600 cursor-pointer select-none">
+          Keep me signed in
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" id="loginSubmitBtn"
+        class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group">
+        <span>Sign In to Account</span>
+        <span class="transition-transform group-hover:translate-x-1">→</span>
+      </button>
+    </form>
+
+    <!-- Quick Access & Info Divider -->
+    <div class="relative my-8">
+      <div class="absolute inset-0 flex items-center">
+        <div class="w-full border-t border-gray-200"></div>
+      </div>
+      <div class="relative flex justify-center text-xs uppercase tracking-widest font-semibold text-gray-400">
+        <span class="bg-slate-50 px-3">QUICK ACCESS &amp; INFO</span>
+      </div>
     </div>
 
-    <script type="module" src="./assets/js/supabase-service.js"></script>
-    <script type="module" src="./assets/js/pages/login.js"></script>
-  </body>
+    <!-- Account Info Link -->
+    <div class="text-center text-sm text-gray-600">
+      <span>New tenant moving in?</span>
+      <button type="button" id="signupLink"
+        class="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline ml-1">
+        Account creation info
+      </button>
+    </div>
+
+    <!-- Back to Home -->
+    <div class="text-center mt-6">
+      <a href="./index.html" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+        ← Back to Home
+      </a>
+    </div>
+  </div>
+
+  <!-- Tenant Account Notice Modal -->
+  <div id="signupModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    style="display: none">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900">Tenant Account Notice</h2>
+        <button type="button" id="closeModalBtn" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">
+          &times;
+        </button>
+      </div>
+      <div class="p-6 text-gray-600 text-sm leading-relaxed">
+        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-gray-900 mb-2">Moving into MJP Residences?</h3>
+        <p class="mb-3">
+          Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
+          to link your assigned room, lease term, and monthly rent schedule.
+        </p>
+        <p class="mb-6 text-xs text-gray-500">
+          If you have moved in or finalized your reservation, please ask the admin for your
+          official login credentials.
+        </p>
+        <button type="button" id="understoodBtn"
+          class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
+          Understood
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./assets/js/supabase-service.js"></script>
+  <script type="module" src="./assets/js/lib/maintenance.js"></script>
+  <script type="module" src="./assets/js/pages/login.js"></script>
+</body>
+
 </html>

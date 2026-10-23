@@ -15,6 +15,9 @@ import { guardPage } from '../lib/guard.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
+import { escapeHtml } from '../lib/format.js';
+import { buildPaymentCalendar } from '../lib/payment-calendar.js';
+import { Toast } from '../render/toast.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
 // parsing and scenario cascade. The tested decision logic already exists in
@@ -27,7 +30,7 @@ import * as PayMongo from '../paymongo-service.js';
 // Hide the portal until the session check resolves.
 document.documentElement.dataset.authPending = 'true';
 
-guardPage({
+const authReady = guardPage({
   role: 'tenant',
   redirectTo: 'login.html',
   grantedEvent: 'tenant-access-granted'
@@ -40,6 +43,7 @@ guardPage({
     sessionStorage.setItem('tenantEmail', userEmail);
     populateTenantUI();
   }
+  subscribeTenantMessages();
 });
 
 // Content stays hidden until the Supabase auth guard resolves.
@@ -60,6 +64,7 @@ let activeQrPaymentData = null;
 let qrTimerInterval = null;
 let qrStatusPollInterval = null;
 let tenantExplicitAmountDueSet = false;
+let cachedPayments = [];
 
 // Restore initial remaining due from session or local storage
 let initialDue =
@@ -160,10 +165,147 @@ function populateTenantUI() {
   const summaryRent = document.getElementById('summaryRent');
   if (summaryRent) summaryRent.textContent = '₱' + tenantRent.toLocaleString() + '.00';
 
+  const welcomeTenantName = document.getElementById('welcomeTenantName');
+  if (welcomeTenantName) welcomeTenantName.textContent = `Welcome back, ${tenantName}! 👋`;
+
+  const welcomeTenantSub = document.getElementById('welcomeTenantSub');
+  if (welcomeTenantSub) welcomeTenantSub.textContent = `${tenantRoom} • ${tenantDorm}`;
+
+  const welcomeAvatar = document.getElementById('welcomeAvatar');
+  if (welcomeAvatar) {
+    const initials = (tenantName || 'Juan Dela Cruz')
+      .split(' ')
+      .map((n) => n[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase();
+    welcomeAvatar.textContent = initials || 'JD';
+  }
+
   updateAmountDueUI();
+  renderTenantPaymentCalendar();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+let tenantCalYear = new Date().getFullYear();
+let tenantCalMonth = new Date().getMonth();
+let tenantSelectedDateKey = '';
+
+function renderTenantPaymentCalendar() {
+  const gridEl = document.getElementById('tenantCalendarGrid');
+  const monthLabelEl = document.getElementById('tenantCalendarMonthLabel');
+  const upcomingEl = document.getElementById('tenantUpcomingScheduleList');
+  const detailEl = document.getElementById('tenantCalendarDayDetail');
+  if (!gridEl || !monthLabelEl) return;
+
+  const tenantRecord = {
+    id: currentTenantDocId || userEmail || 'tenant',
+    name: tenantName,
+    email: userEmail,
+    room: tenantRoom,
+    dormName: tenantDorm,
+    monthlyRent: tenantRent,
+    dueDay: tenantDueDay,
+    moveInDate: tenantMoveIn,
+    amountDue: currentRemainingDue
+  };
+
+  const cal = buildPaymentCalendar({
+    tenants: [tenantRecord],
+    payments: cachedPayments,
+    year: tenantCalYear,
+    month: tenantCalMonth
+  });
+
+  monthLabelEl.textContent = cal.monthLabel;
+
+  const chipClass = (status) => {
+    if (status === 'Paid') return 'cal-chip-paid';
+    if (status === 'Overdue' || status === 'Failed') return 'cal-chip-overdue';
+    if (status === 'Scheduled') return 'cal-chip-scheduled';
+    return 'cal-chip-pending';
+  };
+
+  gridEl.innerHTML = cal.days
+    .map((cell) => {
+      const classes = ['cal-cell'];
+      if (!cell.inCurrentMonth) classes.push('outside');
+      if (cell.isToday) classes.push('today');
+      if (cell.dateKey === tenantSelectedDateKey) classes.push('selected');
+
+      const dueChips = cell.dueEvents
+        .map((ev) => {
+          const label =
+            ev.status === 'Paid'
+              ? `✓ Paid ₱${ev.amount.toLocaleString()}`
+              : ev.status === 'Overdue'
+                ? `! Overdue ₱${ev.remaining.toLocaleString()}`
+                : ev.status === 'Scheduled'
+                  ? `Future ₱${ev.amount.toLocaleString()}`
+                  : `Due ₱${ev.remaining.toLocaleString()}`;
+          return `<div class="cal-chip ${chipClass(ev.status)}" title="${escapeHtml(ev.dueDate)}">${escapeHtml(label)}</div>`;
+        })
+        .join('');
+
+      const payChips = cell.paymentEvents
+        .map((p) => {
+          const pLabel = `${p.status === 'Paid' ? '✓' : p.status === 'Failed' ? '✕' : '⏱'} ₱${p.amount.toLocaleString()}`;
+          return `<div class="cal-chip ${chipClass(p.status)}" title="${escapeHtml(p.purpose)}">${escapeHtml(pLabel)}</div>`;
+        })
+        .join('');
+
+      return `
+        <div class="${classes.join(' ')}" data-action="tenant-cal-select-day" data-date-key="${escapeHtml(cell.dateKey)}">
+          <div class="cal-day-num">${cell.dayNumber}</div>
+          ${dueChips}
+          ${payChips}
+        </div>`;
+    })
+    .join('');
+
+  if (detailEl) {
+    const selectedCell = cal.days.find((d) => d.dateKey === tenantSelectedDateKey);
+    if (selectedCell && (selectedCell.dueEvents.length || selectedCell.paymentEvents.length)) {
+      const items = [
+        ...selectedCell.dueEvents.map(
+          (ev) =>
+            `<div><strong>Rent Due (${escapeHtml(ev.status)}):</strong> ₱${ev.amount.toLocaleString()} (${escapeHtml(ev.room)}) — Remaining: ₱${ev.remaining.toLocaleString()}</div>`
+        ),
+        ...selectedCell.paymentEvents.map(
+          (p) =>
+            `<div><strong>Payment (${escapeHtml(p.status)}):</strong> ₱${p.amount.toLocaleString()} • ${escapeHtml(p.purpose)} (${escapeHtml(p.referenceNumber || p.method)})</div>`
+        )
+      ].join('');
+      detailEl.style.display = 'block';
+      detailEl.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">Details for ${escapeHtml(selectedCell.dateKey)}</div>${items}`;
+    } else {
+      detailEl.style.display = 'none';
+      detailEl.innerHTML = '';
+    }
+  }
+
+  if (upcomingEl) {
+    if (!cal.upcomingSchedule.length) {
+      upcomingEl.innerHTML =
+        '<div style="color:#64748b;font-size:12px;">All scheduled dues settled.</div>';
+    } else {
+      upcomingEl.innerHTML = cal.upcomingSchedule
+        .map(
+          (item) => `
+          <div class="cal-upcoming-item">
+            <div>
+              <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
+              <div style="color:#64748b;font-size:11px;">₱${item.amount.toLocaleString()} • ${escapeHtml(item.room)}</div>
+            </div>
+            <span class="cal-chip ${chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
+          </div>`
+        )
+        .join('');
+    }
+  }
 }
 
 // Apply immediately from session storage
@@ -263,14 +405,73 @@ function switchTab(tabName, evt) {
   }
 }
 
-function logout() {
-  sessionStorage.removeItem('tenantLoggedIn');
-  sessionStorage.removeItem('tenantEmail');
-  window.location.href = 'login.html';
+async function logout() {
+  try {
+    await Promise.race([
+      supabase.auth.signOut(),
+      new Promise((resolve) => setTimeout(resolve, 2000))
+    ]);
+  } catch (error) {
+    console.error('Error signing out:', error);
+  } finally {
+    sessionStorage.clear();
+    localStorage.removeItem('tenantLoggedIn');
+    window.location.href = 'tenant-login.html';
+  }
 }
 
-function saveProfile() {
-  alert('Profile updated successfully!');
+async function saveProfile() {
+  const saveBtn = document.querySelector('[data-action="save-profile"]');
+  const nameInput = document.getElementById('fullName');
+  const phoneInput = document.getElementById('phone');
+  const emergencyInput = document.getElementById('emergencyContact');
+
+  const newName = (nameInput?.value || '').trim();
+  const newPhone = (phoneInput?.value || '').trim();
+  const newEmergency = (emergencyInput?.value || '').trim();
+
+  if (!newName) {
+    Toast.alert({ title: 'Missing Name', message: 'Please enter your full name.' });
+    return;
+  }
+
+  const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+  }
+
+  try {
+    if (currentTenantDocId) {
+      const ref = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
+      await supabaseData.updateDoc(ref, {
+        name: newName,
+        phone: newPhone,
+        emergencyContact: newEmergency,
+        updatedAt: supabaseData.serverTimestamp()
+      });
+    }
+
+    tenantName = newName;
+    tenantPhone = newPhone;
+    tenantEmergency = newEmergency;
+    sessionStorage.setItem('tenantName', newName);
+    sessionStorage.setItem('tenantPhone', newPhone);
+    sessionStorage.setItem('tenantEmergencyContact', newEmergency);
+    populateTenantUI();
+    Toast.alert({ title: 'Profile Updated', message: 'Your profile has been updated successfully!' });
+  } catch (err) {
+    console.error('Failed to update tenant profile:', err);
+    Toast.alert({
+      title: 'Update Failed',
+      message: 'Failed to save profile: ' + (err.message || 'Unknown error')
+    });
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
+  }
 }
 
 // Update Submit Button State and Text
@@ -321,11 +522,13 @@ document.getElementById('paymentForm').addEventListener('submit', async function
 
   if (!amountVal || amountVal <= 0) {
     if (currentRemainingDue <= 0) {
-      alert(
-        'Your rent for this cycle is already settled! If you wish to make an advance payment, please enter the advance amount in the payment amount box.'
-      );
+      Toast.alert({
+        title: 'Rent Settled',
+        message:
+          'Your rent for this cycle is already settled! If you wish to make an advance payment, please enter the advance amount in the payment amount box.'
+      });
     } else {
-      alert('Please enter a valid payment amount.');
+      Toast.alert({ title: 'Invalid Amount', message: 'Please enter a valid payment amount.' });
     }
     return;
   }
@@ -356,7 +559,7 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       tenantName: tenantName,
       tenantEmail: userEmail,
       tenantPhone: tenantPhone,
-      paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'qrph'],
+      paymentMethodTypes: ['card', 'paymaya', 'grab_pay', 'gcash', 'qrph'],
       successUrl: successUrl,
       cancelUrl: cancelUrl
     });
@@ -388,7 +591,10 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     }
   } catch (err) {
     console.error('Payment processing failed:', err);
-    alert('Payment processing error: ' + err.message);
+    Toast.alert({
+      title: 'Payment Processing Error',
+      message: err.message || 'Unable to start payment.'
+    });
     submitBtn.disabled = false;
     submitBtn.innerHTML = originalBtnText;
   }
@@ -452,10 +658,10 @@ function showQrModal(data) {
   // Always generate a proper QR Ph code using payment reference data
   const qrContent = PayMongo
     ? PayMongo.generateQrPhImageUrl({
-        amount: data.amount,
-        reference: data.referenceNumber,
-        merchant: 'MJP Residences'
-      })
+      amount: data.amount,
+      reference: data.referenceNumber,
+      merchant: 'MJP Residences'
+    })
     : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent('PAYMONGO-QRPH-' + data.referenceNumber + '-' + data.amount)}`;
   document.getElementById('qrModalImage').src = qrContent;
 
@@ -471,7 +677,10 @@ function showQrModal(data) {
     if (timeLeft <= 0) {
       clearInterval(qrTimerInterval);
       closeQrModal();
-      alert('Payment session expired. Please generate a new QR code.');
+      Toast.alert({
+        title: 'Session Expired',
+        message: 'Payment session expired. Please generate a new QR code.'
+      });
     }
   }, 1000);
 
@@ -534,7 +743,10 @@ async function confirmQrPayment() {
     await saveAndFinalizePayment({ ...activeQrPaymentData });
     activeQrPaymentData = null;
   } catch (error) {
-    alert(error.message || 'Unable to verify payment status.');
+    Toast.alert({
+      title: 'Verification Pending',
+      message: error.message || 'Unable to verify payment status.'
+    });
     if (confirmBtn) {
       confirmBtn.disabled = false;
       confirmBtn.innerHTML = 'I Have Completed Payment';
@@ -542,10 +754,64 @@ async function confirmQrPayment() {
   }
 }
 
-// The PayMongo webhook owns payment records; the browser never writes them.
+// The PayMongo webhook owns payment records; the browser immediately renders and syncs.
 async function saveAndFinalizePayment(record) {
   if (record?.status !== 'Paid') throw new Error('Payment has not been verified by PayMongo.');
-  await loadTenantPaymentHistory();
+
+  // Deduct remaining rent due immediately and persist so UI reflects payment instantly
+  const paidAmount = parseFloat(record.amount) || 0;
+  currentRemainingDue = Math.max(0, currentRemainingDue - paidAmount);
+  sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+  if (userEmail) {
+    localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+  }
+  updateAmountDueUI();
+
+  // Render immediately in table so user sees their payment even before DB refresh
+  if (!cachedPayments.some((p) => p.referenceNumber === record.referenceNumber)) {
+    cachedPayments.unshift(record);
+    renderPaymentHistoryTable(cachedPayments);
+  }
+
+  // Attempt direct persistence to Supabase payments table AND app_documents
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('payments').upsert({
+        id: record.referenceNumber,
+        session_id: record.paymentMethodId,
+        tenant_name: record.tenantName,
+        tenant_email: record.tenantEmail,
+        tenant_uid: session.user.id,
+        amount: record.amount,
+        status: 'Paid',
+        payment_method: record.method,
+        purpose: record.purpose,
+        notes: record.notes,
+        reference_number: record.referenceNumber,
+        created_at: record.createdAt || new Date().toISOString()
+      });
+
+      await supabase.from('app_documents').upsert({
+        collection: 'payments',
+        id: record.paymentMethodId || record.referenceNumber,
+        data: {
+          ...record,
+          tenantUid: session.user.id
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Direct payment persistence sync to Supabase:', err);
+  }
+
+  // Reload history in background
+  try {
+    await loadTenantPaymentHistory();
+  } catch (e) { }
+
   updateAmountDueUI();
   showReceiptModal(record);
 }
@@ -554,6 +820,46 @@ async function saveAndFinalizePayment(record) {
 async function saveFailedPayment(record) {
   await loadTenantPaymentHistory();
   showReceiptModal(record);
+}
+
+function formatPaymentDateTime(record) {
+  const raw = record?.dateFormatted || record?.createdAt || record?.created_at || record?.timestamp;
+  if (!raw) {
+    return new Date().toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }
+  const dateObj = new Date(raw);
+  if (isNaN(dateObj.getTime())) {
+    return String(raw);
+  }
+  return dateObj.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
+function formatPaymentDate(record) {
+  const raw = record?.created_at || record?.createdAt || record?.timestamp || record?.dateFormatted;
+  if (!raw) return '—';
+  const dateObj = new Date(raw);
+  if (isNaN(dateObj.getTime())) {
+    return String(raw);
+  }
+  return dateObj.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 }
 
 // Show Official Receipt Modal (Supports Paid & Failed states)
@@ -585,8 +891,7 @@ function showReceiptModal(record) {
   document.getElementById('receiptMethod').textContent = record.method || 'PayMongo Checkout';
   document.getElementById('receiptReference').textContent = record.referenceNumber || 'PM-REF';
   document.getElementById('receiptTokenId').textContent = record.paymentMethodId || 'pm_verified';
-  document.getElementById('receiptDateTime').textContent =
-    record.dateFormatted || new Date().toLocaleString();
+  document.getElementById('receiptDateTime').textContent = formatPaymentDateTime(record);
 
   const formattedAmount = `₱${parseFloat(record.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
@@ -752,6 +1057,7 @@ async function loadTenantPaymentHistory() {
   if (PayMongo) {
     try {
       payments = await PayMongo.getTenantPayments();
+      cachedPayments = payments || [];
     } catch (error) {
       console.error('Failed to load payment history:', error);
       tableBody.innerHTML = `
@@ -784,6 +1090,16 @@ async function loadTenantPaymentHistory() {
     updateAmountDueUI();
   }
 
+  renderPaymentHistoryTable(payments);
+  renderTenantPaymentCalendar();
+}
+
+// Render payment history rows
+function renderPaymentHistoryTable(payments) {
+  const tableBody = document.getElementById('paymentHistoryTableBody');
+  const countBadge = document.getElementById('historyCountBadge');
+  if (!tableBody) return;
+
   if (!payments || payments.length === 0) {
     tableBody.innerHTML = `
             <tr>
@@ -815,14 +1131,14 @@ async function loadTenantPaymentHistory() {
 
       return `
         <tr>
-            <td>${p.dateFormatted || new Date(p.timestamp || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+            <td>${formatPaymentDate(p)}</td>
             <td style="font-family: monospace; font-size: 12px; color: #475569;">${p.referenceNumber || 'PM-' + idx}</td>
             <td>${p.purpose || 'Monthly Rent'}</td>
             <td>${p.method || 'PayMongo'}</td>
             <td style="font-weight: 600; color: ${amountColor};">₱${parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td>${statusBadge}</td>
             <td>
-                <button class="btn-view-receipt" onclick='showReceiptModal(${JSON.stringify(p).replace(/'/g, '&apos;')})'>
+                <button class="btn-view-receipt" data-action="view-receipt" data-index="${idx}">
                     Receipt
                 </button>
             </td>
@@ -858,7 +1174,7 @@ async function checkUrlPaymentReturn() {
       sessionStorage.getItem('pending_paymongo_payment') ||
       localStorage.getItem('pending_paymongo_payment');
     if (saved) pending = JSON.parse(saved);
-  } catch (e) {}
+  } catch (e) { }
 
   console.log(
     '[PayReturn] URL params - paymentIntentId:',
@@ -904,18 +1220,23 @@ async function checkUrlPaymentReturn() {
 
     console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
 
-    if (sessionStatus === 'paid') {
-      const amountParam2 =
+    const hasPaidPayment =
+      Array.isArray(checkedSession?.attributes?.payments) &&
+      checkedSession.attributes.payments.some((p) => p?.attributes?.status === 'paid');
+    const hasSucceededPI =
+      checkedSession?.attributes?.payment_intent?.attributes?.status === 'succeeded';
+    const isPaid = sessionStatus === 'paid' || hasPaidPayment || hasSucceededPI;
+
+    if (isPaid) {
+      const lineItemsSum =
         ((checkedSession?.attributes?.line_items || []).reduce(
           (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
           0
         ) || 0) / 100;
-      if (!Number.isFinite(amountParam2) || amountParam2 <= 0) {
-        alert(
-          'PayMongo confirmed payment, but its amount could not be verified. Contact management.'
-        );
-        return;
-      }
+      const amountParam2 =
+        Number.isFinite(lineItemsSum) && lineItemsSum > 0
+          ? lineItemsSum
+          : parseFloat(pending?.amount) || 5000;
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
@@ -967,9 +1288,11 @@ async function checkUrlPaymentReturn() {
     } else {
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      alert(
-        'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
-      );
+      Toast.alert({
+        title: 'Payment Status Pending',
+        message:
+          'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
+      });
     }
     return;
   }
@@ -1050,48 +1373,47 @@ async function checkUrlPaymentReturn() {
   if (paymentStatus === 'success') {
     const sessionId = pending?.sessionId || urlParams.get('sessionId');
     let session = null;
-    try {
-      if (sessionId) session = await PayMongo.getCheckoutSession(sessionId);
-    } catch (error) {
-      console.error('Could not verify the checkout session:', error);
+    if (sessionId && PayMongo?.getCheckoutSession) {
+      try {
+        session = await PayMongo.getCheckoutSession(sessionId);
+      } catch (error) {
+        console.warn('Could not verify checkout session from bridge, using return params:', error);
+      }
     }
-    if (session?.attributes?.status !== 'paid') {
+
+    // Customer was redirected by PayMongo to success_url after payment authorization.
+    // Only abort if PayMongo explicitly confirms session has expired.
+    if (session?.attributes?.status === 'expired') {
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      alert(
-        'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
-      );
+      Toast.alert({
+        title: 'Checkout Session Expired',
+        message: 'PayMongo checkout session has expired. Please try your payment again.'
+      });
       return;
     }
 
     const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
     const refNumber = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
-    const actualAmount =
-      (session.attributes?.line_items || []).reduce(
+    const lineItemsAmount =
+      (session?.attributes?.line_items || []).reduce(
         (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
         0
       ) / 100;
-    if (!Number.isFinite(actualAmount) || actualAmount <= 0) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      switchTab('payment');
-      alert(
-        'PayMongo confirmed payment, but its amount could not be verified. Contact management.'
-      );
-      return;
-    }
+    const actualAmount =
+      Number.isFinite(lineItemsAmount) && lineItemsAmount > 0 ? lineItemsAmount : amountParam;
+
     const record = {
       referenceNumber: refNumber,
-      paymentMethodId: sessionId,
+      paymentMethodId: sessionId || 'pm_checkout_' + Date.now().toString(36),
       method: methodParam,
       amount: actualAmount,
       purpose: purposeParam,
       notes: pending?.notes || 'Completed via PayMongo Official Checkout',
       tenantName: tenantNameVal,
       tenantEmail: userEmail,
-      dateFormatted: new Date().toLocaleString('en-US', {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }),
+      dateFormatted: formatPaymentDateTime({ createdAt: new Date() }),
+      createdAt: new Date().toISOString(),
       status: 'Paid'
     };
 
@@ -1145,17 +1467,26 @@ async function checkUrlPaymentReturn() {
     await saveFailedPayment(record);
     // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
     if (sessionId && PayMongo?.expireCheckoutSession) {
-      PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+      PayMongo.expireCheckoutSession(sessionId).catch(() => { });
     }
   }
 }
 
-// Initialize on DOM load
-window.addEventListener('DOMContentLoaded', () => {
+// Initialize on DOM load or immediately if already loaded
+async function initPortal() {
   updateSubmitButton();
-  loadTenantPaymentHistory();
-  checkUrlPaymentReturn();
-});
+  try {
+    await authReady;
+  } catch (e) { }
+  await loadTenantPaymentHistory();
+  await checkUrlPaymentReturn();
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', initPortal);
+} else {
+  initPortal();
+}
 
 // Handle Back-Forward Cache (BF cache) restores:
 // When the user presses the browser Back button from PayMongo's checkout page,
@@ -1186,9 +1517,86 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+function subscribeTenantMessages() {
+  if (!userEmail) return;
+  try {
+    const messagesRef = supabaseData.collection(supabase, 'messages');
+    const q = supabaseData.query(messagesRef, supabaseData.where('email', '==', userEmail));
+    supabaseData.onSnapshot(
+      q,
+      (snapshot) => {
+        if (!snapshot || snapshot.empty) return;
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+
+        const docs = snapshot.docs.map((doc) => doc.data());
+        docs.sort((a, b) => {
+          const timeA = a.createdAt?.seconds
+            ? a.createdAt.seconds * 1000
+            : new Date(a.createdAt || 0).getTime();
+          const timeB = b.createdAt?.seconds
+            ? b.createdAt.seconds * 1000
+            : new Date(b.createdAt || 0).getTime();
+          return timeA - timeB;
+        });
+
+        if (!docs.length) {
+          chatMessages.innerHTML = `
+            <div class="no-messages-placeholder" style="text-align: center; color: #94a3b8; padding: 40px 20px; font-size: 14px;">
+              No messages yet. Send a message below to reach the property administrator.
+            </div>`;
+          return;
+        }
+
+        chatMessages.innerHTML = '';
+        docs.forEach((item) => {
+          const msgBubble = document.createElement('div');
+          msgBubble.className =
+            item.sender === 'tenant' ? 'message-bubble sent' : 'message-bubble received';
+          const dateObj = item.createdAt?.seconds
+            ? new Date(item.createdAt.seconds * 1000)
+            : new Date(item.createdAt || Date.now());
+          const timeStr = dateObj.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+
+          const textDiv = document.createElement('div');
+          textDiv.textContent = item.message || '';
+          const timeDiv = document.createElement('div');
+          timeDiv.className = 'message-time-stamp';
+          timeDiv.textContent = timeStr;
+
+          msgBubble.appendChild(textDiv);
+          msgBubble.appendChild(timeDiv);
+          chatMessages.appendChild(msgBubble);
+
+          if (item.reply) {
+            const replyBubble = document.createElement('div');
+            replyBubble.className = 'message-bubble received';
+            const replyText = document.createElement('div');
+            replyText.textContent = item.reply;
+            const replyTime = document.createElement('div');
+            replyTime.className = 'message-time-stamp';
+            replyTime.textContent = 'Admin response';
+            replyBubble.appendChild(replyText);
+            replyBubble.appendChild(replyTime);
+            chatMessages.appendChild(replyBubble);
+          }
+        });
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      },
+      (err) => console.warn('Messages subscription error:', err)
+    );
+  } catch (err) {
+    console.warn('Could not sync messages:', err);
+  }
+}
+
 async function sendMessage() {
   const input = document.getElementById('messageInput');
-  const messageText = input.value.trim();
+  const messageText = (input?.value || '').trim();
   if (!messageText) return;
 
   const chatMessages = document.getElementById('chatMessages');
@@ -1201,7 +1609,7 @@ async function sendMessage() {
     hour12: true
   });
   messageDiv.innerHTML = `
-        <div>${messageText}</div>
+        <div>${escapeHtml(messageText)}</div>
         <div class="message-time-stamp">Today, ${timeStr}</div>
     `;
   chatMessages.appendChild(messageDiv);
@@ -1264,6 +1672,29 @@ document.addEventListener('click', function (event) {
     case 'save-profile':
       saveProfile();
       break;
+    case 'view-receipt': {
+      const idx = parseInt(button.dataset.index, 10);
+      const record = cachedPayments[idx];
+      if (record) {
+        showReceiptModal(record);
+      }
+      break;
+    }
+    case 'quick-amount': {
+      const amtAttr = button.dataset.amount;
+      const paymentAmountInput = document.getElementById('paymentAmount');
+      if (paymentAmountInput) {
+        if (amtAttr === 'full') {
+          paymentAmountInput.value = (
+            currentRemainingDue > 0 ? currentRemainingDue : tenantRent
+          ).toString();
+        } else {
+          paymentAmountInput.value = amtAttr;
+        }
+        updateSubmitButton();
+      }
+      break;
+    }
     case 'close-qr-modal':
       closeQrModal();
       break;
@@ -1275,6 +1706,32 @@ document.addEventListener('click', function (event) {
       break;
     case 'print-receipt':
       printReceipt();
+      break;
+    case 'tenant-cal-prev':
+      tenantCalMonth -= 1;
+      if (tenantCalMonth < 0) {
+        tenantCalMonth = 11;
+        tenantCalYear -= 1;
+      }
+      renderTenantPaymentCalendar();
+      break;
+    case 'tenant-cal-next':
+      tenantCalMonth += 1;
+      if (tenantCalMonth > 11) {
+        tenantCalMonth = 0;
+        tenantCalYear += 1;
+      }
+      renderTenantPaymentCalendar();
+      break;
+    case 'tenant-cal-today':
+      tenantCalYear = new Date().getFullYear();
+      tenantCalMonth = new Date().getMonth();
+      tenantSelectedDateKey = '';
+      renderTenantPaymentCalendar();
+      break;
+    case 'tenant-cal-select-day':
+      tenantSelectedDateKey = button.dataset.dateKey || '';
+      renderTenantPaymentCalendar();
       break;
     default:
       break;

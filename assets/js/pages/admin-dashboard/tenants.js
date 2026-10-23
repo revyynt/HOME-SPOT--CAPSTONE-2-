@@ -10,6 +10,8 @@
 import { db, supabaseData } from '../../supabase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
+import { refreshTenantMessenger } from '../../render/messages.js';
+import { Toast } from '../../render/toast.js';
 
 /** @type {Array<Object & {id: string}>} */
 let loadedTenants = [];
@@ -43,6 +45,7 @@ export function listenToTenants() {
     }
     renderFiltered();
     updateTenantStats(loadedTenants);
+    refreshTenantMessenger();
   };
 
   try {
@@ -99,42 +102,42 @@ function renderTenantsTable(tenants) {
 
       return `
         <tr class="hover:bg-gray-50/70 transition-colors">
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="px-4 py-3.5">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-gradient-to-tr ${gradient} text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
                 ${escapeHtml(initials(t.name))}
               </div>
-              <div>
+              <div class="min-w-0">
                 <div class="font-bold text-gray-900">${escapeHtml(t.name || 'Tenant')}</div>
-                <div class="text-xs text-gray-500 font-mono">${escapeHtml(t.email || '—')}</div>
+                <div class="text-xs text-gray-500 font-mono break-all">${escapeHtml(t.email || '—')}</div>
               </div>
             </div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="px-4 py-3.5">
             <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
               ${escapeHtml(t.room || 'Unassigned')}
             </span>
             <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="px-4 py-3.5">
             <div class="text-sm text-gray-800">${escapeHtml(t.phone || '—')}</div>
             ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${escapeHtml(t.emergencyContact)}</div>` : ''}
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+          <td class="px-4 py-3.5 whitespace-nowrap text-sm text-gray-600">
             ${escapeHtml(t.moveInDate || '—')}
             <div class="text-xs text-gray-400">${escapeHtml(t.leaseTerm || '1 Year')}</div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="px-4 py-3.5 whitespace-nowrap">
             <div class="font-bold text-gray-900">${escapeHtml(rent)}</div>
             <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap">
+          <td class="px-4 py-3.5 whitespace-nowrap">
             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
               ● Active
             </span>
           </td>
-          <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-            <div class="flex items-center justify-end gap-2">
+          <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end gap-1.5">
               <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">view</button>
               <button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">copy</button>
               <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">x</button>
@@ -154,6 +157,7 @@ function updateTenantStats(tenants) {
     if (el) el.textContent = value;
   };
 
+  set('activeBookingsCount', active);
   set('tenantsCountBadge', tenants.length);
   set('tenantsStatTotal', tenants.length);
   set('tenantsStatActive', active);
@@ -214,8 +218,18 @@ export function copyTenantLoginInfo(email, name, room) {
 
   navigator.clipboard
     .writeText(text)
-    .then(() => alert('Tenant portal details copied to clipboard!'))
-    .catch(() => alert(`Tenant Portal:\nEmail: ${email}\nURL: ${portalUrl}`));
+    .then(() =>
+      Toast.alert({
+        title: 'Credentials Copied',
+        message: 'Tenant portal sign-in details have been copied to your clipboard.'
+      })
+    )
+    .catch(() =>
+      Toast.alert({
+        title: 'Tenant Portal Access',
+        message: `Email: ${email}\nURL: ${portalUrl}`
+      })
+    );
 }
 
 export function copyCurrentTenantCredentials() {
@@ -230,28 +244,33 @@ export function copyCurrentTenantCredentials() {
 /**
  * Deletes a tenant's Firestore profile.
  *
- * Note this does not disable the Firebase Auth account. Removing the profile
- * means the tenant can no longer read their data (firestore.rules keys off
- * the tenant document), but the Auth user still exists.
- *
  * @param {string} tenantId
  * @param {string} tenantName
  */
 export async function deleteTenantAccount(tenantId, tenantName) {
-  if (
-    !confirm(
-      `Remove the tenant account for "${tenantName}"? They will no longer be able to sign in.`
-    )
-  ) {
-    return;
-  }
+  const confirmed = await Toast.confirm({
+    title: 'Remove Tenant Account',
+    message: `Remove the tenant account for "${tenantName}"? They will no longer be able to sign in.`,
+    confirmText: 'Remove Tenant',
+    cancelText: 'Cancel',
+    danger: true
+  });
+  if (!confirmed) return;
 
   try {
-    await supabaseData.deleteDoc(supabaseData.doc(db, 'tenants', tenantId));
-    alert(`Tenant ${tenantName} removed successfully.`);
+    const { data, error } = await supabase.functions.invoke('delete-tenant', {
+      body: { tenantId }
+    });
+    if (error || !data?.success) {
+      await supabaseData.deleteDoc(supabaseData.doc(db, 'tenants', tenantId));
+    }
+    Toast.success(`Tenant ${tenantName} removed successfully.`);
   } catch (error) {
     console.error('Failed to remove tenant:', error);
-    alert('Could not remove tenant. Error: ' + error.message);
+    Toast.alert({
+      title: 'Could Not Remove Tenant',
+      message: error.message || 'Unable to remove tenant account.'
+    });
   }
 }
 

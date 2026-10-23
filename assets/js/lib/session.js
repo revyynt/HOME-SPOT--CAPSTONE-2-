@@ -28,7 +28,22 @@ export async function logoutStaff(redirectTo = './login.html') {
     console.error('Error signing out:', error);
   } finally {
     sessionStorage.clear();
-    localStorage.removeItem('adminSession');
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        const lower = key.toLowerCase();
+        if (
+          lower.startsWith('sb-') ||
+          lower.includes('admin') ||
+          lower.includes('auth') ||
+          lower.includes('token') ||
+          lower.includes('session')
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {
+      // Ignore localStorage errors
+    }
     window.location.href = redirectTo;
   }
 }

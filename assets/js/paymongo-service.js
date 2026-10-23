@@ -11,7 +11,7 @@ import { supabase } from './supabase-service.js';
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',
   currency: 'PHP',
-  supportedMethods: ['card', 'paymaya', 'grab_pay', 'qrph']
+  supportedMethods: ['card', 'paymaya', 'grab_pay', 'gcash', 'qrph']
 };
 
 /**
@@ -204,11 +204,67 @@ export async function getTenantPayments() {
   if (sessionError) throw sessionError;
   if (!session) return [];
 
-  const { data, error } = await supabase
-    .from('app_documents')
-    .select('data')
-    .eq('collection', 'payments')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data || []).map((row) => row.data);
+  const results = [];
+  const seenRefs = new Set();
+
+  // 1. Query relational payments table
+  try {
+    const { data: relPayments, error: relError } = await supabase
+      .from('payments')
+      .select('*')
+      .or(`tenant_email.ilike.${session.user.email},tenant_uid.eq.${session.user.id}`)
+      .order('created_at', { ascending: false });
+
+    if (!relError && Array.isArray(relPayments)) {
+      for (const p of relPayments) {
+        const ref = p.reference_number || p.id;
+        if (ref && !seenRefs.has(ref)) {
+          seenRefs.add(ref);
+          results.push({
+            referenceNumber: ref,
+            paymentMethodId: p.session_id || p.payment_intent_id || p.id,
+            amount: parseFloat(p.amount) || 0,
+            purpose: p.purpose || 'Monthly Rent',
+            notes: p.notes || '',
+            method: p.payment_method || 'PayMongo',
+            status: p.status || 'Paid',
+            tenantEmail: p.tenant_email,
+            tenantName: p.tenant_name,
+            createdAt: p.created_at,
+            dateFormatted: new Date(p.created_at).toLocaleString('en-US', {
+              dateStyle: 'medium',
+              timeStyle: 'short'
+            })
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Could not query payments table:', err);
+  }
+
+  // 2. Query app_documents for backward compatibility
+  try {
+    const { data: docPayments, error: docError } = await supabase
+      .from('app_documents')
+      .select('data')
+      .eq('collection', 'payments')
+      .order('created_at', { ascending: false });
+
+    if (!docError && Array.isArray(docPayments)) {
+      for (const row of docPayments) {
+        const item = row.data;
+        if (!item) continue;
+        const ref = item.referenceNumber || item.reference_number || item.id;
+        if (ref && !seenRefs.has(ref)) {
+          seenRefs.add(ref);
+          results.push(item);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Could not query app_documents payments:', err);
+  }
+
+  return results;
 }

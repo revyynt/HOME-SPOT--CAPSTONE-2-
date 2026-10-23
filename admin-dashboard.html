@@ -1,1728 +1,1118 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin Dashboard - HomeSpot - AR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./assets/css/style.css" />
-  </head>
 
-  <body class="bg-gray-50">
-    <!-- Top Navigation -->
-    <header class="bg-white border-b sticky top-0 z-50">
-      <div class="px-6 py-4">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - HomeSpot - AR</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css" />
+</head>
+
+<body class="bg-gray-50">
+  <!-- Top Navigation -->
+  <header class="bg-white border-b sticky top-0 z-50">
+    <div class="px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <h1 class="text-2xl font-bold">HomeSpot Admin</h1>
+          <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium">Admin</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button data-action="logout"
+            class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg active:bg-gray-200 cursor-pointer"
+            style="border: none; background: none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="p-6 max-w-[1600px] w-full mx-auto">
+    <!-- Welcome Section -->
+    <div class="mb-8">
+      <h2 class="text-3xl font-bold mb-2">Welcome back, Admin!</h2>
+      <p class="text-gray-600">Manage your dorm listings and reservations</p>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow p-6">
         <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-bold">HomeSpot Admin</h1>
-            <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-medium"
-              >Admin</span
-            >
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Total Listings</p>
+            <p id="totalListingsCount" class="text-3xl font-bold">2</p>
           </div>
-          <div class="flex items-center gap-4">
-            <a
-              href="./index.html"
-              class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                ></path>
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                ></path>
-              </svg>
-              View Website
-            </a>
-            <button
-              data-action="logout"
-              class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg active:bg-gray-200 cursor-pointer"
-              style="border: none; background: none"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                ></path>
-              </svg>
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <div class="p-6 max-w-7xl mx-auto">
-      <!-- Welcome Section -->
-      <div class="mb-8">
-        <h2 class="text-3xl font-bold mb-2">Welcome back, Admin!</h2>
-        <p class="text-gray-600">Manage your dorm listings and reservations</p>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Total Listings</p>
-              <p class="text-3xl font-bold">4</p>
-            </div>
-            <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                ></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Active Bookings</p>
-              <p class="text-3xl font-bold">12</p>
-            </div>
-            <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                ></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Pending Requests</p>
-              <p id="pendingRequestsCount" class="text-3xl font-bold">5</p>
-            </div>
-            <div class="bg-yellow-600 w-12 h-12 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                ></path>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow p-6">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-600 mb-1">Unread Messages</p>
-              <p id="unreadMessagesCount" class="text-3xl font-bold">3</p>
-            </div>
-            <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                ></path>
-              </svg>
-            </div>
+          <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+              </path>
+            </svg>
           </div>
         </div>
       </div>
 
-      <!-- Tabs -->
-      <div class="bg-white rounded-lg shadow mb-6">
-        <div class="flex border-b overflow-x-auto">
-          <button data-tab-button="overview" class="tab-button active px-6 py-3 font-medium">
-            Overview
-          </button>
-          <button data-tab-button="listings" class="tab-button px-6 py-3 font-medium">
-            My Listings
-          </button>
-          <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium">
-            Reservations
-          </button>
-          <button
-            data-tab-button="tenants"
-            class="tab-button px-6 py-3 font-medium flex items-center gap-2"
-          >
-            <span>Tenants</span>
-            <span
-              id="tenantsCountBadge"
-              class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full"
-              >0</span
-            >
-          </button>
-          <button data-tab-button="tenant-payments" class="tab-button px-6 py-3 font-medium">
-            Tenant Payments
-          </button>
-          <button data-tab-button="messages" class="tab-button px-6 py-3 font-medium">
-            Inquiries
-          </button>
-          <button data-tab-button="reviews" class="tab-button px-6 py-3 font-medium">
-            Reviews
-          </button>
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Active Bookings</p>
+            <p id="activeBookingsCount" class="text-3xl font-bold">0</p>
+          </div>
+          <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+          </div>
         </div>
+      </div>
 
-        <!-- Tab Content -->
-        <div class="p-6">
-          <!-- Overview Tab -->
-          <div data-tab-content="overview">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <!-- Recent Activity -->
-              <div class="bg-white border rounded-lg p-6">
-                <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
-                <div class="space-y-4">
-                  <div class="flex items-start gap-3 pb-4 border-b">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fill-rule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clip-rule="evenodd"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium">New booking confirmed</p>
-                      <p class="text-xs text-gray-500">Single Occupancy Room - 2 hours ago</p>
-                    </div>
-                  </div>
-                  <div class="flex items-start gap-3 pb-4 border-b">
-                    <div
-                      class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center"
-                    >
-                      <svg
-                        class="w-4 h-4 text-yellow-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium">New reservation request</p>
-                      <p class="text-xs text-gray-500">Double Occupancy Room - 5 hours ago</p>
-                    </div>
-                  </div>
-                  <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg
-                        class="w-4 h-4 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                        ></path>
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-sm font-medium">New message received</p>
-                      <p class="text-xs text-gray-500">From John Reyes - 10 mins ago</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Quick Actions -->
-              <div class="bg-white border rounded-lg p-6">
-                <h3 class="text-xl font-bold mb-4">Quick Actions</h3>
-                <div class="grid grid-cols-2 gap-4">
-                  <button
-                    class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"
-                      ></path>
-                    </svg>
-                    <span class="text-sm font-medium">Add New Listing</span>
-                  </button>
-                  <button
-                    class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      ></path>
-                    </svg>
-                    <span class="text-sm font-medium">Manage Calendar</span>
-                  </button>
-                  <button
-                    class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                      ></path>
-                    </svg>
-                    <span class="text-sm font-medium">View Messages</span>
-                  </button>
-                  <button
-                    class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50"
-                  >
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                      ></path>
-                    </svg>
-                    <span class="text-sm font-medium">View Reports</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Pending Requests</p>
+            <p id="pendingRequestsCount" class="text-3xl font-bold">0</p>
           </div>
-
-          <!-- Listings Tab -->
-          <div data-tab-content="listings" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-              <h3 class="text-xl font-bold">My Dorm Listings</h3>
-              <button
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"
-                  ></path>
-                </svg>
-                Add New Listing
-              </button>
-            </div>
-
-            <div class="space-y-4">
-              <!-- Listing 1 -->
-              <div class="bg-white border rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <h4 class="text-lg font-bold mb-1">Single Occupancy Room</h4>
-                      <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-                        <span>Occupancy: 2/4</span>
-                        <span class="text-green-600 font-medium">₱5,500/mo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        ></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        ></path>
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        ></path>
-                      </svg>
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Listing 2 -->
-              <div class="bg-white border rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <h4 class="text-lg font-bold mb-1">Double Occupancy Room</h4>
-                      <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-                        <span>Occupancy: 3/6</span>
-                        <span class="text-green-600 font-medium">₱4,000/mo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        ></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        ></path>
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        ></path>
-                      </svg>
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Listing 3 -->
-              <div class="bg-white border rounded-lg p-6">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <div class="w-20 h-20 bg-gray-200 rounded-lg"></div>
-                    <div>
-                      <h4 class="text-lg font-bold mb-1">Triple Occupancy Room</h4>
-                      <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Active</span>
-                        <span>Occupancy: 4/12</span>
-                        <span class="text-green-600 font-medium">₱3,200/mo</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        ></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button
-                      class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        ></path>
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        ></path>
-                      </svg>
-                      View
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="bg-yellow-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
           </div>
+        </div>
+      </div>
 
-          <!-- Reservations Tab -->
-          <div data-tab-content="reservations" class="hidden">
-            <h3 class="text-xl font-bold mb-6">Reservation Requests</h3>
-            <div id="firestoreStatus" class="text-sm text-gray-500 mb-4">
-              Connecting to Firestore...
-            </div>
-
-            <div id="reservationRequestsContainer" class="space-y-4"></div>
+      <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Unread Messages</p>
+            <p id="unreadMessagesCount" class="text-3xl font-bold">0</p>
           </div>
-
-          <!-- Tenants Tab -->
-          <div data-tab-content="tenants" class="hidden">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div>
-                <h3 class="text-2xl font-bold text-gray-900">Tenant Management</h3>
-                <p class="text-sm text-gray-500 mt-0.5">
-                  Create and manage accounts for tenants moving into MJP Residences
-                </p>
-              </div>
-              <div class="flex items-center gap-3">
-                <button
-                  data-action="open-create-tenant"
-                  class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow-md"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                    />
-                  </svg>
-                  Create Tenant Account
-                </button>
-              </div>
-            </div>
-
-            <!-- Quick Stats Banner -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              <div
-                class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4"
-              >
-                <div
-                  class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm"
-                >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-xs font-medium text-blue-900 uppercase tracking-wider">
-                    Total Enrolled Tenants
-                  </div>
-                  <div id="tenantsStatTotal" class="text-2xl font-bold text-blue-950">0</div>
-                </div>
-              </div>
-
-              <div
-                class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4"
-              >
-                <div
-                  class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm"
-                >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-xs font-medium text-emerald-900 uppercase tracking-wider">
-                    Active Moved-In
-                  </div>
-                  <div id="tenantsStatActive" class="text-2xl font-bold text-emerald-950">0</div>
-                </div>
-              </div>
-
-              <div
-                class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 flex items-center gap-4"
-              >
-                <div
-                  class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm"
-                >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div>
-                  <div class="text-xs font-medium text-purple-900 uppercase tracking-wider">
-                    Monthly Rent Receivable
-                  </div>
-                  <div id="tenantsStatRent" class="text-2xl font-bold text-purple-950">₱0.00</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Filter & Search Toolbar -->
-            <div
-              class="bg-white border rounded-xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3"
-            >
-              <div class="relative w-full sm:w-80">
-                <svg
-                  class="w-4 h-4 text-gray-400 absolute left-3.5 top-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  type="text"
-                  id="tenantSearchInput"
-                  placeholder="Search tenant name, email, room..."
-                  class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                />
-              </div>
-              <div class="flex items-center gap-3 w-full sm:w-auto">
-                <select
-                  id="tenantRoomFilter"
-                  class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"
-                >
-                  <option value="">All Rooms & Units</option>
-                  <option value="Room 101">Room 101</option>
-                  <option value="Room 105">Room 105</option>
-                  <option value="Room 201">Room 201</option>
-                  <option value="Room 208">Room 208</option>
-                  <option value="Room 302">Room 302</option>
-                  <option value="Room 410">Room 410</option>
-                  <option value="Commercial">Commercial</option>
-                </select>
-                <span
-                  id="tenantsFirestoreStatus"
-                  class="text-xs text-gray-500 hidden sm:inline-block"
-                  >Syncing...</span
-                >
-              </div>
-            </div>
-
-            <!-- Tenants Table Container -->
-            <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                  <thead
-                    class="bg-gray-50/80 border-b text-xs font-semibold text-gray-500 uppercase tracking-wider"
-                  >
-                    <tr>
-                      <th class="px-6 py-3.5">Tenant</th>
-                      <th class="px-6 py-3.5">Assigned Room</th>
-                      <th class="px-6 py-3.5">Contact</th>
-                      <th class="px-6 py-3.5">Move-in Date</th>
-                      <th class="px-6 py-3.5">Monthly Rent</th>
-                      <th class="px-6 py-3.5">Status</th>
-                      <th class="px-6 py-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tenantsTableBody" class="divide-y divide-gray-100 text-sm">
-                    <tr>
-                      <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                        <div class="flex flex-col items-center justify-center gap-2">
-                          <div
-                            class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"
-                          ></div>
-                          <span>Loading tenants from Firestore...</span>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Messages Tab -->
-          <div data-tab-content="messages" class="hidden">
-            <h3 class="text-xl font-bold mb-6">Inquiries (Real-time Updates)</h3>
-
-            <div id="messagesContainer" class="space-y-4"></div>
-          </div>
-
-          <!-- Tenant Payments Tab -->
-          <div data-tab-content="tenant-payments" class="hidden">
-            <h3 class="text-xl font-bold mb-6">Tenant Payment Management</h3>
-
-            <!-- Payment Summary Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div class="bg-white border rounded-lg p-4">
-                <div class="text-sm text-gray-600 mb-1">Total Expected This Month</div>
-                <div class="text-2xl font-bold text-gray-900">₱60,000</div>
-              </div>
-              <div class="bg-white border rounded-lg p-4">
-                <div class="text-sm text-gray-600 mb-1">Paid This Month</div>
-                <div class="text-2xl font-bold text-green-600">₱45,000</div>
-              </div>
-              <div class="bg-white border rounded-lg p-4">
-                <div class="text-sm text-gray-600 mb-1">Overdue Payments</div>
-                <div class="text-2xl font-bold text-red-600">₱5,000</div>
-              </div>
-            </div>
-
-            <!-- Payment Due Dates Table -->
-            <div class="bg-white border rounded-lg">
-              <div class="p-6 border-b">
-                <h4 class="text-lg font-bold">Payment Due Dates</h4>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="w-full">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Tenant Name
-                      </th>
-                      <th
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Room
-                      </th>
-                      <th
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Amount
-                      </th>
-                      <th
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Due Date
-                      </th>
-                      <th
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Status
-                      </th>
-                      <th
-                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      >
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div
-                            class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3"
-                          >
-                            JD
-                          </div>
-                          <div class="text-sm font-medium text-gray-900">Juan Dela Cruz</div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 201</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ₱5,000
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 5, 2026</td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                          class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                          >Pending</span
-                        >
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          data-open-modal="payment"
-                          data-tenant="%7B%22name%22%3A%22Juan%20Dela%20Cruz%22%2C%22room%22%3A%22Room%20201%22%2C%22amount%22%3A5000%2C%22dueDate%22%3A%22May%205%2C%202026%22%2C%22status%22%3A%22Pending%22%7D"
-                          class="text-blue-600 hover:text-blue-800 mr-3"
-                        >
-                          View Payment
-                        </button>
-                        <button
-                          data-open-modal="dueDate"
-                          data-tenant="%7B%22name%22%3A%22Juan%20Dela%20Cruz%22%2C%22room%22%3A%22Room%20201%22%2C%22dueDate%22%3A%22May%205%2C%202026%22%7D"
-                          class="text-green-600 hover:text-green-800"
-                        >
-                          View Due Date
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div
-                            class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-semibold text-sm mr-3"
-                          >
-                            MS
-                          </div>
-                          <div class="text-sm font-medium text-gray-900">Maria Santos</div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 105</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ₱4,500
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 3, 2026</td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                          class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"
-                          >Paid</span
-                        >
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          data-open-modal="payment"
-                          data-tenant="%7B%22name%22%3A%22Maria%20Santos%22%2C%22room%22%3A%22Room%20105%22%2C%22amount%22%3A4500%2C%22dueDate%22%3A%22May%203%2C%202026%22%2C%22status%22%3A%22Paid%22%7D"
-                          class="text-blue-600 hover:text-blue-800 mr-3"
-                        >
-                          View Payment
-                        </button>
-                        <button
-                          data-open-modal="dueDate"
-                          data-tenant="%7B%22name%22%3A%22Maria%20Santos%22%2C%22room%22%3A%22Room%20105%22%2C%22dueDate%22%3A%22May%203%2C%202026%22%7D"
-                          class="text-green-600 hover:text-green-800"
-                        >
-                          View Due Date
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div
-                            class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm mr-3"
-                          >
-                            AR
-                          </div>
-                          <div class="text-sm font-medium text-gray-900">Anna Reyes</div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 302</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ₱5,500
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 1, 2026</td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                          class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"
-                          >Paid</span
-                        >
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          data-open-modal="payment"
-                          data-tenant="%7B%22name%22%3A%22Anna%20Reyes%22%2C%22room%22%3A%22Room%20302%22%2C%22amount%22%3A5500%2C%22dueDate%22%3A%22May%201%2C%202026%22%2C%22status%22%3A%22Paid%22%7D"
-                          class="text-blue-600 hover:text-blue-800 mr-3"
-                        >
-                          View Payment
-                        </button>
-                        <button
-                          data-open-modal="dueDate"
-                          data-tenant="%7B%22name%22%3A%22Anna%20Reyes%22%2C%22room%22%3A%22Room%20302%22%2C%22dueDate%22%3A%22May%201%2C%202026%22%7D"
-                          class="text-green-600 hover:text-green-800"
-                        >
-                          View Due Date
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div
-                            class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-600 font-semibold text-sm mr-3"
-                          >
-                            PT
-                          </div>
-                          <div class="text-sm font-medium text-gray-900">Pedro Torres</div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 410</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ₱5,000
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        Apr 25, 2026
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                          class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800"
-                          >Overdue</span
-                        >
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          data-open-modal="payment"
-                          data-tenant="%7B%22name%22%3A%22Pedro%20Torres%22%2C%22room%22%3A%22Room%20410%22%2C%22amount%22%3A5000%2C%22dueDate%22%3A%22Apr%2025%2C%202026%22%2C%22status%22%3A%22Overdue%22%7D"
-                          class="text-blue-600 hover:text-blue-800 mr-3"
-                        >
-                          View Payment
-                        </button>
-                        <button
-                          data-open-modal="dueDate"
-                          data-tenant="%7B%22name%22%3A%22Pedro%20Torres%22%2C%22room%22%3A%22Room%20410%22%2C%22dueDate%22%3A%22Apr%2025%2C%202026%22%7D"
-                          class="text-green-600 hover:text-green-800"
-                        >
-                          View Due Date
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="flex items-center">
-                          <div
-                            class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-semibold text-sm mr-3"
-                          >
-                            LG
-                          </div>
-                          <div class="text-sm font-medium text-gray-900">Lisa Garcia</div>
-                        </div>
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">Room 208</td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ₱4,000
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">May 8, 2026</td>
-                      <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                          class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800"
-                          >Pending</span
-                        >
-                      </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          data-open-modal="payment"
-                          data-tenant="%7B%22name%22%3A%22Lisa%20Garcia%22%2C%22room%22%3A%22Room%20208%22%2C%22amount%22%3A4000%2C%22dueDate%22%3A%22May%208%2C%202026%22%2C%22status%22%3A%22Pending%22%7D"
-                          class="text-blue-600 hover:text-blue-800 mr-3"
-                        >
-                          View Payment
-                        </button>
-                        <button
-                          data-open-modal="dueDate"
-                          data-tenant="%7B%22name%22%3A%22Lisa%20Garcia%22%2C%22room%22%3A%22Room%20208%22%2C%22dueDate%22%3A%22May%208%2C%202026%22%7D"
-                          class="text-green-600 hover:text-green-800"
-                        >
-                          View Due Date
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Reviews Tab -->
-          <div data-tab-content="reviews" class="hidden">
-            <h3 class="text-xl font-bold mb-6">Tenant Reviews</h3>
-
-            <div class="bg-white border rounded-lg p-6">
-              <div class="flex items-center justify-between mb-6">
-                <div>
-                  <div class="text-4xl font-bold mb-1">4.8</div>
-                  <div class="flex items-center gap-1 text-yellow-500 mb-1">
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      ></path>
-                    </svg>
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      ></path>
-                    </svg>
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      ></path>
-                    </svg>
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      ></path>
-                    </svg>
-                    <svg class="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p class="text-sm text-gray-600">Based on 24 reviews</p>
-                </div>
-              </div>
-
-              <div class="space-y-4">
-                <div class="border-t pt-4">
-                  <div class="flex items-start gap-3">
-                    <div class="w-10 h-10 bg-gray-300 rounded-full"></div>
-                    <div class="flex-1">
-                      <div class="flex items-center gap-2 mb-1">
-                        <h5 class="font-bold">Sarah Martinez</h5>
-                        <div class="flex text-yellow-500">
-                          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            ></path>
-                          </svg>
-                          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            ></path>
-                          </svg>
-                          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            ></path>
-                          </svg>
-                          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            ></path>
-                          </svg>
-                          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                            <path
-                              d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                            ></path>
-                          </svg>
-                        </div>
-                      </div>
-                      <p class="text-sm text-gray-700">
-                        Great location near campus! The owner is very responsive and the facilities
-                        are well-maintained.
-                      </p>
-                      <p class="text-xs text-gray-500 mt-1">2 days ago</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+              </path>
+            </svg>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- View Payment Modal -->
-    <div
-      id="paymentModal"
-      class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-    >
-      <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="p-6 border-b flex items-center justify-between">
-          <h3 class="text-xl font-bold">Tenant Payment Details</h3>
-          <button data-action="close-payment-modal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
-            </svg>
-          </button>
-        </div>
-        <div class="p-6">
-          <div class="space-y-4">
-            <div class="flex items-center gap-3 mb-6">
-              <div
-                id="modalAvatar"
-                class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl"
-              ></div>
-              <div>
-                <div id="modalTenantName" class="text-xl font-bold"></div>
-                <div id="modalRoom" class="text-sm text-gray-600"></div>
+    <!-- Tabs -->
+    <div class="bg-white rounded-lg shadow mb-6">
+      <div class="flex border-b overflow-x-auto">
+        <button data-tab-button="overview" class="tab-button active px-6 py-3 font-medium">
+          Overview
+        </button>
+        <button data-tab-button="listings" class="tab-button px-6 py-3 font-medium">
+          My Listings
+        </button>
+        <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium">
+          Reservations
+        </button>
+        <button data-tab-button="tenants" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
+          <span>Tenants</span>
+          <span id="tenantsCountBadge"
+            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+        </button>
+        <button data-tab-button="tenant-payments" class="tab-button px-6 py-3 font-medium">
+          Tenant Payments
+        </button>
+        <button data-tab-button="tenant-messages" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
+          <span>Tenant Messages</span>
+          <span id="unreadTenantMessagesCount"
+            class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2 py-0.5 rounded-full hidden">0</span>
+        </button>
+        <button data-tab-button="messages" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
+          <span>Inquiries</span>
+          <span id="unreadInquiriesCount"
+            class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full hidden">0</span>
+        </button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="p-6">
+        <!-- Overview Tab -->
+        <div data-tab-content="overview">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Activity -->
+            <div class="bg-white border rounded-lg p-6">
+              <h3 class="text-xl font-bold mb-4">Recent Activity</h3>
+              <div id="adminRecentActivityList" class="space-y-4">
+                <p class="text-sm text-gray-500 py-4 text-center">Loading recent activity from Supabase...</p>
               </div>
             </div>
 
-            <div class="bg-gray-50 rounded-lg p-4 space-y-3">
-              <div class="flex justify-between">
-                <span class="text-gray-600">Payment Amount:</span>
-                <span id="modalAmount" class="font-semibold text-lg"></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Due Date:</span>
-                <span id="modalDueDate" class="font-medium"></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Payment Status:</span>
-                <span id="modalStatus"></span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-600">Payment Method:</span>
-                <span class="font-medium">GCash</span>
-              </div>
-            </div>
-
-            <div class="border-t pt-4">
-              <h4 class="font-semibold mb-3">Payment History</h4>
-              <div class="space-y-2">
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">April 2026</span>
-                  <span class="text-green-600 font-medium">✓ Paid on Apr 3, 2026</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">March 2026</span>
-                  <span class="text-green-600 font-medium">✓ Paid on Mar 5, 2026</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                  <span class="text-gray-600">February 2026</span>
-                  <span class="text-green-600 font-medium">✓ Paid on Feb 2, 2026</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="border-t pt-4">
-              <h4 class="font-semibold mb-2">Tenant Contact Information</h4>
-              <div class="space-y-1 text-sm">
-                <div class="flex items-center gap-2">
-                  <svg
-                    class="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    ></path>
+            <!-- Quick Actions -->
+            <div class="bg-white border rounded-lg p-6">
+              <h3 class="text-xl font-bold mb-4">Quick Actions</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <button type="button" data-tab-button="listings"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                   </svg>
-                  <span class="text-gray-600">Email: tenant@example.com</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <svg
-                    class="w-4 h-4 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                    ></path>
+                  <span class="text-sm font-medium">Add New Listing</span>
+                </button>
+                <button type="button" data-tab-button="tenant-payments"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                   </svg>
-                  <span class="text-gray-600">Phone: +63 912 345 6789</span>
-                </div>
+                  <span class="text-sm font-medium">Manage Calendar</span>
+                </button>
+                <button type="button" data-tab-button="tenant-messages"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                    </path>
+                  </svg>
+                  <span class="text-sm font-medium">View Messages</span>
+                </button>
+                <button type="button" data-action="open-create-tenant"
+                  class="h-24 flex flex-col items-center justify-center gap-2 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z">
+                    </path>
+                  </svg>
+                  <span class="text-sm font-medium">Create Tenant Account</span>
+                </button>
               </div>
             </div>
           </div>
         </div>
-        <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
-          <button
-            data-action="close-payment-modal"
-            class="px-4 py-2 border rounded-lg hover:bg-gray-100"
-          >
+
+        <!-- Listings Tab -->
+        <div data-tab-content="listings" class="hidden">
+          <div class="flex justify-between items-center mb-6">
+            <div>
+              <h3 class="text-xl font-bold">Apartment Unit Listings</h3>
+              <p class="text-sm text-gray-500">
+                Changes saved here update the landing page and property detail page in real time.
+              </p>
+            </div>
+          </div>
+
+          <div id="adminListingsContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- Reservations Tab -->
+        <div data-tab-content="reservations" class="hidden">
+          <h3 class="text-xl font-bold mb-6">Reservation Requests</h3>
+          <div id="supabaseStatus" class="text-sm text-gray-500 mb-4">
+            Connecting to Supabase...
+          </div>
+
+          <div id="reservationRequestsContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- Tenants Tab -->
+        <div data-tab-content="tenants" class="hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-2xl font-bold text-gray-900">Tenant Management</h3>
+              <p class="text-sm text-gray-500 mt-0.5">
+                Create and manage accounts for tenants moving into MJP Residences
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button data-action="open-create-tenant"
+                class="bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-sm transition-all hover:shadow-md">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Create Tenant Account
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Stats Banner -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div
+              class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-blue-900 uppercase tracking-wider">
+                  Total Enrolled Tenants
+                </div>
+                <div id="tenantsStatTotal" class="text-2xl font-bold text-blue-950">0</div>
+              </div>
+            </div>
+
+            <div
+              class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-emerald-900 uppercase tracking-wider">
+                  Active Moved-In
+                </div>
+                <div id="tenantsStatActive" class="text-2xl font-bold text-emerald-950">0</div>
+              </div>
+            </div>
+
+            <div
+              class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-purple-900 uppercase tracking-wider">
+                  Monthly Rent Receivable
+                </div>
+                <div id="tenantsStatRent" class="text-2xl font-bold text-purple-950">₱0.00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div
+            class="bg-white border rounded-xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="relative w-full sm:w-80">
+              <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" id="tenantSearchInput" placeholder="Search tenant name, email, room..."
+                class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <select id="tenantRoomFilter"
+                class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
+                <option value="">All Rooms & Units</option>
+                <option value="Room 101">Room 101</option>
+                <option value="Room 105">Room 105</option>
+                <option value="Room 201">Room 201</option>
+                <option value="Room 208">Room 208</option>
+                <option value="Room 302">Room 302</option>
+                <option value="Room 410">Room 410</option>
+                <option value="Commercial">Commercial</option>
+              </select>
+              <span id="tenantsSupabaseStatus" class="text-xs text-gray-500 hidden sm:inline-block">Syncing...</span>
+            </div>
+          </div>
+
+          <!-- Tenants Table Container -->
+          <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
+            <div class="w-full">
+              <table class="w-full text-left border-collapse table-auto">
+                <thead class="bg-gray-50/80 border-b text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <tr>
+                    <th class="px-4 py-3.5">Tenant</th>
+                    <th class="px-4 py-3.5">Assigned Room</th>
+                    <th class="px-4 py-3.5">Contact</th>
+                    <th class="px-4 py-3.5">Move-in Date</th>
+                    <th class="px-4 py-3.5">Monthly Rent</th>
+                    <th class="px-4 py-3.5">Status</th>
+                    <th class="px-4 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="tenantsTableBody" class="divide-y divide-gray-100 text-sm">
+                  <tr>
+                    <td colspan="7" class="px-4 py-12 text-center text-gray-500">
+                      <div class="flex flex-col items-center justify-center gap-2">
+                        <div class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full">
+                        </div>
+                        <span>Loading tenants from Supabase...</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tenant Messages Tab -->
+        <div data-tab-content="tenant-messages" class="hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-xl font-bold">Tenant Messages</h3>
+              <p class="text-sm text-gray-500">Direct conversations with registered tenants</p>
+            </div>
+          </div>
+
+          <div id="tenantMessagesContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- Messages Tab (Public Inquiries) -->
+        <div data-tab-content="messages" class="hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-xl font-bold">Public Inquiries</h3>
+              <p class="text-sm text-gray-500">
+                Inquiries submitted from public property listings
+              </p>
+            </div>
+          </div>
+
+          <div id="messagesContainer" class="space-y-4"></div>
+        </div>
+
+        <!-- Tenant Payments Tab -->
+        <div data-tab-content="tenant-payments" class="hidden">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <h3 class="text-xl font-bold">Tenant Payment &amp; Future Schedule Calendar</h3>
+              <p class="text-sm text-gray-500">
+                Track past tenant payments, current monthly collections, and future scheduled due dates.
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="adminCalendarTenantFilter" class="text-xs font-semibold text-gray-600">Tenant:</label>
+              <select id="adminCalendarTenantFilter" class="px-3 py-2 border rounded-lg text-sm bg-white">
+                <option value="">All Tenants</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Payment Summary Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="bg-white border rounded-lg p-4">
+              <div class="text-sm text-gray-600 mb-1">Total Expected (Selected Month)</div>
+              <div id="adminPaymentExpected" class="text-2xl font-bold text-gray-900">₱0.00</div>
+            </div>
+            <div class="bg-white border rounded-lg p-4">
+              <div class="text-sm text-gray-600 mb-1">Paid (Selected Month)</div>
+              <div id="adminPaymentPaid" class="text-2xl font-bold text-green-600">₱0.00</div>
+            </div>
+            <div class="bg-white border rounded-lg p-4">
+              <div class="text-sm text-gray-600 mb-1">Overdue Payments</div>
+              <div id="adminPaymentOverdue" class="text-2xl font-bold text-red-600">₱0.00</div>
+            </div>
+          </div>
+
+          <!-- Current Month Collection Statistics Chart -->
+          <div class="bg-white border rounded-xl p-5 mb-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h4 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                  Monthly Collection Health &amp; Statistics
+                </h4>
+                <p class="text-xs text-gray-500">Real-time breakdown of payment realization for the selected month</p>
+              </div>
+              <div class="flex items-center gap-3">
+                <span id="adminPaymentCollectionRateBadge"
+                  class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  0% Collected
+                </span>
+              </div>
+            </div>
+
+            <!-- Visual Multi-segment Progress Bar -->
+            <div class="space-y-2">
+              <div class="w-full h-3.5 bg-gray-100 rounded-full overflow-hidden flex">
+                <div id="adminStatBarPaid" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"
+                  title="Paid"></div>
+                <div id="adminStatBarPending" class="bg-amber-400 h-full transition-all duration-500" style="width: 0%"
+                  title="Pending / Due"></div>
+                <div id="adminStatBarOverdue" class="bg-rose-500 h-full transition-all duration-500" style="width: 0%"
+                  title="Overdue"></div>
+              </div>
+              <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600 pt-1">
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="inline-flex items-center gap-1.5"><span
+                      class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Paid: <strong
+                      id="adminStatLabelPaid" class="text-gray-900">₱0.00</strong> (<span
+                      id="adminStatPctPaid">0%</span>)</span>
+                  <span class="inline-flex items-center gap-1.5"><span
+                      class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Pending Due: <strong
+                      id="adminStatLabelPending" class="text-gray-900">₱0.00</strong> (<span
+                      id="adminStatPctPending">0%</span>)</span>
+                  <span class="inline-flex items-center gap-1.5"><span
+                      class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Overdue: <strong
+                      id="adminStatLabelOverdue" class="text-gray-900">₱0.00</strong> (<span
+                      id="adminStatPctOverdue">0%</span>)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Room / Space Revenue Breakdown Pills -->
+            <div id="adminStatRoomBreakdown"
+              class="mt-4 pt-3 border-t flex flex-wrap items-center gap-2.5 text-xs text-gray-600"></div>
+          </div>
+
+          <!-- Interactive Admin Payment Calendar -->
+          <div id="adminPaymentCalendarSection" class="bg-white border rounded-lg p-6 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div class="flex flex-wrap items-center gap-4 text-xs text-gray-600">
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Paid</span>
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Due This Month</span>
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Future Payment</span>
+                <span class="inline-flex items-center gap-1.5"><span
+                    class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Overdue</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" data-action="admin-cal-prev"
+                  class="px-3 py-1.5 border rounded-lg hover:bg-gray-50 text-sm font-bold">&lsaquo;</button>
+                <span id="adminCalendarMonthLabel"
+                  class="text-sm font-bold text-gray-900 min-w-[140px] text-center">Month Year</span>
+                <button type="button" data-action="admin-cal-next"
+                  class="px-3 py-1.5 border rounded-lg hover:bg-gray-50 text-sm font-bold">&rsaquo;</button>
+                <button type="button" data-action="admin-cal-today"
+                  class="px-3 py-1.5 border rounded-lg hover:bg-gray-50 text-xs font-semibold">Today</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-7 text-center text-xs font-bold uppercase text-gray-500 pb-2 border-b">
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
+            <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1.5 mt-2"></div>
+
+            <div id="adminCalendarDayDetail"
+              class="hidden mt-4 p-4 rounded-lg bg-slate-50 border text-sm text-gray-800"></div>
+
+            <div class="mt-5 pt-4 border-t">
+              <h5 class="text-xs font-bold uppercase text-gray-500 mb-3">Upcoming &amp; Future Scheduled Payments</h5>
+              <div id="adminUpcomingScheduleList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+          </div>
+
+          <!-- 6-Month Sales & Revenue Forecast Section -->
+          <div class="bg-white border rounded-xl p-6 mb-6 shadow-xs">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h4 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                  </svg>
+                  6-Month Sales &amp; Revenue Forecast
+                </h4>
+                <p class="text-sm text-gray-500">
+                  Projected revenue inflows and cash-flow forecast based on active tenant contracts
+                </p>
+              </div>
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                Forward-Looking Contract Projection
+              </div>
+            </div>
+
+            <!-- Forecast Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div class="p-4 rounded-xl bg-gradient-to-br from-blue-50/60 to-white border border-blue-100">
+                <div class="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">Contracted Monthly Run
+                  Rate</div>
+                <div id="adminForecastRunRate" class="text-2xl font-extrabold text-blue-900">₱0.00</div>
+                <div class="text-[11px] text-gray-500 mt-1">Base monthly recurring billing</div>
+              </div>
+              <div class="p-4 rounded-xl bg-gradient-to-br from-emerald-50/60 to-white border border-emerald-100">
+                <div class="text-xs font-semibold text-emerald-800 uppercase tracking-wider mb-1">6-Month Projected
+                  Inflow</div>
+                <div id="adminForecastTotalInflow" class="text-2xl font-extrabold text-emerald-900">₱0.00</div>
+                <div class="text-[11px] text-gray-500 mt-1">Cumulative projected rent realization</div>
+              </div>
+              <div class="p-4 rounded-xl bg-gradient-to-br from-purple-50/60 to-white border border-purple-100">
+                <div class="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">Active Paying Contracts
+                </div>
+                <div id="adminForecastActiveTenants" class="text-2xl font-extrabold text-purple-900">0 Tenants</div>
+                <div class="text-[11px] text-gray-500 mt-1">Contributing to future projections</div>
+              </div>
+            </div>
+
+            <!-- Visual 6-Month Forecast Chart -->
+            <div>
+              <div class="flex items-center justify-between text-xs text-gray-500 font-semibold mb-3 px-1">
+                <span>Month-by-Month Projected Inflow</span>
+                <span>Scaled to highest projected monthly volume</span>
+              </div>
+              <div id="adminSalesForecastChart"
+                class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-4 border-t"></div>
+            </div>
+          </div>
+
+          <!-- Payment Due Dates Table -->
+          <div class="bg-white border rounded-lg">
+            <div class="p-6 border-b">
+              <h4 class="text-lg font-bold">Payment Due Dates</h4>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Tenant Name
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Room
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Due Date
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody id="adminPaymentDueTableBody" class="bg-white divide-y divide-gray-200">
+                  <tr>
+                    <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
+                      Loading tenant payment schedule from Supabase...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Payment Modal -->
+  <div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-xl font-bold">Tenant Payment Details</h3>
+        <button data-action="close-payment-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 mb-6">
+            <div id="modalAvatar"
+              class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-xl">
+            </div>
+            <div>
+              <div id="modalTenantName" class="text-xl font-bold"></div>
+              <div id="modalRoom" class="text-sm text-gray-600"></div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payment Amount:</span>
+              <span id="modalAmount" class="font-semibold text-lg"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Due Date:</span>
+              <span id="modalDueDate" class="font-medium"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payment Status:</span>
+              <span id="modalStatus"></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-600">Payment Method:</span>
+              <span id="modalPaymentMethod" class="font-medium">PayMongo</span>
+            </div>
+          </div>
+
+          <div class="border-t pt-4">
+            <h4 class="font-semibold mb-3">Payment History</h4>
+            <div id="modalPaymentHistoryList" class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-600">April 2026</span>
+                <span class="text-green-600 font-medium">✓ Paid on Apr 3, 2026</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t pt-4">
+            <h4 class="font-semibold mb-2">Tenant Contact Information</h4>
+            <div class="space-y-1 text-sm">
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                  </path>
+                </svg>
+                <span id="modalTenantEmail" class="text-gray-600">Email: tenant@example.com</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+                  </path>
+                </svg>
+                <span id="modalTenantPhone" class="text-gray-600">Phone: +63 912 345 6789</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="modalReminderStatus"
+            class="hidden rounded-lg p-3 text-xs border bg-blue-50 text-blue-800 border-blue-200"></div>
+        </div>
+      </div>
+      <div class="p-6 border-t bg-gray-50 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button type="button" data-action="send-reminder-gmail"
+            class="px-3 py-1.5 border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold">
+            Gmail Compose
+          </button>
+        </div>
+        <div class="flex items-center gap-3">
+          <button data-action="close-payment-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
             Close
           </button>
-          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <button type="button" data-action="send-payment-reminder" id="sendPaymentReminderBtn"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
             Send Reminder
           </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- View Due Date Modal -->
-    <div
-      id="dueDateModal"
-      class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-    >
-      <div class="bg-white rounded-lg max-w-lg w-full">
-        <div class="p-6 border-b flex items-center justify-between">
-          <h3 class="text-xl font-bold">Payment Due Date Details</h3>
-          <button data-action="close-due-date-modal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              ></path>
-            </svg>
-          </button>
-        </div>
-        <div class="p-6">
-          <div class="space-y-4">
-            <div class="flex items-center gap-3 mb-4">
-              <div
-                id="dueDateModalAvatar"
-                class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold"
-              ></div>
+  <!-- View Due Date Modal -->
+  <div id="dueDateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-lg w-full">
+      <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-xl font-bold">Payment Due Date Details</h3>
+        <button data-action="close-due-date-modal" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 mb-4">
+            <div id="dueDateModalAvatar"
+              class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold"></div>
+            <div>
+              <div id="dueDateModalTenantName" class="font-bold"></div>
+              <div id="dueDateModalRoom" class="text-sm text-gray-600"></div>
+            </div>
+          </div>
+
+          <div class="bg-blue-50 border-l-4 border-blue-600 rounded p-4">
+            <div class="flex items-center gap-3">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
               <div>
-                <div id="dueDateModalTenantName" class="font-bold"></div>
-                <div id="dueDateModalRoom" class="text-sm text-gray-600"></div>
+                <div class="text-sm text-blue-800 font-medium">Payment Due Date</div>
+                <div id="dueDateModalDate" class="text-xl font-bold text-blue-900"></div>
               </div>
             </div>
+          </div>
 
-            <div class="bg-blue-50 border-l-4 border-blue-600 rounded p-4">
-              <div class="flex items-center gap-3">
-                <svg
-                  class="w-6 h-6 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  ></path>
-                </svg>
-                <div>
-                  <div class="text-sm text-blue-800 font-medium">Payment Due Date</div>
-                  <div id="dueDateModalDate" class="text-xl font-bold text-blue-900"></div>
-                </div>
-              </div>
+          <div class="space-y-2">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Monthly Rent:</span>
+              <span id="dueDateModalRent" class="font-semibold">₱5,000.00</span>
             </div>
-
-            <div class="space-y-2">
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Monthly Rent:</span>
-                <span class="font-semibold">₱5,000.00</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Payment Cycle:</span>
-                <span class="font-medium">Monthly (5th of each month)</span>
-              </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-gray-600">Next Due Date:</span>
-                <span class="font-medium">June 5, 2026</span>
-              </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Payment Cycle:</span>
+              <span id="dueDateModalCycle" class="font-medium">Monthly (5th of each month)</span>
             </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-600">Next Due Date:</span>
+              <span id="dueDateModalNextDate" class="font-medium">June 5, 2026</span>
+            </div>
+            <div class="pt-2 border-t flex items-center justify-between gap-3 text-sm">
+              <label for="dueDateModalDayInput" class="text-gray-700 font-medium">Set Monthly Due Day (1–31):</label>
+              <input id="dueDateModalDayInput" type="number" min="1" max="31" value="5"
+                class="w-24 px-3 py-1.5 border rounded-lg text-sm font-semibold text-right" />
+            </div>
+          </div>
 
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
-              <div class="flex gap-2">
-                <svg
-                  class="w-5 h-5 text-yellow-600 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  ></path>
-                </svg>
-                <div>
-                  <div class="font-semibold text-yellow-800 mb-1">Reminder Settings</div>
-                  <div class="text-yellow-700">
-                    Automatic payment reminder will be sent 3 days before due date.
-                  </div>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+            <div class="flex gap-2">
+              <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+              </svg>
+              <div>
+                <div class="font-semibold text-yellow-800 mb-1">Reminder Settings</div>
+                <div class="text-yellow-700">
+                  Automatic payment reminder will be sent 3 days before due date.
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
-          <button
-            data-action="close-due-date-modal"
-            class="px-4 py-2 border rounded-lg hover:bg-gray-100"
-          >
-            Close
-          </button>
-          <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-            Update Due Date
-          </button>
         </div>
       </div>
+      <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
+        <button data-action="close-due-date-modal" class="px-4 py-2 border rounded-lg hover:bg-gray-100">
+          Close
+        </button>
+        <button type="button" data-action="save-due-date" id="saveDueDateBtn"
+          class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+          Update Due Date
+        </button>
+      </div>
     </div>
+  </div>
 
-    <!-- Create Tenant Account Modal -->
+  <!-- Create Tenant Account Modal -->
+  <div id="createTenantModal"
+    class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
     <div
-      id="createTenantModal"
-      class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto"
-    >
-      <div
-        class="bg-white rounded-2xl max-w-2xl w-full my-8 shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200"
-      >
-        <div
-          class="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-5 text-white flex items-center justify-between"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm"
-            >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-xl font-bold">Create Tenant Account</h3>
-              <p class="text-blue-100 text-xs">
-                Enroll tenant moving into the apartment & set up their Tenant Portal login
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            data-action="close-create-tenant-modal"
-            class="text-white/80 hover:text-white rounded-lg p-1 hover:bg-white/10 transition-colors"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
+      class="bg-white rounded-2xl max-w-2xl w-full my-8 shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+      <div class="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-5 text-white flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-sm">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
-          </button>
-        </div>
-
-        <form id="createTenantForm" class="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
-          <div id="createTenantAlert" class="hidden p-3 rounded-lg text-sm"></div>
-
-          <!-- Section 1: Tenant Personal Info -->
-          <div>
-            <h4
-              class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2"
-            >
-              <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-              Personal & Contact Information
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Full Name <span class="text-red-500">*</span></label
-                >
-                <input
-                  type="text"
-                  id="tenantFullName"
-                  required
-                  placeholder="e.g. Juan Dela Cruz"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Email Address (Login ID) <span class="text-red-500">*</span></label
-                >
-                <input
-                  type="email"
-                  id="tenantEmail"
-                  required
-                  placeholder="e.g. juan.delacruz@example.com"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Phone Number <span class="text-red-500">*</span></label
-                >
-                <input
-                  type="tel"
-                  id="tenantPhone"
-                  required
-                  placeholder="e.g. +63 912 345 6789"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Emergency Contact</label
-                >
-                <input
-                  type="text"
-                  id="tenantEmergency"
-                  placeholder="e.g. Maria (+63 923 456 7890)"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                />
-              </div>
-            </div>
           </div>
-
-          <!-- Section 2: Account Security / Portal Password -->
-          <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-4">
-            <div class="flex items-center justify-between mb-2">
-              <h4
-                class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5"
-              >
-                <svg
-                  class="w-4 h-4 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-                Portal Login Password
-              </h4>
-              <button
-                type="button"
-                data-action="generate-password"
-                class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
-                Generate Password
-              </button>
-            </div>
-            <div class="relative">
-              <input
-                type="text"
-                id="tenantPassword"
-                required
-                placeholder="Minimum 6 characters"
-                minlength="6"
-                class="w-full px-3 py-2 pr-10 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono"
-              />
-              <button
-                type="button"
-                data-action="toggle-password"
-                class="absolute right-2 top-2 text-gray-400 hover:text-gray-600 p-1"
-                title="Toggle visibility"
-              >
-                <svg
-                  id="pwdEyeIcon"
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              </button>
-            </div>
-            <p class="text-xs text-blue-700 mt-1">
-              Tenant will use their email and this password to sign into the Tenant Portal.
+          <div>
+            <h3 class="text-xl font-bold">Create Tenant Account</h3>
+            <p class="text-blue-100 text-xs">
+              Enroll tenant moving into the apartment & set up their Tenant Portal login
             </p>
           </div>
-
-          <!-- Section 3: Room & Residence Assignment -->
-          <div>
-            <h4
-              class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2"
-            >
-              <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-              Room Assignment & Lease Details
-            </h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Assigned Room / Unit <span class="text-red-500">*</span></label
-                >
-                <input
-                  type="text"
-                  id="tenantRoom"
-                  list="roomSuggestionList"
-                  required
-                  placeholder="e.g. Room 201"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                />
-                <datalist id="roomSuggestionList">
-                  <option value="Room 101"></option>
-                  <option value="Room 105"></option>
-                  <option value="Room 201"></option>
-                  <option value="Room 208"></option>
-                  <option value="Room 302"></option>
-                  <option value="Room 410"></option>
-                  <option value="Commercial Space 1"></option>
-                </datalist>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Residence Type</label>
-                <select
-                  id="tenantDorm"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                >
-                  <option value="Triple Occupancy Room">Triple Occupancy Room</option>
-                  <option value="Single Occupancy Room">Single Occupancy Room</option>
-                  <option value="Double Occupancy Room">Double Occupancy Room</option>
-                  <option value="Commercial Space">Commercial Space</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Move-in Date <span class="text-red-500">*</span></label
-                >
-                <input
-                  type="date"
-                  id="tenantMoveInDate"
-                  required
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Monthly Rent (₱) <span class="text-red-500">*</span></label
-                >
-                <div class="relative">
-                  <span class="absolute left-3 top-2 text-gray-500 text-sm font-medium">₱</span>
-                  <input
-                    type="number"
-                    id="tenantMonthlyRent"
-                    required
-                    min="0"
-                    step="100"
-                    placeholder="5000"
-                    class="w-full pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1"
-                  >Payment Due Day</label
-                >
-                <select
-                  id="tenantDueDay"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                >
-                  <option value="1">1st of each month</option>
-                  <option value="5" selected>5th of each month</option>
-                  <option value="10">10th of each month</option>
-                  <option value="15">15th of each month</option>
-                  <option value="20">20th of each month</option>
-                  <option value="25">25th of each month</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1">Lease Term</label>
-                <select
-                  id="tenantLeaseTerm"
-                  class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-                >
-                  <option value="6 Months">6 Months</option>
-                  <option value="1 Year" selected>1 Year</option>
-                  <option value="2 Years">2 Years</option>
-                  <option value="Month-to-Month">Month-to-Month</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section 4: Notes -->
-          <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1"
-              >Remarks / Notes (Optional)</label
-            >
-            <textarea
-              id="tenantNotes"
-              rows="2"
-              placeholder="e.g. Paid 1-month advance deposit. Keycard #12 issued."
-              class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-            ></textarea>
-          </div>
-
-          <!-- Modal Footer Buttons -->
-          <div class="pt-4 border-t flex items-center justify-end gap-3">
-            <button
-              type="button"
-              data-action="close-create-tenant-modal"
-              class="px-5 py-2.5 border rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              id="submitTenantBtn"
-              class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg transition-all"
-            >
-              <span
-                id="submitTenantSpinner"
-                class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
-              ></span>
-              <span id="submitTenantText">Create Account & Save to Firestore</span>
-            </button>
-          </div>
-        </form>
+        </div>
+        <button type="button" data-action="close-create-tenant-modal"
+          class="text-white/80 hover:text-white rounded-lg p-1 hover:bg-white/10 transition-colors">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-    </div>
 
-    <!-- View Tenant Details Modal -->
-    <div
-      id="viewTenantModal"
-      class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-    >
-      <div
-        class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200"
-      >
-        <div class="p-6 border-b flex items-center justify-between">
-          <h3 class="text-xl font-bold text-gray-900">Tenant Profile</h3>
-          <button
-            data-action="close-view-tenant-modal"
-            class="text-gray-400 hover:text-gray-600 p-1"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div class="p-6 space-y-4">
-          <div class="flex items-center gap-4 pb-4 border-b">
-            <div
-              id="viewTenantAvatar"
-              class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-xl font-bold shadow-md"
-            >
-              JD
+      <form id="createTenantForm" class="p-6 space-y-5 max-h-[82vh] overflow-y-auto">
+        <div id="createTenantAlert" class="hidden p-3 rounded-lg text-sm"></div>
+
+        <!-- Section 1: Tenant Personal Info -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            Personal & Contact Information
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Full Name <span
+                  class="text-red-500">*</span></label>
+              <input type="text" id="tenantFullName" required placeholder="e.g. Juan Dela Cruz"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
             </div>
             <div>
-              <h4 id="viewTenantName" class="text-lg font-bold text-gray-900">Juan Dela Cruz</h4>
-              <p id="viewTenantEmail" class="text-sm text-gray-500 font-mono">juan@example.com</p>
-              <span
-                id="viewTenantStatus"
-                class="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800"
-                >Active Tenant</span
-              >
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Email Address (Login ID) <span
+                  class="text-red-500">*</span></label>
+              <input type="email" id="tenantEmail" required placeholder="e.g. juan.delacruz@example.com"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Phone Number <span
+                  class="text-red-500">*</span></label>
+              <input type="tel" id="tenantPhone" required placeholder="e.g. +63 912 345 6789"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Emergency Contact</label>
+              <input type="text" id="tenantEmergency" placeholder="e.g. Maria (+63 923 456 7890)"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm" />
             </div>
           </div>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <div class="text-xs text-gray-500 font-medium">Assigned Unit</div>
-              <div id="viewTenantRoom" class="font-bold text-gray-800 text-base">Room 201</div>
-              <div id="viewTenantDorm" class="text-xs text-gray-500">Triple Occupancy</div>
-            </div>
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <div class="text-xs text-gray-500 font-medium">Monthly Rent</div>
-              <div id="viewTenantRent" class="font-bold text-emerald-600 text-base">₱5,000.00</div>
-              <div id="viewTenantDue" class="text-xs text-gray-500">Due every 5th</div>
-            </div>
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <div class="text-xs text-gray-500 font-medium">Move-in Date</div>
-              <div id="viewTenantMoveIn" class="font-semibold text-gray-800">May 1, 2026</div>
-            </div>
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <div class="text-xs text-gray-500 font-medium">Phone Number</div>
-              <div id="viewTenantPhone" class="font-semibold text-gray-800">+63 912 345 6789</div>
-            </div>
-          </div>
-          <div
-            class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 text-xs text-blue-950 space-y-1.5"
-          >
-            <div class="font-bold text-blue-900 flex items-center gap-1.5">
-              <svg
-                class="w-4 h-4 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                />
+        </div>
+
+        <!-- Section 2: Account Security / Portal Password -->
+        <div class="bg-blue-50/80 border border-blue-100 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-blue-900 uppercase tracking-wider flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Tenant Portal Credentials
-            </div>
-            <div>
-              Login Email:
-              <span id="viewTenantLoginEmail" class="font-mono font-semibold text-blue-900"></span>
-            </div>
-            <div>
-              Password:
-              <span id="viewTenantLoginPassword" class="font-mono font-semibold text-blue-900"
-                >••••••••</span
-              >
-            </div>
+              Portal Login Password
+            </h4>
+            <button type="button" data-action="generate-password"
+              class="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Generate Password
+            </button>
           </div>
-          <div
-            id="viewTenantNotesSection"
-            class="hidden text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border"
-          >
-            <div class="font-semibold text-gray-700 mb-0.5">Notes:</div>
-            <p id="viewTenantNotes"></p>
+          <div class="relative">
+            <input type="text" id="tenantPassword" required placeholder="Minimum 6 characters" minlength="6"
+              class="w-full px-3 py-2 pr-10 border border-blue-200 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono" />
+            <button type="button" data-action="toggle-password"
+              class="absolute right-2 top-2 text-gray-400 hover:text-gray-600 p-1" title="Toggle visibility">
+              <svg id="pwdEyeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+          <p class="text-xs text-blue-700 mt-1">
+            Tenant will use their email and this password to sign into the Tenant Portal.
+          </p>
+        </div>
+
+        <!-- Section 3: Room & Residence Assignment -->
+        <div>
+          <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+            Room Assignment & Lease Details
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Assigned Room / Unit <span
+                  class="text-red-500">*</span></label>
+              <input type="text" id="tenantRoom" list="roomSuggestionList" required placeholder="e.g. Room 201"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              <datalist id="roomSuggestionList">
+                <option value="Room 101"></option>
+                <option value="Room 105"></option>
+                <option value="Room 201"></option>
+                <option value="Room 208"></option>
+                <option value="Room 302"></option>
+                <option value="Room 410"></option>
+                <option value="Commercial Space 1"></option>
+              </datalist>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Residence Type</label>
+              <select id="tenantDorm"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="Triple Occupancy Room">Triple Occupancy Room</option>
+                <option value="Single Occupancy Room">Single Occupancy Room</option>
+                <option value="Double Occupancy Room">Double Occupancy Room</option>
+                <option value="Commercial Space">Commercial Space</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Move-in Date <span
+                  class="text-red-500">*</span></label>
+              <input type="date" id="tenantMoveInDate" required
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Monthly Rent (₱) <span
+                  class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute left-3 top-2 text-gray-500 text-sm font-medium">₱</span>
+                <input type="number" id="tenantMonthlyRent" required min="0" step="100" placeholder="5000"
+                  class="w-full pl-7 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Payment Due Day</label>
+              <select id="tenantDueDay"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="1">1st of each month</option>
+                <option value="5" selected>5th of each month</option>
+                <option value="10">10th of each month</option>
+                <option value="15">15th of each month</option>
+                <option value="20">20th of each month</option>
+                <option value="25">25th of each month</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Lease Term</label>
+              <select id="tenantLeaseTerm"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                <option value="6 Months">6 Months</option>
+                <option value="1 Year" selected>1 Year</option>
+                <option value="2 Years">2 Years</option>
+                <option value="Month-to-Month">Month-to-Month</option>
+              </select>
+            </div>
           </div>
         </div>
-        <div class="p-6 border-t bg-gray-50 flex justify-between items-center">
-          <button
-            data-action="copy-credentials"
-            class="px-4 py-2 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-            Copy Login Info
+
+        <!-- Section 4: Notes -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Remarks / Notes (Optional)</label>
+          <textarea id="tenantNotes" rows="2" placeholder="e.g. Paid 1-month advance deposit. Keycard #12 issued."
+            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"></textarea>
+        </div>
+
+        <!-- Modal Footer Buttons -->
+        <div class="pt-4 border-t flex items-center justify-end gap-3">
+          <button type="button" data-action="close-create-tenant-modal"
+            class="px-5 py-2.5 border rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium transition-colors">
+            Cancel
           </button>
-          <button
-            data-action="close-view-tenant-modal"
-            class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors"
-          >
+          <button type="submit" id="submitTenantBtn"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg transition-all">
+            <span id="submitTenantSpinner"
+              class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+            <span id="submitTenantText">Create Account & Save to Supabase</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- In-Modal Tenant Account Created Confirmation -->
+      <div id="createTenantSuccess" class="hidden p-6 space-y-5">
+        <div class="flex items-start gap-4 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+          <div
+            class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 font-bold text-lg">
+            ✓
+          </div>
+          <div>
+            <h4 class="text-base font-bold text-emerald-950">
+              Tenant account created for <span id="createdTenantNameLabel"></span>
+            </h4>
+            <p class="text-xs text-emerald-800 mt-0.5">
+              Share these sign-in credentials with the tenant now — the temporary password is shown only once and is not
+              stored anywhere.
+            </p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 text-sm">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-gray-500 font-medium">Login Email:</span>
+            <span id="createdTenantEmailValue" class="font-mono font-semibold text-gray-900"></span>
+          </div>
+          <div class="flex items-center justify-between gap-2 border-t pt-3">
+            <span class="text-gray-500 font-medium">Temporary Password:</span>
+            <span id="createdTenantPasswordValue"
+              class="font-mono font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded border border-blue-200"></span>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t flex items-center justify-between gap-3">
+          <button type="button" data-action="copy-created-tenant-password" id="copyCreatedTenantBtn"
+            class="px-4 py-2.5 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold transition-colors">
+            Copy Login &amp; Password
+          </button>
+          <button type="button" data-action="finish-create-tenant"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors">
             Done
           </button>
         </div>
       </div>
     </div>
+  </div>
 
-    <script type="module" src="./assets/js/supabase-service.js"></script>
-    <script type="module" src="./assets/js/pages/admin-dashboard.js"></script>
-    <script type="module" src="./assets/js/main.js"></script>
-  </body>
+  <!-- View Tenant Details Modal -->
+  <div id="viewTenantModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+    <div
+      class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden border border-gray-100 animate-in fade-in zoom-in duration-200">
+      <div class="p-6 border-b flex items-center justify-between">
+        <h3 class="text-xl font-bold text-gray-900">Tenant Profile</h3>
+        <button data-action="close-view-tenant-modal" class="text-gray-400 hover:text-gray-600 p-1">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 space-y-4">
+        <div class="flex items-center gap-4 pb-4 border-b">
+          <div id="viewTenantAvatar"
+            class="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-2xl flex items-center justify-center text-xl font-bold shadow-md">
+            JD
+          </div>
+          <div>
+            <h4 id="viewTenantName" class="text-lg font-bold text-gray-900">Juan Dela Cruz</h4>
+            <p id="viewTenantEmail" class="text-sm text-gray-500 font-mono">juan@example.com</p>
+            <span id="viewTenantStatus"
+              class="inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800">Active
+              Tenant</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Assigned Unit</div>
+            <div id="viewTenantRoom" class="font-bold text-gray-800 text-base">Room 201</div>
+            <div id="viewTenantDorm" class="text-xs text-gray-500">Triple Occupancy</div>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Monthly Rent</div>
+            <div id="viewTenantRent" class="font-bold text-emerald-600 text-base">₱5,000.00</div>
+            <div id="viewTenantDue" class="text-xs text-gray-500">Due every 5th</div>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Move-in Date</div>
+            <div id="viewTenantMoveIn" class="font-semibold text-gray-800">May 1, 2026</div>
+          </div>
+          <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="text-xs text-gray-500 font-medium">Phone Number</div>
+            <div id="viewTenantPhone" class="font-semibold text-gray-800">+63 912 345 6789</div>
+          </div>
+        </div>
+        <div class="bg-blue-50/80 p-4 rounded-xl border border-blue-100 text-xs text-blue-950 space-y-1.5">
+          <div class="font-bold text-blue-900 flex items-center gap-1.5">
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            Tenant Portal Credentials
+          </div>
+          <div>
+            Login Email:
+            <span id="viewTenantLoginEmail" class="font-mono font-semibold text-blue-900"></span>
+          </div>
+          <div>
+            Password:
+            <span id="viewTenantLoginPassword" class="font-mono font-semibold text-blue-900">••••••••</span>
+          </div>
+        </div>
+        <div id="viewTenantNotesSection" class="hidden text-xs text-gray-600 bg-gray-50 p-3 rounded-xl border">
+          <div class="font-semibold text-gray-700 mb-0.5">Notes:</div>
+          <p id="viewTenantNotes"></p>
+        </div>
+      </div>
+      <div class="p-6 border-t bg-gray-50 flex justify-between items-center">
+        <button data-action="copy-credentials"
+          class="px-4 py-2 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold flex items-center gap-1.5 shadow-sm transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          Copy Login Info
+        </button>
+        <button data-action="close-view-tenant-modal"
+          class="px-5 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg text-sm font-semibold transition-colors">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./assets/js/supabase-service.js"></script>
+  <script type="module" src="./assets/js/pages/admin-dashboard.js"></script>
+  <script type="module" src="./assets/js/main.js"></script>
+</body>
+
 </html>

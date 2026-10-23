@@ -132,11 +132,14 @@ async function setDoc(ref, value, options = {}) {
     const existing = await getDoc(ref);
     data = { ...(existing.exists() ? existing.data() : {}), ...value };
   }
-  const { error } = await supabase.from('app_documents').upsert({
-    collection: ref.name,
-    id: ref.id,
-    data
-  });
+  const { error } = await supabase.from('app_documents').upsert(
+    {
+      collection: ref.name,
+      id: ref.id,
+      data
+    },
+    { onConflict: 'collection,id' }
+  );
   if (error) throw error;
 }
 
@@ -180,8 +183,13 @@ function onSnapshot(ref, onData, onError) {
     }
     pending = true;
     try {
-      const snapshot = await getDocs(ref);
-      if (active) onData(snapshot);
+      if (target.type === 'document') {
+        const docSnapshot = await getDoc(target);
+        if (active) onData(docSnapshot);
+      } else {
+        const snapshot = await getDocs(ref);
+        if (active) onData(snapshot);
+      }
     } catch (error) {
       if (active) onError?.(error);
     } finally {
@@ -192,6 +200,9 @@ function onSnapshot(ref, onData, onError) {
       }
     }
   };
+
+  // Immediately fetch current state via HTTP REST without waiting for WebSocket handshake
+  void refresh();
 
   const channel = supabase
     .channel(`app-documents:${target.name}:${crypto.randomUUID()}`)
@@ -261,7 +272,9 @@ async function requireRole(requiredRole, redirectTo) {
     return false;
   }
 
-  const role = user.app_metadata?.role;
+  const role =
+    user.app_metadata?.role ||
+    (requiredRole === 'tenant' && user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
   if (role !== requiredRole) {
     console.warn(`[auth] role mismatch: required ${requiredRole}, found ${role || 'none'}`);
     window.location.replace(redirectTo || 'login.html');
@@ -296,9 +309,16 @@ export function getMessagesRef() {
 
 export async function ensureRoomDocument(room) {
   if (!room) return null;
-  const ref = getRoomDocRef(room.name);
-  const snapshot = await getDoc(ref);
-  if (!snapshot.exists()) await setDoc(ref, { name: room.name, available: room.available });
+  const ref = room.id ? documentRef('rooms', room.id) : getRoomDocRef(room.name);
+  if (!ref) return null;
+  try {
+    const snapshot = await getDoc(ref);
+    if (!snapshot.exists()) {
+      await setDoc(ref, { ...room });
+    }
+  } catch {
+    // Anonymous visitors can read rooms but cannot insert; ignore write failure.
+  }
   return ref;
 }
 
