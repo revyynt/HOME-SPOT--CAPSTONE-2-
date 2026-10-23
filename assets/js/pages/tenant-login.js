@@ -1,4 +1,5 @@
 import { db, supabase, supabaseData } from '../supabase-service.js';
+import { Toast } from '../render/toast.js';
 
 window.location.replace('./login.html');
 
@@ -34,10 +35,7 @@ function clearAlert() {
 
 async function loadProfile(uid) {
   const snapshot = await supabaseData.getDocs(
-    supabaseData.query(
-      supabaseData.collection(db, 'tenants'),
-      supabaseData.where('uid', '==', uid)
-    )
+    supabaseData.query(supabaseData.collection(db, 'tenants'), supabaseData.where('uid', '==', uid))
   );
   if (snapshot.empty) return { data: {}, docId: null };
   return { data: snapshot.docs[0].data(), docId: snapshot.docs[0].id };
@@ -74,9 +72,10 @@ document.addEventListener('click', (event) => {
       break;
     case 'contact-admin':
       event.preventDefault();
-      alert(
-        'Please contact the building administrator or front desk to reset your tenant password.'
-      );
+      Toast.alert({
+        title: 'Reset Portal Password',
+        message: 'Please contact the building administrator or front desk to reset your tenant password.'
+      });
       break;
     default:
       break;
@@ -117,7 +116,9 @@ document.getElementById('tenantLoginForm')?.addEventListener('submit', async (ev
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     const user = data.user;
-    if (user.app_metadata?.role !== 'tenant') {
+    const role =
+      user.app_metadata?.role || (user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
+    if (role !== 'tenant') {
       await supabase.auth.signOut();
       throw new Error('This account is not configured as a tenant.');
     }
@@ -132,7 +133,7 @@ document.getElementById('tenantLoginForm')?.addEventListener('submit', async (ev
   } catch (error) {
     showAlert(
       ERROR_MESSAGES[error.code] ??
-        'Login error: ' + (error.message || 'Please check your connection and try again.')
+      'Login error: ' + (error.message || 'Please check your connection and try again.')
     );
     submitBtn.disabled = false;
     submitBtn.textContent = 'Sign In';

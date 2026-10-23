@@ -20,12 +20,13 @@ import { Toast } from '../render/toast.js';
  * @returns {string}
  */
 export function getRoomNameFromPage() {
+  const el = document.getElementById('roomName');
+  const liveName = el?.textContent.trim();
+  if (liveName && liveName !== 'Loading...') return liveName;
+
   const roomId = getUrlParam('id');
   if (roomId === '1') return 'Triple Occupancy Room';
   if (roomId === '4') return 'Commercial Space';
-
-  const el = document.getElementById('roomName');
-  if (el && el.textContent.trim()) return el.textContent.trim();
 
   return 'Triple Occupancy Room';
 }

@@ -55,22 +55,46 @@ Deno.serve(async (request) => {
   }
 
   const admin = adminClient();
+  let userId = '';
+  let wasExistingUser = false;
+
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     app_metadata: { role: 'tenant' }
   });
+
   if (createError || !created.user) {
-    return jsonResponse(
-      request,
-      { error: createError?.message || 'Could not create the tenant account.' },
-      400
-    );
+    const errMsg = String(createError?.message || '').toLowerCase();
+    if (errMsg.includes('already') || errMsg.includes('registered') || errMsg.includes('exists')) {
+      const { data: listed } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      const existing = listed?.users?.find((u) => u.email?.toLowerCase() === email);
+      if (existing) {
+        const { error: updateErr } = await admin.auth.admin.updateUserById(existing.id, {
+          password,
+          email_confirm: true,
+          app_metadata: { ...(existing.app_metadata || {}), role: 'tenant' }
+        });
+        if (!updateErr) {
+          userId = existing.id;
+          wasExistingUser = true;
+        }
+      }
+    }
+
+    if (!userId) {
+      return jsonResponse(
+        request,
+        { error: createError?.message || 'Could not create the tenant account.' },
+        400
+      );
+    }
+  } else {
+    userId = created.user.id;
   }
 
   const now = new Date().toISOString();
-  const userId = created.user.id;
   const tenantId = crypto.randomUUID();
   const tenant = {
     name,
@@ -100,15 +124,26 @@ Deno.serve(async (request) => {
     createdAt: now
   };
 
-  const { error: insertError } = await admin.from('app_documents').insert([
-    { collection: 'tenants', id: tenantId, data: tenant },
-    { collection: 'users', id: userId, data: profile }
-  ]);
+  const { error: insertError } = await admin
+    .from('app_documents')
+    .upsert(
+      [
+        { collection: 'tenants', id: tenantId, data: tenant },
+        { collection: 'users', id: userId, data: profile }
+      ],
+      { onConflict: 'collection,id' }
+    );
   if (insertError) {
-    const { error: cleanupError } = await admin.auth.admin.deleteUser(userId);
-    if (cleanupError) console.error('Failed to remove orphaned tenant auth user:', cleanupError);
+    if (!wasExistingUser) {
+      const { error: cleanupError } = await admin.auth.admin.deleteUser(userId);
+      if (cleanupError) console.error('Failed to remove orphaned tenant auth user:', cleanupError);
+    }
     console.error('Failed to save tenant records:', insertError);
-    return jsonResponse(request, { error: 'Could not save the tenant profile.' }, 500);
+    return jsonResponse(
+      request,
+      { error: `Could not save the tenant profile: ${insertError.message}` },
+      500
+    );
   }
 
   return jsonResponse(request, { userId });

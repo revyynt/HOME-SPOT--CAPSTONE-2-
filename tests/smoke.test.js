@@ -39,12 +39,12 @@ function installDom() {
       append: (...nodes) => {
         el.children.push(...nodes);
       },
-      remove: () => {},
+      remove: () => { },
       getAttribute: (name) => attrs[name] ?? null,
       setAttribute: (name, value) => {
         attrs[name] = value;
       },
-      addEventListener: () => {},
+      addEventListener: () => { },
       querySelector: () => null,
       querySelectorAll: () => [],
       closest: () => null
@@ -56,7 +56,7 @@ function installDom() {
 
   // `instanceof Element` is used by the delegation helpers, so the stub needs
   // a real constructor and instances must inherit from it.
-  class ElementStub {}
+  class ElementStub { }
   globalThis.Element = ElementStub;
 
   saved.document = globalThis.document;
@@ -70,7 +70,7 @@ function installDom() {
     getElementById: (id) => registry.get(id) ?? null,
     querySelector: () => null,
     querySelectorAll: () => [],
-    addEventListener: () => {},
+    addEventListener: () => { },
     dispatchEvent: () => true,
     __registry: registry
   };
@@ -82,8 +82,8 @@ function installDom() {
       origin: 'http://localhost:5050',
       pathname: '/'
     },
-    addEventListener: () => {},
-    removeEventListener: () => {},
+    addEventListener: () => { },
+    removeEventListener: () => { },
     dispatchEvent: () => true,
     localStorage: (() => {
       const s = new Map();
@@ -96,9 +96,9 @@ function installDom() {
     })(),
     sessionStorage: {
       getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-      clear: () => {}
+      setItem: () => { },
+      removeItem: () => { },
+      clear: () => { }
     },
     setTimeout,
     clearTimeout
@@ -203,4 +203,147 @@ test('attr escapes quotes so values cannot break out of an attribute', async () 
   const { attr } = await import('../assets/js/lib/dom.js');
   assert.equal(attr('" onmouseover="alert(1)'), '&quot; onmouseover=&quot;alert(1)');
   assert.equal(attr(null), '');
+});
+
+test('buildTenantThreads merges tenants, orders messages chronologically, and counts unread', async () => {
+  const { buildTenantThreads } = await import('../assets/js/lib/format.js');
+  const docs = [
+    {
+      id: 'm1',
+      data: () => ({
+        name: 'Juan Dela Cruz',
+        email: 'juan@example.com',
+        sender: 'tenant',
+        status: 'Unread',
+        message: 'Hello admin',
+        createdAt: '2026-10-19T10:00:00Z'
+      })
+    },
+    {
+      id: 'm2',
+      data: () => ({
+        name: 'Juan Dela Cruz',
+        email: 'juan@example.com',
+        sender: 'admin',
+        status: 'Read',
+        message: 'Hi Juan!',
+        createdAt: '2026-10-19T10:05:00Z'
+      })
+    },
+    {
+      id: 'inq1',
+      data: () => ({
+        name: 'Public Guest',
+        email: 'guest@example.com',
+        sender: 'guest',
+        status: 'New',
+        message: 'Is room available?'
+      })
+    }
+  ];
+
+  const tenants = [
+    { name: 'Maria Santos', email: 'maria@example.com', room: 'Room 105' },
+    { name: 'Juan Dela Cruz', email: 'juan@example.com', room: 'Room 201' }
+  ];
+
+  const threads = buildTenantThreads(docs, tenants);
+  assert.equal(threads.length, 2, 'excludes public guest inquiry and includes enrolled tenants');
+  assert.equal(threads[0].email, 'juan@example.com', 'most recent conversation is first');
+  assert.equal(threads[0].unreadCount, 1);
+  assert.equal(threads[0].items.length, 2);
+  assert.equal(threads[0].lastMessage.text, 'Hi Juan!');
+  assert.equal(threads[1].email, 'maria@example.com', 'tenant without messages is still selectable');
+});
+
+test('buildPaymentCalendar tracks paid, overdue, and future scheduled tenant payments', async () => {
+  const { buildPaymentCalendar } = await import('../assets/js/lib/payment-calendar.js');
+  const today = new Date(2026, 4, 10); // May 10, 2026
+  const tenants = [
+    {
+      id: 't1',
+      name: 'Juan Dela Cruz',
+      email: 'juan@example.com',
+      room: 'Room 201',
+      monthlyRent: 5000,
+      dueDay: 5,
+      moveInDate: '2026-01-10'
+    },
+    {
+      id: 't2',
+      name: 'Maria Santos',
+      email: 'maria@example.com',
+      room: 'Room 105',
+      monthlyRent: 4500,
+      dueDay: 15,
+      moveInDate: '2026-01-01'
+    }
+  ];
+  const payments = [
+    {
+      id: 'p1',
+      tenantName: 'Maria Santos',
+      tenantEmail: 'maria@example.com',
+      amount: 4500,
+      status: 'Paid',
+      createdAt: '2026-05-03T10:00:00Z'
+    }
+  ];
+
+  // Current month (May 2026): Juan (due May 5) is Overdue; Maria (paid May 3) is Paid
+  const mayCal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 4, today });
+  assert.equal(mayCal.monthLabel, 'May 2026');
+  assert.equal(mayCal.days.length, 42);
+  assert.equal(mayCal.monthSummary.totalExpected, 9500);
+  assert.equal(mayCal.monthSummary.totalPaid, 4500);
+  assert.equal(mayCal.monthSummary.totalOverdue, 5000);
+  assert.equal(mayCal.monthSummary.collectionRate, 47);
+  assert.equal(mayCal.monthSummary.roomBreakdown.length, 2);
+
+  // Future month (June 2026): both tenants are Scheduled as future payments
+  const juneCal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 5, today });
+  assert.equal(juneCal.monthLabel, 'June 2026');
+  assert.equal(juneCal.monthSummary.rows.every((r) => r.status === 'Scheduled'), true);
+  assert.ok(mayCal.upcomingSchedule.length >= 2, 'upcoming schedule includes future due dates');
+});
+
+test('buildSalesForecast computes run rate, 6-month projected inflow, and monthly bars', async () => {
+  const { buildSalesForecast } = await import('../assets/js/lib/payment-calendar.js');
+  const today = new Date(2026, 4, 1); // May 1, 2026
+  const tenants = [
+    {
+      id: 't1',
+      name: 'Juan Dela Cruz',
+      room: 'Triple Occupancy Room',
+      monthlyRent: 10000,
+      status: 'Active',
+      moveInDate: '2026-01-01'
+    },
+    {
+      id: 't2',
+      name: 'Maria Santos',
+      room: 'Commercial Space',
+      monthlyRent: 12000,
+      status: 'Active',
+      moveInDate: '2026-01-01'
+    },
+    {
+      id: 't3',
+      name: 'Archived Tenant',
+      room: 'Old Room',
+      monthlyRent: 8000,
+      status: 'Archived',
+      moveInDate: '2025-01-01'
+    }
+  ];
+
+  const forecast = buildSalesForecast({ tenants, monthsAhead: 6, today });
+  assert.equal(forecast.monthlyRunRate, 22000, 'excludes archived tenants');
+  assert.equal(forecast.activeTenantCount, 2);
+  assert.equal(forecast.totalProjectedInflow, 22000 * 6);
+  assert.equal(forecast.projectedMonths.length, 6);
+  assert.equal(forecast.projectedMonths[0].label, 'May 2026');
+  assert.equal(forecast.projectedMonths[0].isCurrentMonth, true);
+  assert.equal(forecast.projectedMonths[0].projectedAmount, 22000);
+  assert.equal(forecast.projectedMonths[5].label, 'Oct 2026');
 });

@@ -103,3 +103,93 @@ export function getUrlParam(name, search) {
   const query = search ?? (typeof window !== 'undefined' ? window.location.search : '');
   return new URLSearchParams(query).get(name);
 }
+
+function toMillis(ts) {
+  if (!ts) return 0;
+  if (typeof ts.seconds === 'number') return ts.seconds * 1000;
+  const parsed = new Date(ts).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/**
+ * Pure helper: groups tenant/admin message docs by email and merges enrolled tenants.
+ * @param {Array<{id: string, data: () => Object}>} docList
+ * @param {Array<Object>} tenants
+ */
+export function buildTenantThreads(docList = [], tenants = []) {
+  const byEmail = new Map();
+
+  for (const t of tenants) {
+    const email = (t.email || '').trim().toLowerCase();
+    if (!email) continue;
+    byEmail.set(email, {
+      email: t.email.trim(),
+      name: t.name || t.email.split('@')[0] || 'Tenant',
+      room: t.room || '',
+      unreadCount: 0,
+      lastTime: 0,
+      lastMessage: null,
+      items: []
+    });
+  }
+
+  for (const doc of docList) {
+    const data = doc.data();
+    if (data.sender !== 'tenant' && data.sender !== 'admin') continue;
+    const rawEmail = (data.email || '').trim();
+    const key = rawEmail.toLowerCase();
+    if (!key) continue;
+
+    if (!byEmail.has(key)) {
+      byEmail.set(key, {
+        email: rawEmail,
+        name: data.name || rawEmail.split('@')[0] || 'Tenant',
+        room: data.room || '',
+        unreadCount: 0,
+        lastTime: 0,
+        lastMessage: null,
+        items: []
+      });
+    }
+
+    const thread = byEmail.get(key);
+    if (data.name && data.sender === 'tenant') thread.name = data.name;
+    if (data.room && !thread.room) thread.room = data.room;
+
+    const createdMs = toMillis(data.createdAt);
+    const isUnread = data.sender === 'tenant' && data.status === 'Unread';
+    if (isUnread) thread.unreadCount += 1;
+
+    thread.items.push({
+      id: doc.id,
+      sender: data.sender,
+      text: data.message || '',
+      timeMs: createdMs,
+      unread: isUnread,
+      legacyReply: false
+    });
+
+    if (data.reply) {
+      const replyMs = toMillis(data.repliedAt) || createdMs + 1;
+      thread.items.push({
+        id: doc.id,
+        sender: 'admin',
+        text: data.reply,
+        timeMs: replyMs,
+        unread: false,
+        legacyReply: true
+      });
+    }
+  }
+
+  const threads = Array.from(byEmail.values());
+  for (const thread of threads) {
+    thread.items.sort((a, b) => a.timeMs - b.timeMs);
+    const last = thread.items.at(-1) || null;
+    thread.lastMessage = last;
+    thread.lastTime = last ? last.timeMs : 0;
+  }
+
+  threads.sort((a, b) => b.lastTime - a.lastTime || a.name.localeCompare(b.name));
+  return threads;
+}
