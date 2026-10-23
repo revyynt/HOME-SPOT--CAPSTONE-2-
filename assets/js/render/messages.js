@@ -272,6 +272,19 @@ export function renderMessages(docs) {
       (data.name || (isTenant ? 'T' : 'G')).slice(0, 2).toUpperCase()
     );
 
+    let subject = data.subject || '';
+    let displayMessage = data.message || 'No message content';
+    if (!subject && typeof data.message === 'string') {
+      const match = data.message.match(/^\[(.*?)\]\s*([\s\S]*)$/);
+      if (match) {
+        subject = match[1];
+        displayMessage = match[2];
+      }
+    }
+    if (!subject && data.room === 'Customer Support') {
+      subject = 'General Inquiry';
+    }
+
     const replyHtml = data.reply
       ? `<div class="mt-3 p-3 bg-gray-50 border-l-4 border-emerald-500 rounded text-sm">
            <span class="font-semibold text-gray-700">Admin reply:</span>
@@ -279,12 +292,12 @@ export function renderMessages(docs) {
          </div>`
       : '';
 
-    const subjectBadge = data.subject
-      ? `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-xs font-semibold">Topic: ${escapeHtml(data.subject)}</span>`
+    const subjectBadge = subject
+      ? `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-xs font-semibold">Topic: ${escapeHtml(subject)}</span>`
       : '';
 
     const metaHtml =
-      !isTenant && (data.property || data.email || data.phone || data.subject)
+      !isTenant && (data.property || data.email || data.phone || subject)
         ? `<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1.5">
            ${subjectBadge}
            ${data.property ? `<span class="bg-gray-100 px-2 py-0.5 rounded">Property: ${escapeHtml(data.property)}</span>` : ''}
@@ -303,8 +316,8 @@ export function renderMessages(docs) {
           data-id="${attr(doc.id)}"
           data-email="${attr(data.email || '')}"
           data-name="${attr(data.name || '')}"
-          data-subject="${attr(data.subject || 'Customer Support Inquiry')}"
-          data-message="${attr(data.message || '')}"
+          data-subject="${attr(subject || 'Customer Support Inquiry')}"
+          data-message="${attr(displayMessage)}"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +343,7 @@ export function renderMessages(docs) {
                   <h4 class="text-lg font-bold">${escapeHtml(data.name || (isTenant ? 'Tenant' : 'Guest'))}</h4>
                   ${badge}
                 </div>
-                <p class="text-gray-700 mb-1">${escapeHtml(data.message || 'No message content')}</p>
+                <p class="text-gray-700 mb-1">${escapeHtml(displayMessage)}</p>
                 ${metaHtml}
                 ${replyHtml}
                 <p class="text-sm text-gray-500 mt-2">${createdAt}</p>

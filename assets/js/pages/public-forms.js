@@ -73,18 +73,19 @@ async function handleInquirySubmit(event) {
     return;
   }
 
-  // Field set is constrained by the anonymous Supabase insert policy.
+  // Strictly constrained to the 8 keys whitelisted by the anonymous Supabase insert RLS policy:
+  // ['name', 'email', 'phone', 'room', 'moveInDate', 'message', 'status', 'createdAt']
   const roomName = getRoomNameFromPage();
-  const subjectVal = form.querySelector('[name="subject"]')?.value || (roomName ? `Inquiry: ${roomName}` : 'General Inquiry');
+  const subjectVal = form.querySelector('[name="subject"]')?.value?.trim();
+  const rawMsg = form.querySelector('[name="message"]')?.value?.trim() || '';
+  const message = subjectVal ? `[${subjectVal}] ${rawMsg}` : rawMsg;
   const inquiry = {
     name,
     email,
     phone,
     room: roomName || 'Customer Support',
-    subject: subjectVal,
-    message: form.querySelector('[name="message"]')?.value.trim() || '',
-    sender: 'guest',
-    source: 'customer-support',
+    moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
+    message,
     status: 'New',
     createdAt: supabaseData.serverTimestamp()
   };
