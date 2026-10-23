@@ -330,7 +330,6 @@ export function renderMessages(docs) {
           </svg>
           Reply via Gmail
         </button>
-        <button data-action="reply" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Quick Reply</button>
         <button data-action="delete-message" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600 text-sm font-medium">Delete</button>
       `
       : `
