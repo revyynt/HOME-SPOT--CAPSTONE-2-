@@ -75,7 +75,8 @@ async function handleInquirySubmit(event) {
 
   // Strictly constrained to the 8 keys whitelisted by the anonymous Supabase insert RLS policy:
   // ['name', 'email', 'phone', 'room', 'moveInDate', 'message', 'status', 'createdAt']
-  const roomName = getRoomNameFromPage();
+  const isCustomerSupport = Boolean(form.querySelector('[name="subject"]')) || !window.location.pathname.includes('property-detail');
+  const room = isCustomerSupport ? 'Customer Support' : getRoomNameFromPage();
   const subjectVal = form.querySelector('[name="subject"]')?.value?.trim();
   const rawMsg = form.querySelector('[name="message"]')?.value?.trim() || '';
   const message = subjectVal ? `[${subjectVal}] ${rawMsg}` : rawMsg;
@@ -83,7 +84,7 @@ async function handleInquirySubmit(event) {
     name,
     email,
     phone,
-    room: roomName || 'Customer Support',
+    room,
     moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
     message,
     status: 'New',

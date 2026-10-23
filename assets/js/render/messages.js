@@ -241,7 +241,12 @@ export async function sendAdminChatMessage(email, name, messageText) {
  */
 export function isSupportDoc(doc) {
   const d = typeof doc?.data === 'function' ? doc.data() : doc || {};
-  return d.room === 'Customer Support' || d.source === 'customer-support' || Boolean(d.subject && !d.property);
+  return (
+    d.room === 'Customer Support' ||
+    d.source === 'customer-support' ||
+    Boolean(d.subject && !d.property) ||
+    (typeof d.message === 'string' && d.message.startsWith('['))
+  );
 }
 
 export function renderMessages(docs) {
@@ -485,7 +490,8 @@ export function watchMessages(onUnreadCount) {
       ).length;
       const inquiryUnread = allDocs.filter(
         (doc) =>
-          doc.data().status === 'Unread' &&
+          (doc.data().status === 'Unread' || doc.data().status === 'New') &&
+          !isSupportDoc(doc) &&
           doc.data().sender !== 'tenant' &&
           doc.data().sender !== 'admin'
       ).length;
@@ -513,7 +519,7 @@ export function watchMessages(onUnreadCount) {
         supportBadge.classList.toggle('hidden', supportUnread === 0);
       }
 
-      onUnreadCount?.(tenantUnread + inquiryUnread);
+      onUnreadCount?.(tenantUnread + inquiryUnread + supportUnread);
       renderMessages(allDocs);
     },
     (error) => {
