@@ -211,6 +211,7 @@ function openMediaLightbox() {
   const modal = document.getElementById('mediaLightboxModal');
   if (!modal || !mediaSlides.length) return;
   modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
   renderLightboxSlide(activeSlideIndex);
 }
 
@@ -218,6 +219,7 @@ function closeMediaLightbox() {
   const modal = document.getElementById('mediaLightboxModal');
   if (!modal) return;
   modal.classList.add('hidden');
+  document.body.style.overflow = '';
   const lbPano = document.getElementById('lightboxPanoramaViewer');
   lbPano?._panoramaCleanup?.();
   setActiveMediaSlide(activeSlideIndex, document.getElementById('roomName')?.textContent || 'Room');
@@ -336,6 +338,17 @@ function initLightboxControls() {
         break;
       default:
         break;
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (modal.classList.contains('hidden')) return;
+    if (e.key === 'Escape') {
+      closeMediaLightbox();
+    } else if (e.key === 'ArrowLeft') {
+      renderLightboxSlide(activeSlideIndex - 1);
+    } else if (e.key === 'ArrowRight') {
+      renderLightboxSlide(activeSlideIndex + 1);
     }
   });
 }
