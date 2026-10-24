@@ -538,10 +538,10 @@ function initPanoramaViewer(imageUrl, container = document.getElementById('panor
     const THREE = window.THREE;
 
     const W = container.clientWidth || 720;
-    const H = container.clientHeight || 430;
+    const H = container.clientHeight || 340;
 
     // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setSize(W, H);
     Object.assign(renderer.domElement.style, {
@@ -549,8 +549,10 @@ function initPanoramaViewer(imageUrl, container = document.getElementById('panor
       top: '0',
       left: '0',
       width: '100%',
-      height: '100%'
+      height: '100%',
+      touchAction: 'none'
     });
+    renderer.domElement.addEventListener('webglcontextlost', (e) => e.preventDefault());
     container.appendChild(renderer.domElement);
 
     // Scene + camera
@@ -602,7 +604,9 @@ function initPanoramaViewer(imageUrl, container = document.getElementById('panor
       isDragging = true;
       startX = e.clientX;
       startY = e.clientY;
-      renderer.domElement.setPointerCapture(e.pointerId);
+      try {
+        renderer.domElement.setPointerCapture(e.pointerId);
+      } catch (_) { }
       container.style.cursor = 'grabbing';
       clearTimeout(autoRotateTimer);
     });
@@ -616,9 +620,14 @@ function initPanoramaViewer(imageUrl, container = document.getElementById('panor
       startY = e.clientY;
     });
 
-    const stopDrag = () => {
+    const stopDrag = (e) => {
       if (!isDragging) return;
       isDragging = false;
+      if (e?.pointerId !== undefined) {
+        try {
+          renderer.domElement.releasePointerCapture(e.pointerId);
+        } catch (_) { }
+      }
       container.style.cursor = 'grab';
     };
     renderer.domElement.addEventListener('pointerup', stopDrag);

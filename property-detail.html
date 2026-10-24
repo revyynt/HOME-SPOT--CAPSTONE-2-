@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Room Details - MJP Residences | Homespot AR</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="stylesheet" href="./assets/css/style.css" />
   <style>
     /* Animated floating background elements */
@@ -180,7 +181,7 @@
 
       <!-- Main Stage (Photo Slide or 360° Interactive Slide) -->
       <div id="mediaStageContainer"
-        class="relative flex-1 h-[360px] sm:h-[480px] md:h-[540px] lg:h-[580px] rounded-2xl overflow-hidden shadow-2xl bg-slate-950 group border border-slate-200/80">
+        class="relative w-full min-h-[340px] h-[340px] sm:min-h-0 sm:flex-1 sm:h-[480px] md:h-[540px] lg:h-[580px] rounded-2xl overflow-hidden shadow-2xl bg-slate-950 group border border-slate-200/80">
         <!-- Photo View -->
         <div id="mediaPhotoStage" class="w-full h-full relative">
           <img id="mainImage" alt="Room interior"
