@@ -39,7 +39,7 @@ async function initPlatformStats() {
     (snap) => {
       let count = 0;
       snap.forEach(() => count++);
-      if (listingsCountEl) listingsCountEl.textContent = String(count || 2);
+      if (listingsCountEl) listingsCountEl.textContent = String(count ?? 0);
     },
     () => {
       if (listingsCountEl) listingsCountEl.textContent = '2';

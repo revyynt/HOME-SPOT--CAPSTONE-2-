@@ -133,6 +133,22 @@ function mountAdminPanoramaPreview(container, imageUrl) {
   }
 }
 
+function updateTenantDormSelect(rooms) {
+  const select = document.getElementById('tenantDorm');
+  if (!select || !Array.isArray(rooms)) return;
+  const currentVal = select.value;
+  if (!rooms.length) {
+    select.innerHTML = '<option value="">No units available</option>';
+    return;
+  }
+  select.innerHTML = rooms
+    .map((r) => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`)
+    .join('');
+  if (currentVal && rooms.some((r) => r.name === currentVal)) {
+    select.value = currentVal;
+  }
+}
+
 function renderListings(rooms) {
   const container = document.getElementById('adminListingsContainer');
   if (!container) return;
@@ -331,12 +347,11 @@ function initAdminListings() {
 
       if (!seeded) {
         seeded = true;
-        for (const base of DEFAULT_ROOMS) {
-          const existing = byIdMap.get(base.id);
-          if (!existing || existing.price === undefined || !existing.image) {
-            const merged = mergeRoomData(base, existing);
+        // Only seed default rooms if the database has zero rooms at all (fresh database setup)
+        if (snapshot.size === 0) {
+          for (const base of DEFAULT_ROOMS) {
             await supabaseData
-              .setDoc(supabaseData.doc(supabase, 'rooms', base.id), merged, { merge: true })
+              .setDoc(supabaseData.doc(supabase, 'rooms', base.id), { ...base }, { merge: true })
               .catch((err) => console.warn('Room seed skipped:', err));
           }
         }
@@ -346,10 +361,8 @@ function initAdminListings() {
       snapshot.forEach((doc) => {
         rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
-      if (!rooms.length && !snapshot.size) {
-        rooms.push(...DEFAULT_ROOMS);
-      }
       renderListings(rooms);
+      updateTenantDormSelect(rooms);
     },
     (err) => console.error('Failed to subscribe to admin listings:', err)
   );

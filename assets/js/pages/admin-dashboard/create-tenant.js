@@ -71,8 +71,20 @@ export function openCreateTenantModalFromData(data = {}) {
   assign('tenantEmail', data.email);
   assign('tenantPhone', data.phone);
   assign('tenantRoom', data.room);
-  assign('tenantDorm', data.dormName);
   assign('tenantMonthlyRent', data.amount);
+
+  const dormSelect = document.getElementById('tenantDorm');
+  const targetDorm = data.dormName || data.room;
+  if (dormSelect && targetDorm) {
+    const optionExists = Array.from(dormSelect.options).some((o) => o.value === targetDorm);
+    if (!optionExists) {
+      const opt = document.createElement('option');
+      opt.value = targetDorm;
+      opt.textContent = targetDorm;
+      dormSelect.appendChild(opt);
+    }
+    dormSelect.value = targetDorm;
+  }
 
   if (data.moveInDate) {
     const parsed = new Date(data.moveInDate);
