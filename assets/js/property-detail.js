@@ -101,10 +101,15 @@ function setActiveMediaSlide(index, roomName = 'Room') {
   const mainImg = document.getElementById('mainImage');
   const counterEl = document.getElementById('mediaSlideCounter');
   const jumpBtn = document.getElementById('mediaJump360Btn');
+  const tag360 = document.getElementById('media360Tag');
 
   if (active.type === 'panorama') {
     photoStage?.classList.add('hidden');
     panoStage?.classList.remove('hidden');
+    if (tag360) {
+      tag360.classList.remove('hidden');
+      tag360.classList.add('flex');
+    }
     if (active.src && active.src !== currentPanoramaUrl) {
       currentPanoramaUrl = active.src;
       initPanoramaViewer(active.src);
@@ -120,6 +125,10 @@ function setActiveMediaSlide(index, roomName = 'Room') {
   } else {
     panoStage?.classList.add('hidden');
     photoStage?.classList.remove('hidden');
+    if (tag360) {
+      tag360.classList.add('hidden');
+      tag360.classList.remove('flex');
+    }
     if (mainImg) {
       mainImg.src = active.src;
       mainImg.alt = `${roomName} - ${active.label}`;
@@ -172,6 +181,24 @@ function initMediaShowcaseControls() {
 
     const roomName = document.getElementById('roomName')?.textContent || 'Room';
     switch (actionBtn.dataset.action) {
+      case 'toggle-fullscreen': {
+        const stage = document.getElementById('mediaStageContainer');
+        if (!stage) break;
+        if (!document.fullscreenElement) {
+          if (stage.requestFullscreen) {
+            stage.requestFullscreen().catch((err) => console.warn('Fullscreen error:', err));
+          } else if (stage.webkitRequestFullscreen) {
+            stage.webkitRequestFullscreen();
+          }
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch((err) => console.warn('Exit fullscreen error:', err));
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+        break;
+      }
       case 'media-prev':
         setActiveMediaSlide(activeSlideIndex - 1, roomName);
         break;
@@ -191,6 +218,21 @@ function initMediaShowcaseControls() {
       default:
         break;
     }
+  });
+
+  document.addEventListener('fullscreenchange', () => {
+    const isFs = Boolean(document.fullscreenElement);
+    const expandIcon = document.getElementById('fullscreenIconExpand');
+    const compressIcon = document.getElementById('fullscreenIconCompress');
+    const fsText = document.getElementById('fullscreenText');
+    const panoViewer = document.getElementById('panoramaViewer');
+
+    if (expandIcon) expandIcon.classList.toggle('hidden', isFs);
+    if (compressIcon) compressIcon.classList.toggle('hidden', !isFs);
+    if (fsText) fsText.textContent = isFs ? 'Exit' : 'Fullscreen';
+
+    panoViewer?._setEnlarged?.(isFs);
+    window.dispatchEvent(new Event('resize'));
   });
 }
 
@@ -412,9 +454,14 @@ function initPanoramaViewer(imageUrl) {
     let targetLon = 0,
       targetLat = 0;
     let isDragging = false;
+    let isEnlarged = Boolean(document.fullscreenElement);
     let startX = 0,
       startY = 0;
     let autoRotateTimer = null;
+
+    container._setEnlarged = (val) => {
+      isEnlarged = Boolean(val);
+    };
 
     const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 
@@ -527,6 +574,9 @@ function initPanoramaViewer(imageUrl) {
     let rafId;
     (function loop() {
       rafId = requestAnimationFrame(loop);
+      if (!isDragging && !isEnlarged) {
+        targetLon += 0.08;
+      }
       lon += (targetLon - lon) * 0.08;
       lat += (targetLat - lat) * 0.08;
       updateCamera();
@@ -538,6 +588,7 @@ function initPanoramaViewer(imageUrl) {
       cancelAnimationFrame(rafId);
       ro.disconnect();
       renderer.dispose();
+      delete container._setEnlarged;
     };
   }
 

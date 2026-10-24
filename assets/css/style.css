@@ -7,36 +7,44 @@ html {
 
 /* Hero Section Animations */
 @keyframes float {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1);
   }
+
   33% {
     transform: translate(30px, -30px) scale(1.1);
   }
+
   66% {
     transform: translate(-20px, 20px) scale(0.9);
   }
 }
 
 @keyframes float-delay {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1);
   }
+
   33% {
     transform: translate(-25px, 25px) scale(1.05);
   }
+
   66% {
     transform: translate(25px, -15px) scale(0.95);
   }
 }
 
 @keyframes float-slow {
+
   0%,
   100% {
     transform: translate(0, 0) scale(1);
   }
+
   50% {
     transform: translate(20px, 20px) scale(1.15);
   }
@@ -60,38 +68,46 @@ html {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.hero-content > * {
+.hero-content>* {
   animation: fadeInUp 0.8s ease-out forwards;
 }
 
-.hero-content > *:nth-child(1) {
+.hero-content>*:nth-child(1) {
   animation-delay: 0.1s;
 }
-.hero-content > *:nth-child(2) {
+
+.hero-content>*:nth-child(2) {
   animation-delay: 0.2s;
 }
-.hero-content > *:nth-child(3) {
+
+.hero-content>*:nth-child(3) {
   animation-delay: 0.3s;
 }
-.hero-content > *:nth-child(4) {
+
+.hero-content>*:nth-child(4) {
   animation-delay: 0.4s;
 }
-.hero-content > *:nth-child(5) {
+
+.hero-content>*:nth-child(5) {
   animation-delay: 0.5s;
 }
-.hero-content > *:nth-child(6) {
+
+.hero-content>*:nth-child(6) {
   animation-delay: 0.6s;
 }
-.hero-content > *:nth-child(7) {
+
+.hero-content>*:nth-child(7) {
   animation-delay: 0.7s;
 }
-.hero-content > *:nth-child(8) {
+
+.hero-content>*:nth-child(8) {
   animation-delay: 0.8s;
 }
 
@@ -105,6 +121,7 @@ html {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -113,11 +130,13 @@ html {
 
 /* Pulsing badge animation */
 @keyframes pulse-scale {
+
   0%,
   100% {
     transform: scale(1);
     box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
   }
+
   50% {
     transform: scale(1.05);
     box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
@@ -163,6 +182,7 @@ html {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -278,13 +298,37 @@ textarea.form-input {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
 }
 
+/* Media stage fullscreen */
+#mediaStageContainer:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  background-color: #000 !important;
+}
+
+#mediaStageContainer:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  background-color: #000 !important;
+}
+
+#mediaStageContainer:fullscreen img#mainImage,
+#mediaStageContainer:-webkit-full-screen img#mainImage {
+  object-fit: contain !important;
+}
+
 /* Print styles */
 @media print {
+
   header,
   footer {
     display: none;

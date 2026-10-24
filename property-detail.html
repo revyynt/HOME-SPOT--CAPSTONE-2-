@@ -170,88 +170,104 @@
       <span id="roomBreadcrumb" class="text-gray-800">Loading...</span>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Left Column - Room Details -->
-      <div class="lg:col-span-2 space-y-6">
-        <!-- Revamped Media Showcase: Left Thumbnail Rail + Main Stage (Photos + Last Slide 360°) -->
-        <div id="propertyMediaShowcase" class="flex flex-col-reverse sm:flex-row gap-4 animate-slide-in"
-          style="animation-delay: 0.1s">
-          <!-- Left Side Thumbnail Column -->
-          <div id="mediaThumbnailStrip"
-            class="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-32 sm:max-h-[430px] p-1.5 -m-1.5 hide-scrollbar flex-shrink-0"
-            aria-label="Room media thumbnails"></div>
+    <!-- YouTube Theater-esque Media Showcase: Left Thumbnail Rail + Main Stage (Photos + Last Slide 360°) -->
+    <div id="propertyMediaShowcase" class="flex flex-col-reverse sm:flex-row gap-4 mb-8 animate-slide-in"
+      style="animation-delay: 0.1s">
+      <!-- Left Side Thumbnail Column -->
+      <div id="mediaThumbnailStrip"
+        class="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto sm:w-36 sm:max-h-[580px] p-1.5 -m-1.5 hide-scrollbar flex-shrink-0"
+        aria-label="Room media thumbnails"></div>
 
-          <!-- Main Stage (Photo Slide or 360° Interactive Slide) -->
-          <div
-            class="relative flex-1 h-80 sm:h-[430px] rounded-2xl overflow-hidden shadow-2xl bg-slate-950 group border border-slate-200/80">
-            <!-- Photo View -->
-            <div id="mediaPhotoStage" class="w-full h-full relative">
-              <img id="mainImage" alt="Room interior"
-                class="hidden w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
-              <div
-                class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15 pointer-events-none">
-              </div>
-              <div class="absolute inset-0 shimmer-effect opacity-0 group-hover:opacity-100 pointer-events-none"></div>
-            </div>
+      <!-- Main Stage (Photo Slide or 360° Interactive Slide) -->
+      <div id="mediaStageContainer"
+        class="relative flex-1 h-[360px] sm:h-[480px] md:h-[540px] lg:h-[580px] rounded-2xl overflow-hidden shadow-2xl bg-slate-950 group border border-slate-200/80">
+        <!-- Photo View -->
+        <div id="mediaPhotoStage" class="w-full h-full relative">
+          <img id="mainImage" alt="Room interior"
+            class="hidden w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15 pointer-events-none">
+          </div>
+          <div class="absolute inset-0 shimmer-effect opacity-0 group-hover:opacity-100 pointer-events-none"></div>
+        </div>
 
-            <!-- 360° Panorama View (Final Slide of the Row) -->
-            <div id="mediaPanoramaStage" class="hidden w-full h-full relative">
-              <div id="panoramaViewer"
-                class="relative w-full h-full bg-gray-900 overflow-hidden cursor-grab select-none"
-                style="touch-action: none"></div>
-              <div class="absolute inset-0 pointer-events-none">
-                <div
-                  class="absolute top-4 left-4 bg-gradient-to-r from-blue-600 to-green-600 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1.5">
-                  <span>360° Interactive View</span>
-                  <span class="opacity-80 font-normal hidden sm:inline">• Drag to look around</span>
-                </div>
-                <div id="rotationIndicator"
-                  class="absolute bottom-14 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white px-3.5 py-1 rounded-full text-xs font-semibold shadow-lg">
-                  0°
-                </div>
-              </div>
-            </div>
-
-            <!-- Availability Badge (Top Right) -->
-            <div class="absolute top-4 right-4 z-20">
-              <span id="availabilityBadge"
-                class="text-sm sm:text-base px-4 py-1.5 rounded-full animate-pulse-glow shadow-lg"></span>
-            </div>
-
-            <!-- Prev / Next Slide Controls -->
-            <button type="button" data-action="media-prev" aria-label="Previous slide"
-              class="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-sm transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 shadow-lg">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-              </svg>
-            </button>
-            <button type="button" data-action="media-next" aria-label="Next slide"
-              class="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-sm transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 shadow-lg">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </button>
-
-            <!-- Bottom Bar: Slide Caption / Counter + Quick 360° Jump Pill -->
-            <div
-              class="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
-              <span id="mediaSlideCounter"
-                class="px-3 py-1 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-semibold shadow">
-                1 / 1
-              </span>
-              <button type="button" data-action="media-jump-360" id="mediaJump360Btn"
-                class="pointer-events-auto px-3.5 py-1.5 rounded-full bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-transform hover:scale-105">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                  </path>
-                </svg>
-                <span>360° Panorama</span>
-              </button>
+        <!-- 360° Panorama View (Final Slide of the Row) -->
+        <div id="mediaPanoramaStage" class="hidden w-full h-full relative">
+          <div id="panoramaViewer" class="relative w-full h-full bg-gray-900 overflow-hidden cursor-grab select-none"
+            style="touch-action: none"></div>
+          <div class="absolute inset-0 pointer-events-none">
+            <div id="rotationIndicator"
+              class="absolute bottom-14 left-1/2 -translate-x-1/2 bg-black/70 backdrop-blur-sm text-white px-3.5 py-1 rounded-full text-xs font-semibold shadow-lg">
+              0°
             </div>
           </div>
         </div>
 
+        <!-- Top Left Controls (Fullscreen Enlarge + 360 Tag) -->
+        <div class="absolute top-4 left-4 z-30 flex items-center gap-2">
+          <button type="button" data-action="toggle-fullscreen" id="mediaFullscreenBtn" title="Toggle Fullscreen"
+            aria-label="Toggle Fullscreen"
+            class="px-3.5 py-2 rounded-full bg-black/65 hover:bg-black/85 active:bg-black text-white text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2 shadow-lg cursor-pointer hover:scale-105 border border-white/15">
+            <svg id="fullscreenIconExpand" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+            <svg id="fullscreenIconCompress" class="hidden w-4 h-4" fill="none" stroke="currentColor"
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 4v4H5m4 0L4 3m11 1v4h4m-4 0l5-5M9 20v-4H5m4 0l-5 5m11-1v-4h4m-4 0l5 5" />
+            </svg>
+            <span id="fullscreenText" class="hidden sm:inline">Fullscreen</span>
+          </button>
+
+          <div id="media360Tag"
+            class="hidden bg-gradient-to-r from-blue-600 to-green-600 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shadow-lg items-center gap-1.5">
+            <span>360° Interactive View</span>
+            <span class="opacity-80 font-normal hidden md:inline">• Drag to explore</span>
+          </div>
+        </div>
+
+        <!-- Availability Badge (Top Right) -->
+        <div class="absolute top-4 right-4 z-20">
+          <span id="availabilityBadge"
+            class="text-sm sm:text-base px-4 py-1.5 rounded-full animate-pulse-glow shadow-lg"></span>
+        </div>
+
+        <!-- Prev / Next Slide Controls -->
+        <button type="button" data-action="media-prev" aria-label="Previous slide"
+          class="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-sm transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 shadow-lg cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
+          </svg>
+        </button>
+        <button type="button" data-action="media-next" aria-label="Next slide"
+          class="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/45 hover:bg-black/75 text-white flex items-center justify-center backdrop-blur-sm transition-all opacity-90 sm:opacity-0 sm:group-hover:opacity-100 shadow-lg cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+
+        <!-- Bottom Bar: Slide Caption / Counter + Quick 360° Jump Pill -->
+        <div class="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-none">
+          <span id="mediaSlideCounter"
+            class="px-3.5 py-1.5 rounded-full bg-black/65 backdrop-blur-md text-white text-xs font-semibold shadow">
+            1 / 1
+          </span>
+          <button type="button" data-action="media-jump-360" id="mediaJump360Btn"
+            class="pointer-events-auto px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-emerald-600 hover:from-blue-700 hover:to-emerald-700 text-white text-xs font-bold shadow-lg flex items-center gap-1.5 transition-transform hover:scale-105 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+              </path>
+            </svg>
+            <span>360° Panorama</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column - Room Details -->
+      <div class="lg:col-span-2 space-y-6">
         <!-- Room Header -->
         <div class="animate-slide-in" style="animation-delay: 0.2s">
           <h1 id="roomName"
@@ -612,7 +628,8 @@
                 <svg class="w-8 h-8 mb-2 text-blue-500 group-hover:scale-110 transition-transform" fill="none"
                   stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                  </path>
                 </svg>
                 <p class="text-xs font-semibold text-blue-700">Click to upload Valid ID</p>
                 <p class="text-[11px] text-gray-500 mt-0.5">PNG, JPG, or WEBP (Max 10MB)</p>
@@ -622,15 +639,18 @@
               <input type="file" name="validId" id="reservationValidId" accept="image/png, image/jpeg, image/webp"
                 class="sr-only" required />
             </label>
-            <div id="validIdMeta" class="hidden items-center justify-between text-xs text-gray-600 bg-white p-2 mt-2 rounded-lg border border-blue-200">
+            <div id="validIdMeta"
+              class="hidden items-center justify-between text-xs text-gray-600 bg-white p-2 mt-2 rounded-lg border border-blue-200">
               <span id="validIdFilename" class="truncate font-medium text-blue-700 max-w-[240px]"></span>
-              <button type="button" id="validIdRemoveBtn" class="text-red-500 hover:text-red-700 font-semibold text-xs ml-2">Remove</button>
+              <button type="button" id="validIdRemoveBtn"
+                class="text-red-500 hover:text-red-700 font-semibold text-xs ml-2">Remove</button>
             </div>
           </div>
         </div>
         <div class="bg-gradient-to-r from-blue-100 to-green-100 border-2 border-blue-300 rounded-xl p-4 shadow-sm">
           <p class="text-xs text-gray-700 font-medium leading-relaxed">
-            <strong class="text-blue-700 font-bold">Note:</strong> Please upload a clear photo of your valid ID for identity verification. The admin will review and verify your details before approving your reservation.
+            <strong class="text-blue-700 font-bold">Note:</strong> Please upload a clear photo of your valid ID for
+            identity verification. The admin will review and verify your details before approving your reservation.
           </p>
         </div>
         <button type="submit"
