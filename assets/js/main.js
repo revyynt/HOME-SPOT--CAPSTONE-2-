@@ -218,6 +218,11 @@ async function initAdminActions() {
       case 'delete-message':
         messages.deleteMessage(id);
         break;
+      case 'gcompose': {
+        const { email, name, subject, message } = button.dataset;
+        messages.openGCompose({ email, name, subject, message, id });
+        break;
+      }
       case 'select-chat':
         messages.selectTenantChat(trigger.dataset.email);
         break;
