@@ -1,6 +1,14 @@
 
 async function enforceStaffLockOnPublicPages() {
-  if (byId('reservationRequestsContainer') || byId('superAdminContainer') || byId('tenantPortalContainer')) {
+  const path = window.location.pathname.toLowerCase();
+  if (
+    path.includes('admin-dashboard') ||
+    path.includes('super-admin-dashboard') ||
+    path.includes('tenant-portal') ||
+    path.includes('login') ||
+    byId('reservationRequestsContainer') ||
+    byId('superAdminTableBody')
+  ) {
     return;
   }
   try {
