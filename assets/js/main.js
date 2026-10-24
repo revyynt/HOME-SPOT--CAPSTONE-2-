@@ -59,47 +59,88 @@ function renderFeaturePills(features = []) {
     .join('');
 }
 
-function applyRoomToCard(card, room) {
-  const img = card.querySelector('[data-room-image]');
-  if (img && room.image) {
-    if (img.getAttribute('src') !== room.image) img.setAttribute('src', room.image);
-    img.setAttribute('alt', room.name);
-  }
-  const badge = card.querySelector('[data-room-badge]');
-  if (badge) {
-    badge.textContent = room.badge || '';
-    badge.parentElement?.classList.toggle('hidden', !room.badge);
-  }
-  const nameEl = card.querySelector('[data-room-name]');
-  if (nameEl) nameEl.textContent = room.name;
-  const typeEl = card.querySelector('[data-room-type]');
-  if (typeEl) typeEl.textContent = room.type;
-  const priceEl = card.querySelector('[data-room-price]');
-  if (priceEl) priceEl.textContent = formatRoomPrice(room.price, false);
-  const featuresEl = card.querySelector('[data-room-features]');
-  if (featuresEl && Array.isArray(room.features)) {
-    featuresEl.innerHTML = renderFeaturePills(room.features);
-  }
+function renderLandingRoomCard(room) {
+  const badgeHtml = room.badge
+    ? `<div class="absolute top-3 left-3">
+        <span data-room-badge
+          class="bg-gradient-to-r from-blue-100 to-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-green-200">
+          ${escapeHtml(room.badge)}
+        </span>
+      </div>`
+    : '';
+
+  const availClass =
+    room.available > 0
+      ? 'bg-gradient-to-r from-green-500 to-green-600'
+      : 'bg-gradient-to-r from-red-500 to-red-600';
+  const availText = room.available > 0 ? `${room.available} Available` : 'Fully Booked';
+  const detailUrl = `property-detail.html?id=${encodeURIComponent(room.id)}`;
+
+  return `
+    <div data-room-card="${escapeHtml(room.id)}"
+      class="bg-gradient-to-br from-blue-50/40 via-white to-green-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group transform hover:-translate-y-2 border-2 border-transparent hover:border-blue-200 flex flex-col justify-between">
+      <div>
+        <div class="relative overflow-hidden">
+          <a href="${detailUrl}">
+            <img data-room-image src="${escapeHtml(room.image)}" alt="${escapeHtml(room.name)}"
+              class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500" />
+          </a>
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-blue-900/20 to-transparent pointer-events-none"></div>
+          ${badgeHtml}
+          <div class="absolute top-3 right-3" data-availability-room="${escapeHtml(room.name)}" data-default-available="${escapeHtml(room.available)}">
+            <span class="pulse-badge ${availClass} text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5">
+              <span class="w-2 h-2 bg-white rounded-full ${room.available > 0 ? 'animate-ping' : ''} absolute"></span>
+              <span class="w-2 h-2 bg-white rounded-full relative"></span>
+              ${escapeHtml(availText)}
+            </span>
+          </div>
+          <div class="absolute bottom-4 left-4 right-4 pointer-events-none">
+            <h4 data-room-name class="text-2xl font-bold text-white mb-1 drop-shadow-lg">${escapeHtml(room.name)}</h4>
+            <p data-room-type class="text-sm text-green-200 font-medium">${escapeHtml(room.type)}</p>
+          </div>
+        </div>
+        <div class="p-5">
+          <div data-room-features class="flex flex-wrap gap-2 mb-4">
+            ${renderFeaturePills(room.features || [])}
+          </div>
+        </div>
+      </div>
+      <div class="px-5 pb-5">
+        <div class="flex items-end justify-between bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-3 border border-blue-100">
+          <div>
+            <div class="text-xs text-gray-500">Starting at</div>
+            <div class="flex items-baseline gap-1">
+              <span data-room-price class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">${escapeHtml(formatRoomPrice(room.price, false))}</span>
+              <span class="text-gray-500 text-sm">/month</span>
+            </div>
+          </div>
+          <a href="${detailUrl}"
+            class="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 inline-block text-center">
+            View Details
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function initLandingRooms() {
   const grid = document.querySelector('[data-rooms-grid]');
   if (!grid) return;
 
-  for (const base of DEFAULT_ROOMS) {
-    const card = grid.querySelector(`[data-room-card="${base.id}"]`);
-    if (card) applyRoomToCard(card, base);
-  }
-
   const roomsRef = supabaseData.collection(supabase, 'rooms');
   supabaseData.onSnapshot(
     roomsRef,
     (snapshot) => {
+      const rooms = [];
       snapshot.forEach((doc) => {
-        const room = mergeRoomData(doc.id, { id: doc.id, ...doc.data() });
-        const card = grid.querySelector(`[data-room-card="${doc.id}"]`);
-        if (card) applyRoomToCard(card, room);
+        rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
+      if (rooms.length > 0) {
+        grid.innerHTML = rooms.map(renderLandingRoomCard).join('');
+      } else {
+        grid.innerHTML = DEFAULT_ROOMS.map(renderLandingRoomCard).join('');
+      }
     },
     (error) => console.error('Failed to sync landing room cards:', error)
   );

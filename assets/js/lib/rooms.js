@@ -131,7 +131,24 @@ export function mergeRoomData(baseOrKey, remote = {}) {
             r.id === baseOrKey ||
             r.detailId === Number(baseOrKey) ||
             r.id === normalizeRoomDocId(baseOrKey)
-        ) || DEFAULT_ROOMS[0];
+        ) || {
+          id: typeof baseOrKey === 'string' ? normalizeRoomDocId(baseOrKey) : 'triple-occupancy-room',
+          detailId: Number(baseOrKey) || 1,
+          name: typeof baseOrKey === 'string' ? baseOrKey : 'Apartment Unit',
+          type: 'Living Space',
+          badge: '',
+          price: 10000,
+          beds: 1,
+          capacity: 2,
+          available: 1,
+          size: '25 sqm',
+          image: 'assets/img/triple-occupancy-panorama.png',
+          mainImage: 'assets/img/triple-occupancy.jpg',
+          panorama: 'assets/img/triple-occupancy-panorama.png',
+          images: ['assets/img/triple-occupancy.jpg'],
+          description: 'Comfortable apartment unit living space.',
+          features: ['1 Room', 'Bathroom']
+        };
 
   const data = remote || {};
   const features = Array.isArray(data.features)
