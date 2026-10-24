@@ -11,7 +11,7 @@ import { initTenantTable, listenToTenants } from './admin-dashboard/tenants.js';
 import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
-import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData } from '../lib/rooms.js';
+import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
 import { escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
 import { Toast } from '../render/toast.js';
@@ -172,16 +172,28 @@ function renderListings(rooms) {
             type="button"
             data-action="toggle-edit-room"
             data-room-id="${escapeHtml(room.id)}"
-            class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2 text-sm font-medium"
+            class="px-3.5 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-1.5 text-sm font-medium cursor-pointer"
           >
             Edit
           </button>
           <a
-            href="property-detail.html?id=${encodeURIComponent(room.detailId || room.id)}"
-            class="px-4 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-2 text-sm font-medium text-gray-700"
+            href="property-detail.html?id=${encodeURIComponent(room.id)}"
+            class="px-3.5 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-1.5 text-sm font-medium text-gray-700 cursor-pointer"
           >
             View
           </a>
+          <button
+            type="button"
+            data-action="delete-room"
+            data-room-id="${escapeHtml(room.id)}"
+            data-room-name="${escapeHtml(room.name)}"
+            class="px-3.5 py-2 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete
+          </button>
         </div>
       </div>
 
@@ -330,11 +342,138 @@ function initAdminListings() {
         }
       }
 
-      const rooms = DEFAULT_ROOMS.map((base) => mergeRoomData(base, byIdMap.get(base.id)));
+      const rooms = [];
+      snapshot.forEach((doc) => {
+        rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
+      });
+      if (!rooms.length && !snapshot.size) {
+        rooms.push(...DEFAULT_ROOMS);
+      }
       renderListings(rooms);
     },
     (err) => console.error('Failed to subscribe to admin listings:', err)
   );
+
+  // Modal open/close & Delete room handling
+  document.addEventListener('click', async (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    if (target.closest('[data-action="open-add-room-modal"]')) {
+      document.getElementById('addRoomModal')?.classList.remove('hidden');
+      return;
+    }
+
+    if (target.closest('[data-action="close-add-room-modal"]')) {
+      document.getElementById('addRoomModal')?.classList.add('hidden');
+      return;
+    }
+
+    const deleteBtn = target.closest('button[data-action="delete-room"]');
+    if (deleteBtn) {
+      const { roomId, roomName } = deleteBtn.dataset;
+      if (!roomId) return;
+
+      const confirmed = await Toast.confirm({
+        title: 'Delete Unit Listing',
+        message: `Are you sure you want to delete "${roomName || roomId}"? This will permanently remove the unit listing from the website.`,
+        confirmText: 'Delete Unit',
+        cancelText: 'Cancel',
+        danger: true
+      });
+
+      if (!confirmed) return;
+
+      try {
+        deleteBtn.disabled = true;
+        await supabaseData.deleteDoc(supabaseData.doc(supabase, 'rooms', roomId));
+        await supabase.from('rooms').delete().eq('id', roomId);
+        Toast.success(`Unit "${roomName || roomId}" deleted successfully.`);
+      } catch (err) {
+        console.error('Failed to delete room:', err);
+        Toast.error(`Failed to delete room: ${err.message || 'Unknown error'}`);
+        deleteBtn.disabled = false;
+      }
+    }
+  });
+
+  // Create room form submission
+  const createRoomForm = document.getElementById('createRoomForm');
+  createRoomForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('submitCreateRoomBtn');
+    const originalBtnText = submitBtn?.innerHTML || 'Create Listing';
+
+    try {
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = 'Creating Unit...';
+      }
+
+      const fd = new FormData(createRoomForm);
+      const name = (fd.get('name') || '').toString().trim();
+      const type = (fd.get('type') || '').toString().trim();
+      const price = Number(fd.get('price'));
+      const capacity = Number(fd.get('capacity'));
+      const available = Number(fd.get('available'));
+      const size = (fd.get('size') || '').toString().trim();
+      const badge = (fd.get('badge') || '').toString().trim();
+      const features = (fd.get('features') || '')
+        .toString()
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const description = (fd.get('description') || '').toString().trim();
+
+      if (!name || !type || !price || !capacity || !size) {
+        Toast.error('Please fill in all required unit fields.');
+        return;
+      }
+
+      const slug = normalizeRoomDocId(name);
+      const fileInput = document.getElementById('addRoomImageInput');
+      const file = fileInput?.files?.[0];
+
+      let imageUrl = 'assets/img/triple-occupancy-panorama.png';
+      if (file) {
+        try {
+          imageUrl = await uploadRoomFile(slug, file, 'image');
+        } catch (uploadErr) {
+          console.warn('Image upload failed, using fallback:', uploadErr);
+        }
+      }
+
+      const newRoom = {
+        id: slug,
+        name,
+        type,
+        price,
+        capacity,
+        available,
+        size,
+        badge: badge || null,
+        features: features.length ? features : ['1 Room', 'Bathroom'],
+        description: description || `Modern ${type} with comfortable living spaces.`,
+        image: imageUrl,
+        mainImage: imageUrl,
+        panorama: imageUrl,
+        images: [imageUrl]
+      };
+
+      await supabaseData.setDoc(supabaseData.doc(supabase, 'rooms', slug), newRoom);
+      Toast.success(`Unit "${name}" created and published!`);
+      createRoomForm.reset();
+      document.getElementById('addRoomModal')?.classList.add('hidden');
+    } catch (err) {
+      console.error('Failed to create room:', err);
+      Toast.error(`Failed to create room: ${err.message || 'Unknown error'}`);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    }
+  });
 
   container.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null;
