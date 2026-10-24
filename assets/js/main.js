@@ -59,6 +59,29 @@ function renderFeaturePills(features = []) {
     .join('');
 }
 
+function applyRoomToCard(card, room) {
+  const img = card.querySelector('[data-room-image]');
+  if (img && room.image) {
+    if (img.getAttribute('src') !== room.image) img.setAttribute('src', room.image);
+    img.setAttribute('alt', room.name);
+  }
+  const badge = card.querySelector('[data-room-badge]');
+  if (badge) {
+    badge.textContent = room.badge || '';
+    badge.parentElement?.classList.toggle('hidden', !room.badge);
+  }
+  const nameEl = card.querySelector('[data-room-name]');
+  if (nameEl) nameEl.textContent = room.name;
+  const typeEl = card.querySelector('[data-room-type]');
+  if (typeEl) typeEl.textContent = room.type;
+  const priceEl = card.querySelector('[data-room-price]');
+  if (priceEl) priceEl.textContent = formatRoomPrice(room.price, false);
+  const featuresEl = card.querySelector('[data-room-features]');
+  if (featuresEl && Array.isArray(room.features)) {
+    featuresEl.innerHTML = renderFeaturePills(room.features);
+  }
+}
+
 function renderLandingRoomCard(room) {
   const badgeHtml = room.badge
     ? `<div class="absolute top-3 left-3">
