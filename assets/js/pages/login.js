@@ -1,4 +1,4 @@
-import { db, setPersistence, supabase, supabaseData } from '../supabase-service.js';
+import { authReady, db, getCurrentUser, setPersistence, supabase, supabaseData } from '../supabase-service.js';
 import { Toast } from '../render/toast.js';
 
 const ROLE_DESTINATIONS = {
@@ -18,7 +18,6 @@ const ERROR_MESSAGES = {
 const loginForm = document.getElementById('loginForm');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
-const rememberMeCheckbox = document.getElementById('rememberMe');
 const loginSubmitBtn = document.getElementById('loginSubmitBtn');
 const loginAlert = document.getElementById('loginAlert');
 const togglePasswordBtn = document.getElementById('togglePasswordBtn');
@@ -166,7 +165,7 @@ loginForm?.addEventListener('submit', async (event) => {
   loginSubmitBtn.style.opacity = '0.75';
 
   try {
-    await setPersistence(Boolean(rememberMeCheckbox?.checked));
+    await setPersistence(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
 
@@ -187,3 +186,21 @@ loginForm?.addEventListener('submit', async (event) => {
     loginSubmitBtn.style.opacity = '1';
   }
 });
+
+async function checkExistingSession() {
+  try {
+    await authReady;
+    const user = await getCurrentUser();
+    if (!user) return;
+    const role =
+      user.app_metadata?.role || (user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
+    const destination = ROLE_DESTINATIONS[role];
+    if (destination) {
+      window.location.replace(destination);
+    }
+  } catch (error) {
+    console.warn('[auth] Existing session check error:', error);
+  }
+}
+
+checkExistingSession();
