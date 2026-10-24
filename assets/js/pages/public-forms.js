@@ -13,6 +13,7 @@ import {
   waitForSupabaseReady
 } from '../supabase-service.js';
 import { getUrlParam } from '../lib/format.js';
+import { resolveRoom } from '../lib/rooms.js';
 import { Toast } from '../render/toast.js';
 
 /**
@@ -25,8 +26,10 @@ export function getRoomNameFromPage() {
   if (liveName && liveName !== 'Loading...') return liveName;
 
   const roomId = getUrlParam('id');
-  if (roomId === '1') return 'Triple Occupancy Room';
-  if (roomId === '4') return 'Commercial Space';
+  if (roomId) {
+    const resolved = resolveRoom(roomId);
+    if (resolved?.name) return resolved.name;
+  }
 
   return 'Triple Occupancy Room';
 }
