@@ -202,21 +202,15 @@
           </div>
         </div>
 
-        <!-- Top Left Controls (Fullscreen Enlarge + 360 Tag) -->
+        <!-- Top Left Controls (Windowed Fullscreen Enlarge + 360 Tag) -->
         <div class="absolute top-4 left-4 z-30 flex items-center gap-2">
-          <button type="button" data-action="toggle-fullscreen" id="mediaFullscreenBtn" title="Toggle Fullscreen"
-            aria-label="Toggle Fullscreen"
+          <button type="button" data-action="open-lightbox" id="mediaFullscreenBtn"
+            title="Expand into windowed fullscreen" aria-label="Expand into windowed fullscreen"
             class="px-3.5 py-2 rounded-full bg-black/65 hover:bg-black/85 active:bg-black text-white text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2 shadow-lg cursor-pointer hover:scale-105 border border-white/15">
-            <svg id="fullscreenIconExpand" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
             </svg>
-            <svg id="fullscreenIconCompress" class="hidden w-4 h-4" fill="none" stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 4v4H5m4 0L4 3m11 1v4h4m-4 0l5-5M9 20v-4H5m4 0l-5 5m11-1v-4h4m-4 0l5 5" />
-            </svg>
-            <span id="fullscreenText" class="hidden sm:inline">Fullscreen</span>
+            <span class="hidden sm:inline">Fullscreen</span>
           </button>
 
           <div id="media360Tag"
@@ -479,6 +473,77 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Windowed Fullscreen Lightbox Modal (Reference Design) -->
+  <div id="mediaLightboxModal"
+    class="hidden fixed inset-0 z-50 bg-black flex flex-col justify-between items-center select-none animate-fade-in"
+    role="dialog" aria-modal="true" aria-label="Media preview">
+    <!-- Top-Right Close Button -->
+    <button type="button" data-action="close-lightbox"
+      class="absolute top-5 right-6 z-30 text-white/70 hover:text-white text-3xl font-light w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+      aria-label="Close windowed fullscreen">
+      &times;
+    </button>
+
+    <!-- Center Stage (Photo or 360 Panorama) -->
+    <div class="relative flex-1 w-full h-full flex items-center justify-center overflow-hidden p-4 sm:p-8">
+      <!-- Prev Arrow (Left Edge) -->
+      <button type="button" data-action="lightbox-prev"
+        class="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-30 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-all cursor-pointer"
+        aria-label="Previous slide">
+        <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <!-- Next Arrow (Right Edge) -->
+      <button type="button" data-action="lightbox-next"
+        class="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-30 text-white/70 hover:text-white p-3 rounded-full hover:bg-white/10 transition-all cursor-pointer"
+        aria-label="Next slide">
+        <svg class="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <!-- Photo Display -->
+      <div id="lightboxPhotoStage" class="w-full h-full flex items-center justify-center">
+        <img id="lightboxImage" alt="Room preview"
+          class="max-h-[80vh] max-w-[88vw] object-contain rounded shadow-2xl transition-opacity duration-300" />
+      </div>
+
+      <!-- 360 Panorama Display -->
+      <div id="lightboxPanoramaStage" class="hidden w-full h-full relative">
+        <div id="lightboxPanoramaViewer"
+          class="w-full h-full bg-black cursor-grab select-none"
+          style="touch-action: none"></div>
+      </div>
+    </div>
+
+    <!-- 360 Panorama Zoom Control Bar (Scroll bar with percentage) -->
+    <div id="lightboxZoomControl"
+      class="hidden absolute bottom-24 left-1/2 -translate-x-1/2 z-30 items-center gap-3 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/15 text-white shadow-2xl transition-all">
+      <button type="button" data-action="zoom-out" aria-label="Zoom out" class="text-white/70 hover:text-white transition-colors cursor-pointer p-0.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+        </svg>
+      </button>
+      <input type="range" id="lightboxZoomRange" min="0" max="100" step="1" value="44"
+        class="w-28 sm:w-36 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-blue-500"
+        aria-label="Zoom level" />
+      <button type="button" data-action="zoom-in" aria-label="Zoom in" class="text-white/70 hover:text-white transition-colors cursor-pointer p-0.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+        </svg>
+      </button>
+      <span id="lightboxZoomPercent" class="text-xs font-mono font-semibold min-w-[38px] text-right text-blue-400">44%</span>
+    </div>
+
+    <!-- Bottom Center Circular Thumbnail Strip (Reference Image Design) -->
+    <div id="lightboxThumbnailStrip"
+      class="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 max-w-[90vw] overflow-x-auto hide-scrollbar"
+      aria-label="Thumbnails">
     </div>
   </div>
 

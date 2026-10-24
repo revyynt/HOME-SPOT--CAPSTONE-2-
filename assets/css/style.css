@@ -304,27 +304,6 @@ textarea.form-input {
   }
 }
 
-/* Media stage fullscreen */
-#mediaStageContainer:fullscreen {
-  width: 100vw !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  border-radius: 0 !important;
-  background-color: #000 !important;
-}
-
-#mediaStageContainer:-webkit-full-screen {
-  width: 100vw !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  border-radius: 0 !important;
-  background-color: #000 !important;
-}
-
-#mediaStageContainer:fullscreen img#mainImage,
-#mediaStageContainer:-webkit-full-screen img#mainImage {
-  object-fit: contain !important;
-}
 
 /* Print styles */
 @media print {

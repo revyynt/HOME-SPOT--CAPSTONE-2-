@@ -181,24 +181,9 @@ function initMediaShowcaseControls() {
 
     const roomName = document.getElementById('roomName')?.textContent || 'Room';
     switch (actionBtn.dataset.action) {
-      case 'toggle-fullscreen': {
-        const stage = document.getElementById('mediaStageContainer');
-        if (!stage) break;
-        if (!document.fullscreenElement) {
-          if (stage.requestFullscreen) {
-            stage.requestFullscreen().catch((err) => console.warn('Fullscreen error:', err));
-          } else if (stage.webkitRequestFullscreen) {
-            stage.webkitRequestFullscreen();
-          }
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen().catch((err) => console.warn('Exit fullscreen error:', err));
-          } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-          }
-        }
+      case 'open-lightbox':
+        openMediaLightbox();
         break;
-      }
       case 'media-prev':
         setActiveMediaSlide(activeSlideIndex - 1, roomName);
         break;
@@ -220,21 +205,141 @@ function initMediaShowcaseControls() {
     }
   });
 
-  document.addEventListener('fullscreenchange', () => {
-    const isFs = Boolean(document.fullscreenElement);
-    const expandIcon = document.getElementById('fullscreenIconExpand');
-    const compressIcon = document.getElementById('fullscreenIconCompress');
-    const fsText = document.getElementById('fullscreenText');
-    const panoViewer = document.getElementById('panoramaViewer');
+  initLightboxControls();
+}
+function openMediaLightbox() {
+  const modal = document.getElementById('mediaLightboxModal');
+  if (!modal || !mediaSlides.length) return;
+  modal.classList.remove('hidden');
+  renderLightboxSlide(activeSlideIndex);
+}
 
-    if (expandIcon) expandIcon.classList.toggle('hidden', isFs);
-    if (compressIcon) compressIcon.classList.toggle('hidden', !isFs);
-    if (fsText) fsText.textContent = isFs ? 'Exit' : 'Fullscreen';
+function closeMediaLightbox() {
+  const modal = document.getElementById('mediaLightboxModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  const lbPano = document.getElementById('lightboxPanoramaViewer');
+  lbPano?._panoramaCleanup?.();
+  setActiveMediaSlide(activeSlideIndex, document.getElementById('roomName')?.textContent || 'Room');
+}
 
-    panoViewer?._setEnlarged?.(isFs);
-    window.dispatchEvent(new Event('resize'));
+function renderLightboxSlide(index) {
+  if (!mediaSlides.length) return;
+  activeSlideIndex = ((index % mediaSlides.length) + mediaSlides.length) % mediaSlides.length;
+  const slide = mediaSlides[activeSlideIndex];
+
+  const photoStage = document.getElementById('lightboxPhotoStage');
+  const panoStage = document.getElementById('lightboxPanoramaStage');
+  const imgEl = document.getElementById('lightboxImage');
+  const panoViewer = document.getElementById('lightboxPanoramaViewer');
+  const strip = document.getElementById('lightboxThumbnailStrip');
+
+  const zoomControl = document.getElementById('lightboxZoomControl');
+  if (slide.type === 'panorama') {
+    photoStage?.classList.add('hidden');
+    panoStage?.classList.remove('hidden');
+    zoomControl?.classList.remove('hidden');
+    zoomControl?.classList.add('flex');
+    initPanoramaViewer(slide.src, panoViewer, { autoSpin: false });
+  } else {
+    panoViewer?._panoramaCleanup?.();
+    panoStage?.classList.add('hidden');
+    photoStage?.classList.remove('hidden');
+    zoomControl?.classList.add('hidden');
+    zoomControl?.classList.remove('flex');
+    if (imgEl) {
+      imgEl.src = slide.src;
+      imgEl.alt = slide.label || 'Room preview';
+    }
+  }
+
+  if (strip) {
+    strip.innerHTML = mediaSlides
+      .map((s, idx) => {
+        const isAct = idx === activeSlideIndex;
+        const ringCls = isAct
+          ? 'border-white ring-2 ring-white/60 scale-110 opacity-100 shadow-xl'
+          : 'border-transparent opacity-60 hover:opacity-100';
+
+        const badgeHtml = s.type === 'panorama'
+          ? '<span class="absolute inset-0 bg-black/40 flex items-center justify-center text-[9px] font-black text-white">360°</span>'
+          : '';
+
+        return `
+          <button type="button" data-lightbox-thumb="${idx}"
+            title="${escapeHtml(s.label)}"
+            class="relative w-12 h-12 rounded-full overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${ringCls}">
+            <img src="${escapeHtml(s.src)}" alt="${escapeHtml(s.label)}" class="w-full h-full object-cover" />
+            ${badgeHtml}
+          </button>
+        `;
+      })
+      .join('');
+  }
+
+  setActiveMediaSlide(activeSlideIndex, document.getElementById('roomName')?.textContent || 'Room');
+}
+
+function initLightboxControls() {
+  const modal = document.getElementById('mediaLightboxModal');
+  if (!modal || modal.dataset.bound === 'true') return;
+  modal.dataset.bound = 'true';
+
+  const zoomRange = document.getElementById('lightboxZoomRange');
+  zoomRange?.addEventListener('input', () => {
+    const panoViewer = document.getElementById('lightboxPanoramaViewer');
+    panoViewer?._setZoomPercent?.(Number(zoomRange.value));
+  });
+
+  const zoomOutBtn = modal.querySelector('button[data-action="zoom-out"]');
+  zoomOutBtn?.addEventListener('click', () => {
+    const panoViewer = document.getElementById('lightboxPanoramaViewer');
+    const cur = panoViewer?._getZoomPercent?.() ?? 44;
+    panoViewer?._setZoomPercent?.(cur - 10);
+  });
+
+  const zoomInBtn = modal.querySelector('button[data-action="zoom-in"]');
+  zoomInBtn?.addEventListener('click', () => {
+    const panoViewer = document.getElementById('lightboxPanoramaViewer');
+    const cur = panoViewer?._getZoomPercent?.() ?? 44;
+    panoViewer?._setZoomPercent?.(cur + 10);
+  });
+
+  modal.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    if (target === modal) {
+      closeMediaLightbox();
+      return;
+    }
+
+    const thumb = target.closest('button[data-lightbox-thumb]');
+    if (thumb) {
+      const idx = Number(thumb.dataset.lightboxThumb);
+      if (Number.isFinite(idx)) renderLightboxSlide(idx);
+      return;
+    }
+
+    const actionBtn = target.closest('button[data-action]');
+    if (!actionBtn) return;
+
+    switch (actionBtn.dataset.action) {
+      case 'close-lightbox':
+        closeMediaLightbox();
+        break;
+      case 'lightbox-prev':
+        renderLightboxSlide(activeSlideIndex - 1);
+        break;
+      case 'lightbox-next':
+        renderLightboxSlide(activeSlideIndex + 1);
+        break;
+      default:
+        break;
+    }
   });
 }
+
 
 function updateAvailabilityUI(room, availableCount) {
   const badge = document.getElementById('availabilityBadge');
@@ -399,9 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 360 Panoramic Viewer
-function initPanoramaViewer(imageUrl) {
-  const container = document.getElementById('panoramaViewer');
-  const rotationIndicator = document.getElementById('rotationIndicator');
+function initPanoramaViewer(imageUrl, container = document.getElementById('panoramaViewer'), options = { autoSpin: true }) {
+  if (!container || !imageUrl) return;
+  const rotationIndicator = container.parentElement?.querySelector('#rotationIndicator') || document.getElementById('rotationIndicator');
 
   if (!container) return;
 
@@ -454,7 +559,7 @@ function initPanoramaViewer(imageUrl) {
     let targetLon = 0,
       targetLat = 0;
     let isDragging = false;
-    let isEnlarged = Boolean(document.fullscreenElement);
+    let isEnlarged = !options.autoSpin;
     let startX = 0,
       startY = 0;
     let autoRotateTimer = null;
@@ -506,12 +611,38 @@ function initPanoramaViewer(imageUrl) {
     renderer.domElement.addEventListener('pointerup', stopDrag);
     renderer.domElement.addEventListener('pointercancel', stopDrag);
 
+    // ── Zoom UI & Scroll ──
+    const updateZoomUI = () => {
+      const zoomRange = document.getElementById('lightboxZoomRange');
+      const zoomText = document.getElementById('lightboxZoomPercent');
+      const percent = Math.round(((110 - camera.fov) / 80) * 100);
+      if (zoomRange && document.activeElement !== zoomRange) {
+        zoomRange.value = String(percent);
+      }
+      if (zoomText) {
+        zoomText.textContent = `${percent}%`;
+      }
+    };
+    updateZoomUI();
+
+    container._setZoomPercent = (percent) => {
+      const p = clamp(percent, 0, 100);
+      camera.fov = 110 - (p / 100) * 80;
+      camera.updateProjectionMatrix();
+      updateZoomUI();
+    };
+
+    container._getZoomPercent = () => {
+      return Math.round(((110 - camera.fov) / 80) * 100);
+    };
+
     // ── Scroll to zoom ──
     container.addEventListener(
       'wheel',
       (e) => {
         camera.fov = clamp(camera.fov + e.deltaY * 0.04, 30, 110);
         camera.updateProjectionMatrix();
+        updateZoomUI();
       },
       { passive: true }
     );
@@ -549,6 +680,7 @@ function initPanoramaViewer(imageUrl) {
           if (lastPinchDist !== null) {
             camera.fov = clamp(camera.fov - (dist - lastPinchDist) * 0.1, 30, 110);
             camera.updateProjectionMatrix();
+            updateZoomUI();
           }
           lastPinchDist = dist;
         }
@@ -603,8 +735,24 @@ function initPanoramaViewer(imageUrl) {
   }
 }
 
-// Close inquiry and reservation modals on Escape key press
+// Modal keyboard navigation and Escape key press
 document.addEventListener('keydown', (e) => {
+  const lbModal = document.getElementById('mediaLightboxModal');
+  if (lbModal && !lbModal.classList.contains('hidden')) {
+    if (e.key === 'Escape') {
+      closeMediaLightbox();
+      return;
+    }
+    if (e.key === 'ArrowLeft') {
+      renderLightboxSlide(activeSlideIndex - 1);
+      return;
+    }
+    if (e.key === 'ArrowRight') {
+      renderLightboxSlide(activeSlideIndex + 1);
+      return;
+    }
+  }
+
   if (e.key === 'Escape') {
     const inquiryModal = document.getElementById('inquiryForm');
     const reservationModal = document.getElementById('reservationForm');
