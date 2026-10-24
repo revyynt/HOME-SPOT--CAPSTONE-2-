@@ -12,6 +12,7 @@
  */
 
 import { guardPage } from '../lib/guard.js';
+import { initBackButtonGuard, logoutStaff } from '../lib/session.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
@@ -29,6 +30,8 @@ import { Toast } from '../render/toast.js';
 
 // Hide the portal until the session check resolves.
 document.documentElement.dataset.authPending = 'true';
+
+initBackButtonGuard('tenant');
 
 const authReady = guardPage({
   role: 'tenant',
@@ -406,18 +409,7 @@ function switchTab(tabName, evt) {
 }
 
 async function logout() {
-  try {
-    await Promise.race([
-      supabase.auth.signOut(),
-      new Promise((resolve) => setTimeout(resolve, 2000))
-    ]);
-  } catch (error) {
-    console.error('Error signing out:', error);
-  } finally {
-    sessionStorage.clear();
-    localStorage.removeItem('tenantLoggedIn');
-    window.location.href = 'tenant-login.html';
-  }
+  await logoutStaff('./login.html');
 }
 
 async function saveProfile() {

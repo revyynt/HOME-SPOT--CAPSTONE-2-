@@ -1,3 +1,24 @@
+
+async function enforceStaffLockOnPublicPages() {
+  if (byId('reservationRequestsContainer') || byId('superAdminContainer') || byId('tenantPortalContainer')) {
+    return;
+  }
+  try {
+    const { authReady, getCurrentUser } = await import('./supabase-service.js');
+    await authReady;
+    const user = await getCurrentUser();
+    if (!user) return;
+    const role = user.app_metadata?.role;
+    if (role === 'admin') {
+      window.location.replace('./admin-dashboard.html');
+    } else if (role === 'superadmin') {
+      window.location.replace('./super-admin-dashboard.html');
+    }
+  } catch (err) {
+    console.warn('[auth] Staff lock check failed:', err);
+  }
+}
+
 /**
  * Shared entry point for the public and admin pages.
  *
@@ -209,6 +230,7 @@ async function initStatusLine() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  enforceStaffLockOnPublicPages();
   initSmoothScroll();
   initTabs();
   initPublicForms();

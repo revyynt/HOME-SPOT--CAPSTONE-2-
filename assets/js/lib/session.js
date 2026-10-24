@@ -93,12 +93,13 @@ export function initLogoutButtons(selector = '[data-action="logout"]') {
  *
  * @param {string} pageName
  */
-export function initBackButtonGuard(pageName = 'admin') {
-  window.history.pushState({ page: pageName }, null, window.location.href);
+export function initBackButtonGuard(pageName = 'dashboard') {
+  window.history.pushState({ page: pageName }, '', window.location.href);
+  window.history.pushState({ page: pageName }, '', window.location.href);
 
-  window.onpopstate = () => {
-    window.history.pushState({ page: pageName }, null, window.location.href);
-  };
+  window.addEventListener('popstate', () => {
+    window.history.pushState({ page: pageName }, '', window.location.href);
+  });
 
   let lastX = 0;
 
