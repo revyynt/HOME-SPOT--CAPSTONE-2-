@@ -1,5 +1,6 @@
 function getTenantLifecycle(tenant) {
   if (tenant.status && tenant.status !== 'Active') return tenant.status;
+  if (tenant.movedIn === true || tenant.movedIn === 'true') return 'Active';
   if (!tenant.moveInDate) return 'Active';
   const parsed = new Date(tenant.moveInDate);
   if (Number.isNaN(parsed.getTime())) return 'Active';
@@ -309,10 +310,59 @@ export function initTenantTable() {
     document.getElementById(id)?.addEventListener('input', renderFiltered);
   }
 
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (target?.closest('[data-action="copy-credentials"]')) {
       copyCurrentTenantCredentials();
+      return;
+    }
+
+    if (target?.closest('[data-action="profile-extend-move-in"]')) {
+      if (!currentViewingTenant?.id) return;
+      const currentMoveIn = currentViewingTenant.moveInDate
+        ? new Date(currentViewingTenant.moveInDate)
+        : new Date();
+      const nextDate = new Date(currentMoveIn);
+      nextDate.setDate(nextDate.getDate() + 1);
+      const newDateStr = nextDate.toISOString().split('T')[0];
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          moveInDate: newDateStr,
+          updatedAt: supabaseData.serverTimestamp()
+        });
+        currentViewingTenant.moveInDate = newDateStr;
+        const moveInEl = document.getElementById('viewTenantMoveIn');
+        if (moveInEl) moveInEl.textContent = newDateStr;
+        Toast.success(`Extended ${currentViewingTenant.name}'s move-in date to ${newDateStr}.`);
+      } catch (err) {
+        console.error('Failed to extend move-in date:', err);
+        Toast.error('Could not extend move-in: ' + (err.message || 'Unknown error'));
+      }
+      return;
+    }
+
+    if (target?.closest('[data-action="profile-complete-move-in"]')) {
+      if (!currentViewingTenant?.id) return;
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          movedIn: true,
+          updatedAt: supabaseData.serverTimestamp()
+        });
+        currentViewingTenant.movedIn = true;
+        const statusEl = document.getElementById('viewTenantStatus');
+        if (statusEl) {
+          statusEl.textContent = 'Active Tenant';
+          statusEl.className =
+            'inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800';
+        }
+        Toast.success(
+          `Marked ${currentViewingTenant.name} as moved in. Schedule cleared from calendar.`
+        );
+      } catch (err) {
+        console.error('Failed to mark moved in:', err);
+        Toast.error('Could not mark moved in: ' + (err.message || 'Unknown error'));
+      }
+      return;
     }
   });
 }

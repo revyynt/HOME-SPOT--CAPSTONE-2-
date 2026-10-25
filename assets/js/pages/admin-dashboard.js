@@ -161,21 +161,19 @@ function openRoomPreviewModal(room) {
         <button
           type="button"
           data-preview-slide-idx="${i}"
-          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${
-            i === 0
-              ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
-              : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
+          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${i === 0
+            ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
+            : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
           } flex-shrink-0 transition-all cursor-pointer group"
         >
           <img src="${escapeHtml(slide.src)}" alt="${escapeHtml(slide.label)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
           <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-          ${
-            slide.is360
-              ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
+          ${slide.is360
+            ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">360°</span>
                    <span class="text-[9px] font-semibold text-white tracking-tight mt-0.5">Virtual Tour</span>
                  </div>`
-              : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
+            : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
           }
         </button>`
       )
@@ -223,6 +221,7 @@ import { initPanoramaViewer } from '../lib/panorama.js';
 import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
 import { Toast } from '../render/toast.js';
+import { attr } from '../lib/dom.js';
 
 const ROOM_MEDIA_BUCKET = 'room-media';
 
@@ -1030,6 +1029,9 @@ function initAdminPaymentCalendar() {
         const dueHtml = cell.dueEvents
           .slice(0, 3)
           .map((ev) => {
+            if (ev.isMoveInMarker) {
+              return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate bg-amber-50 text-amber-900 border-amber-200" title="Scheduled Move-in: ${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)})">📦 ${escapeHtml(ev.tenantName)}: Move-In</div>`;
+            }
             const prefix =
               ev.status === 'Paid'
                 ? '✓'
@@ -1071,13 +1073,38 @@ function initAdminPaymentCalendar() {
       const selectedCell = cal.days.find((d) => d.dateKey === selectedDateKey);
       if (selectedCell && (selectedCell.dueEvents.length || selectedCell.paymentEvents.length)) {
         const lines = [
-          ...selectedCell.dueEvents.map(
-            (ev) =>
-              `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
-                <span><strong>${escapeHtml(ev.tenantName)}</strong> (${escapeHtml(ev.room)}) — Scheduled Rent Due</span>
-                <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(ev.status)}">${escapeHtml(ev.status)} • ${escapeHtml(formatPHP(ev.amount))}</span>
-              </div>`
-          ),
+          ...selectedCell.dueEvents.map((ev) => {
+            if (ev.isMoveInMarker) {
+              return `
+                <div class="flex items-center justify-between py-2 border-b last:border-b-0 gap-2 flex-wrap sm:flex-nowrap">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-base flex-shrink-0">📦</span>
+                    <div class="min-w-0">
+                      <div class="text-sm font-bold text-gray-900 truncate">${escapeHtml(ev.tenantName)}</div>
+                      <div class="text-xs text-amber-800 font-medium">${escapeHtml(ev.room)} • Scheduled Move-In</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1.5 flex-shrink-0 flex-wrap">
+                    <button type="button" data-action="extend-move-in" data-id="${attr(ev.tenantId)}" data-name="${attr(ev.tenantName)}" class="px-2.5 py-1 text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg border border-blue-200 transition-colors" title="Extend move-in date by +1 day">
+                      +1 Day Extend
+                    </button>
+                    <button type="button" data-action="reschedule-move-in" data-id="${attr(ev.tenantId)}" data-name="${attr(ev.tenantName)}" class="px-2 py-1 text-xs font-semibold bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors" title="Pick a new move-in date">
+                      Reschedule
+                    </button>
+                    <button type="button" data-action="complete-move-in" data-id="${attr(ev.tenantId)}" data-name="${attr(ev.tenantName)}" class="px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg border border-emerald-200 transition-colors" title="Mark tenant as moved in and clear schedule marker">
+                      ✓ Moved In
+                    </button>
+                    <button type="button" data-action="remove-move-in" data-id="${attr(ev.tenantId)}" data-name="${attr(ev.tenantName)}" class="px-2 py-1 text-xs font-semibold text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Remove move-in schedule">
+                      ✕
+                    </button>
+                  </div>
+                </div>`;
+            }
+            return `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
+              <span><strong>${escapeHtml(ev.tenantName)}</strong> (${escapeHtml(ev.room)}) — Scheduled Rent Due</span>
+              <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(ev.status)}">${escapeHtml(ev.status)} • ${escapeHtml(formatPHP(ev.amount))}</span>
+            </div>`;
+          }),
           ...selectedCell.paymentEvents.map(
             (p) =>
               `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
@@ -1214,7 +1241,7 @@ function initAdminPaymentCalendar() {
     renderCalendar();
   });
 
-  section.addEventListener('click', (event) => {
+  section.addEventListener('click', async (event) => {
     const target = event.target instanceof Element ? event.target : null;
     const btn = target?.closest('[data-action]');
     if (!btn) return;
@@ -1245,6 +1272,118 @@ function initAdminPaymentCalendar() {
         selectedDateKey = btn.dataset.dateKey || '';
         renderCalendar();
         break;
+      case 'extend-move-in': {
+        const tenantId = btn.dataset.id;
+        const tenant = calTenants.find(
+          (t) => t.id === tenantId || t.email === tenantId || t.name === tenantId
+        );
+        if (!tenant || !tenant.id) {
+          Toast.error('Tenant record not found.');
+          return;
+        }
+        const currentMoveIn = tenant.moveInDate ? new Date(tenant.moveInDate) : new Date();
+        const nextDate = new Date(currentMoveIn);
+        nextDate.setDate(nextDate.getDate() + 1);
+        const newDateStr = nextDate.toISOString().split('T')[0];
+        try {
+          await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenant.id), {
+            moveInDate: newDateStr,
+            updatedAt: supabaseData.serverTimestamp()
+          });
+          selectedDateKey = '';
+          Toast.success(`Extended ${tenant.name}'s move-in date to ${newDateStr}.`);
+        } catch (err) {
+          console.error('Failed to extend move-in date:', err);
+          Toast.error('Could not extend move-in: ' + (err.message || 'Unknown error'));
+        }
+        break;
+      }
+      case 'reschedule-move-in': {
+        const tenantId = btn.dataset.id;
+        const tenant = calTenants.find(
+          (t) => t.id === tenantId || t.email === tenantId || t.name === tenantId
+        );
+        if (!tenant || !tenant.id) {
+          Toast.error('Tenant record not found.');
+          return;
+        }
+        const inputVal = await Toast.prompt({
+          title: 'Reschedule Move-in Date',
+          message: `Enter new move-in date for ${tenant.name} (YYYY-MM-DD):`,
+          placeholder: tenant.moveInDate || new Date().toISOString().split('T')[0],
+          confirmText: 'Save Date'
+        });
+        if (!inputVal) return;
+        const parsed = new Date(inputVal);
+        if (Number.isNaN(parsed.getTime())) {
+          Toast.error('Please enter a valid date in YYYY-MM-DD format.');
+          return;
+        }
+        const newDateStr = parsed.toISOString().split('T')[0];
+        try {
+          await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenant.id), {
+            moveInDate: newDateStr,
+            updatedAt: supabaseData.serverTimestamp()
+          });
+          selectedDateKey = '';
+          Toast.success(`Rescheduled ${tenant.name}'s move-in to ${newDateStr}.`);
+        } catch (err) {
+          console.error('Failed to reschedule move-in date:', err);
+          Toast.error('Could not reschedule: ' + (err.message || 'Unknown error'));
+        }
+        break;
+      }
+      case 'complete-move-in': {
+        const tenantId = btn.dataset.id;
+        const tenant = calTenants.find(
+          (t) => t.id === tenantId || t.email === tenantId || t.name === tenantId
+        );
+        if (!tenant || !tenant.id) {
+          Toast.error('Tenant record not found.');
+          return;
+        }
+        try {
+          await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenant.id), {
+            movedIn: true,
+            updatedAt: supabaseData.serverTimestamp()
+          });
+          selectedDateKey = '';
+          Toast.success(`Marked ${tenant.name} as moved in. Move-in schedule cleared from calendar.`);
+        } catch (err) {
+          console.error('Failed to mark moved in:', err);
+          Toast.error('Could not update status: ' + (err.message || 'Unknown error'));
+        }
+        break;
+      }
+      case 'remove-move-in': {
+        const tenantId = btn.dataset.id;
+        const tenant = calTenants.find(
+          (t) => t.id === tenantId || t.email === tenantId || t.name === tenantId
+        );
+        if (!tenant || !tenant.id) {
+          Toast.error('Tenant record not found.');
+          return;
+        }
+        const ok = await Toast.confirm({
+          title: 'Remove Move-in Schedule?',
+          message: `Remove the scheduled move-in marker for ${tenant.name} from the calendar?`,
+          confirmText: 'Remove Schedule',
+          cancelText: 'Cancel'
+        });
+        if (!ok) return;
+        try {
+          await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenant.id), {
+            movedIn: true,
+            updatedAt: supabaseData.serverTimestamp()
+          });
+          selectedDateKey = '';
+          Toast.success(`Removed move-in schedule for ${tenant.name}.`);
+        } catch (err) {
+          console.error('Failed to remove move-in schedule:', err);
+          Toast.error('Could not remove schedule: ' + (err.message || 'Unknown error'));
+        }
+        break;
+      }
       default:
         break;
     }

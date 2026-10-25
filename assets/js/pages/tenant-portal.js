@@ -60,6 +60,7 @@ let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 20
 let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
 let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
 let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
+let tenantMovedIn = sessionStorage.getItem('tenantMovedIn') === 'true';
 let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
 
 // Global State
@@ -80,6 +81,15 @@ if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
 }
 
 function getMoveInInfo() {
+  if (tenantMovedIn) {
+    const parsed = tenantMoveIn ? new Date(tenantMoveIn) : null;
+    return {
+      isPending: false,
+      moveInDate: parsed && !Number.isNaN(parsed.getTime()) ? parsed : null,
+      moveInStart: 0,
+      todayStart: Date.now()
+    };
+  }
   if (!tenantMoveIn) return { isPending: false, moveInDate: null };
   const parsed = new Date(tenantMoveIn);
   if (Number.isNaN(parsed.getTime())) return { isPending: false, moveInDate: null };
@@ -274,6 +284,7 @@ function renderTenantPaymentCalendar() {
     monthlyRent: tenantRent,
     dueDay: tenantDueDay,
     moveInDate: tenantMoveIn,
+    movedIn: tenantMovedIn,
     amountDue: currentRemainingDue
   };
 
@@ -417,6 +428,10 @@ async function fetchTenantSupabaseProfile() {
           if (docData.dueDay) {
             tenantDueDay = parseInt(docData.dueDay);
             sessionStorage.setItem('tenantDueDay', tenantDueDay);
+          }
+          if (docData.movedIn !== undefined) {
+            tenantMovedIn = Boolean(docData.movedIn);
+            sessionStorage.setItem('tenantMovedIn', tenantMovedIn ? 'true' : 'false');
           }
           if (docData.monthlyRent) {
             tenantRent = parseFloat(docData.monthlyRent);
