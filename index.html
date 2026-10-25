@@ -357,15 +357,16 @@
           </div>
           <h4 class="font-bold text-gray-900 text-lg mb-1">Phone Inquiries</h4>
           <p class="text-xs text-gray-500 mb-3">Mon – Sat, 8:00 AM – 6:00 PM</p>
-          <a href="tel:0212345678" class="text-blue-600 hover:text-blue-700 font-semibold text-base transition-colors">
+          <p class="text-blue-600 font-semibold text-base select-text cursor-default">
             (02) 1234-5678
-          </a>
+          </p>
         </div>
 
         <!-- Email Support -->
-        <div
-          class="bg-gradient-to-br from-green-50/50 via-white to-gray-50 rounded-2xl p-6 border border-green-100 shadow-sm hover:shadow-md transition-all text-center">
-          <div class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+        <div id="emailSupportBtn"
+          class="bg-gradient-to-br from-green-50/50 via-white to-gray-50 rounded-2xl p-6 border border-green-100 shadow-sm hover:shadow-md transition-all text-center cursor-pointer group hover:border-green-300">
+          <div
+            class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
@@ -374,10 +375,10 @@
           </div>
           <h4 class="font-bold text-gray-900 text-lg mb-1">Email Support</h4>
           <p class="text-xs text-gray-500 mb-3">Direct helpdesk replies</p>
-          <a href="mailto:info@mjpresidences.com"
-            class="text-green-600 hover:text-green-700 font-semibold text-base transition-colors">
-            info@mjpresidences.com
-          </a>
+          <span
+            class="text-green-600 group-hover:text-green-700 font-semibold text-base transition-colors inline-block">
+            homespotapartment@gmail.com
+          </span>
         </div>
 
         <!-- On-Site Office -->
@@ -423,6 +424,81 @@
       </div>
     </div>
   </section>
+
+  <!-- Email Support Modal (Pop-up on screen) -->
+  <div id="emailSupportModal"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 transition-opacity duration-300">
+    <div
+      class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 md:p-8 animate-slide-in"
+      role="dialog" aria-modal="true" aria-labelledby="emailSupportModalTitle">
+      <!-- Close Button -->
+      <button type="button" data-close="emailSupportModal"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-full shadow-xs border border-gray-100 transition-all cursor-pointer"
+        aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <div class="text-center mb-6">
+        <div
+          class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
+          </svg>
+        </div>
+        <h3 id="emailSupportModalTitle" class="text-xl font-bold text-gray-900">
+          Email Helpdesk
+        </h3>
+        <p class="text-xs text-gray-500 mt-1">Official support &amp; inquiries for HomeSpot</p>
+      </div>
+
+      <div class="bg-gray-50 border border-gray-200/80 rounded-xl p-4 mb-5 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider block">Official Email</span>
+          <span id="supportEmailText"
+            class="text-sm font-semibold text-gray-900 truncate block select-all">homespotapartment@gmail.com</span>
+        </div>
+        <button type="button" id="copySupportEmailBtn"
+          class="flex-shrink-0 px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-xs font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          <span id="copySupportEmailLabel">Copy</span>
+        </button>
+      </div>
+
+      <div class="space-y-3 mb-6">
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=homespotapartment@gmail.com&su=Customer+Support+-+Home-Spot+Apartments"
+          target="_blank" rel="noopener noreferrer"
+          class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all text-center">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.49l8.073-5.997c1.618-1.214 3.927-.059 3.927 1.964z" />
+          </svg>
+          Compose in Gmail
+        </a>
+
+        <a href="mailto:homespotapartment@gmail.com"
+          class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-all text-center">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
+          </svg>
+          Open Default Mail App
+        </a>
+      </div>
+
+      <div class="text-xs text-gray-400 text-center">
+        Typical response time is within 1 business day.
+      </div>
+    </div>
+  </div>
 
   <!-- Inquiry Modal (Pop-up on screen) -->
   <div id="inquiryForm"
@@ -541,7 +617,7 @@
                   d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
                 </path>
               </svg>
-              Email: info@mjpresidences.com
+              Email: homespotapartment@gmail.com
             </p>
           </div>
         </div>

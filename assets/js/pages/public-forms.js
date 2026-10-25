@@ -271,12 +271,20 @@ export function initPublicFormToggles() {
     const target = event.target;
     if (!(target instanceof Element)) return;
 
+    if (target.closest('#emailSupportBtn')) {
+      document.getElementById('emailSupportModal')?.classList.remove('hidden');
+      return;
+    }
     if (target.closest('#inquireBtn')) {
       toggleInquiryForm();
       return;
     }
     if (target.closest('#reserveBtn')) {
       toggleReservationForm();
+      return;
+    }
+    if (target.closest('[data-close="emailSupportModal"]')) {
+      hidePanel('emailSupportModal');
       return;
     }
     if (target.closest('[data-close="inquiryForm"]')) {
@@ -288,8 +296,27 @@ export function initPublicFormToggles() {
     }
   });
 
+    // Copy support email logic
+  const copyBtn = document.getElementById('copySupportEmailBtn');
+  copyBtn?.addEventListener('click', async () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText('homespotapartment@gmail.com');
+      }
+      const label = document.getElementById('copySupportEmailLabel');
+      if (label) {
+        label.textContent = 'Copied!';
+        setTimeout(() => {
+          label.textContent = 'Copy';
+        }, 2000);
+      }
+    } catch {
+      // Ignore clipboard error
+    }
+  });
+
   // Backdrop clicks: only when the overlay itself was hit.
-  for (const id of ['inquiryForm', 'reservationForm']) {
+  for (const id of ['inquiryForm', 'reservationForm', 'emailSupportModal']) {
     const overlay = document.getElementById(id);
     overlay?.addEventListener('click', (event) => {
       if (event.target === overlay) hidePanel(id);
