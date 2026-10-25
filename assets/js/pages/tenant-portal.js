@@ -1589,11 +1589,13 @@ function subscribeTenantMessages() {
     supabaseData.onSnapshot(
       q,
       (snapshot) => {
-        if (!snapshot || snapshot.empty) return;
+        if (!snapshot) return;
         const chatMessages = document.getElementById('chatMessages');
         if (!chatMessages) return;
 
-        const docs = snapshot.docs.map((doc) => doc.data());
+        const docs = (snapshot.docs || [])
+          .map((doc) => doc.data())
+          .filter((item) => item.sender === 'tenant' || item.sender === 'admin');
         docs.sort((a, b) => {
           const timeA = a.createdAt?.seconds
             ? a.createdAt.seconds * 1000
