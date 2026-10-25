@@ -73,6 +73,14 @@ function matchesTenant(payment, tenant) {
   return Boolean(pName && tName && pName === tName);
 }
 
+function isDueDateBeforeMoveIn(dueDateObj, moveInDateStr) {
+  if (!moveInDateStr) return false;
+  const d = new Date(moveInDateStr);
+  if (Number.isNaN(d.getTime())) return false;
+  const moveInStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return dueDateObj.getTime() < moveInStart;
+}
+
 function isBeforeMoveIn(year, month, moveInDateStr) {
   if (!moveInDateStr) return false;
   const d = new Date(moveInDateStr);
@@ -219,6 +227,7 @@ export function buildPaymentCalendar({
     const dueDateObj = new Date(year, month, dueDay);
     const dueDateKey = formatDateKey(year, month, dueDay);
     const dueDateFormatted = `${SHORT_MONTHS[month]} ${dueDay}, ${year}`;
+    if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
 
     const monthPaidPayments = filteredPayments.filter((p) => {
       if (normalizeStatus(p.status) !== 'Paid') return false;
@@ -289,6 +298,36 @@ export function buildPaymentCalendar({
     }
   }
 
+
+  // Place move-in day milestone markers on the calendar
+  for (const tenant of activeTenants) {
+    if (!tenant.moveInDate) continue;
+    const mDate = new Date(tenant.moveInDate);
+    if (Number.isNaN(mDate.getTime())) continue;
+    if (mDate.getFullYear() === year && mDate.getMonth() === month) {
+      const mDay = mDate.getDate();
+      const mKey = formatDateKey(year, month, mDay);
+      const targetCell = cellsByKey.get(mKey);
+      if (targetCell) {
+        targetCell.dueEvents.push({
+          tenantId: tenant.id || tenant.email || tenant.name,
+          tenantName: tenant.name || 'Tenant',
+          tenantEmail: tenant.email || '',
+          room: tenant.room || 'Unassigned',
+          dormName: tenant.dormName || '',
+          amount: 0,
+          remaining: 0,
+          paidAmount: 0,
+          dueDay: mDay,
+          dueDate: `${SHORT_MONTHS[month]} ${mDay}, ${year}`,
+          dateKey: mKey,
+          status: 'MoveIn',
+          isMoveInMarker: true
+        });
+      }
+    }
+  }
+
   // Build upcoming future schedule (current month if unpaid + next 3 future months)
   const upcomingSchedule = [];
   for (let offset = 0; offset <= 3; offset++) {
@@ -321,6 +360,7 @@ export function buildPaymentCalendar({
       if (offset === 0 && isPaid) continue;
 
       const dueDateObj = new Date(uYear, uMonth, dueDay);
+      if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
       upcomingSchedule.push({
         tenantName: tenant.name || 'Tenant',
         room: tenant.room || 'Unassigned',

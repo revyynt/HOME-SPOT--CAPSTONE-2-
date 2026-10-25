@@ -1,3 +1,17 @@
+function getTenantLifecycle(tenant) {
+  if (tenant.status && tenant.status !== 'Active') return tenant.status;
+  if (!tenant.moveInDate) return 'Active';
+  const parsed = new Date(tenant.moveInDate);
+  if (Number.isNaN(parsed.getTime())) return 'Active';
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const moveInStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+  if (moveInStart > todayStart) {
+    return 'Pending Move-In';
+  }
+  return 'Active';
+}
+
 /**
  * Tenant table: rendering, filtering, statistics, and the live Supabase
  * listener.
@@ -130,9 +144,11 @@ function renderTenantsTable(tenants) {
             <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-              ● Active
-            </span>
+            ${
+              getTenantLifecycle(t) === 'Pending Move-In'
+                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
+                : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
+            }
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
             <div class="flex items-center justify-end gap-1.5">
@@ -147,7 +163,7 @@ function renderTenantsTable(tenants) {
 }
 
 function updateTenantStats(tenants) {
-  const active = tenants.filter((t) => (t.status || 'Active') === 'Active').length;
+  const active = tenants.filter((t) => getTenantLifecycle(t) === 'Active').length;
   const totalRent = tenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
 
   const set = (id, value) => {

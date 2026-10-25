@@ -79,10 +79,30 @@ if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
   tenantExplicitAmountDueSet = true;
 }
 
+function getMoveInInfo() {
+  if (!tenantMoveIn) return { isPending: false, moveInDate: null };
+  const parsed = new Date(tenantMoveIn);
+  if (Number.isNaN(parsed.getTime())) return { isPending: false, moveInDate: null };
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const moveInStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+  return {
+    isPending: moveInStart > todayStart,
+    moveInDate: parsed,
+    moveInStart,
+    todayStart
+  };
+}
+
 function updateAmountDueUI() {
+  const moveInInfo = getMoveInInfo();
   const summaryAmountDue = document.getElementById('summaryAmountDue');
   if (summaryAmountDue) {
-    if (currentRemainingDue <= 0) {
+    if (moveInInfo.isPending) {
+      summaryAmountDue.textContent =
+        '₱' + tenantRent.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' (Scheduled)';
+      summaryAmountDue.style.color = '#0284c7';
+    } else if (currentRemainingDue <= 0) {
       summaryAmountDue.textContent = '₱0.00 (Settled)';
       summaryAmountDue.style.color = '#15803d';
     } else {
@@ -110,13 +130,32 @@ function updateAmountDueUI() {
       'November',
       'December'
     ];
-    let targetMonth = now.getMonth();
-    let targetYear = now.getFullYear();
-    if (currentRemainingDue <= 0) {
-      targetMonth = (targetMonth + 1) % 12;
-      if (targetMonth === 0) targetYear += 1;
+    if (moveInInfo.isPending) {
+      let checkYear = moveInInfo.moveInDate.getFullYear();
+      let checkMonth = moveInInfo.moveInDate.getMonth();
+      const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
+      const actualD = Math.min(dueDay, daysInM);
+      const candidate = new Date(checkYear, checkMonth, actualD);
+      let targetDate = candidate;
+      if (candidate.getTime() < moveInInfo.moveInStart) {
+        checkMonth++;
+        if (checkMonth > 11) {
+          checkMonth = 0;
+          checkYear++;
+        }
+        const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
+        targetDate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
+      }
+      summaryDueDate.textContent = `${monthNames[targetDate.getMonth()]} ${targetDate.getDate()}, ${targetDate.getFullYear()} (First Due)`;
+    } else {
+      let targetMonth = now.getMonth();
+      let targetYear = now.getFullYear();
+      if (currentRemainingDue <= 0) {
+        targetMonth = (targetMonth + 1) % 12;
+        if (targetMonth === 0) targetYear += 1;
+      }
+      summaryDueDate.textContent = `${monthNames[targetMonth]} ${dueDay}, ${targetYear}`;
     }
-    summaryDueDate.textContent = `${monthNames[targetMonth]} ${dueDay}, ${targetYear}`;
   }
 
   const paymentAmountInput = document.getElementById('paymentAmount');
@@ -186,6 +225,22 @@ function populateTenantUI() {
     welcomeAvatar.textContent = initials || 'JD';
   }
 
+  const statusPill = document.querySelector('.tenant-status-pill');
+  const moveInInfo = getMoveInInfo();
+  if (statusPill) {
+    if (moveInInfo.isPending) {
+      statusPill.textContent = '● Pending Move-In';
+      statusPill.style.background = '#fef3c7';
+      statusPill.style.color = '#92400e';
+      statusPill.style.border = '1px solid #fde68a';
+    } else {
+      statusPill.textContent = '● Active Resident';
+      statusPill.style.background = '';
+      statusPill.style.color = '';
+      statusPill.style.border = '';
+    }
+  }
+
   updateAmountDueUI();
   renderTenantPaymentCalendar();
 
@@ -241,6 +296,9 @@ function renderTenantPaymentCalendar() {
 
       const dueChips = cell.dueEvents
         .map((ev) => {
+          if (ev.isMoveInMarker) {
+            return `<div class="cal-chip" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Scheduled Move-in Date: ${escapeHtml(ev.dueDate)}">🔑 Move-In Day</div>`;
+          }
           const label =
             ev.status === 'Paid'
               ? `✓ Paid ₱${ev.amount.toLocaleString()}`
