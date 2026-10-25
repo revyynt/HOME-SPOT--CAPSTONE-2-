@@ -70,6 +70,16 @@ export function openCreateTenantModalFromData(data = {}) {
   assign('tenantFullName', data.name);
   assign('tenantEmail', data.email);
   assign('tenantPhone', data.phone);
+  const roomSelect = document.getElementById('tenantRoom');
+  if (roomSelect && data.room) {
+    const optionExists = Array.from(roomSelect.options).some((o) => o.value === data.room);
+    if (!optionExists) {
+      const opt = document.createElement('option');
+      opt.value = data.room;
+      opt.textContent = data.room;
+      roomSelect.appendChild(opt);
+    }
+  }
   assign('tenantRoom', data.room);
   assign('tenantMonthlyRent', data.amount);
 
