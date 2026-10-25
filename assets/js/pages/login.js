@@ -186,6 +186,8 @@ forgotForm?.addEventListener('submit', async (e) => {
 });
 
 
+let isRecoveringPassword = false;
+
 // Check URL hash for errors or recovery tokens on page load
 function checkAuthHashState() {
   if (typeof window === 'undefined' || !window.location.hash) return;
@@ -215,6 +217,7 @@ function checkAuthHashState() {
   }
 
   if (hash.includes('type=recovery') || hash.includes('access_token')) {
+    isRecoveringPassword = true;
     const modal = document.getElementById('updatePasswordModal');
     if (modal) modal.classList.remove('hidden');
   }
@@ -232,6 +235,7 @@ const updatePassAlert = document.getElementById('updatePassAlert');
 
 supabase.auth.onAuthStateChange(async (event) => {
   if (event === 'PASSWORD_RECOVERY') {
+    isRecoveringPassword = true;
     if (updatePassModal) updatePassModal.classList.remove('hidden');
   }
 });
@@ -265,15 +269,23 @@ updatePassForm?.addEventListener('submit', async (e) => {
   }
 
   try {
-    const { error } = await supabase.auth.updateUser({ password: newPass });
+    const { data: updated, error } = await supabase.auth.updateUser({ password: newPass });
     if (error) throw error;
 
     if (updatePassModal) updatePassModal.classList.add('hidden');
-    try { history.replaceState(null, '', window.location.pathname); } catch {}
+    isRecoveringPassword = false;
+    try { history.replaceState(null, '', window.location.pathname); } catch { }
     Toast.alert({
       title: 'Password Updated',
-      message: 'Your new password is set! You can now log into your tenant portal.'
+      message: 'Your new password is set! Redirecting to your portal...'
     });
+
+    const user = updated?.user || (await getCurrentUser());
+    if (user) {
+      await routeUser(user, user.email);
+    } else {
+      window.location.reload();
+    }
   } catch (err) {
     console.error('Update password error:', err);
     if (updatePassAlert) {
@@ -350,8 +362,25 @@ loginForm?.addEventListener('submit', async (event) => {
 });
 
 async function checkExistingSession() {
+  if (
+    isRecoveringPassword ||
+    (typeof window !== 'undefined' &&
+      window.location.hash &&
+      (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token')))
+  ) {
+    console.log('[auth] In password recovery, preventing auto-redirect to portal');
+    return;
+  }
   try {
     await authReady;
+    if (
+      isRecoveringPassword ||
+      (typeof window !== 'undefined' &&
+        window.location.hash &&
+        (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token')))
+    ) {
+      return;
+    }
     const user = await getCurrentUser();
     if (!user) return;
     const role =
