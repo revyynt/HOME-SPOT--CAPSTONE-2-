@@ -7,6 +7,7 @@
  */
 
 import { supabase } from './supabase-service.js';
+import { deduplicatePayments } from './lib/format.js';
 
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',
@@ -178,7 +179,7 @@ export async function createCheckoutSession({
   return {
     checkoutUrl: session.attributes.checkout_url,
     sessionId: session.id,
-    referenceNumber: session.attributes.reference_number || session.id.replace('cs_', 'REF-')
+    referenceNumber: session.attributes.reference_number || `PM-${session.id.slice(-6).toUpperCase()}`
   };
 }
 
@@ -266,5 +267,5 @@ export async function getTenantPayments() {
     console.warn('Could not query app_documents payments:', err);
   }
 
-  return results;
+  return deduplicatePayments(results);
 }

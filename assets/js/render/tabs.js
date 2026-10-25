@@ -16,7 +16,11 @@ export function activateTab(name) {
   const panels = document.querySelectorAll(PANEL_SELECTOR);
 
   for (const button of buttons) {
-    button.classList.toggle('active', button.getAttribute('data-tab-button') === name);
+    const isActive = button.getAttribute('data-tab-button') === name;
+    button.classList.toggle('active', isActive);
+    if (isActive && typeof button.scrollIntoView === 'function') {
+      button.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
   }
   for (const panel of panels) {
     panel.classList.toggle('hidden', panel.getAttribute('data-tab-content') !== name);

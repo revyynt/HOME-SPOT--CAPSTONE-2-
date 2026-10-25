@@ -1,3 +1,210 @@
+
+let currentAdminRooms = [];
+
+function openRoomPreviewModal(room) {
+  const modal = document.getElementById('previewRoomModal');
+  if (!modal || !room) return;
+
+  const breadcrumbEl = document.getElementById('previewBreadcrumbRoomName');
+  const titleEl = document.getElementById('previewRoomTitle');
+  const subtitleEl = document.getElementById('previewRoomTypeSize');
+  const mainImgEl = document.getElementById('previewMainImg');
+  const tag360El = document.getElementById('preview360Tag');
+  const jump360Pill = document.getElementById('previewJump360Pill');
+  const availBadgeEl = document.getElementById('previewAvailabilityBadge');
+  const slideCounterEl = document.getElementById('previewSlideCounter');
+  const thumbStripEl = document.getElementById('previewThumbnailStrip');
+  const limitedAvailEl = document.getElementById('previewLimitedAvailability');
+  const limitedAvailText = document.getElementById('previewLimitedAvailabilityText');
+  const detailTypeEl = document.getElementById('previewDetailRoomType');
+  const detailCapEl = document.getElementById('previewDetailCapacity');
+  const detailSizeEl = document.getElementById('previewDetailSize');
+  const detailDescEl = document.getElementById('previewDetailDescription');
+  const detailFeaturesEl = document.getElementById('previewDetailFeatures');
+  const sidebarPriceEl = document.getElementById('previewSidebarPrice');
+  const publicLink = document.getElementById('previewPublicPageLink');
+
+  if (breadcrumbEl) breadcrumbEl.textContent = room.name || 'Apartment Unit';
+  if (titleEl) titleEl.textContent = room.name || 'Apartment Unit';
+  if (subtitleEl) subtitleEl.textContent = `${room.type || 'Living Space'} • ${room.size || '30 sqm'}`;
+
+  const avail = Number(room.available) || 0;
+  if (availBadgeEl) {
+    if (avail > 0) {
+      availBadgeEl.className = 'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-green-500 to-green-600';
+      availBadgeEl.textContent = `${avail} Available`;
+    } else {
+      availBadgeEl.className = 'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-red-500 to-red-600';
+      availBadgeEl.textContent = 'Fully Booked';
+    }
+  }
+
+  if (limitedAvailEl && limitedAvailText) {
+    if (avail > 0 && avail <= 5) {
+      limitedAvailText.textContent = `Only ${avail} slot${avail === 1 ? '' : 's'} remaining in this room type`;
+      limitedAvailEl.classList.remove('hidden');
+    } else if (avail === 0) {
+      limitedAvailText.textContent = 'This unit is currently fully booked.';
+      limitedAvailEl.classList.remove('hidden');
+    } else {
+      limitedAvailEl.classList.add('hidden');
+    }
+  }
+
+  if (detailTypeEl) detailTypeEl.textContent = room.type || 'Living Space';
+  if (detailCapEl) detailCapEl.textContent = `${room.capacity || 1} People`;
+  if (detailSizeEl) detailSizeEl.textContent = room.size || '30 sqm';
+
+  if (detailDescEl) {
+    detailDescEl.textContent =
+      room.description ||
+      'Spacious apartment unit that can accommodate occupants looking for a comfortable shared living space at MJP Residences.';
+  }
+
+  if (detailFeaturesEl) {
+    const feats = Array.isArray(room.features) && room.features.length
+      ? room.features
+      : [`${room.capacity || 3} People`, 'Bathroom', 'Aircon Space'];
+    detailFeaturesEl.innerHTML = feats
+      .map(
+        (f) => `
+        <div class="flex items-center gap-2 bg-emerald-50 text-emerald-900 border border-emerald-200/80 px-3 py-2 rounded-lg text-xs font-semibold">
+          <svg class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+          </svg>
+          <span class="truncate">${escapeHtml(f)}</span>
+        </div>`
+      )
+      .join('');
+  }
+
+  if (sidebarPriceEl) {
+    sidebarPriceEl.textContent = formatPHP(room.price) + '/month';
+  }
+
+  const slides = [];
+  const seenUrls = new Set();
+  const panoUrl = String(room.panorama || '').trim();
+
+  const addPhotoSlide = (src, label) => {
+    const url = String(src || '').trim();
+    if (!url || seenUrls.has(url) || (panoUrl && url === panoUrl)) return;
+    seenUrls.add(url);
+    slides.push({ src: url, label, is360: false });
+  };
+
+  if (room.mainImage) addPhotoSlide(room.mainImage, 'Main Photo');
+  if (Array.isArray(room.images)) {
+    room.images.forEach((url, i) => addPhotoSlide(url, `Photo ${i + 1}`));
+  }
+  if (room.image) addPhotoSlide(room.image, 'Listing Card');
+
+  if (panoUrl) {
+    slides.push({ src: panoUrl, label: '360° Panoramic View', is360: true });
+  }
+
+  if (!slides.length) {
+    addPhotoSlide('assets/img/triple-occupancy.jpg', 'Main Photo');
+  }
+
+  const photoStage = document.getElementById('previewPhotoStage');
+  const panoStage = document.getElementById('previewPanoramaStage');
+  const panoViewer = document.getElementById('previewPanoramaViewer');
+
+  const updateSlideDisplay = (idx) => {
+    const cur = slides[idx] || slides[0];
+
+    if (cur.is360) {
+      photoStage?.classList.add('hidden');
+      panoStage?.classList.remove('hidden');
+      if (tag360El) tag360El.classList.remove('hidden');
+      if (panoViewer && cur.src) {
+        initPanoramaViewer(cur.src, panoViewer, { autoSpin: true });
+      }
+    } else {
+      panoViewer?._panoramaCleanup?.();
+      panoStage?.classList.add('hidden');
+      photoStage?.classList.remove('hidden');
+      if (mainImgEl) mainImgEl.src = cur.src;
+      if (tag360El) tag360El.classList.add('hidden');
+    }
+
+    if (slideCounterEl) {
+      slideCounterEl.textContent = `${cur.label} • ${idx + 1}/${slides.length}`;
+    }
+
+    document.querySelectorAll('.preview-thumb-card').forEach((card, cIdx) => {
+      if (cIdx === idx) {
+        card.className =
+          'preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 border-blue-600 ring-2 ring-blue-300 shadow-md flex-shrink-0 transition-all cursor-pointer';
+      } else {
+        card.className =
+          'preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 border-transparent hover:border-gray-300 shadow-sm flex-shrink-0 transition-all cursor-pointer opacity-80 hover:opacity-100';
+      }
+    });
+  };
+
+  if (jump360Pill) {
+    const pIdx = slides.findIndex((s) => s.is360);
+    if (pIdx !== -1) {
+      jump360Pill.classList.remove('hidden');
+      jump360Pill.onclick = () => updateSlideDisplay(pIdx);
+    } else {
+      jump360Pill.classList.add('hidden');
+    }
+  }
+
+  if (thumbStripEl) {
+    thumbStripEl.innerHTML = slides
+      .map(
+        (slide, i) => `
+        <button
+          type="button"
+          data-preview-slide-idx="${i}"
+          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${
+            i === 0
+              ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
+              : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
+          } flex-shrink-0 transition-all cursor-pointer group"
+        >
+          <img src="${escapeHtml(slide.src)}" alt="${escapeHtml(slide.label)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+          ${
+            slide.is360
+              ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
+                   <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">360°</span>
+                   <span class="text-[9px] font-semibold text-white tracking-tight mt-0.5">Virtual Tour</span>
+                 </div>`
+              : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
+          }
+        </button>`
+      )
+      .join('');
+  }
+
+  updateSlideDisplay(0);
+
+  thumbStripEl?.querySelectorAll('button[data-preview-slide-idx]').forEach((btn) => {
+    btn.onclick = () => {
+      const idx = Number(btn.getAttribute('data-preview-slide-idx')) || 0;
+      updateSlideDisplay(idx);
+    };
+  });
+
+  if (publicLink) {
+    publicLink.href = `property-detail.html?id=${encodeURIComponent(room.id)}`;
+  }
+
+  modal.classList.remove('hidden');
+}
+
+function closeRoomPreviewModal() {
+  const modal = document.getElementById('previewRoomModal');
+  const panoViewer = document.getElementById('previewPanoramaViewer');
+  panoViewer?._panoramaCleanup?.();
+  if (modal) modal.classList.add('hidden');
+}
+
 /**
  * Admin dashboard bootstrap.
  *
@@ -12,7 +219,8 @@ import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
-import { escapeHtml, formatPHP, initials } from '../lib/format.js';
+import { initPanoramaViewer } from '../lib/panorama.js';
+import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
 import { Toast } from '../render/toast.js';
 
@@ -192,12 +400,14 @@ function renderListings(rooms) {
           >
             Edit
           </button>
-          <a
-            href="property-detail.html?id=${encodeURIComponent(room.id)}"
+          <button
+            type="button"
+            data-action="preview-room"
+            data-room-id="${escapeHtml(room.id)}"
             class="px-3.5 py-2 border rounded-lg hover:bg-gray-50 flex items-center gap-1.5 text-sm font-medium text-gray-700 cursor-pointer"
           >
             View
-          </a>
+          </button>
           <button
             type="button"
             data-action="delete-room"
@@ -361,6 +571,7 @@ function initAdminListings() {
       snapshot.forEach((doc) => {
         rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
+      currentAdminRooms = rooms;
       renderListings(rooms);
       updateTenantDormSelect(rooms);
     },
@@ -379,6 +590,35 @@ function initAdminListings() {
 
     if (target.closest('[data-action="close-add-room-modal"]')) {
       document.getElementById('addRoomModal')?.classList.add('hidden');
+      return;
+    }
+
+    const previewBtn = target.closest('button[data-action="preview-room"]');
+    if (previewBtn) {
+      const roomId = previewBtn.dataset.roomId;
+      const room = currentAdminRooms.find((r) => r.id === roomId);
+      if (room) openRoomPreviewModal(room);
+      return;
+    }
+
+    const thumbBtn = target.closest('button[data-preview-thumb-src]');
+    if (thumbBtn) {
+      const src = thumbBtn.getAttribute('data-preview-thumb-src');
+      const mainImg = document.getElementById('previewRoomMainImg');
+      if (mainImg && src) mainImg.src = src;
+      document.querySelectorAll('.preview-thumb-btn').forEach((b) => {
+        b.className = b === thumbBtn
+          ? 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-emerald-500 ring-2 ring-emerald-200 flex-shrink-0 transition-all cursor-pointer'
+          : 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 flex-shrink-0 transition-all cursor-pointer';
+      });
+      return;
+    }
+
+    if (
+      target.closest('#closePreviewRoomModalBtn') ||
+      target.id === 'previewRoomModal'
+    ) {
+      closeRoomPreviewModal();
       return;
     }
 
@@ -963,7 +1203,7 @@ function initAdminPaymentCalendar() {
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'payments'),
     (snap) => {
-      calPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      calPayments = deduplicatePayments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       renderCalendar();
     },
     (err) => console.error('Calendar payments listener failed:', err)
@@ -1149,7 +1389,8 @@ function initAdminOverviewActivity() {
     supabaseData.onSnapshot(
       supabaseData.collection(supabase, col),
       (snap) => {
-        state[col] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const rawItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        state[col] = col === 'payments' ? deduplicatePayments(rawItems) : rawItems;
         renderActivity();
       },
       (err) => console.warn(`Overview activity listener (${col}) failed:`, err)

@@ -79,10 +79,30 @@ if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
   tenantExplicitAmountDueSet = true;
 }
 
+function getMoveInInfo() {
+  if (!tenantMoveIn) return { isPending: false, moveInDate: null };
+  const parsed = new Date(tenantMoveIn);
+  if (Number.isNaN(parsed.getTime())) return { isPending: false, moveInDate: null };
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const moveInStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+  return {
+    isPending: moveInStart > todayStart,
+    moveInDate: parsed,
+    moveInStart,
+    todayStart
+  };
+}
+
 function updateAmountDueUI() {
+  const moveInInfo = getMoveInInfo();
   const summaryAmountDue = document.getElementById('summaryAmountDue');
   if (summaryAmountDue) {
-    if (currentRemainingDue <= 0) {
+    if (moveInInfo.isPending) {
+      summaryAmountDue.textContent =
+        '₱' + tenantRent.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' (Scheduled)';
+      summaryAmountDue.style.color = '#0284c7';
+    } else if (currentRemainingDue <= 0) {
       summaryAmountDue.textContent = '₱0.00 (Settled)';
       summaryAmountDue.style.color = '#15803d';
     } else {
@@ -110,13 +130,32 @@ function updateAmountDueUI() {
       'November',
       'December'
     ];
-    let targetMonth = now.getMonth();
-    let targetYear = now.getFullYear();
-    if (currentRemainingDue <= 0) {
-      targetMonth = (targetMonth + 1) % 12;
-      if (targetMonth === 0) targetYear += 1;
+    if (moveInInfo.isPending) {
+      let checkYear = moveInInfo.moveInDate.getFullYear();
+      let checkMonth = moveInInfo.moveInDate.getMonth();
+      const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
+      const actualD = Math.min(dueDay, daysInM);
+      const candidate = new Date(checkYear, checkMonth, actualD);
+      let targetDate = candidate;
+      if (candidate.getTime() < moveInInfo.moveInStart) {
+        checkMonth++;
+        if (checkMonth > 11) {
+          checkMonth = 0;
+          checkYear++;
+        }
+        const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
+        targetDate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
+      }
+      summaryDueDate.textContent = `${monthNames[targetDate.getMonth()]} ${targetDate.getDate()}, ${targetDate.getFullYear()} (First Due)`;
+    } else {
+      let targetMonth = now.getMonth();
+      let targetYear = now.getFullYear();
+      if (currentRemainingDue <= 0) {
+        targetMonth = (targetMonth + 1) % 12;
+        if (targetMonth === 0) targetYear += 1;
+      }
+      summaryDueDate.textContent = `${monthNames[targetMonth]} ${dueDay}, ${targetYear}`;
     }
-    summaryDueDate.textContent = `${monthNames[targetMonth]} ${dueDay}, ${targetYear}`;
   }
 
   const paymentAmountInput = document.getElementById('paymentAmount');
@@ -186,6 +225,22 @@ function populateTenantUI() {
     welcomeAvatar.textContent = initials || 'JD';
   }
 
+  const statusPill = document.querySelector('.tenant-status-pill');
+  const moveInInfo = getMoveInInfo();
+  if (statusPill) {
+    if (moveInInfo.isPending) {
+      statusPill.textContent = '● Pending Move-In';
+      statusPill.style.background = '#fef3c7';
+      statusPill.style.color = '#92400e';
+      statusPill.style.border = '1px solid #fde68a';
+    } else {
+      statusPill.textContent = '● Active Resident';
+      statusPill.style.background = '';
+      statusPill.style.color = '';
+      statusPill.style.border = '';
+    }
+  }
+
   updateAmountDueUI();
   renderTenantPaymentCalendar();
 
@@ -241,6 +296,9 @@ function renderTenantPaymentCalendar() {
 
       const dueChips = cell.dueEvents
         .map((ev) => {
+          if (ev.isMoveInMarker) {
+            return `<div class="cal-chip" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Scheduled Move-in Date: ${escapeHtml(ev.dueDate)}">🔑 Move-In Day</div>`;
+          }
           const label =
             ev.status === 'Paid'
               ? `✓ Paid ₱${ev.amount.toLocaleString()}`
@@ -759,8 +817,22 @@ async function saveAndFinalizePayment(record) {
   }
   updateAmountDueUI();
 
-  // Render immediately in table so user sees their payment even before DB refresh
-  if (!cachedPayments.some((p) => p.referenceNumber === record.referenceNumber)) {
+  const cleanPurpose = (record.purpose || 'Monthly Rent').replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+  record.purpose = cleanPurpose;
+  const canonicalDocId = record.paymentMethodId || record.referenceNumber;
+  if (!record.referenceNumber || record.referenceNumber.startsWith('PM-RET-')) {
+    record.referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
+  }
+
+  // Render immediately in table if not already cached
+  const alreadyInCache = cachedPayments.some((p) => {
+    if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
+    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId) return true;
+    if (Number(p.amount) === Number(record.amount) && (p.purpose || '').replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase() === cleanPurpose.toLowerCase()) return true;
+    return false;
+  });
+
+  if (!alreadyInCache) {
     cachedPayments.unshift(record);
     renderPaymentHistoryTable(cachedPayments);
   }
@@ -773,7 +845,7 @@ async function saveAndFinalizePayment(record) {
     if (session) {
       await supabase.from('payments').upsert({
         id: record.referenceNumber,
-        session_id: record.paymentMethodId,
+        session_id: canonicalDocId,
         tenant_name: record.tenantName,
         tenant_email: record.tenantEmail,
         tenant_uid: session.user.id,
@@ -788,7 +860,7 @@ async function saveAndFinalizePayment(record) {
 
       await supabase.from('app_documents').upsert({
         collection: 'payments',
-        id: record.paymentMethodId || record.referenceNumber,
+        id: canonicalDocId,
         data: {
           ...record,
           tenantUid: session.user.id
@@ -1232,7 +1304,7 @@ async function checkUrlPaymentReturn() {
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
-      const refNumber2 = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
+      const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
@@ -1386,7 +1458,7 @@ async function checkUrlPaymentReturn() {
     }
 
     const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
-    const refNumber = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
+    const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
     const lineItemsAmount =
       (session?.attributes?.line_items || []).reduce(
         (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),

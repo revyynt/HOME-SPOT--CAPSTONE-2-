@@ -503,7 +503,7 @@ async function loadSystemSettings() {
     const cancellationDays =
       Number((document.getElementById('settingCancellationDays'))?.value) || 7;
     const supportEmail =
-      (document.getElementById('settingSupportEmail'))?.value?.trim() || 'info@mjpresidences.com';
+      (document.getElementById('settingSupportEmail'))?.value?.trim() || 'homespotapartment@gmail.com';
     const supportPhone =
       (document.getElementById('settingSupportPhone'))?.value?.trim() || '(02) 1234-5678';
 

@@ -108,11 +108,20 @@ Deno.serve(async (request) => {
       ? paymentAttributes.source.type
       : 'PayMongo Checkout');
   const now = new Date();
+  const firstLineItem = Array.isArray(attributes.line_items) && isRecord(attributes.line_items[0]) ? attributes.line_items[0] : null;
+  const lineItemName = typeof firstLineItem?.name === 'string' ? firstLineItem.name.trim() : '';
+  const cleanPurpose =
+    lineItemName ||
+    description.replace(/\s*-\s*MJP Residences\s*$/i, '').trim() ||
+    'Monthly Rent';
+  const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
+
   const record = {
     payMongoEventId: eventId,
     payMongoResourceId: paymentId,
+    sessionId: rawResourceId.startsWith('cs_') ? rawResourceId : null,
     eventType,
-    referenceNumber: `PM-${paymentId.slice(-6).toUpperCase()}`,
+    referenceNumber,
     amount: amountInCentavos / 100,
     currency:
       (typeof paymentAttributes.currency === 'string' && paymentAttributes.currency) ||
@@ -120,7 +129,7 @@ Deno.serve(async (request) => {
       'PHP',
     status: isPaid ? 'Paid' : 'Failed',
     description,
-    purpose: description || 'Monthly Rent',
+    purpose: cleanPurpose,
     method: paymentMethod,
     tenantEmail,
     tenantUid,
@@ -146,9 +155,32 @@ Deno.serve(async (request) => {
   const { error } = await admin
     .from('app_documents')
     .upsert(
-      { collection: 'payments', id: paymentId, data: record },
+      { collection: 'payments', id: canonicalDocId, data: record },
       { onConflict: 'collection,id' }
     );
+
+  if (isPaid) {
+    await admin
+      .from('payments')
+      .upsert(
+        {
+          id: referenceNumber,
+          session_id: canonicalDocId,
+          tenant_name: record.tenantName,
+          tenant_email: record.tenantEmail,
+          tenant_uid: tenantUid || null,
+          amount: record.amount,
+          status: 'Paid',
+          payment_method: record.method,
+          purpose: record.purpose,
+          notes: description || null,
+          reference_number: referenceNumber,
+          created_at: record.createdAt
+        },
+        { onConflict: 'id' }
+      )
+      .catch(() => null);
+  }
   if (error) {
     console.error('Could not persist PayMongo webhook event:', error);
     return jsonResponse(request, { error: 'Could not record the payment event.' }, 500);

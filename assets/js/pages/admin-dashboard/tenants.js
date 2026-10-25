@@ -1,3 +1,17 @@
+function getTenantLifecycle(tenant) {
+  if (tenant.status && tenant.status !== 'Active') return tenant.status;
+  if (!tenant.moveInDate) return 'Active';
+  const parsed = new Date(tenant.moveInDate);
+  if (Number.isNaN(parsed.getTime())) return 'Active';
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const moveInStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate()).getTime();
+  if (moveInStart > todayStart) {
+    return 'Pending Move-In';
+  }
+  return 'Active';
+}
+
 /**
  * Tenant table: rendering, filtering, statistics, and the live Supabase
  * listener.
@@ -130,14 +144,15 @@ function renderTenantsTable(tenants) {
             <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-              ● Active
-            </span>
+            ${getTenantLifecycle(t) === 'Pending Move-In'
+          ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
+          : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
+        }
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
             <div class="flex items-center justify-end gap-1.5">
-              <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">view</button>
-              <button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">copy</button>
+              <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
+              <button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
               <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">x</button>
             </div>
           </td>
@@ -147,7 +162,7 @@ function renderTenantsTable(tenants) {
 }
 
 function updateTenantStats(tenants) {
-  const active = tenants.filter((t) => (t.status || 'Active') === 'Active').length;
+  const active = tenants.filter((t) => getTenantLifecycle(t) === 'Active').length;
   const totalRent = tenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
 
   const set = (id, value) => {
@@ -301,3 +316,48 @@ export function initTenantTable() {
     }
   });
 }
+
+// Password reset via Supabase email
+document.getElementById('btnSendPasswordResetEmail')?.addEventListener('click', async () => {
+  if (!currentViewingTenant?.email) {
+    Toast.alert({
+      title: 'Missing Email',
+      message: 'This tenant does not have a valid email address on file.'
+    });
+    return;
+  }
+
+  const btn = document.getElementById('btnSendPasswordResetEmail');
+  const originalText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>Sending Link...</span>';
+  }
+
+  try {
+    const redirectUrl =
+      window.location.origin + window.location.pathname.replace(/[^/]*$/, '') + 'login.html';
+
+    const { error } = await supabase.auth.resetPasswordForEmail(currentViewingTenant.email, {
+      redirectTo: redirectUrl
+    });
+
+    if (error) throw error;
+
+    Toast.alert({
+      title: 'Reset Link Dispatched',
+      message: `An official password reset email has been sent to ${currentViewingTenant.email} via Supabase.`
+    });
+  } catch (error) {
+    console.error('Failed to send reset email:', error);
+    Toast.alert({
+      title: 'Error Sending Reset Email',
+      message: error.message || 'Could not send the password reset email. Please try again.'
+    });
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  }
+});

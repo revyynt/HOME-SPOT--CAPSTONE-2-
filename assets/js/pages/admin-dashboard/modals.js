@@ -5,7 +5,7 @@
  * from Supabase, and dispatches reminders via Portal Chat and Gmail Compose.
  */
 
-import { escapeHtml, formatPHP, initials } from '../../lib/format.js';
+import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { parsePaymentDate } from '../../lib/payment-calendar.js';
 import { db, supabaseData } from '../../supabase-service.js';
 import { Toast } from '../../render/toast.js';
@@ -113,7 +113,7 @@ export async function openPaymentModal(rawTenant) {
 
   try {
     const snap = await supabaseData.getDocs(supabaseData.collection(db, 'payments'));
-    const allPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const allPayments = deduplicatePayments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     const tEmail = String(tenant.email || '').toLowerCase();
     const tName = String(tenant.name || '').toLowerCase();
     const matching = allPayments

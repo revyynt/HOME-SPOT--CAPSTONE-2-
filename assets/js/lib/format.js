@@ -193,3 +193,62 @@ export function buildTenantThreads(docList = [], tenants = []) {
   threads.sort((a, b) => b.lastTime - a.lastTime || a.name.localeCompare(b.name));
   return threads;
 }
+
+/**
+ * Deduplicates payment records that originated from both client redirect and provider webhook.
+ * Collapses records sharing the same resource/session ID, or same tenant + amount + purpose within a 15-minute window.
+ *
+ * @param {Array<Object>} payments
+ * @returns {Array<Object>}
+ */
+export function deduplicatePayments(payments) {
+  if (!Array.isArray(payments) || payments.length <= 1) return Array.isArray(payments) ? payments : [];
+
+  const results = [];
+
+  for (const p of payments) {
+    if (!p || typeof p !== 'object') continue;
+
+    const pId = p.id || p.payMongoResourceId || p.paymentMethodId || p.sessionId;
+    const ref = p.referenceNumber || p.reference_number;
+    const rawPurpose = p.purpose || p.description || 'Monthly Rent';
+    const cleanPurpose = rawPurpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase();
+    const amount = Number(p.amount) || 0;
+    const tenant = (p.tenantEmail || p.tenantName || p.tenant_email || p.tenant_name || '').toLowerCase().trim();
+    const rawTime = p.createdAt || p.created_at || p.timestamp || p.dateFormatted;
+    const timeMs = rawTime ? new Date(rawTime).getTime() : 0;
+
+    const isDuplicate = results.some((existing) => {
+      const exId = existing.id || existing.payMongoResourceId || existing.paymentMethodId || existing.sessionId;
+      const exRef = existing.referenceNumber || existing.reference_number;
+      if (pId && exId && pId === exId) return true;
+      if (ref && exRef && ref === exRef) return true;
+
+      const exTenant = (existing.tenantEmail || existing.tenantName || existing.tenant_email || existing.tenant_name || '').toLowerCase().trim();
+      const exAmount = Number(existing.amount) || 0;
+      const exRawPurpose = existing.purpose || existing.description || 'Monthly Rent';
+      const exCleanPurpose = exRawPurpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase();
+      const exRawTime = existing.createdAt || existing.created_at || existing.timestamp || existing.dateFormatted;
+      const exTimeMs = exRawTime ? new Date(exRawTime).getTime() : 0;
+
+      if (tenant && exTenant && tenant === exTenant && amount === exAmount && cleanPurpose === exCleanPurpose) {
+        if (timeMs && exTimeMs) {
+          if (Math.abs(timeMs - exTimeMs) <= 15 * 60 * 1000) return true;
+        } else {
+          return true;
+        }
+      }
+      return false;
+    });
+
+    if (!isDuplicate) {
+      const clone = { ...p };
+      if (typeof clone.purpose === 'string' && clone.purpose.includes(' - MJP Residences')) {
+        clone.purpose = clone.purpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+      }
+      results.push(clone);
+    }
+  }
+
+  return results;
+}

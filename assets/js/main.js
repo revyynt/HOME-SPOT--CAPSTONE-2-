@@ -1,3 +1,15 @@
+// If an auth recovery link or error lands on index.html, forward immediately to login.html
+if (typeof window !== 'undefined' && window.location.hash) {
+  const hash = window.location.hash;
+  if (
+    hash.includes('type=recovery') ||
+    hash.includes('access_token') ||
+    hash.includes('error=')
+  ) {
+    window.location.replace('./login.html' + hash);
+  }
+}
+
 
 async function enforceStaffLockOnPublicPages() {
   const path = window.location.pathname.toLowerCase();
@@ -6,6 +18,7 @@ async function enforceStaffLockOnPublicPages() {
     path.includes('super-admin-dashboard') ||
     path.includes('tenant-portal') ||
     path.includes('login') ||
+    path.includes('property-detail') ||
     byId('reservationRequestsContainer') ||
     byId('superAdminTableBody')
   ) {
@@ -78,12 +91,12 @@ function renderLandingRoomCard(room) {
 
   return `
     <div data-room-card="${escapeHtml(room.id)}"
-      class="bg-gradient-to-br from-blue-50/40 via-white to-green-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group transform hover:-translate-y-2 border-2 border-transparent hover:border-blue-200 flex flex-col justify-between">
+      class="bg-gradient-to-br from-blue-50/40 via-white to-green-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group transform hover:-translate-y-2 border-2 border-transparent hover:border-blue-200 flex flex-col justify-between h-full">
       <div>
         <div class="relative overflow-hidden">
           <a href="${detailUrl}">
             <img data-room-image src="${escapeHtml(room.image)}" alt="${escapeHtml(room.name)}"
-              class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500" />
+              class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500" />
           </a>
           <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-blue-900/20 to-transparent pointer-events-none"></div>
           ${badgeHtml}
@@ -97,7 +110,7 @@ function renderLandingRoomCard(room) {
           <div class="absolute bottom-4 left-4 right-4 pointer-events-none">
             <h4 data-room-name class="text-2xl font-bold text-white mb-1 drop-shadow-lg">${escapeHtml(room.name)}</h4>
             <p data-room-type class="text-sm text-green-200 font-medium">${escapeHtml(room.type)}</p>
-          </div>
+          </div>${room.panorama ? `<div class="absolute bottom-3 right-3 pointer-events-none"><span class="bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-semibold px-2 py-0.5 rounded-md border border-white/20 shadow-sm">360° Tour</span></div>` : ''}
         </div>
         <div class="p-5">
           <div data-room-features class="flex flex-wrap gap-2 mb-4">
@@ -136,10 +149,19 @@ function initLandingRooms() {
       snapshot.forEach((doc) => {
         rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
+      const countBadge = document.getElementById('landingUnitsCountBadge');
       if (rooms.length > 0) {
         grid.innerHTML = rooms.map(renderLandingRoomCard).join('');
+        if (countBadge) {
+          countBadge.textContent = `${rooms.length} ${rooms.length === 1 ? 'Unit' : 'Units'} Available`;
+          countBadge.classList.remove('hidden');
+        }
       } else {
         grid.innerHTML = DEFAULT_ROOMS.map(renderLandingRoomCard).join('');
+        if (countBadge) {
+          countBadge.textContent = `${DEFAULT_ROOMS.length} Units Available`;
+          countBadge.classList.remove('hidden');
+        }
       }
     },
     (error) => console.error('Failed to sync landing room cards:', error)
@@ -296,3 +318,79 @@ document.addEventListener('DOMContentLoaded', () => {
 // Availability helpers remain available for the browser console.
 window.setRoomAvailability = setRoomAvailability;
 window.decrementRoomAvailability = decrementRoomAvailability;
+
+// Password Recovery Handler on landing page
+const updatePassModal = document.getElementById('updatePasswordModal');
+const updatePassForm = document.getElementById('updatePasswordForm');
+const newPassInput = document.getElementById('newPassword');
+const confirmPassInput = document.getElementById('confirmNewPassword');
+const submitUpdateBtn = document.getElementById('submitUpdatePassBtn');
+const updatePassAlert = document.getElementById('updatePassAlert');
+
+if (typeof window !== 'undefined') {
+  // Check hash on landing
+  if (window.location.hash && (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token'))) {
+    if (updatePassModal) updatePassModal.classList.remove('hidden');
+  }
+
+  // Supabase Auth listener
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      if (updatePassModal) updatePassModal.classList.remove('hidden');
+    }
+  });
+
+  updatePassForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPass = newPassInput?.value || '';
+    const confirmPass = confirmPassInput?.value || '';
+
+    if (newPass.length < 6) {
+      if (updatePassAlert) {
+        updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+        updatePassAlert.textContent = 'Password must be at least 6 characters.';
+        updatePassAlert.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (newPass !== confirmPass) {
+      if (updatePassAlert) {
+        updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+        updatePassAlert.textContent = 'Passwords do not match.';
+        updatePassAlert.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (submitUpdateBtn) {
+      submitUpdateBtn.disabled = true;
+      submitUpdateBtn.textContent = 'Updating...';
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPass });
+      if (error) throw error;
+
+      if (updatePassModal) updatePassModal.classList.add('hidden');
+      try {
+        history.replaceState(null, '', window.location.pathname);
+      } catch {}
+
+      alert('Password updated successfully! Redirecting to login...');
+      window.location.href = './login.html';
+    } catch (err) {
+      console.error('Update password error on landing:', err);
+      if (updatePassAlert) {
+        updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+        updatePassAlert.textContent = err.message || 'Failed to update password. Link may be expired.';
+        updatePassAlert.classList.remove('hidden');
+      }
+    } finally {
+      if (submitUpdateBtn) {
+        submitUpdateBtn.disabled = false;
+        submitUpdateBtn.textContent = 'Update Password & Sign In';
+      }
+    }
+  });
+}

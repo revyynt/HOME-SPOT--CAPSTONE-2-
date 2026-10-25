@@ -118,13 +118,175 @@ togglePasswordBtn?.addEventListener('click', () => {
   }
 });
 
-// Forgot password action
+// Forgot password modal
+const forgotModal = document.getElementById('forgotPasswordModal');
+const forgotEmailInput = document.getElementById('forgotEmail');
+const forgotForm = document.getElementById('forgotPasswordForm');
+const closeForgotBtn = document.getElementById('closeForgotModalBtn');
+const cancelForgotBtn = document.getElementById('cancelForgotBtn');
+const submitForgotBtn = document.getElementById('submitForgotBtn');
+const forgotAlert = document.getElementById('forgotAlert');
+
+function openForgotModal() {
+  if (forgotAlert) forgotAlert.classList.add('hidden');
+  if (forgotEmailInput) forgotEmailInput.value = emailInput?.value.trim() || '';
+  if (forgotModal) forgotModal.classList.remove('hidden');
+}
+
+function closeForgotModal() {
+  if (forgotModal) forgotModal.classList.add('hidden');
+}
+
 forgotPasswordBtn?.addEventListener('click', (event) => {
   event.preventDefault();
-  Toast.alert({
-    title: 'Reset Portal Password',
-    message: 'Please contact the building administrator or front desk to reset your portal password.'
-  });
+  openForgotModal();
+});
+
+closeForgotBtn?.addEventListener('click', closeForgotModal);
+cancelForgotBtn?.addEventListener('click', closeForgotModal);
+forgotModal?.addEventListener('click', (e) => {
+  if (e.target === forgotModal) closeForgotModal();
+});
+
+forgotForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = forgotEmailInput?.value.trim().toLowerCase();
+  if (!email) return;
+
+  if (submitForgotBtn) {
+    submitForgotBtn.disabled = true;
+    submitForgotBtn.textContent = 'Sending Link...';
+  }
+
+  try {
+    const redirectUrl = window.location.origin + window.location.pathname;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+    if (error) throw error;
+
+    closeForgotModal();
+    Toast.alert({
+      title: 'Reset Link Sent',
+      message: `An official password reset link has been dispatched to ${email}. Please check your inbox!`
+    });
+  } catch (err) {
+    console.error('Password reset email error:', err);
+    if (forgotAlert) {
+      forgotAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      forgotAlert.textContent = err.message || 'Could not send reset email. Please try again.';
+      forgotAlert.classList.remove('hidden');
+    }
+  } finally {
+    if (submitForgotBtn) {
+      submitForgotBtn.disabled = false;
+      submitForgotBtn.textContent = 'Send Reset Link';
+    }
+  }
+});
+
+
+// Check URL hash for errors or recovery tokens on page load
+function checkAuthHashState() {
+  if (typeof window === 'undefined' || !window.location.hash) return;
+  const hash = window.location.hash;
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+  const error = params.get('error');
+  const errorCode = params.get('error_code');
+  const errorDesc = params.get('error_description');
+
+  if (error || errorCode) {
+    let msg = 'The password reset link is invalid or has expired.';
+    if (errorCode === 'otp_expired' || (errorDesc && errorDesc.toLowerCase().includes('expired'))) {
+      msg = 'This password reset link has expired or was already used. Please click "Forgot password?" to send a fresh reset link.';
+    } else if (errorDesc) {
+      msg = decodeURIComponent(errorDesc.replace(/\+/g, ' '));
+    }
+    Toast.alert({
+      title: 'Reset Link Expired',
+      message: msg
+    });
+    try {
+      history.replaceState(null, '', window.location.pathname);
+    } catch {
+      // Ignore history state errors
+    }
+    return;
+  }
+
+  if (hash.includes('type=recovery') || hash.includes('access_token')) {
+    const modal = document.getElementById('updatePasswordModal');
+    if (modal) modal.classList.remove('hidden');
+  }
+}
+
+checkAuthHashState();
+
+// Recovery Handler (When tenant lands here from email link)
+const updatePassModal = document.getElementById('updatePasswordModal');
+const updatePassForm = document.getElementById('updatePasswordForm');
+const newPassInput = document.getElementById('newPassword');
+const confirmPassInput = document.getElementById('confirmNewPassword');
+const submitUpdateBtn = document.getElementById('submitUpdatePassBtn');
+const updatePassAlert = document.getElementById('updatePassAlert');
+
+supabase.auth.onAuthStateChange(async (event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    if (updatePassModal) updatePassModal.classList.remove('hidden');
+  }
+});
+
+updatePassForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const newPass = newPassInput?.value || '';
+  const confirmPass = confirmPassInput?.value || '';
+
+  if (newPass.length < 6) {
+    if (updatePassAlert) {
+      updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      updatePassAlert.textContent = 'Password must be at least 6 characters.';
+      updatePassAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (newPass !== confirmPass) {
+    if (updatePassAlert) {
+      updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      updatePassAlert.textContent = 'Passwords do not match.';
+      updatePassAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (submitUpdateBtn) {
+    submitUpdateBtn.disabled = true;
+    submitUpdateBtn.textContent = 'Updating...';
+  }
+
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPass });
+    if (error) throw error;
+
+    if (updatePassModal) updatePassModal.classList.add('hidden');
+    try { history.replaceState(null, '', window.location.pathname); } catch {}
+    Toast.alert({
+      title: 'Password Updated',
+      message: 'Your new password is set! You can now log into your tenant portal.'
+    });
+  } catch (err) {
+    console.error('Update password error:', err);
+    if (updatePassAlert) {
+      updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      updatePassAlert.textContent = err.message || 'Failed to update password. Link may be expired.';
+      updatePassAlert.classList.remove('hidden');
+    }
+  } finally {
+    if (submitUpdateBtn) {
+      submitUpdateBtn.disabled = false;
+      submitUpdateBtn.textContent = 'Update Password & Continue';
+    }
+  }
 });
 
 // Modal open / close
