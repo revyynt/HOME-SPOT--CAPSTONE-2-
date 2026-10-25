@@ -6,6 +6,7 @@ async function enforceStaffLockOnPublicPages() {
     path.includes('super-admin-dashboard') ||
     path.includes('tenant-portal') ||
     path.includes('login') ||
+    path.includes('property-detail') ||
     byId('reservationRequestsContainer') ||
     byId('superAdminTableBody')
   ) {

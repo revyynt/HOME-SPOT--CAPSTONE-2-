@@ -191,21 +191,27 @@ html {
 
 /* Tab styles */
 .tab-button {
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 12px 22px;
+  border-radius: 8px 8px 0 0;
   background: transparent;
+  color: #6b7280;
   border: none;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease-in-out;
 }
 
 .tab-button:hover {
-  background: #f3f4f6;
+  color: #1d4ed8;
+  background: #f0f7ff;
 }
 
 .tab-button.active {
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: #2563eb;
+  font-weight: 600;
+  background: #eff6ff;
+  border-bottom: 2px solid #2563eb;
+  box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.15);
 }
 
 /* Form styles */
