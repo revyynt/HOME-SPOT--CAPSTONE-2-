@@ -60,6 +60,7 @@ let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 20
 let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
 let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
 let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
+let tenantMovedIn = sessionStorage.getItem('tenantMovedIn') === 'true';
 let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
 
 // Global State
@@ -80,6 +81,15 @@ if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
 }
 
 function getMoveInInfo() {
+  if (tenantMovedIn) {
+    const parsed = tenantMoveIn ? new Date(tenantMoveIn) : null;
+    return {
+      isPending: false,
+      moveInDate: parsed && !Number.isNaN(parsed.getTime()) ? parsed : null,
+      moveInStart: 0,
+      todayStart: Date.now()
+    };
+  }
   if (!tenantMoveIn) return { isPending: false, moveInDate: null };
   const parsed = new Date(tenantMoveIn);
   if (Number.isNaN(parsed.getTime())) return { isPending: false, moveInDate: null };
@@ -130,32 +140,38 @@ function updateAmountDueUI() {
       'November',
       'December'
     ];
-    if (moveInInfo.isPending) {
-      let checkYear = moveInInfo.moveInDate.getFullYear();
-      let checkMonth = moveInInfo.moveInDate.getMonth();
-      const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
-      const actualD = Math.min(dueDay, daysInM);
-      const candidate = new Date(checkYear, checkMonth, actualD);
-      let targetDate = candidate;
-      if (candidate.getTime() < moveInInfo.moveInStart) {
-        checkMonth++;
-        if (checkMonth > 11) {
-          checkMonth = 0;
-          checkYear++;
-        }
-        const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
-        targetDate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
-      }
-      summaryDueDate.textContent = `${monthNames[targetDate.getMonth()]} ${targetDate.getDate()}, ${targetDate.getFullYear()} (First Due)`;
-    } else {
-      let targetMonth = now.getMonth();
-      let targetYear = now.getFullYear();
-      if (currentRemainingDue <= 0) {
-        targetMonth = (targetMonth + 1) % 12;
-        if (targetMonth === 0) targetYear += 1;
-      }
-      summaryDueDate.textContent = `${monthNames[targetMonth]} ${dueDay}, ${targetYear}`;
+    let checkYear = now.getFullYear();
+    let checkMonth = now.getMonth();
+
+    if (
+      moveInInfo.moveInDate &&
+      (moveInInfo.moveInDate.getFullYear() > checkYear ||
+        (moveInInfo.moveInDate.getFullYear() === checkYear &&
+          moveInInfo.moveInDate.getMonth() > checkMonth))
+    ) {
+      checkYear = moveInInfo.moveInDate.getFullYear();
+      checkMonth = moveInInfo.moveInDate.getMonth();
     }
+
+    const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
+    let candidate = new Date(checkYear, checkMonth, Math.min(dueDay, daysInM));
+
+    if (
+      (moveInInfo.moveInStart && candidate.getTime() < moveInInfo.moveInStart) ||
+      currentRemainingDue <= 0
+    ) {
+      checkMonth++;
+      if (checkMonth > 11) {
+        checkMonth = 0;
+        checkYear++;
+      }
+      const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
+      candidate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
+    }
+
+    summaryDueDate.textContent = moveInInfo.isPending
+      ? `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()} (First Due)`
+      : `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()}`;
   }
 
   const paymentAmountInput = document.getElementById('paymentAmount');
@@ -268,6 +284,7 @@ function renderTenantPaymentCalendar() {
     monthlyRent: tenantRent,
     dueDay: tenantDueDay,
     moveInDate: tenantMoveIn,
+    movedIn: tenantMovedIn,
     amountDue: currentRemainingDue
   };
 
@@ -411,6 +428,10 @@ async function fetchTenantSupabaseProfile() {
           if (docData.dueDay) {
             tenantDueDay = parseInt(docData.dueDay);
             sessionStorage.setItem('tenantDueDay', tenantDueDay);
+          }
+          if (docData.movedIn !== undefined) {
+            tenantMovedIn = Boolean(docData.movedIn);
+            sessionStorage.setItem('tenantMovedIn', tenantMovedIn ? 'true' : 'false');
           }
           if (docData.monthlyRent) {
             tenantRent = parseFloat(docData.monthlyRent);

@@ -227,7 +227,7 @@ export function buildPaymentCalendar({
     const dueDateObj = new Date(year, month, dueDay);
     const dueDateKey = formatDateKey(year, month, dueDay);
     const dueDateFormatted = `${SHORT_MONTHS[month]} ${dueDay}, ${year}`;
-    if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
+    const isMoveInMonthDuePassed = isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate);
 
     const monthPaidPayments = filteredPayments.filter((p) => {
       if (normalizeStatus(p.status) !== 'Paid') return false;
@@ -254,6 +254,8 @@ export function buildPaymentCalendar({
     let status = 'Pending';
     if (isSettled) {
       status = 'Paid';
+    } else if (isMoveInMonthDuePassed) {
+      status = 'Scheduled';
     } else if (dueDateObj.getTime() < todayStart) {
       status = 'Overdue';
     } else if (isFutureMonth) {
@@ -292,9 +294,11 @@ export function buildPaymentCalendar({
     };
 
     rows.push(dueEvent);
-    const targetCell = cellsByKey.get(dueDateKey);
-    if (targetCell) {
-      targetCell.dueEvents.push(dueEvent);
+    if (!isMoveInMonthDuePassed) {
+      const targetCell = cellsByKey.get(dueDateKey);
+      if (targetCell) {
+        targetCell.dueEvents.push(dueEvent);
+      }
     }
   }
 
@@ -302,6 +306,14 @@ export function buildPaymentCalendar({
   // Place move-in day milestone markers on the calendar
   for (const tenant of activeTenants) {
     if (!tenant.moveInDate) continue;
+    if (
+      tenant.movedIn === true ||
+      tenant.movedIn === 'true' ||
+      tenant.moveInCompleted === true ||
+      tenant.moveInCompleted === 'true'
+    ) {
+      continue;
+    }
     const mDate = new Date(tenant.moveInDate);
     if (Number.isNaN(mDate.getTime())) continue;
     if (mDate.getFullYear() === year && mDate.getMonth() === month) {
