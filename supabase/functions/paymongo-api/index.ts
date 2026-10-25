@@ -219,7 +219,9 @@ Deno.serve(async (request: Request) => {
           try {
             const admin = adminClient();
             const relatedPayment = payments[0] || null;
-            const paymentId = relatedPayment?.id || data.data.id;
+            const rawSessionId = typeof data.data?.id === 'string' ? data.data.id : '';
+            const paymentId = relatedPayment?.id || rawSessionId;
+            const canonicalDocId = rawSessionId.startsWith('cs_') ? rawSessionId : paymentId;
             const lineItemsAmount = Array.isArray(sessionAttrs?.line_items)
               ? sessionAttrs.line_items.reduce(
                 (sum: number, item: { amount?: number; quantity?: number }) =>
@@ -237,15 +239,23 @@ Deno.serve(async (request: Request) => {
               '';
             const tenantName =
               sessionAttrs?.billing?.name || sessionAttrs?.metadata?.tenantName || 'Tenant';
-            const purpose = sessionAttrs?.description || 'Monthly Rent';
+            const lineItemName =
+              Array.isArray(sessionAttrs?.line_items) &&
+              typeof sessionAttrs.line_items[0]?.name === 'string' &&
+              sessionAttrs.line_items[0].name.trim();
+            const cleanPurpose =
+              lineItemName ||
+              (sessionAttrs?.description || 'Monthly Rent').replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+            const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
             const now = new Date();
             const record = {
               payMongoResourceId: paymentId,
-              referenceNumber: `PM-${paymentId.slice(-6).toUpperCase()}`,
+              sessionId: rawSessionId || null,
+              referenceNumber,
               amount: amountInCentavos > 0 ? amountInCentavos / 100 : 5000,
               currency: 'PHP',
               status: 'Paid',
-              purpose,
+              purpose: cleanPurpose,
               notes: sessionAttrs?.metadata?.notes || 'Completed via PayMongo Checkout',
               method:
                 relatedPayment?.attributes?.payment_method_type ||
@@ -264,9 +274,29 @@ Deno.serve(async (request: Request) => {
             await admin
               .from('app_documents')
               .upsert(
-                { collection: 'payments', id: paymentId, data: record },
+                { collection: 'payments', id: canonicalDocId, data: record },
                 { onConflict: 'collection,id' }
               );
+            await admin
+              .from('payments')
+              .upsert(
+                {
+                  id: referenceNumber,
+                  session_id: canonicalDocId,
+                  tenant_name: record.tenantName,
+                  tenant_email: record.tenantEmail,
+                  tenant_uid: auth.user.id,
+                  amount: record.amount,
+                  status: 'Paid',
+                  payment_method: record.method,
+                  purpose: record.purpose,
+                  notes: record.notes,
+                  reference_number: referenceNumber,
+                  created_at: record.createdAt
+                },
+                { onConflict: 'id' }
+              )
+              .catch(() => null);
           } catch (e) {
             console.warn('Backend payment auto-sync failed (non-blocking):', e);
           }

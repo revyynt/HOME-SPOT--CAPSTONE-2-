@@ -817,8 +817,22 @@ async function saveAndFinalizePayment(record) {
   }
   updateAmountDueUI();
 
-  // Render immediately in table so user sees their payment even before DB refresh
-  if (!cachedPayments.some((p) => p.referenceNumber === record.referenceNumber)) {
+  const cleanPurpose = (record.purpose || 'Monthly Rent').replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+  record.purpose = cleanPurpose;
+  const canonicalDocId = record.paymentMethodId || record.referenceNumber;
+  if (!record.referenceNumber || record.referenceNumber.startsWith('PM-RET-')) {
+    record.referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
+  }
+
+  // Render immediately in table if not already cached
+  const alreadyInCache = cachedPayments.some((p) => {
+    if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
+    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId) return true;
+    if (Number(p.amount) === Number(record.amount) && (p.purpose || '').replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase() === cleanPurpose.toLowerCase()) return true;
+    return false;
+  });
+
+  if (!alreadyInCache) {
     cachedPayments.unshift(record);
     renderPaymentHistoryTable(cachedPayments);
   }
@@ -831,7 +845,7 @@ async function saveAndFinalizePayment(record) {
     if (session) {
       await supabase.from('payments').upsert({
         id: record.referenceNumber,
-        session_id: record.paymentMethodId,
+        session_id: canonicalDocId,
         tenant_name: record.tenantName,
         tenant_email: record.tenantEmail,
         tenant_uid: session.user.id,
@@ -846,7 +860,7 @@ async function saveAndFinalizePayment(record) {
 
       await supabase.from('app_documents').upsert({
         collection: 'payments',
-        id: record.paymentMethodId || record.referenceNumber,
+        id: canonicalDocId,
         data: {
           ...record,
           tenantUid: session.user.id
@@ -1290,7 +1304,7 @@ async function checkUrlPaymentReturn() {
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
-      const refNumber2 = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
+      const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
@@ -1444,7 +1458,7 @@ async function checkUrlPaymentReturn() {
     }
 
     const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
-    const refNumber = pending?.referenceNumber || 'PM-RET-' + Date.now().toString().slice(-6);
+    const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
     const lineItemsAmount =
       (session?.attributes?.line_items || []).reduce(
         (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),

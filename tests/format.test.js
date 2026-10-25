@@ -7,7 +7,8 @@ import {
   toCentavos,
   initials,
   avatarGradient,
-  getUrlParam
+  getUrlParam,
+  deduplicatePayments
 } from '../assets/js/lib/format.js';
 
 test('escapeHtml neutralises every HTML-significant character', () => {
@@ -86,4 +87,60 @@ test('getUrlParam reads query parameters', () => {
   assert.equal(getUrlParam('id', '?id=4'), '4');
   assert.equal(getUrlParam('missing', '?id=4'), null);
   assert.equal(getUrlParam('payment', '?payment=success&amount=5000'), 'success');
+});
+
+test('deduplicatePayments collapses provider webhook and client redirect duplicates', () => {
+  const records = [
+    {
+      id: 'pay_001',
+      tenantName: 'Juan Dela Cruz',
+      tenantEmail: 'juan.delacruz@gmail.com',
+      amount: 500,
+      purpose: 'Parking Space Fee - MJP Residences',
+      status: 'Paid',
+      createdAt: '2026-10-24T10:00:00Z'
+    },
+    {
+      id: 'cs_001',
+      tenantName: 'Juan Dela Cruz',
+      tenantEmail: 'juan.delacruz@gmail.com',
+      amount: 500,
+      purpose: 'Parking Space Fee',
+      status: 'Paid',
+      createdAt: '2026-10-24T10:00:05Z'
+    },
+    {
+      id: 'pay_002',
+      tenantName: 'Juan Dela Cruz',
+      tenantEmail: 'juan.delacruz@gmail.com',
+      amount: 1000,
+      purpose: 'Monthly Rent',
+      status: 'Paid',
+      createdAt: '2026-10-24T11:00:00Z'
+    },
+    {
+      id: 'cs_002',
+      tenantName: 'Juan Dela Cruz',
+      tenantEmail: 'juan.delacruz@gmail.com',
+      amount: 1000,
+      purpose: 'Monthly Rent - MJP Residences',
+      status: 'Paid',
+      createdAt: '2026-10-24T11:00:02Z'
+    },
+    {
+      id: 'pay_003',
+      tenantName: 'Juan Dela Cruz',
+      tenantEmail: 'juan.delacruz@gmail.com',
+      amount: 1200,
+      purpose: 'Monthly Rent',
+      status: 'Paid',
+      createdAt: '2026-10-18T10:00:00Z'
+    }
+  ];
+
+  const result = deduplicatePayments(records);
+  assert.equal(result.length, 3);
+  assert.equal(result[0].purpose, 'Parking Space Fee');
+  assert.equal(result[1].purpose, 'Monthly Rent');
+  assert.equal(result[2].amount, 1200);
 });

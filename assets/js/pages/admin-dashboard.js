@@ -12,7 +12,7 @@ import { initCreateTenant } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
-import { escapeHtml, formatPHP, initials } from '../lib/format.js';
+import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
 import { Toast } from '../render/toast.js';
 
@@ -963,7 +963,7 @@ function initAdminPaymentCalendar() {
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'payments'),
     (snap) => {
-      calPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      calPayments = deduplicatePayments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       renderCalendar();
     },
     (err) => console.error('Calendar payments listener failed:', err)
@@ -1149,7 +1149,8 @@ function initAdminOverviewActivity() {
     supabaseData.onSnapshot(
       supabaseData.collection(supabase, col),
       (snap) => {
-        state[col] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const rawItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        state[col] = col === 'payments' ? deduplicatePayments(rawItems) : rawItems;
         renderActivity();
       },
       (err) => console.warn(`Overview activity listener (${col}) failed:`, err)
