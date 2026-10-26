@@ -1337,16 +1337,20 @@ html[data-auth-pending] body {
     padding: 10px 14px;
     gap: 8px;
   }
+
   .brand-logo {
     width: 32px;
     height: 32px;
   }
+
   .brand-title-wrap h1 {
     font-size: 15px;
   }
+
   .user-info {
     gap: 8px;
   }
+
   .user-email {
     max-width: 115px;
     overflow: hidden;
@@ -1354,6 +1358,7 @@ html[data-auth-pending] body {
     white-space: nowrap;
     font-size: 12px;
   }
+
   .logout-btn {
     padding: 6px 10px;
     font-size: 13px;
@@ -1371,4 +1376,331 @@ html[data-auth-pending] body {
 .cal-scroll-container .cal-weekdays,
 .cal-scroll-container .cal-grid {
   min-width: 520px;
+}
+
+/* 3D X-Ray Building View Tab */
+.building-3d-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 1024px) {
+  .building-3d-layout {
+    grid-template-columns: 1fr 370px;
+  }
+}
+
+.building-3d-viewport-card,
+.building-3d-info-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.building-3d-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.building-3d-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.building-3d-live-badge {
+  background: #0f172a;
+  color: #38bdf8;
+  border: 1px solid #0284c7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.building-3d-heading {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.building-3d-sub {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+}
+
+.building-3d-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.building-3d-btn {
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.building-3d-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.building-3d-btn.active {
+  background: #047857;
+  color: #ffffff;
+  border-color: #047857;
+}
+
+.building-3d-floor-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.building-3d-floor-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.building-3d-floor-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.building-3d-floor-pill:hover {
+  background: #e2e8f0;
+}
+
+.building-3d-floor-pill.active {
+  background: #0f172a;
+  color: #38bdf8;
+  border-color: #0284c7;
+}
+
+.building-3d-canvas-wrap {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #1e293b;
+  background: #08101d;
+}
+
+.building-3d-canvas {
+  width: 100%;
+  height: 500px;
+}
+
+@media (max-width: 640px) {
+  .building-3d-canvas {
+    height: 360px;
+  }
+}
+
+.building-3d-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 10px 14px;
+  background: #0f172a;
+  border-top: 1px solid #1e293b;
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot-own {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.legend-dot-room {
+  background: #38bdf8;
+}
+
+.legend-dot-comm {
+  background: #f59e0b;
+}
+
+.legend-dot-corridor {
+  background: #ef4444;
+}
+
+.building-3d-inspector-head {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+.building-3d-unit-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #d1fae5;
+  color: #065f46;
+  margin-bottom: 8px;
+}
+
+.building-3d-unit-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.building-3d-unit-subtitle {
+  font-size: 13px;
+  color: #475569;
+  margin: 0;
+}
+
+.building-3d-specs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.building-3d-spec-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.spec-label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.spec-val {
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.building-3d-foundation-note {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.building-3d-foundation-note strong {
+  display: block;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.building-3d-foundation-note p {
+  margin: 0 0 10px 0;
+  line-height: 1.45;
+}
+
+.building-3d-feature-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.building-3d-chip {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.building-3d-dir-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.building-3d-dir-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.building-3d-dir-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.building-3d-dir-item:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.building-3d-dir-item.active {
+  background: #ecfdf5;
+  border-color: #059669;
 }

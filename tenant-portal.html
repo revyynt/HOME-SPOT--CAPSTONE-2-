@@ -70,6 +70,14 @@
         </svg>
         <span>Profile</span>
       </button>
+      <button class="tab" data-tab-target="building-3d">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+          </path>
+        </svg>
+        <span>3D Building View</span>
+      </button>
     </div>
 
     <div id="messages-tab" class="tab-content active">
@@ -367,6 +375,116 @@
         <button class="save-profile-btn" data-action="save-profile">Save Changes</button>
       </div>
     </div>
+
+    <div id="building-3d-tab" class="tab-content">
+      <div class="building-3d-layout">
+        <div class="building-3d-viewport-card">
+          <div class="building-3d-header">
+            <div>
+              <div class="building-3d-title-row">
+                <span class="building-3d-live-badge">X-RAY BLUEPRINT</span>
+                <h2 class="building-3d-heading">MJP Residences — 3D Building &amp; Room Foundation</h2>
+              </div>
+              <p class="building-3d-sub">
+                Drag to rotate 360° • Scroll to zoom • Click any room to inspect its floor foundation
+              </p>
+            </div>
+            <div class="building-3d-controls">
+              <button type="button" class="building-3d-btn active" id="tenant3DXrayBtn" data-action="tenant-3d-xray">
+                X-Ray Mode: ON
+              </button>
+              <button type="button" class="building-3d-btn active" id="tenant3DSpinBtn" data-action="tenant-3d-spin">
+                Auto-Spin: ON
+              </button>
+              <button type="button" class="building-3d-btn" data-action="tenant-3d-my-unit">
+                My Unit
+              </button>
+              <button type="button" class="building-3d-btn" data-action="tenant-3d-reset">
+                Reset View
+              </button>
+            </div>
+          </div>
+
+          <div class="building-3d-floor-bar">
+            <span class="building-3d-floor-label">Floor Filter:</span>
+            <button type="button" class="building-3d-floor-pill active" data-action="tenant-3d-floor" data-floor="all">
+              All Floors
+            </button>
+            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="1">
+              1F • Commercial &amp; Water Station
+            </button>
+            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="2">
+              2F • Rooms (101–103)
+            </button>
+            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="3">
+              3F • Rooms (201–203)
+            </button>
+            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="4">
+              4F • Rooms &amp; Back Deck
+            </button>
+            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="5">
+              5F • Upper Rooms (401 &amp; 410)
+            </button>
+          </div>
+
+          <div class="building-3d-canvas-wrap">
+            <div id="tenantBuilding3DViewport" class="building-3d-canvas"></div>
+            <div class="building-3d-legend">
+              <span class="legend-item"><span class="legend-dot legend-dot-own"></span> Your Assigned Unit</span>
+              <span class="legend-item"><span class="legend-dot legend-dot-room"></span> Triple Room (2F–5F)</span>
+              <span class="legend-item"><span class="legend-dot legend-dot-comm"></span> 1F Commercial Space</span>
+              <span class="legend-item"><span class="legend-dot" style="background:#22d3ee"></span> 1F Owner Water
+                Station</span>
+              <span class="legend-item"><span class="legend-dot legend-dot-corridor"></span> Side Hallway &amp; Rear
+                Stairs</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="building-3d-info-card">
+          <div class="building-3d-inspector-head">
+            <span id="tenant3DUnitBadge" class="building-3d-unit-badge">YOUR ASSIGNED UNIT</span>
+            <h3 id="tenant3DUnitTitle" class="building-3d-unit-title">Room 201</h3>
+            <p id="tenant3DUnitSubtitle" class="building-3d-unit-subtitle">3rd Floor (Front Wing) • Triple Occupancy
+              Room</p>
+          </div>
+
+          <div class="building-3d-specs-grid">
+            <div class="building-3d-spec-box">
+              <span class="spec-label">Floor Level</span>
+              <strong id="tenant3DUnitFloor" class="spec-val">3rd Floor</strong>
+            </div>
+            <div class="building-3d-spec-box">
+              <span class="spec-label">Floor Area</span>
+              <strong id="tenant3DUnitSize" class="spec-val">30 sqm</strong>
+            </div>
+            <div class="building-3d-spec-box">
+              <span class="spec-label">Capacity</span>
+              <strong id="tenant3DUnitCap" class="spec-val">3 Occupants</strong>
+            </div>
+            <div class="building-3d-spec-box">
+              <span class="spec-label">Monthly Rate</span>
+              <strong id="tenant3DUnitPrice" class="spec-val">₱5,000/mo</strong>
+            </div>
+          </div>
+
+          <div class="building-3d-foundation-note">
+            <strong>Interior Foundation Layout</strong>
+            <p id="tenant3DUnitDesc">
+              Front-to-back apartment room aligned along the right-side tiled hallway with red fire hose cabinet,
+              sliding hallway windows, private bathroom, and staircase access.
+            </p>
+            <div id="tenant3DUnitFeatures" class="building-3d-feature-chips"></div>
+          </div>
+
+          <div class="building-3d-directory">
+            <div class="building-3d-dir-title">Building Unit Directory (1F–5F)</div>
+            <div id="tenant3DUnitList" class="building-3d-dir-list"
+              style="max-height: 260px; overflow-y: auto; padding-right: 4px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PayMongo QR Ph Payment Modal -->
@@ -401,7 +519,9 @@
         </div>
 
         <div class="qr-wrapper">
-          <img id="qrModalImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' fill='%23f1f5f9'/%3E%3C/svg%3E" alt="PayMongo QR Ph Code" />
+          <img id="qrModalImage"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' fill='%23f1f5f9'/%3E%3C/svg%3E"
+            alt="PayMongo QR Ph Code" />
         </div>
 
         <div style="

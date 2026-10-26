@@ -220,6 +220,7 @@ import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } fro
 import { initPanoramaViewer } from '../lib/panorama.js';
 import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
+import { initBuilding3DViewer, BUILDING_UNITS, resolveBuildingUnit } from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
 import { attr } from '../lib/dom.js';
 
@@ -1537,6 +1538,238 @@ function initAdminOverviewActivity() {
   }
 }
 
+function initAdminBuilding3D() {
+  const viewport = document.getElementById('adminBuilding3DViewport');
+  if (!viewport) return;
+
+  let viewer = null;
+  let tenantsList = [];
+  let selectedUnitId = 'Room 201';
+  let xrayEnabled = true;
+  let spinEnabled = true;
+
+  const getOccupantsForUnit = (unitId) =>
+    tenantsList.filter((t) => {
+      const resolved = resolveBuildingUnit(t.room, t.dormName);
+      return resolved && resolved.id === unitId;
+    });
+
+  const renderInspector = () => {
+    const unit = BUILDING_UNITS.find((u) => u.id === selectedUnitId) || BUILDING_UNITS[0];
+    if (!unit) return;
+
+    const occupants = getOccupantsForUnit(unit.id);
+    const isOccupied = occupants.length > 0;
+
+    const statusBadge = document.getElementById('admin3DUnitStatusBadge');
+    if (statusBadge) {
+      statusBadge.textContent = isOccupied
+        ? `● Occupied (${occupants.length})`
+        : '○ Vacant Unit';
+      statusBadge.className = isOccupied
+        ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800'
+        : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800';
+    }
+
+    const floorBadge = document.getElementById('admin3DUnitFloorBadge');
+    if (floorBadge) floorBadge.textContent = `${unit.floorLabel} • ${unit.wing}`;
+
+    const titleEl = document.getElementById('admin3DUnitTitle');
+    if (titleEl) titleEl.textContent = unit.id;
+
+    const typeEl = document.getElementById('admin3DUnitType');
+    if (typeEl) typeEl.textContent = `${unit.type} • ${unit.size}`;
+
+    const occEl = document.getElementById('admin3DUnitOccupancy');
+    if (occEl) {
+      occEl.textContent =
+        unit.type === 'Commercial Space'
+          ? `${occupants.length} / 1 Lease`
+          : `${occupants.length} / ${unit.capacity} Occupants`;
+    }
+
+    const priceEl = document.getElementById('admin3DUnitPrice');
+    if (priceEl) priceEl.textContent = `${formatPHP(unit.price)}/mo`;
+
+    const tenantsEl = document.getElementById('admin3DUnitTenantsList');
+    if (tenantsEl) {
+      if (!occupants.length) {
+        tenantsEl.innerHTML =
+          '<p class="text-xs text-gray-400 italic py-1">No active tenants assigned to this unit yet.</p>';
+      } else {
+        tenantsEl.innerHTML = occupants
+          .map(
+            (t) => `
+          <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-emerald-50/70 border border-emerald-200">
+            <div class="min-w-0">
+              <div class="font-bold text-gray-900 truncate">${escapeHtml(t.name || 'Tenant')}</div>
+              <div class="text-[11px] text-gray-500 truncate">${escapeHtml(t.email || '')} • ${escapeHtml(t.room || unit.id)}</div>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white text-emerald-700 border border-emerald-200 flex-shrink-0">
+              ${escapeHtml(formatPHP(Number(t.monthlyRent) || unit.price))}
+            </span>
+          </div>`
+          )
+          .join('');
+      }
+    }
+
+    const featsEl = document.getElementById('admin3DUnitFeatures');
+    if (featsEl) {
+      featsEl.innerHTML = (unit.features || [])
+        .map(
+          (f) =>
+            `<span class="px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(f)}</span>`
+        )
+        .join('');
+    }
+
+    const dirEl = document.getElementById('admin3DUnitDirectory');
+    if (dirEl) {
+      dirEl.innerHTML = BUILDING_UNITS.map((u) => {
+        const uOcc = getOccupantsForUnit(u.id);
+        const active = u.id === unit.id;
+        return `
+          <button type="button" data-action="admin-3d-select-unit" data-unit-id="${escapeHtml(u.id)}"
+            class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-left text-xs transition-colors ${active
+            ? 'bg-emerald-50 border-emerald-500 text-gray-900 font-bold'
+            : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'
+          }">
+            <div>
+              <span class="font-bold text-gray-900">${escapeHtml(u.id)}</span>
+              <span class="text-gray-500 ml-1">${escapeHtml(u.floorLabel)} (${escapeHtml(u.wing)})</span>
+            </div>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${uOcc.length > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'
+          }">
+              ${u.type === 'Commercial Space'
+            ? uOcc.length > 0
+              ? 'Leased'
+              : 'Available'
+            : `${uOcc.length}/${u.capacity} Beds`
+          }
+            </span>
+          </button>`;
+      }).join('');
+    }
+  };
+
+  const ensureViewer = () => {
+    if (!viewer) {
+      viewer = initBuilding3DViewer(viewport, {
+        mode: 'admin',
+        tenants: tenantsList,
+        onSelectUnit: (unit) => {
+          selectedUnitId = unit.id;
+          renderInspector();
+        }
+      });
+      viewer.selectUnit(selectedUnitId);
+    } else {
+      viewer.resize();
+      viewer.setTenants(tenantsList);
+    }
+    renderInspector();
+  };
+
+  supabaseData.onSnapshot(
+    supabaseData.collection(supabase, 'tenants'),
+    (snap) => {
+      tenantsList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (viewer) viewer.setTenants(tenantsList);
+      renderInspector();
+    },
+    (err) => console.warn('3D Building tenants listener error:', err)
+  );
+
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+
+    const tabBtn = target.closest('[data-tab-button="building-3d"]');
+    if (tabBtn) {
+      setTimeout(ensureViewer, 50);
+      return;
+    }
+
+    const actionBtn = target.closest('[data-action]');
+    if (!actionBtn) return;
+
+    switch (actionBtn.dataset.action) {
+      case 'admin-3d-xray':
+        ensureViewer();
+        xrayEnabled = !xrayEnabled;
+        if (viewer) viewer.setXrayMode(xrayEnabled);
+        actionBtn.textContent = xrayEnabled ? 'X-Ray Mode: ON' : 'X-Ray Mode: OFF';
+        actionBtn.className = xrayEnabled
+          ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors'
+          : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
+        break;
+      case 'admin-3d-spin':
+        ensureViewer();
+        spinEnabled = !spinEnabled;
+        if (viewer) viewer.setAutoRotate(spinEnabled);
+        actionBtn.textContent = spinEnabled ? 'Auto-Spin: ON' : 'Auto-Spin: OFF';
+        actionBtn.className = spinEnabled
+          ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white border border-slate-800 hover:bg-slate-900 transition-colors'
+          : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
+        break;
+      case 'admin-3d-reset': {
+        ensureViewer();
+        xrayEnabled = true;
+        spinEnabled = true;
+        if (viewer) {
+          viewer.setXrayMode(true);
+          viewer.setAutoRotate(true);
+          viewer.setFloorFilter('all');
+          viewer.resetCamera();
+        }
+        const xrayBtn = document.getElementById('admin3DXrayBtn');
+        if (xrayBtn) {
+          xrayBtn.textContent = 'X-Ray Mode: ON';
+          xrayBtn.className =
+            'px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors';
+        }
+        const spinBtn = document.getElementById('admin3DSpinBtn');
+        if (spinBtn) {
+          spinBtn.textContent = 'Auto-Spin: ON';
+          spinBtn.className =
+            'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white border border-slate-800 hover:bg-slate-900 transition-colors';
+        }
+        document.querySelectorAll('[data-action="admin-3d-floor"]').forEach((pill) => {
+          pill.className =
+            pill.dataset.floor === 'all'
+              ? 'px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500'
+              : 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200';
+        });
+        break;
+      }
+      case 'admin-3d-floor': {
+        ensureViewer();
+        const floor = actionBtn.dataset.floor || 'all';
+        if (viewer) viewer.setFloorFilter(floor);
+        document.querySelectorAll('[data-action="admin-3d-floor"]').forEach((pill) => {
+          pill.className =
+            pill.dataset.floor === floor
+              ? 'px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500'
+              : 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200';
+        });
+        break;
+      }
+      case 'admin-3d-select-unit': {
+        ensureViewer();
+        const unitId = actionBtn.dataset.unitId || '';
+        if (unitId) {
+          selectedUnitId = unitId;
+          if (viewer) viewer.selectUnit(unitId);
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  });
+}
+
 guardPage({
   role: 'admin',
   redirectTo: 'login.html',
@@ -1558,6 +1791,7 @@ document.addEventListener(
     initAdminListings();
     initAdminPaymentCalendar();
     initAdminOverviewActivity();
+    initAdminBuilding3D();
   },
   { once: true }
 );

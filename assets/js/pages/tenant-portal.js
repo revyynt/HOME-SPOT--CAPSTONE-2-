@@ -18,6 +18,7 @@ import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
+import { initBuilding3DViewer, BUILDING_UNITS, resolveBuildingUnit } from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
@@ -259,9 +260,129 @@ function populateTenantUI() {
 
   updateAmountDueUI();
   renderTenantPaymentCalendar();
+  syncTenant3DBuildingState();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+let tenantBuilding3D = null;
+let tenantSelected3DUnitId = '';
+let tenant3DXrayEnabled = true;
+let tenant3DSpinEnabled = true;
+
+function renderTenant3DUnitInspector(unit) {
+  if (!unit) return;
+  const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm);
+  const isOwnUnit = ownUnit && ownUnit.id === unit.id;
+
+  const badgeEl = document.getElementById('tenant3DUnitBadge');
+  if (badgeEl) {
+    badgeEl.textContent = isOwnUnit ? '● YOUR ASSIGNED UNIT' : `${unit.floorLabel.toUpperCase()} UNIT`;
+    badgeEl.style.background = isOwnUnit ? '#d1fae5' : '#e0f2fe';
+    badgeEl.style.color = isOwnUnit ? '#065f46' : '#0369a1';
+  }
+
+  const titleEl = document.getElementById('tenant3DUnitTitle');
+  if (titleEl) {
+    titleEl.textContent =
+      isOwnUnit && tenantRoom && tenantRoom.toLowerCase() !== unit.name.toLowerCase()
+        ? `${unit.name} (${tenantRoom})`
+        : unit.name;
+  }
+
+  const subEl = document.getElementById('tenant3DUnitSubtitle');
+  if (subEl) {
+    subEl.textContent = `${unit.floorLabel} (${unit.wing || unit.positionLabel}) • ${unit.type}`;
+  }
+
+  const floorEl = document.getElementById('tenant3DUnitFloor');
+  if (floorEl) floorEl.textContent = unit.floorLabel;
+
+  const sizeEl = document.getElementById('tenant3DUnitSize');
+  if (sizeEl) sizeEl.textContent = unit.size;
+
+  const capEl = document.getElementById('tenant3DUnitCap');
+  if (capEl) {
+    capEl.textContent =
+      unit.type === 'Commercial Space' ? 'Commercial Utility' : `${unit.capacity} Occupants`;
+  }
+
+  const priceEl = document.getElementById('tenant3DUnitPrice');
+  if (priceEl) {
+    const rate = isOwnUnit && tenantRent ? tenantRent : unit.price;
+    priceEl.textContent = `₱${Number(rate).toLocaleString()}/mo`;
+  }
+
+  const descEl = document.getElementById('tenant3DUnitDesc');
+  if (descEl) {
+    descEl.textContent =
+      unit.type === 'Commercial Space'
+        ? "1st Floor center-right storefront under the white canopy overhang — separated from the owner's MJ Parungao Purified Water Station on the left and the gated side hallway on the right."
+        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`;
+  }
+
+  const featsEl = document.getElementById('tenant3DUnitFeatures');
+  if (featsEl) {
+    featsEl.innerHTML = (unit.features || [])
+      .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
+      .join('');
+  }
+
+  const listEl = document.getElementById('tenant3DUnitList');
+  if (listEl) {
+    listEl.innerHTML = BUILDING_UNITS.map((u) => {
+      const isMine = ownUnit && ownUnit.id === u.id;
+      const isSelected = u.id === unit.id;
+      return `
+        <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
+          <div>
+            <strong style="color:#0f172a">${escapeHtml(u.id)}</strong>
+            <span style="color:#64748b;font-size:12px;margin-left:6px">${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
+          </div>
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${isMine ? '#d1fae5' : '#f1f5f9'};color:${isMine ? '#065f46' : '#475569'}">
+            ${isMine ? 'My Room' : escapeHtml(u.type === 'Commercial Space' ? '1F Commercial' : 'Triple Room')}
+          </span>
+        </button>`;
+    }).join('');
+  }
+}
+
+function syncTenant3DBuildingState() {
+  const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
+  if (!tenantSelected3DUnitId && ownUnit) {
+    tenantSelected3DUnitId = ownUnit.id;
+  }
+  const activeUnit =
+    BUILDING_UNITS.find((u) => u.id === tenantSelected3DUnitId) || ownUnit || BUILDING_UNITS[0];
+  renderTenant3DUnitInspector(activeUnit);
+
+  if (tenantBuilding3D) {
+    tenantBuilding3D.setTenantUnit(tenantRoom, tenantDorm);
+    tenantBuilding3D.selectUnit(activeUnit.id);
+  }
+}
+
+function ensureTenantBuilding3DInitialized() {
+  const viewport = document.getElementById('tenantBuilding3DViewport');
+  if (!viewport) return;
+  if (!tenantBuilding3D) {
+    const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
+    tenantSelected3DUnitId = ownUnit.id;
+    tenantBuilding3D = initBuilding3DViewer(viewport, {
+      mode: 'tenant',
+      tenantRoom,
+      tenantDorm,
+      onSelectUnit: (unit) => {
+        tenantSelected3DUnitId = unit.id;
+        renderTenant3DUnitInspector(unit);
+      }
+    });
+    renderTenant3DUnitInspector(ownUnit);
+  } else {
+    tenantBuilding3D.resize();
+    syncTenant3DBuildingState();
+  }
 }
 
 let tenantCalYear = new Date().getFullYear();
@@ -468,12 +589,14 @@ function switchTab(tabName, evt) {
   if (targetContent) targetContent.classList.add('active');
   // The caller passes the triggering element. `window.event` is a legacy
   // global and is not reliable from module code.
-  const target = evt?.target ?? evt;
-  if (target && target.classList) {
+  const target = evt?.target?.closest?.('[data-tab-target]') ?? evt?.target ?? evt;
+  if (target && target.classList && target.classList.contains('tab')) {
     target.classList.add('active');
   } else {
     tabButtons.forEach((btn) => {
-      if (btn.textContent.toLowerCase().includes(tabName)) btn.classList.add('active');
+      if (btn.dataset.tabTarget === tabName || btn.textContent.toLowerCase().includes(tabName)) {
+        btn.classList.add('active');
+      }
     });
   }
   if (tabName === 'messages') {
@@ -484,6 +607,11 @@ function switchTab(tabName, evt) {
   }
   if (tabName === 'payment') {
     loadTenantPaymentHistory();
+  }
+  if (tabName === 'building-3d') {
+    setTimeout(() => {
+      ensureTenantBuilding3DInitialized();
+    }, 40);
   }
 }
 
@@ -1820,6 +1948,81 @@ document.addEventListener('click', function (event) {
       tenantSelectedDateKey = button.dataset.dateKey || '';
       renderTenantPaymentCalendar();
       break;
+    case 'tenant-3d-xray': {
+      ensureTenantBuilding3DInitialized();
+      tenant3DXrayEnabled = !tenant3DXrayEnabled;
+      if (tenantBuilding3D) tenantBuilding3D.setXrayMode(tenant3DXrayEnabled);
+      button.classList.toggle('active', tenant3DXrayEnabled);
+      button.textContent = tenant3DXrayEnabled ? 'X-Ray Mode: ON' : 'X-Ray Mode: OFF';
+      break;
+    }
+    case 'tenant-3d-spin': {
+      ensureTenantBuilding3DInitialized();
+      tenant3DSpinEnabled = !tenant3DSpinEnabled;
+      if (tenantBuilding3D) tenantBuilding3D.setAutoRotate(tenant3DSpinEnabled);
+      button.classList.toggle('active', tenant3DSpinEnabled);
+      button.textContent = tenant3DSpinEnabled ? 'Auto-Spin: ON' : 'Auto-Spin: OFF';
+      break;
+    }
+    case 'tenant-3d-my-unit': {
+      ensureTenantBuilding3DInitialized();
+      const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
+      tenantSelected3DUnitId = ownUnit.id;
+      const floorStr = String(ownUnit.floor);
+      if (tenantBuilding3D) {
+        tenantBuilding3D.setFloorFilter(floorStr);
+        tenantBuilding3D.selectUnit(ownUnit.id);
+      }
+      document.querySelectorAll('[data-action="tenant-3d-floor"]').forEach((pill) => {
+        pill.classList.toggle('active', pill.dataset.floor === floorStr);
+      });
+      renderTenant3DUnitInspector(ownUnit);
+      break;
+    }
+    case 'tenant-3d-reset': {
+      ensureTenantBuilding3DInitialized();
+      tenant3DXrayEnabled = true;
+      tenant3DSpinEnabled = true;
+      if (tenantBuilding3D) {
+        tenantBuilding3D.setXrayMode(true);
+        tenantBuilding3D.setAutoRotate(true);
+        tenantBuilding3D.setFloorFilter('all');
+        tenantBuilding3D.resetCamera();
+      }
+      const xrayBtn = document.getElementById('tenant3DXrayBtn');
+      if (xrayBtn) {
+        xrayBtn.classList.add('active');
+        xrayBtn.textContent = 'X-Ray Mode: ON';
+      }
+      const spinBtn = document.getElementById('tenant3DSpinBtn');
+      if (spinBtn) {
+        spinBtn.classList.add('active');
+        spinBtn.textContent = 'Auto-Spin: ON';
+      }
+      document.querySelectorAll('[data-action="tenant-3d-floor"]').forEach((pill) => {
+        pill.classList.toggle('active', pill.dataset.floor === 'all');
+      });
+      break;
+    }
+    case 'tenant-3d-floor': {
+      ensureTenantBuilding3DInitialized();
+      const floor = button.dataset.floor || 'all';
+      if (tenantBuilding3D) tenantBuilding3D.setFloorFilter(floor);
+      document.querySelectorAll('[data-action="tenant-3d-floor"]').forEach((pill) => {
+        pill.classList.toggle('active', pill.dataset.floor === floor);
+      });
+      break;
+    }
+    case 'tenant-3d-select-unit': {
+      ensureTenantBuilding3DInitialized();
+      const unitId = button.dataset.unitId || '';
+      const unit = BUILDING_UNITS.find((u) => u.id === unitId);
+      if (unit) {
+        tenantSelected3DUnitId = unit.id;
+        if (tenantBuilding3D) tenantBuilding3D.selectUnit(unit.id);
+      }
+      break;
+    }
     default:
       break;
   }
