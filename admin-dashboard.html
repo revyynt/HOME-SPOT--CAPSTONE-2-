@@ -42,15 +42,15 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white rounded-lg shadow p-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-6 mb-8">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6">
         <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Total Listings</p>
-            <p id="totalListingsCount" class="text-3xl font-bold">2</p>
+          <div class="min-w-0">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Total Listings</p>
+            <p id="totalListingsCount" class="text-2xl sm:text-3xl font-bold">2</p>
           </div>
-          <div class="bg-blue-600 w-12 h-12 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-blue-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
               </path>
@@ -59,14 +59,14 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow p-6">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6">
         <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Active Bookings</p>
-            <p id="activeBookingsCount" class="text-3xl font-bold">0</p>
+          <div class="min-w-0">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Active Bookings</p>
+            <p id="activeBookingsCount" class="text-2xl sm:text-3xl font-bold">0</p>
           </div>
-          <div class="bg-green-600 w-12 h-12 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-green-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
@@ -74,14 +74,14 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow p-6">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6">
         <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Pending Requests</p>
-            <p id="pendingRequestsCount" class="text-3xl font-bold">0</p>
+          <div class="min-w-0">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Pending Requests</p>
+            <p id="pendingRequestsCount" class="text-2xl sm:text-3xl font-bold">0</p>
           </div>
-          <div class="bg-yellow-600 w-12 h-12 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-yellow-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
             </svg>
@@ -89,16 +89,31 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-lg shadow p-6">
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6">
         <div class="flex items-center justify-between">
-          <div>
-            <p class="text-sm text-gray-600 mb-1">Unread Messages</p>
-            <p id="unreadMessagesCount" class="text-3xl font-bold">0</p>
+          <div class="min-w-0">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Tenant Messages</p>
+            <p id="unreadTenantMessagesStatCount" class="text-2xl sm:text-3xl font-bold">0</p>
           </div>
-          <div class="bg-purple-600 w-12 h-12 rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-emerald-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-4 sm:p-6 col-span-2 md:col-span-1">
+        <div class="flex items-center justify-between">
+          <div class="min-w-0">
+            <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Unread Inquiries</p>
+            <p id="unreadInquiriesStatCount" class="text-2xl sm:text-3xl font-bold">0</p>
+          </div>
+          <div class="bg-purple-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
               </path>
             </svg>
           </div>

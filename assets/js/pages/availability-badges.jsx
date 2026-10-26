@@ -56,8 +56,7 @@ function AvailabilityBadge({ roomName, defaultAvailable }) {
 
   return (
     <span className="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5">
-      <span className="w-2 h-2 bg-white rounded-full animate-ping absolute"></span>
-      <span className="w-2 h-2 bg-white rounded-full relative"></span>
+      <span className="w-2 h-2 bg-white rounded-full"></span>
       {available} Available
     </span>
   );

@@ -313,15 +313,19 @@ export function renderMessages(docs) {
           ? `<div class="text-xs text-gray-500 mt-1">${escapeHtml(data.email)}</div>`
           : '';
 
-    const actionButtons = isSupport
-      ? `
+    const targetSubject = isSupport
+      ? (subject || 'Customer Support Inquiry')
+      : (subject || (data.room ? `Inquiry regarding ${data.room}` : 'Property Inquiry'));
+
+    const actionButtons = `
         <button
           type="button"
           data-action="gcompose"
           data-id="${attr(doc.id)}"
           data-email="${attr(data.email || '')}"
           data-name="${attr(data.name || '')}"
-          data-subject="${attr(subject || 'Customer Support Inquiry')}"
+          ${!isSupport ? `data-room="${attr(data.room || data.property || '')}"` : ''}
+          data-subject="${attr(targetSubject)}"
           data-message="${attr(displayMessage)}"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
         >
@@ -330,10 +334,6 @@ export function renderMessages(docs) {
           </svg>
           Reply via Gmail
         </button>
-        <button data-action="delete-message" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600 text-sm font-medium">Delete</button>
-      `
-      : `
-        <button data-action="reply" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-sm font-medium">Reply</button>
         <button data-action="delete-message" data-id="${attr(doc.id)}" class="px-4 py-2 border rounded-lg hover:bg-gray-50 text-red-600 text-sm font-medium">Delete</button>
       `;
 
@@ -395,18 +395,32 @@ export function renderMessages(docs) {
  * Also marks the message read in Supabase.
  * @param {{ email: string, name?: string, subject?: string, message?: string, id?: string }} params
  */
-export function openGCompose({ email, name, subject, message, id }) {
+export function formatRecipientName(rawName) {
+  if (!rawName) return 'there';
+  const clean = rawName.includes(',') ? rawName.split(',')[1].trim() : rawName.trim();
+  return clean
+    .toLowerCase()
+    .replace(/(?:^|[\s-])\S/g, (char) => char.toUpperCase());
+}
+
+/**
+ * Opens Gmail compose in a new tab with recipient, subject, and quoted inquiry message.
+ * Also marks the message read in Supabase.
+ * @param {{ email: string, name?: string, subject?: string, message?: string, id?: string, room?: string }} params
+ */
+export function openGCompose({ email, name, subject, message, id, room }) {
   if (!email) {
     Toast.error('No email address available for this message.');
     return;
   }
-  const cleanSubject = subject || 'Customer Support Inquiry';
-  const su = encodeURIComponent(`Re: [HomeSpot Support] ${cleanSubject}`);
-  const bodyText = `Hi ${name || 'Customer'},` +
-    `\n\nThank you for reaching out to HomeSpot Customer Support.` +
-    `\n\nRegarding your inquiry:` +
-    `\n"${message || ''}"` +
-    `\n\n\n\nBest regards,\nHomeSpot Support Team\nMJP Residences`;
+  const formattedName = formatRecipientName(name);
+  const cleanSubject = subject || (room ? `Inquiry regarding ${room}` : 'Public Inquiry');
+  const su = encodeURIComponent(`Re: [HomeSpot] ${cleanSubject}`);
+  const bodyText = `Hi ${formattedName},\n\n` +
+    'Thank you for reaching out to HomeSpot.\n\n' +
+    'Regarding your inquiry:\n' +
+    `"${message || ''}"\n\n\n\n` +
+    'Best regards,\nHomeSpot Support Team\nMJP Residences';
   const body = encodeURIComponent(bodyText);
   const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
 
@@ -500,11 +514,21 @@ export function watchMessages(onUnreadCount) {
         tenantBadge.textContent = tenantUnread;
         tenantBadge.classList.toggle('hidden', tenantUnread === 0);
       }
+      const tenantStat = document.getElementById('unreadTenantMessagesStatCount');
+      if (tenantStat) {
+        tenantStat.textContent = tenantUnread;
+      }
+
       const inquiryBadge = document.getElementById('unreadInquiriesCount');
       if (inquiryBadge) {
         inquiryBadge.textContent = inquiryUnread;
         inquiryBadge.classList.toggle('hidden', inquiryUnread === 0);
       }
+      const inquiryStat = document.getElementById('unreadInquiriesStatCount');
+      if (inquiryStat) {
+        inquiryStat.textContent = inquiryUnread;
+      }
+
       const supportUnread = allDocs.filter(
         (doc) =>
           (doc.data().status === 'Unread' || doc.data().status === 'New') &&
@@ -518,7 +542,12 @@ export function watchMessages(onUnreadCount) {
         supportBadge.classList.toggle('hidden', supportUnread === 0);
       }
 
-      onUnreadCount?.(tenantUnread + inquiryUnread + supportUnread);
+      onUnreadCount?.({
+        total: tenantUnread + inquiryUnread + supportUnread,
+        tenantUnread,
+        inquiryUnread,
+        supportUnread
+      });
       renderMessages(allDocs);
     },
     (error) => {

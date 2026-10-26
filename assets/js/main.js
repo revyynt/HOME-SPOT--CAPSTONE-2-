@@ -102,8 +102,7 @@ function renderLandingRoomCard(room) {
           ${badgeHtml}
           <div class="absolute top-3 right-3" data-availability-room="${escapeHtml(room.name)}" data-default-available="${escapeHtml(room.available)}">
             <span class="pulse-badge ${availClass} text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5">
-              <span class="w-2 h-2 bg-white rounded-full ${room.available > 0 ? 'animate-ping' : ''} absolute"></span>
-              <span class="w-2 h-2 bg-white rounded-full relative"></span>
+              <span class="w-2 h-2 bg-white rounded-full"></span>
               ${escapeHtml(availText)}
             </span>
           </div>
@@ -119,11 +118,11 @@ function renderLandingRoomCard(room) {
         </div>
       </div>
       <div class="px-5 pb-5">
-        <div class="flex items-end justify-between bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-3 border border-blue-100">
+        <div class="flex items-end justify-between pt-3 border-t border-slate-100">
           <div>
             <div class="text-xs text-gray-500">Starting at</div>
             <div class="flex items-baseline gap-1">
-              <span data-room-price class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">${escapeHtml(formatRoomPrice(room.price, false))}</span>
+              <span data-room-price class="text-2xl font-bold text-slate-900 tabular-nums">${escapeHtml(formatRoomPrice(room.price, false))}</span>
               <span class="text-gray-500 text-sm">/month</span>
             </div>
           </div>
@@ -197,8 +196,15 @@ function initAdminRealtime() {
     ),
     import('./render/messages.js').then((m) =>
       m.watchMessages((unread) => {
-        const el = byId('unreadMessagesCount');
-        if (el) el.textContent = unread;
+        const total = typeof unread === 'object' ? unread.total : unread;
+        const tenant = typeof unread === 'object' ? unread.tenantUnread : 0;
+        const inquiry = typeof unread === 'object' ? unread.inquiryUnread : total;
+        const elTotal = byId('unreadMessagesCount');
+        if (elTotal) elTotal.textContent = total;
+        const elTenant = byId('unreadTenantMessagesStatCount');
+        if (elTenant) elTenant.textContent = tenant;
+        const elInquiry = byId('unreadInquiriesStatCount');
+        if (elInquiry) elInquiry.textContent = inquiry;
       })
     )
   ]);
@@ -241,8 +247,8 @@ async function initAdminActions() {
         messages.deleteMessage(id);
         break;
       case 'gcompose': {
-        const { email, name, subject, message } = trigger.dataset;
-        messages.openGCompose({ email, name, subject, message, id });
+        const { email, name, subject, message, room } = trigger.dataset;
+        messages.openGCompose({ email, name, subject, message, id, room });
         break;
       }
       case 'select-chat':
