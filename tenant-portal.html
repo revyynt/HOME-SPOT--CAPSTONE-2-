@@ -84,7 +84,7 @@
 
         <div class="chat-messages" id="chatMessages">
           <div class="no-messages-placeholder"
-            style="text-align: center; color: #94a3b8; padding: 40px 20px; font-size: 14px">
+            style="text-align: center; color: #64748b; padding: 40px 20px; font-size: 14px">
             No messages yet. Send a message below to reach the property administrator.
           </div>
         </div>
@@ -133,7 +133,7 @@
               <div class="payment-summary-item">
                 <span class="payment-summary-label">Amount Due:</span>
                 <span class="payment-summary-value" id="summaryAmountDue"
-                  style="color: #059669; font-size: 18px; font-weight: 700">₱10,000.00</span>
+                  style="color: #065f46; font-size: 18px; font-weight: 700">₱10,000.00</span>
               </div>
             </div>
 
@@ -183,14 +183,14 @@
                     margin-top: 14px;
                     margin-bottom: 6px;
                   ">
-                <span style="font-size: 11px; color: #64748b; font-weight: 500">Accepted via PayMongo:</span>
+                <span style="font-size: 12px; color: #64748b; font-weight: 500">Accepted via PayMongo:</span>
                 <span style="
                       background: #eff6ff;
                       color: #1e40af;
                       border: 1px solid #bfdbfe;
                       border-radius: 4px;
                       padding: 2px 7px;
-                      font-size: 11px;
+                      font-size: 12px;
                       font-weight: 600;
                     ">💳 Card (Visa/MC)</span>
                 <span style="
@@ -199,7 +199,7 @@
                       border: 1px solid #a7f3d0;
                       border-radius: 4px;
                       padding: 2px 7px;
-                      font-size: 11px;
+                      font-size: 12px;
                       font-weight: 600;
                     ">📱 GCash</span>
                 <span style="
@@ -208,7 +208,7 @@
                       border: 1px solid #bbf7d0;
                       border-radius: 4px;
                       padding: 2px 7px;
-                      font-size: 11px;
+                      font-size: 12px;
                       font-weight: 600;
                     ">🟢 Maya</span>
                 <span style="
@@ -217,7 +217,7 @@
                       border: 1px solid #e9d5ff;
                       border-radius: 4px;
                       padding: 2px 7px;
-                      font-size: 11px;
+                      font-size: 12px;
                       font-weight: 600;
                     ">🏁 GrabPay</span>
                 <span style="
@@ -226,7 +226,7 @@
                       border: 1px solid #fed7aa;
                       border-radius: 4px;
                       padding: 2px 7px;
-                      font-size: 11px;
+                      font-size: 12px;
                       font-weight: 600;
                     ">🔳 QR Ph</span>
               </div>
@@ -315,7 +315,7 @@
               </thead>
               <tbody id="paymentHistoryTableBody">
                 <tr>
-                  <td colspan="7" style="text-align: center; color: #9ca3af; padding: 24px">
+                  <td colspan="7" style="text-align: center; color: #4b5563; padding: 24px">
                     Loading your payment history...
                   </td>
                 </tr>
@@ -381,7 +381,7 @@
               background: none;
               border: none;
               font-size: 20px;
-              color: #94a3b8;
+              color: #64748b;
               cursor: pointer;
               padding: 4px 8px;
             ">
@@ -392,16 +392,16 @@
         <div style="font-size: 13px; color: #64748b; margin-bottom: 4px">
           Merchant: <strong>MJP Residences</strong>
         </div>
-        <div style="font-size: 24px; font-weight: 700; color: #059669" id="qrModalAmount">
+        <div style="font-size: 24px; font-weight: 700; color: #065f46" id="qrModalAmount">
           ₱5,000.00
         </div>
-        <div style="font-size: 12px; color: #94a3b8; margin-top: 2px">
+        <div style="font-size: 12px; color: #64748b; margin-top: 2px">
           Ref:
           <span id="qrModalRef" style="font-family: monospace; color: #475569">REF-123456</span>
         </div>
 
         <div class="qr-wrapper">
-          <img id="qrModalImage" src="" alt="PayMongo QR Ph Code" />
+          <img id="qrModalImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' fill='%23f1f5f9'/%3E%3C/svg%3E" alt="PayMongo QR Ph Code" />
         </div>
 
         <div style="
@@ -439,7 +439,7 @@
         </button>
         <button id="confirmQrBtn" data-action="confirm-qr-payment" style="
               padding: 10px 20px;
-              background: #10b981;
+              background: #047857;
               border: none;
               border-radius: 6px;
               color: white;
@@ -465,7 +465,7 @@
               background: none;
               border: none;
               font-size: 20px;
-              color: #94a3b8;
+              color: #64748b;
               cursor: pointer;
               padding: 4px 8px;
             ">
@@ -523,7 +523,7 @@
           <div class="receipt-row">
             <span class="receipt-row-label">PayMongo Token / ID</span>
             <span class="receipt-row-value" id="receiptTokenId"
-              style="font-family: monospace; font-size: 11px">pm_live_...</span>
+              style="font-family: monospace; font-size: 12px">pm_live_...</span>
           </div>
           <div class="receipt-row">
             <span class="receipt-row-label">Date & Time</span>
@@ -531,7 +531,7 @@
           </div>
           <div class="receipt-row">
             <span class="receipt-row-label" id="receiptAmountLabel">Amount Paid</span>
-            <span class="receipt-row-value" id="receiptAmount" style="color: #059669">₱5,000.00</span>
+            <span class="receipt-row-value" id="receiptAmount" style="color: #065f46">₱5,000.00</span>
           </div>
         </div>
       </div>
@@ -539,9 +539,9 @@
         <button data-action="print-receipt" id="receiptPrintBtn" style="
               padding: 10px 18px;
               background: white;
-              border: 1px solid #10b981;
+              border: 1px solid #047857;
               border-radius: 6px;
-              color: #10b981;
+              color: #047857;
               cursor: pointer;
               font-size: 13px;
               font-weight: 600;
@@ -558,7 +558,7 @@
         </button>
         <button data-action="close-receipt-modal" id="receiptCloseBtn" style="
               padding: 10px 22px;
-              background: #10b981;
+              background: #047857;
               border: none;
               border-radius: 6px;
               color: white;

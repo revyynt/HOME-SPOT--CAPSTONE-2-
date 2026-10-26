@@ -341,3 +341,21 @@ textarea.form-input {
     display: none;
   }
 }
+/* Typography Scale (Ensure >= 1.25x steps) */
+h1 { font-size: 2.25rem; line-height: 2.5rem; }
+h2 { font-size: 1.75rem; line-height: 2rem; }
+h3 { font-size: 1.25rem; line-height: 1.75rem; }
+h4 { font-size: 1rem; line-height: 1.5rem; }
+
+/* Browser Surface Styling */
+::selection {
+  background-color: #dbeafe;
+  color: #1e3a8a;
+}
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
