@@ -197,8 +197,15 @@ function initAdminRealtime() {
     ),
     import('./render/messages.js').then((m) =>
       m.watchMessages((unread) => {
-        const el = byId('unreadMessagesCount');
-        if (el) el.textContent = unread;
+        const total = typeof unread === 'object' ? unread.total : unread;
+        const tenant = typeof unread === 'object' ? unread.tenantUnread : 0;
+        const inquiry = typeof unread === 'object' ? unread.inquiryUnread : total;
+        const elTotal = byId('unreadMessagesCount');
+        if (elTotal) elTotal.textContent = total;
+        const elTenant = byId('unreadTenantMessagesStatCount');
+        if (elTenant) elTenant.textContent = tenant;
+        const elInquiry = byId('unreadInquiriesStatCount');
+        if (elInquiry) elInquiry.textContent = inquiry;
       })
     )
   ]);
