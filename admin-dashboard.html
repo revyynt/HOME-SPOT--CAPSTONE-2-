@@ -157,6 +157,10 @@
           <span id="unreadSupportCount"
             class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full hidden">0</span>
         </button>
+        <button data-tab-button="building-3d" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
+          <span>3D Building</span>
+          <span class="bg-sky-100 text-sky-800 text-xs font-semibold px-2 py-0.5 rounded-full">X-Ray</span>
+        </button>
       </div>
 
       <!-- Tab Content -->
@@ -335,14 +339,22 @@
             <div class="flex items-center gap-3 w-full sm:w-auto">
               <select id="tenantRoomFilter"
                 class="px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
-                <option value="">All Rooms & Units</option>
-                <option value="Room 101">Room 101</option>
+                <option value="">All Rooms &amp; Units</option>
+                <option value="Commercial">1F • Commercial Space</option>
+                <option value="Room 101">2F • Room 101</option>
+                <option value="Room 102">2F • Room 102</option>
+                <option value="Room 103">2F • Room 103</option>
+                <option value="Room 201">3F • Room 201</option>
+                <option value="Room 202">3F • Room 202</option>
+                <option value="Room 203">3F • Room 203</option>
+                <option value="Room 301">4F • Room 301</option>
+                <option value="Room 302">4F • Room 302</option>
+                <option value="Room 303">4F • Room 303</option>
+                <option value="Room 401">5F • Room 401</option>
+                <option value="Room 402">5F • Room 402</option>
+                <option value="Room 410">5F • Room 410</option>
                 <option value="Room 105">Room 105</option>
-                <option value="Room 201">Room 201</option>
                 <option value="Room 208">Room 208</option>
-                <option value="Room 302">Room 302</option>
-                <option value="Room 410">Room 410</option>
-                <option value="Commercial">Commercial</option>
               </select>
               <span id="tenantsSupabaseStatus" class="text-xs text-gray-500 hidden sm:inline-block">Syncing...</span>
             </div>
@@ -647,6 +659,134 @@
             </div>
           </div>
         </div>
+
+        <!-- 3D Building X-Ray Tab -->
+        <div data-tab-content="building-3d" class="hidden">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
+            <div>
+              <div class="flex items-center gap-2.5 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500">
+                  THREE.JS X-RAY BLUEPRINT
+                </span>
+                <h3 class="text-xl font-bold text-gray-900">MJP Residences — 3D Building &amp; Room Foundation</h3>
+              </div>
+              <p class="text-sm text-gray-600">
+                Interactive 3D architectural model with 1F Owner Water Station &amp; Commercial Space, 2F–5F Triple Occupancy Rooms (3 rooms per floor), side hallway, and rear staircase.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button type="button" id="admin3DXrayBtn" data-action="admin-3d-xray"
+                class="px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors">
+                X-Ray Mode: ON
+              </button>
+              <button type="button" id="admin3DSpinBtn" data-action="admin-3d-spin"
+                class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white border border-slate-800 hover:bg-slate-900 transition-colors">
+                Auto-Spin: ON
+              </button>
+              <button type="button" data-action="admin-3d-reset"
+                class="px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors">
+                Reset View
+              </button>
+            </div>
+          </div>
+
+          <!-- Floor Isolation Bar -->
+          <div class="flex flex-wrap items-center gap-2 mb-5 pb-4 border-b border-gray-200">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-500 mr-1">Isolate Floor:</span>
+            <button type="button" data-action="admin-3d-floor" data-floor="all"
+              class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500">
+              All Floors (1F–5F)
+            </button>
+            <button type="button" data-action="admin-3d-floor" data-floor="1"
+              class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+              1F • Commercial &amp; Water Station
+            </button>
+            <button type="button" data-action="admin-3d-floor" data-floor="2"
+              class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+              2F • Rooms (101–103)
+            </button>
+            <button type="button" data-action="admin-3d-floor" data-floor="3"
+              class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+              3F • Rooms (201–203)
+            </button>
+            <button type="button" data-action="admin-3d-floor" data-floor="4"
+              class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+              4F • Rooms &amp; Back Deck
+            </button>
+            <button type="button" data-action="admin-3d-floor" data-floor="5"
+              class="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200">
+              5F • Upper Rooms (401 &amp; 410)
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Left 8 cols: 3D X-Ray Viewport -->
+            <div class="lg:col-span-8 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-lg">
+              <div id="adminBuilding3DViewport" class="w-full h-[380px] sm:h-[520px]"></div>
+              <div class="px-4 py-3 bg-slate-900 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+                <div class="flex flex-wrap items-center gap-4">
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Occupied Unit
+                  </span>
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span> Vacant Room (2F–5F)
+                  </span>
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> 1F Commercial Space
+                  </span>
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> 1F Owner Water Station
+                  </span>
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Side Hallway &amp; Rear Stairs
+                  </span>
+                </div>
+                <span class="text-slate-400">Drag to orbit • Scroll to zoom • Click room to inspect</span>
+              </div>
+            </div>
+
+            <!-- Right 4 cols: Selected Unit & Tenant Occupancy Inspector -->
+            <div class="lg:col-span-4 space-y-4">
+              <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-xs">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <span id="admin3DUnitStatusBadge"
+                    class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+                    Occupied
+                  </span>
+                  <span id="admin3DUnitFloorBadge" class="text-xs font-semibold text-gray-500">3rd Floor • Front Wing</span>
+                </div>
+                <h4 id="admin3DUnitTitle" class="text-xl font-extrabold text-gray-900">Room 201</h4>
+                <p id="admin3DUnitType" class="text-sm text-gray-600 mb-4">Triple Occupancy Room • 30 sqm</p>
+
+                <div class="grid grid-cols-2 gap-2.5 mb-4 text-xs">
+                  <div class="p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                    <div class="text-gray-500 font-semibold uppercase">Occupancy</div>
+                    <div id="admin3DUnitOccupancy" class="text-sm font-bold text-gray-900 mt-0.5">0 / 3 Beds</div>
+                  </div>
+                  <div class="p-2.5 rounded-lg bg-gray-50 border border-gray-200">
+                    <div class="text-gray-500 font-semibold uppercase">Monthly Rate</div>
+                    <div id="admin3DUnitPrice" class="text-sm font-bold text-gray-900 mt-0.5">₱5,000/mo</div>
+                  </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-3 mb-4">
+                  <div class="text-xs font-bold uppercase text-gray-500 mb-2">Assigned Tenants in Unit</div>
+                  <div id="admin3DUnitTenantsList" class="space-y-2 text-xs text-gray-700"></div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-3">
+                  <div class="text-xs font-bold uppercase text-gray-500 mb-2">Foundation &amp; Hallway Features</div>
+                  <div id="admin3DUnitFeatures" class="flex flex-wrap gap-1.5"></div>
+                </div>
+              </div>
+
+              <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-xs">
+                <div class="text-xs font-bold uppercase text-gray-500 mb-2.5">All Building Units (1F–5F)</div>
+                <div id="admin3DUnitDirectory" class="space-y-1.5 max-h-[260px] overflow-y-auto pr-1"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -947,13 +1087,21 @@
               <select id="tenantRoom" required
                 class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white text-gray-800">
                 <option value="" disabled selected>Select Room / Unit</option>
-                <option value="Room 101">Room 101</option>
+                <option value="Commercial Space 1">1F • Commercial Space 1</option>
+                <option value="Room 101">2F • Room 101 (Front)</option>
+                <option value="Room 102">2F • Room 102 (Middle)</option>
+                <option value="Room 103">2F • Room 103 (Rear)</option>
+                <option value="Room 201">3F • Room 201 (Front)</option>
+                <option value="Room 202">3F • Room 202 (Middle)</option>
+                <option value="Room 203">3F • Room 203 (Rear)</option>
+                <option value="Room 301">4F • Room 301 (Front Balcony)</option>
+                <option value="Room 302">4F • Room 302 (Middle)</option>
+                <option value="Room 303">4F • Room 303 (Rear)</option>
+                <option value="Room 401">5F • Room 401 (Front)</option>
+                <option value="Room 402">5F • Room 402 (Middle)</option>
+                <option value="Room 410">5F • Room 410 (Rear)</option>
                 <option value="Room 105">Room 105</option>
-                <option value="Room 201">Room 201</option>
                 <option value="Room 208">Room 208</option>
-                <option value="Room 302">Room 302</option>
-                <option value="Room 410">Room 410</option>
-                <option value="Commercial Space 1">Commercial Space 1</option>
               </select>
             </div>
             <div>
