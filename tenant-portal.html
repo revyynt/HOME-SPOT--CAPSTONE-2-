@@ -102,193 +102,199 @@
     </div>
 
     <div id="payment-tab" class="tab-content">
-      <div class="payment-container">
-        <div class="paymongo-header-badge">
-          <div class="badge-left">
-            <span class="paymongo-live-dot"></span>
-            <span>Secured by <strong>PayMongo</strong></span>
-          </div>
-          <span class="paymongo-tag">Test Gateway</span>
-        </div>
+      <div class="payment-layout">
+        <!-- Top Split Grid (Form on Left, Calendar on Right on Desktop) -->
+        <div class="payment-main-grid">
+          <!-- Make a Payment Action Card -->
+          <div class="payment-form-card">
+            <div class="paymongo-header-badge">
+              <div class="badge-left">
+                <span class="paymongo-live-dot"></span>
+                <span>Secured by <strong>PayMongo</strong></span>
+              </div>
+              <span class="paymongo-tag">Test Gateway</span>
+            </div>
 
-        <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px">Make a Payment</h2>
+            <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px">Make a Payment</h2>
 
-        <div class="payment-summary">
-          <div class="payment-summary-item">
-            <span class="payment-summary-label">Current Residence:</span>
-            <span class="payment-summary-value" id="summaryResidence">Triple Occupancy Room</span>
-          </div>
-          <div class="payment-summary-item">
-            <span class="payment-summary-label">Monthly Rent:</span>
-            <span class="payment-summary-value" id="summaryRent">₱10,000.00</span>
-          </div>
-          <div class="payment-summary-item">
-            <span class="payment-summary-label">Due Date:</span>
-            <span class="payment-summary-value" id="summaryDueDate">May 5, 2026</span>
-          </div>
-          <div class="payment-summary-item">
-            <span class="payment-summary-label">Amount Due:</span>
-            <span class="payment-summary-value" id="summaryAmountDue"
-              style="color: #059669; font-size: 18px; font-weight: 700">₱10,000.00</span>
-          </div>
-        </div>
+            <div class="payment-summary">
+              <div class="payment-summary-item">
+                <span class="payment-summary-label">Current Residence:</span>
+                <span class="payment-summary-value" id="summaryResidence">Triple Occupancy Room</span>
+              </div>
+              <div class="payment-summary-item">
+                <span class="payment-summary-label">Monthly Rent:</span>
+                <span class="payment-summary-value" id="summaryRent">₱10,000.00</span>
+              </div>
+              <div class="payment-summary-item">
+                <span class="payment-summary-label">Due Date:</span>
+                <span class="payment-summary-value" id="summaryDueDate">May 5, 2026</span>
+              </div>
+              <div class="payment-summary-item">
+                <span class="payment-summary-label">Amount Due:</span>
+                <span class="payment-summary-value" id="summaryAmountDue"
+                  style="color: #059669; font-size: 18px; font-weight: 700">₱10,000.00</span>
+              </div>
+            </div>
 
-        <form id="paymentForm" style="margin-top: 20px">
-          <div class="payment-field">
-            <label for="paymentPurpose">Payment Purpose</label>
-            <select id="paymentPurpose" required>
-              <option value="Monthly Rent" selected>Monthly Rent</option>
-              <option value="Security Deposit">Security Deposit</option>
-              <option value="Utility / Electricity">Utility / Electricity</option>
-              <option value="Parking Space Fee">Parking Space Fee (₱500)</option>
-              <option value="Other">Other</option>
-            </select>
+            <form id="paymentForm" style="margin-top: 20px">
+              <div class="payment-field">
+                <label for="paymentPurpose">Payment Purpose</label>
+                <select id="paymentPurpose" required>
+                  <option value="Monthly Rent" selected>Monthly Rent</option>
+                  <option value="Security Deposit">Security Deposit</option>
+                  <option value="Utility / Electricity">Utility / Electricity</option>
+                  <option value="Parking Space Fee">Parking Space Fee (₱500)</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div class="payment-field">
+                <label for="paymentAmount">Amount (₱)</label>
+                <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required />
+                <div class="quick-amounts-bar">
+                  <span class="quick-amount-label">Quick select:</span>
+                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="full">
+                    Full Balance
+                  </button>
+                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="1000">
+                    ₱1,000
+                  </button>
+                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="2500">
+                    ₱2,500
+                  </button>
+                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="5000">
+                    ₱5,000
+                  </button>
+                </div>
+              </div>
+
+              <div class="payment-field">
+                <label for="paymentNotes">Notes (Optional)</label>
+                <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026" />
+              </div>
+
+              <!-- Accepted Payment Methods Bar -->
+              <div class="payment-methods-strip" style="
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    flex-wrap: wrap;
+                    margin-top: 14px;
+                    margin-bottom: 6px;
+                  ">
+                <span style="font-size: 11px; color: #64748b; font-weight: 500">Accepted via PayMongo:</span>
+                <span style="
+                      background: #eff6ff;
+                      color: #1e40af;
+                      border: 1px solid #bfdbfe;
+                      border-radius: 4px;
+                      padding: 2px 7px;
+                      font-size: 11px;
+                      font-weight: 600;
+                    ">💳 Card (Visa/MC)</span>
+                <span style="
+                      background: #ecfdf5;
+                      color: #065f46;
+                      border: 1px solid #a7f3d0;
+                      border-radius: 4px;
+                      padding: 2px 7px;
+                      font-size: 11px;
+                      font-weight: 600;
+                    ">📱 GCash</span>
+                <span style="
+                      background: #f0fdf4;
+                      color: #166534;
+                      border: 1px solid #bbf7d0;
+                      border-radius: 4px;
+                      padding: 2px 7px;
+                      font-size: 11px;
+                      font-weight: 600;
+                    ">🟢 Maya</span>
+                <span style="
+                      background: #faf5ff;
+                      color: #6b21a8;
+                      border: 1px solid #e9d5ff;
+                      border-radius: 4px;
+                      padding: 2px 7px;
+                      font-size: 11px;
+                      font-weight: 600;
+                    ">🏁 GrabPay</span>
+                <span style="
+                      background: #fff7ed;
+                      color: #9a3412;
+                      border: 1px solid #fed7aa;
+                      border-radius: 4px;
+                      padding: 2px 7px;
+                      font-size: 11px;
+                      font-weight: 600;
+                    ">🔳 QR Ph</span>
+              </div>
+
+              <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 14px">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                  </path>
+                </svg>
+                <span>Proceed to Pay</span>
+              </button>
+            </form>
           </div>
 
-          <div class="payment-field">
-            <label for="paymentAmount">Amount (₱)</label>
-            <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required />
-            <div class="quick-amounts-bar">
-              <span class="quick-amount-label">Quick select:</span>
-              <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="full">
-                Full Balance
-              </button>
-              <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="1000">
-                ₱1,000
-              </button>
-              <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="2500">
-                ₱2,500
-              </button>
-              <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="5000">
-                ₱5,000
-              </button>
+          <!-- Payment & Future Schedule Calendar Card -->
+          <div class="payment-calendar-card" id="tenantPaymentCalendarCard">
+            <div class="cal-header">
+              <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a">
+                  Payment &amp; Future Schedule Calendar
+                </h3>
+                <p style="margin: 2px 0 0; font-size: 12px; color: #64748b">
+                  Track past payments, current billing status, and future monthly due dates.
+                </p>
+              </div>
+              <div class="cal-nav">
+                <button type="button" class="cal-nav-btn" data-action="tenant-cal-prev" title="Previous Month">
+                  &lsaquo;
+                </button>
+                <span class="cal-month-label" id="tenantCalendarMonthLabel">Month Year</span>
+                <button type="button" class="cal-nav-btn" data-action="tenant-cal-next" title="Next Month">
+                  &rsaquo;
+                </button>
+                <button type="button" class="cal-today-btn" data-action="tenant-cal-today">
+                  Today
+                </button>
+              </div>
+            </div>
+
+            <div class="cal-legend">
+              <span class="cal-legend-item"><span class="cal-dot cal-dot-paid"></span> Paid</span>
+              <span class="cal-legend-item"><span class="cal-dot cal-dot-pending"></span> Due This Month</span>
+              <span class="cal-legend-item"><span class="cal-dot cal-dot-scheduled"></span> Future Payment</span>
+              <span class="cal-legend-item"><span class="cal-dot cal-dot-overdue"></span> Overdue</span>
+            </div>
+
+            <div class="cal-weekdays">
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
+            <div class="cal-grid" id="tenantCalendarGrid"></div>
+
+            <div class="cal-selected-detail" id="tenantCalendarDayDetail" style="display: none"></div>
+
+            <div class="cal-upcoming-box">
+              <div class="cal-upcoming-title">Upcoming &amp; Future Rent Schedule</div>
+              <div class="cal-upcoming-list" id="tenantUpcomingScheduleList"></div>
             </div>
           </div>
-
-          <div class="payment-field">
-            <label for="paymentNotes">Notes (Optional)</label>
-            <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026" />
-          </div>
-
-          <!-- Accepted Payment Methods Bar -->
-          <div class="payment-methods-strip" style="
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                flex-wrap: wrap;
-                margin-top: 14px;
-                margin-bottom: 6px;
-              ">
-            <span style="font-size: 11px; color: #64748b; font-weight: 500">Accepted via PayMongo:</span>
-            <span style="
-                  background: #eff6ff;
-                  color: #1e40af;
-                  border: 1px solid #bfdbfe;
-                  border-radius: 4px;
-                  padding: 2px 7px;
-                  font-size: 11px;
-                  font-weight: 600;
-                ">💳 Card (Visa/MC)</span>
-            <span style="
-                  background: #ecfdf5;
-                  color: #065f46;
-                  border: 1px solid #a7f3d0;
-                  border-radius: 4px;
-                  padding: 2px 7px;
-                  font-size: 11px;
-                  font-weight: 600;
-                ">📱 GCash</span>
-            <span style="
-                  background: #f0fdf4;
-                  color: #166534;
-                  border: 1px solid #bbf7d0;
-                  border-radius: 4px;
-                  padding: 2px 7px;
-                  font-size: 11px;
-                  font-weight: 600;
-                ">🟢 Maya</span>
-            <span style="
-                  background: #faf5ff;
-                  color: #6b21a8;
-                  border: 1px solid #e9d5ff;
-                  border-radius: 4px;
-                  padding: 2px 7px;
-                  font-size: 11px;
-                  font-weight: 600;
-                ">🏁 GrabPay</span>
-            <span style="
-                  background: #fff7ed;
-                  color: #9a3412;
-                  border: 1px solid #fed7aa;
-                  border-radius: 4px;
-                  padding: 2px 7px;
-                  font-size: 11px;
-                  font-weight: 600;
-                ">🔳 QR Ph</span>
-          </div>
-
-          <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 14px">
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-              </path>
-            </svg>
-            <span>Proceed to Pay</span>
-          </button>
-        </form>
-
-        <!-- Payment & Future Schedule Calendar -->
-        <div class="payment-calendar-card" id="tenantPaymentCalendarCard">
-          <div class="cal-header">
-            <div>
-              <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a">
-                Payment &amp; Future Schedule Calendar
-              </h3>
-              <p style="margin: 2px 0 0; font-size: 12px; color: #64748b">
-                Track past payments, current billing status, and future monthly due dates.
-              </p>
-            </div>
-            <div class="cal-nav">
-              <button type="button" class="cal-nav-btn" data-action="tenant-cal-prev" title="Previous Month">
-                &lsaquo;
-              </button>
-              <span class="cal-month-label" id="tenantCalendarMonthLabel">Month Year</span>
-              <button type="button" class="cal-nav-btn" data-action="tenant-cal-next" title="Next Month">
-                &rsaquo;
-              </button>
-              <button type="button" class="cal-today-btn" data-action="tenant-cal-today">
-                Today
-              </button>
-            </div>
-          </div>
-
-          <div class="cal-legend">
-            <span class="cal-legend-item"><span class="cal-dot cal-dot-paid"></span> Paid</span>
-            <span class="cal-legend-item"><span class="cal-dot cal-dot-pending"></span> Due This Month</span>
-            <span class="cal-legend-item"><span class="cal-dot cal-dot-scheduled"></span> Future Payment</span>
-            <span class="cal-legend-item"><span class="cal-dot cal-dot-overdue"></span> Overdue</span>
-          </div>
-
-          <div class="cal-weekdays">
-            <div>Sun</div>
-            <div>Mon</div>
-            <div>Tue</div>
-            <div>Wed</div>
-            <div>Thu</div>
-            <div>Fri</div>
-            <div>Sat</div>
-          </div>
-          <div class="cal-grid" id="tenantCalendarGrid"></div>
-
-          <div class="cal-selected-detail" id="tenantCalendarDayDetail" style="display: none"></div>
-
-          <div class="cal-upcoming-box">
-            <div class="cal-upcoming-title">Upcoming &amp; Future Rent Schedule</div>
-            <div class="cal-upcoming-list" id="tenantUpcomingScheduleList"></div>
-          </div>
         </div>
 
-        <!-- Payment History Card -->
+        <!-- Payment History Card (Full Width) -->
         <div class="payment-history-card">
           <h3>
             <span>Payment History</span>
