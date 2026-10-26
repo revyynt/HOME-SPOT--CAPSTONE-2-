@@ -241,8 +241,8 @@ async function initAdminActions() {
         messages.deleteMessage(id);
         break;
       case 'gcompose': {
-        const { email, name, subject, message } = trigger.dataset;
-        messages.openGCompose({ email, name, subject, message, id });
+        const { email, name, subject, message, room } = trigger.dataset;
+        messages.openGCompose({ email, name, subject, message, id, room });
         break;
       }
       case 'select-chat':
