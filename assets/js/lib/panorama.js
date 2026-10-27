@@ -207,6 +207,7 @@ export function initPanoramaViewer(
     let rafId;
     (function loop() {
       rafId = requestAnimationFrame(loop);
+      if (!container.isConnected || container.offsetParent === null || document.hidden) return;
       if (!isDragging && !isEnlarged) {
         targetLon += 0.08;
       }

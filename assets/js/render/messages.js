@@ -174,7 +174,12 @@ function renderTenantMessenger(tenantContainer, docList) {
     </div>`;
 
   const historyEl = document.getElementById('adminChatHistory');
-  if (historyEl) historyEl.scrollTop = historyEl.scrollHeight;
+  if (historyEl) {
+    historyEl.scrollTop = historyEl.scrollHeight;
+    requestAnimationFrame(() => {
+      historyEl.scrollTop = historyEl.scrollHeight;
+    });
+  }
 }
 
 export function refreshTenantMessenger() {
@@ -217,6 +222,17 @@ export async function sendAdminChatMessage(email, name, messageText) {
     return;
   }
 
+  let latestThreadMs = 0;
+  const emailLower = cleanEmail.toLowerCase();
+  for (const doc of latestMessageDocs) {
+    const d = doc.data();
+    if ((d.email || '').trim().toLowerCase() !== emailLower) continue;
+    const raw = d._serverCreatedAt || d.createdAt;
+    const ms = raw?.seconds ? raw.seconds * 1000 : new Date(raw || 0).getTime();
+    if (Number.isFinite(ms) && ms > latestThreadMs) latestThreadMs = ms;
+  }
+  const safeCreatedAt = new Date(Math.max(Date.now(), latestThreadMs + 1000)).toISOString();
+
   try {
     const messagesRef = supabaseData.collection(db, 'messages');
     await supabaseData.addDoc(messagesRef, {
@@ -225,7 +241,7 @@ export async function sendAdminChatMessage(email, name, messageText) {
       message: cleanText,
       status: 'Read',
       sender: 'admin',
-      createdAt: supabaseData.serverTimestamp(),
+      createdAt: safeCreatedAt,
       reply: null
     });
     await selectTenantChat(cleanEmail);
@@ -334,6 +350,14 @@ export function renderMessages(docs) {
     const actionButtons = `
         <button
           type="button"
+          data-action="reply"
+          data-id="${attr(doc.id)}"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+        >
+          Reply in App
+        </button>
+        <button
+          type="button"
           data-action="gcompose"
           data-id="${attr(doc.id)}"
           data-email="${attr(data.email || '')}"
@@ -341,6 +365,7 @@ export function renderMessages(docs) {
           ${!isSupport ? `data-room="${attr(data.room || data.property || '')}"` : ''}
           data-subject="${attr(targetSubject)}"
           data-message="${attr(displayMessage)}"
+          title="Opens Gmail specifically for homespotapartment@gmail.com (never uses personal browser accounts)"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -422,6 +447,8 @@ export function formatRecipientName(rawName) {
  * Also marks the message read in Supabase.
  * @param {{ email: string, name?: string, subject?: string, message?: string, id?: string, room?: string }} params
  */
+const OFFICIAL_SUPPORT_GMAIL = 'homespotapartment@gmail.com';
+
 export function openGCompose({ email, name, subject, message, id, room }) {
   if (!email) {
     Toast.error('No email address available for this message.');
@@ -436,7 +463,8 @@ export function openGCompose({ email, name, subject, message, id, room }) {
     `"${message || ''}"\n\n\n\n` +
     'Best regards,\nHomeSpot Support Team\nMJP Residences';
   const body = encodeURIComponent(bodyText);
-  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
+  const composeTarget = `https://mail.google.com/mail/?authuser=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
+  const gmailUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&continue=${encodeURIComponent(composeTarget)}`;
 
   window.open(gmailUrl, '_blank', 'noopener,noreferrer');
 

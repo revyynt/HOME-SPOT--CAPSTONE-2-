@@ -1849,6 +1849,16 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+let latestTenantChatMs = 0;
+
+function resolveMessageTimeMs(item) {
+  const raw = item?._serverCreatedAt || item?.createdAt;
+  if (!raw) return 0;
+  if (typeof raw?.seconds === 'number') return raw.seconds * 1000;
+  const ms = new Date(raw).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 function subscribeTenantMessages() {
   if (!userEmail) return;
   try {
@@ -1864,15 +1874,12 @@ function subscribeTenantMessages() {
         const docs = (snapshot.docs || [])
           .map((doc) => doc.data())
           .filter((item) => item.sender === 'tenant' || item.sender === 'admin');
-        docs.sort((a, b) => {
-          const timeA = a.createdAt?.seconds
-            ? a.createdAt.seconds * 1000
-            : new Date(a.createdAt || 0).getTime();
-          const timeB = b.createdAt?.seconds
-            ? b.createdAt.seconds * 1000
-            : new Date(b.createdAt || 0).getTime();
-          return timeA - timeB;
-        });
+        docs.sort((a, b) => resolveMessageTimeMs(a) - resolveMessageTimeMs(b));
+
+        latestTenantChatMs = docs.reduce(
+          (max, item) => Math.max(max, resolveMessageTimeMs(item)),
+          0
+        );
 
         if (!docs.length) {
           chatMessages.innerHTML = `
@@ -1887,9 +1894,8 @@ function subscribeTenantMessages() {
           const msgBubble = document.createElement('div');
           msgBubble.className =
             item.sender === 'tenant' ? 'message-bubble sent' : 'message-bubble received';
-          const dateObj = item.createdAt?.seconds
-            ? new Date(item.createdAt.seconds * 1000)
-            : new Date(item.createdAt || Date.now());
+          const timeMs = resolveMessageTimeMs(item);
+          const dateObj = timeMs ? new Date(timeMs) : new Date();
           const timeStr = dateObj.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
@@ -1920,6 +1926,9 @@ function subscribeTenantMessages() {
           }
         });
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
       },
       (err) => console.warn('Messages subscription error:', err)
     );
@@ -1936,7 +1945,9 @@ async function sendMessage() {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'message-bubble sent';
-  const now = new Date();
+  const safeMs = Math.max(Date.now(), latestTenantChatMs + 1000);
+  latestTenantChatMs = safeMs;
+  const now = new Date(safeMs);
   const timeStr = now.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -1960,7 +1971,7 @@ async function sendMessage() {
       message: messageText,
       status: 'Unread',
       sender: 'tenant',
-      createdAt: supabaseData.serverTimestamp(),
+      createdAt: now.toISOString(),
       reply: null
     });
   } catch (error) {

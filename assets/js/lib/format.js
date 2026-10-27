@@ -156,7 +156,7 @@ export function buildTenantThreads(docList = [], tenants = []) {
     if (data.name && data.sender === 'tenant') thread.name = data.name;
     if (data.room && !thread.room) thread.room = data.room;
 
-    const createdMs = toMillis(data.createdAt);
+    const createdMs = toMillis(data._serverCreatedAt || data.createdAt);
     const isUnread = data.sender === 'tenant' && data.status === 'Unread';
     if (isUnread) thread.unreadCount += 1;
 

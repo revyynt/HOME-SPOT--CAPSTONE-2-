@@ -305,15 +305,25 @@ async function handleReservationSubmit(event) {
 /** Shows the inquiry panel, hiding the reservation panel. */
 export function toggleInquiryForm() {
   applyMinMoveInDates();
-  document.getElementById('inquiryForm')?.classList.toggle('hidden');
+  window.getSelection?.()?.removeAllRanges?.();
+  const modal = document.getElementById('inquiryForm');
+  modal?.classList.toggle('hidden');
   hidePanel('reservationForm');
+  if (modal && !modal.classList.contains('hidden')) {
+    requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
+  }
 }
 
 /** Shows the reservation panel, hiding the inquiry panel. */
 export function toggleReservationForm() {
   applyMinMoveInDates();
-  document.getElementById('reservationForm')?.classList.toggle('hidden');
+  window.getSelection?.()?.removeAllRanges?.();
+  const modal = document.getElementById('reservationForm');
+  modal?.classList.toggle('hidden');
   hidePanel('inquiryForm');
+  if (modal && !modal.classList.contains('hidden')) {
+    requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
+  }
 }
 
 /**

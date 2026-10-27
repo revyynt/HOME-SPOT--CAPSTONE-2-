@@ -463,12 +463,6 @@ function applyRoomDetails(room) {
       .join('');
   }
 
-  const panoramaUrl = room.panorama || room.image;
-  if (panoramaUrl && panoramaUrl !== currentPanoramaUrl) {
-    currentPanoramaUrl = panoramaUrl;
-    initPanoramaViewer(panoramaUrl);
-  }
-
   document.getElementById('roomPrice').textContent = formatRoomPrice(room.price, true);
   const priceSubtitle = document.getElementById('roomPriceSubtitle');
   if (priceSubtitle) {
