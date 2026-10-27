@@ -464,76 +464,57 @@ function initAdminUserActions() {
 // ── 3. SYSTEM SETTINGS & PLATFORM GOVERNANCE ──────────────────────────────────
 
 const SETTINGS_DOC_REF = supabaseData.doc(supabase, 'adminTokens', 'system_settings');
+const BACKUP_COLLECTIONS = ['rooms', 'tenants', 'reservations', 'messages', 'payments'];
+
+function formatBackupTimestamp(isoString) {
+  const dt = new Date(isoString);
+  if (Number.isNaN(dt.getTime())) return 'Ready for backup';
+  return `Completed ${dt.toLocaleDateString()} at ${dt.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  })}`;
+}
 
 async function loadSystemSettings() {
-  const form = document.getElementById('superSystemSettingsForm');
-  if (!form) return;
+  const maintenanceCheckbox = document.getElementById('settingMaintenanceMode');
+  const lastBackupEl = document.getElementById('superLastBackupTime');
+  if (!maintenanceCheckbox) return;
 
   try {
     const snap = await supabaseData.getDoc(SETTINGS_DOC_REF);
     if (snap.exists()) {
       const data = snap.data();
-      const maintenanceCheckbox = document.getElementById('settingMaintenanceMode');
-      const minBooking = document.getElementById('settingMinBooking');
-      const maxBooking = document.getElementById('settingMaxBooking');
-      const cancelDays = document.getElementById('settingCancellationDays');
-      const supportEmail = document.getElementById('settingSupportEmail');
-      const supportPhone = document.getElementById('settingSupportPhone');
-
-      if (maintenanceCheckbox) maintenanceCheckbox.checked = Boolean(data.maintenanceMode);
-      if (minBooking && data.minBooking) minBooking.value = String(data.minBooking);
-      if (maxBooking && data.maxBooking) maxBooking.value = String(data.maxBooking);
-      if (cancelDays && data.cancellationDays) cancelDays.value = String(data.cancellationDays);
-      if (supportEmail && data.supportEmail) supportEmail.value = String(data.supportEmail);
-      if (supportPhone && data.supportPhone) supportPhone.value = String(data.supportPhone);
+      maintenanceCheckbox.checked = Boolean(data.maintenanceMode);
+      if (lastBackupEl && data.lastBackupAt) {
+        lastBackupEl.textContent = formatBackupTimestamp(data.lastBackupAt);
+      }
     }
   } catch (err) {
     console.warn('Could not load remote system settings, defaults retained:', err);
   }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btnSaveSystemSettings');
-
-    const maintenanceMode = Boolean(
-      (document.getElementById('settingMaintenanceMode'))?.checked
-    );
-    const minBooking = Number((document.getElementById('settingMinBooking'))?.value) || 1;
-    const maxBooking = Number((document.getElementById('settingMaxBooking'))?.value) || 12;
-    const cancellationDays =
-      Number((document.getElementById('settingCancellationDays'))?.value) || 7;
-    const supportEmail =
-      (document.getElementById('settingSupportEmail'))?.value?.trim() || 'homespotapartment@gmail.com';
-    const supportPhone =
-      (document.getElementById('settingSupportPhone'))?.value?.trim() || '(02) 1234-5678';
-
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-    }
-
+  maintenanceCheckbox.addEventListener('change', async () => {
+    const maintenanceMode = Boolean(maintenanceCheckbox.checked);
+    maintenanceCheckbox.disabled = true;
     try {
       await supabaseData.setDoc(
         SETTINGS_DOC_REF,
         {
           maintenanceMode,
-          minBooking,
-          maxBooking,
-          cancellationDays,
-          supportEmail,
-          supportPhone,
           updatedAt: new Date().toISOString()
         },
         { merge: true }
       );
-      Toast.success('Platform system settings saved and synced.');
+      Toast.success(
+        maintenanceMode
+          ? 'Platform Maintenance Mode enabled.'
+          : 'Platform Maintenance Mode disabled.'
+      );
     } catch (err) {
-      Toast.error(`Failed to save settings: ${err.message || 'Unknown error'}`);
+      maintenanceCheckbox.checked = !maintenanceMode;
+      Toast.error(`Failed to update Maintenance Mode: ${err.message || 'Unknown error'}`);
     } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = 'Save Platform Settings';
-      }
+      maintenanceCheckbox.disabled = false;
     }
   });
 }
@@ -548,8 +529,8 @@ async function initBackupAndRestore() {
   const lastBackupEl = document.getElementById('superLastBackupTime');
 
   const executeBackup = async () => {
-    Toast.info('Generating platform database backup...');
     try {
+      Toast.info('Generating platform database backup...');
       const [roomsSnap, tenantsSnap, reservationsSnap, messagesSnap, paymentsSnap, settingsSnap] =
         await Promise.all([
           supabaseData.getDocs(supabaseData.collection(supabase, 'rooms')),
@@ -566,11 +547,12 @@ async function initBackupAndRestore() {
         return out;
       };
 
+      const exportedAt = new Date().toISOString();
       const dump = {
         meta: {
           platform: 'HomeSpot MJP Residences',
           version: '1.0.0',
-          exportedAt: new Date().toISOString()
+          exportedAt
         },
         settings: settingsSnap.exists() ? settingsSnap.data() : null,
         rooms: serializeCollection(roomsSnap),
@@ -583,7 +565,7 @@ async function initBackupAndRestore() {
       const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const dateStr = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const dateStr = exportedAt.replace(/[:.]/g, '-').slice(0, 19);
       a.href = url;
       a.download = `homespot-platform-backup-${dateStr}.json`;
       document.body.appendChild(a);
@@ -591,12 +573,17 @@ async function initBackupAndRestore() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      const timestampText = new Date().toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      try {
+        await supabaseData.setDoc(
+          SETTINGS_DOC_REF,
+          { lastBackupAt: exportedAt },
+          { merge: true }
+        );
+      } catch (err) {
+        console.warn('Could not persist lastBackupAt to system_settings:', err);
+      }
       if (lastBackupEl) {
-        lastBackupEl.textContent = `Completed today at ${timestampText}`;
+        lastBackupEl.textContent = formatBackupTimestamp(exportedAt);
       }
       Toast.success('Full database backup downloaded.');
     } catch (err) {
@@ -633,33 +620,20 @@ async function initBackupAndRestore() {
 
       Toast.info('Restoring records into Supabase...');
 
-      // Restore settings
       if (parsed.settings) {
         await supabaseData.setDoc(SETTINGS_DOC_REF, parsed.settings, { merge: true });
       }
 
-      // Restore rooms
-      if (Array.isArray(parsed.rooms)) {
-        for (const room of parsed.rooms) {
-          if (room.id) {
-            await supabaseData.setDoc(
-              supabaseData.doc(supabase, 'rooms', room.id),
-              room,
-              { merge: true }
-            );
-          }
-        }
-      }
-
-      // Restore tenants
-      if (Array.isArray(parsed.tenants)) {
-        for (const tenant of parsed.tenants) {
-          if (tenant.id) {
-            await supabaseData.setDoc(
-              supabaseData.doc(supabase, 'tenants', tenant.id),
-              tenant,
-              { merge: true }
-            );
+      for (const colName of BACKUP_COLLECTIONS) {
+        if (Array.isArray(parsed[colName])) {
+          for (const item of parsed[colName]) {
+            if (item?.id) {
+              await supabaseData.setDoc(
+                supabaseData.doc(supabase, colName, item.id),
+                item,
+                { merge: true }
+              );
+            }
           }
         }
       }
@@ -708,7 +682,7 @@ async function runSystemPingCheck() {
 
 // ── BOOTSTRAP ────────────────────────────────────────────────────────────────
 
-document.addEventListener('DOMContentLoaded', () => {
+function bootstrapSuperAdmin() {
   void initPlatformStats();
   void loadAdmins();
   initAdminSearch();
@@ -716,4 +690,10 @@ document.addEventListener('DOMContentLoaded', () => {
   void loadSystemSettings();
   void initBackupAndRestore();
   void runSystemPingCheck();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootstrapSuperAdmin);
+} else {
+  bootstrapSuperAdmin();
+}
