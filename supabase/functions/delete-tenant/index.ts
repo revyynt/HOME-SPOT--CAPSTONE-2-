@@ -34,16 +34,12 @@ Deno.serve(async (request) => {
     console.error('Failed to look up tenant for deletion:', lookupError);
     return jsonResponse(request, { error: 'Could not look up the tenant account.' }, 500);
   }
-  if (!tenantRow) return jsonResponse(request, { error: 'Tenant account not found.' }, 404);
+  if (!tenantRow) {
+    await admin.from('tenants').delete().eq('id', input.tenantId);
+    return jsonResponse(request, { success: true });
+  }
 
   const userId = tenantRow.data?.uid;
-  if (typeof userId === 'string' && userId) {
-    const { error } = await admin.auth.admin.deleteUser(userId);
-    if (error) {
-      console.error('Failed to delete tenant Auth account:', error);
-      return jsonResponse(request, { error: 'Could not disable the tenant sign-in account.' }, 500);
-    }
-  }
 
   const { error: tenantDeleteError } = await admin
     .from('app_documents')
@@ -54,26 +50,44 @@ Deno.serve(async (request) => {
     console.error('Failed to delete tenant record:', tenantDeleteError);
     return jsonResponse(
       request,
-      { error: 'The tenant sign-in was removed, but the profile remains.' },
+      { error: 'Could not remove the tenant profile record.' },
       500
     );
   }
 
+  await admin.from('tenants').delete().eq('id', input.tenantId);
+
   if (typeof userId === 'string' && userId) {
-    const { error: profileDeleteError } = await admin
+    const { data: siblingTenants } = await admin
       .from('app_documents')
-      .delete()
-      .eq('collection', 'users')
-      .eq('id', userId);
-    if (profileDeleteError) {
-      console.error('Failed to delete tenant user profile:', profileDeleteError);
-      return jsonResponse(
-        request,
-        { error: 'Tenant access was removed, but a profile record remains.' },
-        500
-      );
+      .select('id')
+      .eq('collection', 'tenants')
+      .eq('data->>uid', userId)
+      .limit(1);
+
+    const hasRemainingTenantsWithSameUid =
+      Array.isArray(siblingTenants) && siblingTenants.length > 0;
+
+    if (!hasRemainingTenantsWithSameUid) {
+      const { error: authDeleteError } = await admin.auth.admin.deleteUser(userId);
+      if (authDeleteError) {
+        const msg = String(authDeleteError.message || '').toLowerCase();
+        if (!msg.includes('not found') && !msg.includes('user not found')) {
+          console.warn('Could not delete tenant Auth account (may already be removed):', authDeleteError);
+        }
+      }
+
+      const { error: profileDeleteError } = await admin
+        .from('app_documents')
+        .delete()
+        .eq('collection', 'users')
+        .eq('id', userId);
+      if (profileDeleteError) {
+        console.warn('Failed to delete tenant user profile:', profileDeleteError);
+      }
     }
   }
 
   return jsonResponse(request, { success: true });
 });
+

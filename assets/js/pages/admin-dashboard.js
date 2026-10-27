@@ -1229,7 +1229,9 @@ function initAdminPaymentCalendar() {
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'tenants'),
     (snap) => {
-      calTenants = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      calTenants = snap.docs
+        .map((d) => ({ ...d.data(), id: d.id }))
+        .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
       syncTenantDropdown();
       renderCalendar();
     },
@@ -1538,7 +1540,12 @@ function initAdminOverviewActivity() {
       supabaseData.collection(supabase, col),
       (snap) => {
         const rawItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        state[col] = col === 'payments' ? deduplicatePayments(rawItems) : rawItems;
+        state[col] =
+          col === 'payments'
+            ? deduplicatePayments(rawItems)
+            : col === 'tenants'
+              ? rawItems.filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived')
+              : rawItems;
         renderActivity();
       },
       (err) => console.warn(`Overview activity listener (${col}) failed:`, err)
@@ -1690,7 +1697,9 @@ function initAdminBuilding3D() {
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'tenants'),
     (snap) => {
-      tenantsList = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      tenantsList = snap.docs
+        .map((d) => ({ ...d.data(), id: d.id }))
+        .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
       if (viewer) viewer.setTenants(tenantsList);
       renderInspector();
     },

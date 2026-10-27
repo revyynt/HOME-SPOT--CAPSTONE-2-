@@ -350,14 +350,6 @@ export function renderMessages(docs) {
     const actionButtons = `
         <button
           type="button"
-          data-action="reply"
-          data-id="${attr(doc.id)}"
-          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
-        >
-          Reply in App
-        </button>
-        <button
-          type="button"
           data-action="gcompose"
           data-id="${attr(doc.id)}"
           data-email="${attr(data.email || '')}"
@@ -458,10 +450,10 @@ export function openGCompose({ email, name, subject, message, id, room }) {
   const cleanSubject = subject || (room ? `Inquiry regarding ${room}` : 'Public Inquiry');
   const su = encodeURIComponent(`Re: [HomeSpot] ${cleanSubject}`);
   const bodyText = `Hi ${formattedName},\n\n` +
-    'Thank you for reaching out to HomeSpot.\n\n' +
+    'Thank you for reaching out to MJP Residences.\n\n' +
     'Regarding your inquiry:\n' +
     `"${message || ''}"\n\n\n\n` +
-    'Best regards,\nHomeSpot Support Team\nMJP Residences';
+    'Best regards,\nHome-Spot Support Team\nMJP Residences';
   const body = encodeURIComponent(bodyText);
   const composeTarget = `https://mail.google.com/mail/?authuser=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
   const gmailUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&continue=${encodeURIComponent(composeTarget)}`;
