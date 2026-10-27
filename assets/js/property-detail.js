@@ -505,11 +505,18 @@ async function loadRemoteRoomData(room) {
 }
 
 // Load room data when page loads
-document.addEventListener('DOMContentLoaded', () => {
+function initPropertyDetailPage() {
   const rawParam = getUrlParam('id') || '1';
   const room = { ...mergeRoomData(rawParam) };
   applyRoomDetails(room);
   loadRemoteRoomData(room);
+}
+
+if (document.readyState !== 'loading') {
+  initPropertyDetailPage();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  initPropertyDetailPage();
 });
 
 // Modal keyboard navigation and Escape key press// Modal keyboard navigation and Escape key press

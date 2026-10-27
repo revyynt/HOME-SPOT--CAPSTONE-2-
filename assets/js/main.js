@@ -172,7 +172,9 @@ function initSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', (event) => {
       const href = anchor.getAttribute('href');
-      if (href === '#' || !href || href.length < 2) return;
+      if (!href || !href.startsWith('#') || href.length < 2) return;
+      const target = document.querySelector(href);
+      if (!target) return;
       event.preventDefault();
       document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -311,7 +313,10 @@ async function initStatusLine() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+let mainPageInitialized = false;
+function initMainPage() {
+  if (mainPageInitialized) return;
+  mainPageInitialized = true;
   enforceStaffLockOnPublicPages();
   initSmoothScroll();
   initTabs();
@@ -323,6 +328,15 @@ document.addEventListener('DOMContentLoaded', () => {
     initStatusLine();
     initAdminRealtime();
     initAdminActions();
+  }
+}
+
+if (document.readyState !== 'loading') {
+  initMainPage();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (!mainPageInitialized) {
+    initMainPage();
   }
 });
 

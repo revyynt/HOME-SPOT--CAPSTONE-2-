@@ -88,7 +88,7 @@ function openRoomPreviewModal(room) {
 
   const addPhotoSlide = (src, label) => {
     const url = String(src || '').trim();
-    if (!url || seenUrls.has(url) || (panoUrl && url === panoUrl)) return;
+    if (!url || seenUrls.has(url)) return;
     seenUrls.add(url);
     slides.push({ src: url, label, is360: false });
   };

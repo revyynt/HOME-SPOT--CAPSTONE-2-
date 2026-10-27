@@ -84,10 +84,10 @@ export const DEFAULT_ROOMS = [
     capacity: 4,
     available: 1,
     size: '35 sqm',
-    image: 'assets/img/commercial-space.jpg',
-    mainImage: 'assets/img/commercial-space.jpg',
+    image: 'assets/img/commercial-space-panorama.png',
+    mainImage: 'assets/img/commercial-space-panorama.png',
     panorama: 'assets/img/commercial-space-panorama.png',
-    images: ['assets/img/commercial-space.jpg', 'assets/img/commercial-space-panorama.png'],
+    images: ['assets/img/commercial-space-panorama.png', 'assets/img/commercial-space.jpg'],
     description:
       'Premium commercial space ideal for business operations. Spacious unit suitable for small offices, retail, or service-based businesses with comfortable working capacity.',
     features: ['4 People', 'Bathroom']
@@ -127,37 +127,37 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     typeof baseOrKey === 'object' && baseOrKey !== null
       ? baseOrKey
       : DEFAULT_ROOMS.find(
-          (r) =>
-            r.id === baseOrKey ||
-            r.detailId === Number(baseOrKey) ||
-            r.id === normalizeRoomDocId(baseOrKey)
-        ) || {
-          id: typeof baseOrKey === 'string' ? normalizeRoomDocId(baseOrKey) : 'triple-occupancy-room',
-          detailId: Number(baseOrKey) || 1,
-          name: typeof baseOrKey === 'string' ? baseOrKey : 'Apartment Unit',
-          type: 'Living Space',
-          badge: '',
-          price: 10000,
-          beds: 1,
-          capacity: 2,
-          available: 1,
-          size: '25 sqm',
-          image: 'assets/img/triple-occupancy-panorama.png',
-          mainImage: 'assets/img/triple-occupancy.jpg',
-          panorama: 'assets/img/triple-occupancy-panorama.png',
-          images: ['assets/img/triple-occupancy.jpg'],
-          description: 'Comfortable apartment unit living space.',
-          features: ['1 Room', 'Bathroom']
-        };
+        (r) =>
+          r.id === baseOrKey ||
+          r.detailId === Number(baseOrKey) ||
+          r.id === normalizeRoomDocId(baseOrKey)
+      ) || {
+        id: typeof baseOrKey === 'string' ? normalizeRoomDocId(baseOrKey) : 'triple-occupancy-room',
+        detailId: Number(baseOrKey) || 1,
+        name: typeof baseOrKey === 'string' ? baseOrKey : 'Apartment Unit',
+        type: 'Living Space',
+        badge: '',
+        price: 10000,
+        beds: 1,
+        capacity: 2,
+        available: 1,
+        size: '25 sqm',
+        image: 'assets/img/triple-occupancy-panorama.png',
+        mainImage: 'assets/img/triple-occupancy.jpg',
+        panorama: 'assets/img/triple-occupancy-panorama.png',
+        images: ['assets/img/triple-occupancy.jpg'],
+        description: 'Comfortable apartment unit living space.',
+        features: ['1 Room', 'Bathroom']
+      };
 
   const data = remote || {};
   const features = Array.isArray(data.features)
     ? data.features.filter(Boolean)
     : typeof data.features === 'string' && data.features.trim()
       ? data.features
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
       : Array.isArray(data.amenities) && data.amenities.length > 0
         ? data.amenities
         : base.features;
@@ -166,9 +166,9 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     ? data.images.map((s) => String(s).trim()).filter(Boolean)
     : typeof data.images === 'string'
       ? data.images
-          .split(/[\n,]+/)
-          .map((s) => s.trim())
-          .filter(Boolean)
+        .split(/[\n,]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
       : Array.isArray(base.images)
         ? [...base.images]
         : [data.mainImage || base.mainImage || base.image].filter(Boolean);
@@ -201,8 +201,16 @@ export function mergeRoomData(baseOrKey, remote = {}) {
           ? Number(data.capacity)
           : base.capacity,
     size: data.size || base.size,
-    image: data.image || base.image,
-    mainImage: data.mainImage || data.image || base.mainImage,
+    image:
+      base.id === 'commercial-space' && data.image === 'assets/img/commercial-space.jpg'
+        ? base.image
+        : data.image || base.image,
+    mainImage:
+      base.id === 'commercial-space' &&
+        (data.mainImage === 'assets/img/commercial-space.jpg' ||
+          (!data.mainImage && data.image === 'assets/img/commercial-space.jpg'))
+        ? base.mainImage
+        : data.mainImage || data.image || base.mainImage,
     panorama: data.panorama || base.panorama,
     images,
     description: data.description || base.description,
