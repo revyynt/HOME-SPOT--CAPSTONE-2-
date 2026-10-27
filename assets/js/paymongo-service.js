@@ -9,9 +9,12 @@
 import { supabase } from './supabase-service.js';
 import {
   deduplicatePayments,
+  formatPaymentMethod,
   isValidPhilippinePhone,
   normalizePhilippinePhone
 } from './lib/format.js';
+
+export { formatPaymentMethod };
 
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',
@@ -52,7 +55,8 @@ async function callBridge(endpoint, payload) {
     '/api/checkout-status': 'checkout-status',
     '/api/expire-checkout': 'expire-checkout',
     '/api/payment-intent-status': 'payment-intent-status',
-    '/api/complete-qr-payment': 'complete-qr-payment'
+    '/api/complete-qr-payment': 'complete-qr-payment',
+    '/api/sync-payment-methods': 'sync-payment-methods'
   };
   const action = routes[parsedUrl.pathname];
   if (!action) throw new Error('Unsupported payment operation.');
@@ -75,6 +79,15 @@ async function callBridge(endpoint, payload) {
  */
 async function getFromBridge(endpoint) {
   return (await callBridge(endpoint, null))?.data || null;
+}
+
+/**
+ * Syncs and backfills specific PayMongo payment channels (GCash, Maya, QR Ph, Card, GrabPay)
+ * for existing payment records via the backend Edge Function.
+ * @returns {Promise<Record<string, string>|null>}
+ */
+export async function syncPaymentMethods() {
+  return getFromBridge('/api/sync-payment-methods');
 }
 
 /**
@@ -214,7 +227,6 @@ export async function getTenantPayments() {
   if (!session) return [];
 
   const results = [];
-  const seenRefs = new Set();
 
   // 1. Query relational payments table
   try {
@@ -227,15 +239,18 @@ export async function getTenantPayments() {
     if (!relError && Array.isArray(relPayments)) {
       for (const p of relPayments) {
         const ref = p.reference_number || p.id;
-        if (ref && !seenRefs.has(ref)) {
-          seenRefs.add(ref);
+        if (ref) {
           results.push({
             referenceNumber: ref,
             paymentMethodId: p.session_id || p.payment_intent_id || p.id,
+            sessionId:
+              typeof p.session_id === 'string' && p.session_id.startsWith('cs_')
+                ? p.session_id
+                : null,
             amount: parseFloat(p.amount) || 0,
             purpose: p.purpose || 'Monthly Rent',
             notes: p.notes || '',
-            method: p.payment_method || 'PayMongo',
+            method: formatPaymentMethod(p.payment_method, p),
             status: p.status || 'Paid',
             tenantEmail: p.tenant_email,
             tenantName: p.tenant_name,
@@ -252,11 +267,11 @@ export async function getTenantPayments() {
     console.warn('Could not query payments table:', err);
   }
 
-  // 2. Query app_documents for backward compatibility
+  // 2. Query app_documents for backward compatibility and channel enrichment
   try {
     const { data: docPayments, error: docError } = await supabase
       .from('app_documents')
-      .select('data')
+      .select('id, data')
       .eq('collection', 'payments')
       .order('created_at', { ascending: false });
 
@@ -264,11 +279,12 @@ export async function getTenantPayments() {
       for (const row of docPayments) {
         const item = row.data;
         if (!item) continue;
-        const ref = item.referenceNumber || item.reference_number || item.id;
-        if (ref && !seenRefs.has(ref)) {
-          seenRefs.add(ref);
-          results.push(item);
-        }
+        const rowCsId = typeof row.id === 'string' && row.id.startsWith('cs_') ? row.id : null;
+        results.push({
+          ...item,
+          sessionId: item.sessionId || rowCsId || null,
+          method: formatPaymentMethod(item.method || item.payment_method, item)
+        });
       }
     }
   } catch (err) {

@@ -1261,7 +1261,10 @@ function showReceiptModal(record) {
   if (residenceEl)
     residenceEl.textContent = `${tenantDorm || 'Triple Occupancy Room'} (${tenantRoom || 'Room 201'})`;
   document.getElementById('receiptPurpose').textContent = record.purpose || 'Monthly Rent';
-  document.getElementById('receiptMethod').textContent = record.method || 'PayMongo Checkout';
+  document.getElementById('receiptMethod').textContent = PayMongo.formatPaymentMethod(
+    record.method,
+    record
+  );
   document.getElementById('receiptReference').textContent = record.referenceNumber || 'PM-REF';
   document.getElementById('receiptTokenId').textContent = record.paymentMethodId || 'pm_verified';
   document.getElementById('receiptDateTime').textContent = formatPaymentDateTime(record);
@@ -1465,6 +1468,58 @@ async function loadTenantPaymentHistory() {
 
   renderPaymentHistoryTable(payments);
   renderTenantPaymentCalendar();
+
+  if (Array.isArray(payments)) {
+    const hasGeneric = payments.some(
+      (p) => PayMongo.formatPaymentMethod(p.method, p) === 'PayMongo Checkout'
+    );
+    if (hasGeneric && PayMongo?.syncPaymentMethods) {
+      try {
+        const resolvedMap = await PayMongo.syncPaymentMethods();
+        if (resolvedMap && typeof resolvedMap === 'object') {
+          let updatedAny = false;
+          for (const item of cachedPayments) {
+            const ref = item.referenceNumber || item.id;
+            if (ref && resolvedMap[ref] && item.method !== resolvedMap[ref]) {
+              item.method = resolvedMap[ref];
+              updatedAny = true;
+            }
+          }
+          if (updatedAny) {
+            renderPaymentHistoryTable(cachedPayments);
+          }
+        }
+      } catch {
+        // ignore non-critical sync errors
+      }
+    }
+  }
+}
+
+function renderMethodBadge(rawMethod, record) {
+  const formatted = PayMongo.formatPaymentMethod(rawMethod, record);
+  const lower = formatted.toLowerCase();
+  let variantClass = '';
+  let icon = '⚡';
+
+  if (lower.includes('gcash')) {
+    variantClass = 'method-pill-gcash';
+    icon = '📱';
+  } else if (lower.includes('maya')) {
+    variantClass = 'method-pill-maya';
+    icon = '🟢';
+  } else if (lower.includes('qr ph')) {
+    variantClass = 'method-pill-qrph';
+    icon = '🔳';
+  } else if (lower.includes('card')) {
+    variantClass = 'method-pill-card';
+    icon = '💳';
+  } else if (lower.includes('grabpay')) {
+    variantClass = 'method-pill-grabpay';
+    icon = '🚗';
+  }
+
+  return `<span class="method-pill ${variantClass}"><span>${icon}</span><span>${escapeHtml(formatted)}</span></span>`;
 }
 
 // Render payment history rows
@@ -1507,7 +1562,7 @@ function renderPaymentHistoryTable(payments) {
             <td>${formatPaymentDate(p)}</td>
             <td style="font-family: monospace; font-size: 12px; color: #475569;">${p.referenceNumber || 'PM-' + idx}</td>
             <td>${p.purpose || 'Monthly Rent'}</td>
-            <td>${p.method || 'PayMongo'}</td>
+            <td>${renderMethodBadge(p.method, p)}</td>
             <td style="font-weight: 600; color: ${amountColor};">₱${parseFloat(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
             <td>${statusBadge}</td>
             <td>
@@ -1624,7 +1679,7 @@ async function checkUrlPaymentReturn() {
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
-        method: pending?.method || 'PayMongo Checkout',
+        method: PayMongo.formatPaymentMethod(pending?.method, checkedSession),
         amount: amountParam2,
         purpose: purposeParam2,
         notes: pending?.notes || 'Completed via PayMongo Checkout',
@@ -1773,7 +1828,10 @@ async function checkUrlPaymentReturn() {
       return;
     }
 
-    const methodParam = urlParams.get('method') || pending?.method || 'PayMongo Checkout';
+    const methodParam = PayMongo.formatPaymentMethod(
+      urlParams.get('method') || pending?.method,
+      session
+    );
     const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
     const lineItemsAmount =
       (session?.attributes?.line_items || []).reduce(

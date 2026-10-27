@@ -194,6 +194,81 @@ export function buildTenantThreads(docList = [], tenants = []) {
   return threads;
 }
 
+const PAYMONGO_METHOD_MAP = {
+  gcash: 'PayMongo Checkout (GCash)',
+  maya: 'PayMongo Checkout (Maya)',
+  paymaya: 'PayMongo Checkout (Maya)',
+  qrph: 'PayMongo Checkout (QR Ph)',
+  'qr ph': 'PayMongo Checkout (QR Ph)',
+  qr_ph: 'PayMongo Checkout (QR Ph)',
+  card: 'PayMongo Checkout (Card)',
+  credit_card: 'PayMongo Checkout (Card)',
+  debit_card: 'PayMongo Checkout (Card)',
+  grab_pay: 'PayMongo Checkout (GrabPay)',
+  grabpay: 'PayMongo Checkout (GrabPay)'
+};
+
+/**
+ * Formats a raw payment method or PayMongo checkout session/payment resource
+ * into a standardized human-readable label such as:
+ *   - "PayMongo Checkout (GCash)"
+ *   - "PayMongo Checkout (Maya)"
+ *   - "PayMongo Checkout (QR Ph)"
+ *   - "PayMongo Checkout (Card)"
+ *   - "PayMongo Checkout (GrabPay)"
+ *
+ * @param {string} [rawMethod]
+ * @param {Object} [sessionOrPayment]
+ * @returns {string}
+ */
+export function formatPaymentMethod(rawMethod, sessionOrPayment = null) {
+  let candidate = String(rawMethod || '').trim();
+
+  if (sessionOrPayment && typeof sessionOrPayment === 'object') {
+    const attrs = sessionOrPayment.attributes || sessionOrPayment;
+    const payments = Array.isArray(attrs?.payments) ? attrs.payments : [];
+    const firstPayment = payments[0]?.attributes || payments[0] || null;
+    const piAttrs = attrs?.payment_intent?.attributes || attrs?.payment_intent || null;
+
+    const detected =
+      attrs?.payment_method_used ||
+      firstPayment?.source?.type ||
+      firstPayment?.payment_method_type ||
+      piAttrs?.payment_method_used ||
+      (Array.isArray(attrs?.payment_method_types) && attrs.payment_method_types.length === 1
+        ? attrs.payment_method_types[0]
+        : '');
+
+    if (detected) {
+      candidate = String(detected).trim();
+    }
+  }
+
+  if (!candidate) return 'PayMongo Checkout';
+
+  if (/^PayMongo Checkout\s*\(.+\)$/i.test(candidate)) {
+    return candidate.replace(/^paymongo checkout/i, 'PayMongo Checkout');
+  }
+
+  const lower = candidate.toLowerCase();
+  if (PAYMONGO_METHOD_MAP[lower]) {
+    return PAYMONGO_METHOD_MAP[lower];
+  }
+
+  if (lower.includes('gcash')) return 'PayMongo Checkout (GCash)';
+  if (lower.includes('maya')) return 'PayMongo Checkout (Maya)';
+  if (lower.includes('qrph') || lower.includes('qr ph')) return 'PayMongo Checkout (QR Ph)';
+  if (lower.includes('grab')) return 'PayMongo Checkout (GrabPay)';
+  if (lower.includes('card') || lower.includes('3ds') || lower.includes('visa') || lower.includes('mastercard')) {
+    return 'PayMongo Checkout (Card)';
+  }
+  if (lower === 'paymongo' || lower === 'paymongo checkout') {
+    return 'PayMongo Checkout';
+  }
+
+  return candidate;
+}
+
 /**
  * Deduplicates payment records that originated from both client redirect and provider webhook.
  * Collapses records sharing the same resource/session ID, or same tenant + amount + purpose within a 15-minute window.
@@ -202,7 +277,7 @@ export function buildTenantThreads(docList = [], tenants = []) {
  * @returns {Array<Object>}
  */
 export function deduplicatePayments(payments) {
-  if (!Array.isArray(payments) || payments.length <= 1) return Array.isArray(payments) ? payments : [];
+  if (!Array.isArray(payments) || payments.length === 0) return [];
 
   const results = [];
 
@@ -217,8 +292,9 @@ export function deduplicatePayments(payments) {
     const tenant = (p.tenantEmail || p.tenantName || p.tenant_email || p.tenant_name || '').toLowerCase().trim();
     const rawTime = p.createdAt || p.created_at || p.timestamp || p.dateFormatted;
     const timeMs = rawTime ? new Date(rawTime).getTime() : 0;
+    const normalizedMethod = formatPaymentMethod(p.method || p.payment_method, p);
 
-    const isDuplicate = results.some((existing) => {
+    const matchedExisting = results.find((existing) => {
       const exId = existing.id || existing.payMongoResourceId || existing.paymentMethodId || existing.sessionId;
       const exRef = existing.referenceNumber || existing.reference_number;
       if (pId && exId && pId === exId) return true;
@@ -241,13 +317,27 @@ export function deduplicatePayments(payments) {
       return false;
     });
 
-    if (!isDuplicate) {
-      const clone = { ...p };
-      if (typeof clone.purpose === 'string' && clone.purpose.includes(' - MJP Residences')) {
-        clone.purpose = clone.purpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+    if (matchedExisting) {
+      if (
+        (!matchedExisting.method || matchedExisting.method === 'PayMongo Checkout') &&
+        normalizedMethod.includes('(')
+      ) {
+        matchedExisting.method = normalizedMethod;
       }
-      results.push(clone);
+      if (!matchedExisting.sessionId && (p.sessionId || (typeof pId === 'string' && pId.startsWith('cs_')))) {
+        matchedExisting.sessionId = p.sessionId || pId;
+      }
+      continue;
     }
+
+    const clone = { ...p, method: normalizedMethod };
+    if (!clone.sessionId && typeof pId === 'string' && pId.startsWith('cs_')) {
+      clone.sessionId = pId;
+    }
+    if (typeof clone.purpose === 'string' && clone.purpose.includes(' - MJP Residences')) {
+      clone.purpose = clone.purpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+    }
+    results.push(clone);
   }
 
   return results;
