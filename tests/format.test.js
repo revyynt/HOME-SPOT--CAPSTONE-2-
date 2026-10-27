@@ -8,7 +8,8 @@ import {
   initials,
   avatarGradient,
   getUrlParam,
-  deduplicatePayments
+  deduplicatePayments,
+  formatPaymentMethod
 } from '../assets/js/lib/format.js';
 
 test('escapeHtml neutralises every HTML-significant character', () => {
@@ -143,4 +144,25 @@ test('deduplicatePayments collapses provider webhook and client redirect duplica
   assert.equal(result[0].purpose, 'Parking Space Fee');
   assert.equal(result[1].purpose, 'Monthly Rent');
   assert.equal(result[2].amount, 1200);
+});
+
+test('formatPaymentMethod formats PayMongo channels into specific labels', () => {
+  assert.equal(formatPaymentMethod('gcash'), 'PayMongo Checkout (GCash)');
+  assert.equal(formatPaymentMethod('paymaya'), 'PayMongo Checkout (Maya)');
+  assert.equal(formatPaymentMethod('qrph'), 'PayMongo Checkout (QR Ph)');
+  assert.equal(formatPaymentMethod('card'), 'PayMongo Checkout (Card)');
+  assert.equal(formatPaymentMethod('grab_pay'), 'PayMongo Checkout (GrabPay)');
+  assert.equal(
+    formatPaymentMethod('PayMongo Checkout', {
+      attributes: { payment_method_used: 'gcash' }
+    }),
+    'PayMongo Checkout (GCash)'
+  );
+  assert.equal(
+    formatPaymentMethod('PayMongo Checkout', {
+      attributes: { payments: [{ attributes: { source: { type: 'qrph' } } }] }
+    }),
+    'PayMongo Checkout (QR Ph)'
+  );
+  assert.equal(formatPaymentMethod('PayMongo Checkout'), 'PayMongo Checkout');
 });
