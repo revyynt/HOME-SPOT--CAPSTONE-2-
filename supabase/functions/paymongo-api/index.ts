@@ -258,7 +258,34 @@ Deno.serve(async (request: Request) => {
               lineItemName ||
               (sessionAttrs?.description || 'Monthly Rent').replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
             const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
-            const now = new Date();
+            const paidUnix = Number(
+              relatedPayment?.attributes?.paid_at ||
+              sessionAttrs?.paid_at ||
+              sessionAttrs?.created_at ||
+              0
+            );
+            const now = paidUnix > 0 ? new Date(paidUnix * 1000) : new Date();
+            const rawChannel = String(
+              sessionAttrs?.payment_method_used ||
+              relatedPayment?.attributes?.payment_method_type ||
+              relatedPayment?.attributes?.source?.type ||
+              ''
+            )
+              .trim()
+              .toLowerCase();
+            const channelMap: Record<string, string> = {
+              gcash: 'PayMongo Checkout (GCash)',
+              maya: 'PayMongo Checkout (Maya)',
+              paymaya: 'PayMongo Checkout (Maya)',
+              qrph: 'PayMongo Checkout (QR Ph)',
+              qr_ph: 'PayMongo Checkout (QR Ph)',
+              card: 'PayMongo Checkout (Card)',
+              credit_card: 'PayMongo Checkout (Card)',
+              debit_card: 'PayMongo Checkout (Card)',
+              grab_pay: 'PayMongo Checkout (GrabPay)',
+              grabpay: 'PayMongo Checkout (GrabPay)'
+            };
+            const formattedMethod = channelMap[rawChannel] || 'PayMongo Checkout';
             const record = {
               payMongoResourceId: paymentId,
               sessionId: rawSessionId || null,
@@ -268,10 +295,7 @@ Deno.serve(async (request: Request) => {
               status: 'Paid',
               purpose: cleanPurpose,
               notes: sessionAttrs?.metadata?.notes || 'Completed via PayMongo Checkout',
-              method:
-                relatedPayment?.attributes?.payment_method_type ||
-                relatedPayment?.attributes?.source?.type ||
-                'PayMongo Checkout',
+              method: formattedMethod,
               tenantEmail,
               tenantUid: auth.user.id,
               tenantName,

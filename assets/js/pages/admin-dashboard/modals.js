@@ -5,7 +5,13 @@
  * from Supabase, and dispatches reminders via Portal Chat and Gmail Compose.
  */
 
-import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../../lib/format.js';
+import {
+  deduplicatePayments,
+  escapeHtml,
+  formatPHP,
+  formatPaymentMethod,
+  initials
+} from '../../lib/format.js';
 import { parsePaymentDate } from '../../lib/payment-calendar.js';
 import { db, supabaseData } from '../../supabase-service.js';
 import { Toast } from '../../render/toast.js';
@@ -129,7 +135,10 @@ export async function openPaymentModal(rawTenant) {
       });
 
     if (matching[0]?.method || matching[0]?.paymentMethod) {
-      set('modalPaymentMethod', matching[0].method || matching[0].paymentMethod);
+      set(
+        'modalPaymentMethod',
+        formatPaymentMethod(matching[0].method || matching[0].paymentMethod, matching[0])
+      );
     }
 
     if (historyList) {

@@ -5,6 +5,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function formatPayMongoMethod(...candidates: unknown[]): string {
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string' || !candidate.trim()) continue;
+    const lower = candidate.trim().toLowerCase();
+    if (lower.includes('gcash')) return 'PayMongo Checkout (GCash)';
+    if (lower.includes('paymaya') || lower.includes('maya')) return 'PayMongo Checkout (Maya)';
+    if (lower.includes('qrph') || lower.includes('qr_ph') || lower.includes('qr ph')) {
+      return 'PayMongo Checkout (QR Ph)';
+    }
+    if (lower.includes('grab_pay') || lower.includes('grabpay') || lower.includes('grab pay')) {
+      return 'PayMongo Checkout (GrabPay)';
+    }
+    if (
+      lower.includes('card') ||
+      lower.includes('credit') ||
+      lower.includes('debit') ||
+      lower.includes('visa') ||
+      lower.includes('mastercard') ||
+      lower.includes('3ds')
+    ) {
+      return 'PayMongo Checkout (Card)';
+    }
+  }
+  return 'PayMongo Checkout';
+}
+
 Deno.serve(async (request) => {
   if (request.method !== 'POST') {
     return jsonResponse(request, { error: 'Method not allowed.' }, 405);
@@ -56,12 +82,13 @@ Deno.serve(async (request) => {
   if (typeof eventId !== 'string' || !eventId) {
     return jsonResponse(request, { error: 'PayMongo event id is required.' }, 400);
   }
+  const rawResourceId = typeof resource.id === 'string' ? resource.id : '';
   const paymentId =
-    (typeof relatedPayment?.id === 'string' && relatedPayment.id) ||
-    (typeof resource.id === 'string' && resource.id);
+    (typeof relatedPayment?.id === 'string' && relatedPayment.id) || rawResourceId;
   if (typeof paymentId !== 'string' || !paymentId) {
     return jsonResponse(request, { error: 'PayMongo payment id is required.' }, 400);
   }
+  const canonicalDocId = rawResourceId.startsWith('cs_') ? rawResourceId : paymentId;
 
   const billing = isRecord(paymentAttributes.billing)
     ? paymentAttributes.billing
@@ -80,10 +107,10 @@ Deno.serve(async (request) => {
       : {};
   const lineItemsAmount = Array.isArray(attributes.line_items)
     ? attributes.line_items.reduce(
-        (sum: number, item: { amount?: number; quantity?: number }) =>
-          sum + Number(item.amount || 0) * Number(item.quantity || 1),
-        0
-      )
+      (sum: number, item: { amount?: number; quantity?: number }) =>
+        sum + Number(item.amount || 0) * Number(item.quantity || 1),
+      0
+    )
     : 0;
   const amountInCentavos = Number(paymentAttributes.amount || attributes.amount || lineItemsAmount);
   if (!Number.isFinite(amountInCentavos) || amountInCentavos <= 0) {
@@ -101,12 +128,15 @@ Deno.serve(async (request) => {
     (typeof attributes.description === 'string' && attributes.description) ||
     (typeof paymentAttributes.description === 'string' && paymentAttributes.description) ||
     '';
-  const paymentMethod =
-    (typeof paymentAttributes.payment_method_type === 'string' &&
-      paymentAttributes.payment_method_type) ||
-    (isRecord(paymentAttributes.source) && typeof paymentAttributes.source.type === 'string'
-      ? paymentAttributes.source.type
-      : 'PayMongo Checkout');
+  const paymentMethod = formatPayMongoMethod(
+    isRecord(paymentAttributes.source) ? paymentAttributes.source.type : '',
+    paymentAttributes.payment_method_type,
+    attributes.payment_method_used,
+    metadata.preferredMethod,
+    Array.isArray(attributes.payment_method_types) && attributes.payment_method_types.length === 1
+      ? attributes.payment_method_types[0]
+      : ''
+  );
   const now = new Date();
   const firstLineItem = Array.isArray(attributes.line_items) && isRecord(attributes.line_items[0]) ? attributes.line_items[0] : null;
   const lineItemName = typeof firstLineItem?.name === 'string' ? firstLineItem.name.trim() : '';

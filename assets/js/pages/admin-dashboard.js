@@ -218,7 +218,13 @@ import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
 import { initPanoramaViewer } from '../lib/panorama.js';
-import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
+import {
+  deduplicatePayments,
+  escapeHtml,
+  formatPaymentMethod,
+  formatPHP,
+  initials
+} from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
 import {
   initBuilding3DViewer,
@@ -1117,7 +1123,7 @@ function initAdminPaymentCalendar() {
           ...selectedCell.paymentEvents.map(
             (p) =>
               `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
-                <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(p.referenceNumber || p.method)})</span>
+                <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(formatPaymentMethod(p.method, p))}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''})</span>
                 <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
               </div>`
           )
