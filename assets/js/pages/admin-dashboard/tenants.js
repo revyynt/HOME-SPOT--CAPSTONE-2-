@@ -54,7 +54,9 @@ export function listenToTenants() {
   const statusEl = document.getElementById('tenantsSupabaseStatus');
 
   const apply = (snapshot) => {
-    loadedTenants = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    loadedTenants = snapshot.docs
+      .map((doc) => ({ ...doc.data(), id: doc.id }))
+      .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
     if (statusEl) {
       statusEl.textContent = `Synced with Supabase (${loadedTenants.length} tenants)`;
       statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
@@ -279,8 +281,28 @@ export async function deleteTenantAccount(tenantId, tenantName) {
       body: { tenantId }
     });
     if (error || !data?.success) {
-      await supabaseData.deleteDoc(supabaseData.doc(db, 'tenants', tenantId));
+      await supabaseData
+        .updateDoc(supabaseData.doc(db, 'tenants', tenantId), {
+          uid: null,
+          status: 'Archived',
+          room: ''
+        })
+        .catch(() => null);
+      const retry = await supabase.functions.invoke('delete-tenant', {
+        body: { tenantId }
+      });
+      if (retry.error || !retry.data?.success) {
+        await supabaseData
+          .deleteDoc(supabaseData.doc(db, 'tenants', tenantId))
+          .catch(() => null);
+      }
+      await supabase.from('tenants').delete().eq('id', tenantId).catch(() => null);
     }
+    loadedTenants = loadedTenants.filter((t) => t.id !== tenantId);
+    renderFiltered();
+    updateTenantStats(loadedTenants);
+    refreshTenantMessenger();
+    refreshTenantRoomOptions();
     Toast.success(`Tenant ${tenantName} removed successfully.`);
   } catch (error) {
     console.error('Failed to remove tenant:', error);
