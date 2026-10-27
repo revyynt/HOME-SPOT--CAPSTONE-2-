@@ -220,7 +220,12 @@ import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } fro
 import { initPanoramaViewer } from '../lib/panorama.js';
 import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
-import { initBuilding3DViewer, BUILDING_UNITS, resolveBuildingUnit } from '../lib/building-3d.js';
+import {
+  initBuilding3DViewer,
+  BUILDING_UNITS,
+  resolveBuildingUnit,
+  syncBuildingUnitsWithRooms
+} from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
 import { attr } from '../lib/dom.js';
 
@@ -572,6 +577,7 @@ function initAdminListings() {
         rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
       currentAdminRooms = rooms;
+      syncBuildingUnitsWithRooms(rooms);
       renderListings(rooms);
       updateTenantDormSelect(rooms);
     },
@@ -1616,7 +1622,10 @@ function initAdminBuilding3D() {
 
     const featsEl = document.getElementById('admin3DUnitFeatures');
     if (featsEl) {
-      featsEl.innerHTML = (unit.features || [])
+      const combinedFeats = Array.from(
+        new Set([...(unit.listingFeatures || []), ...(unit.features || [])])
+      );
+      featsEl.innerHTML = combinedFeats
         .map(
           (f) =>
             `<span class="px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(f)}</span>`
@@ -1679,6 +1688,19 @@ function initAdminBuilding3D() {
       renderInspector();
     },
     (err) => console.warn('3D Building tenants listener error:', err)
+  );
+
+  supabaseData.onSnapshot(
+    supabaseData.collection(supabase, 'rooms'),
+    (snap) => {
+      const rooms = [];
+      snap.forEach((doc) => {
+        rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
+      });
+      syncBuildingUnitsWithRooms(rooms.length ? rooms : DEFAULT_ROOMS);
+      renderInspector();
+    },
+    (err) => console.warn('3D Building rooms listener error:', err)
   );
 
   document.addEventListener('click', (event) => {

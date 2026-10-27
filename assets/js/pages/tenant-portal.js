@@ -18,7 +18,13 @@ import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
-import { initBuilding3DViewer, BUILDING_UNITS, resolveBuildingUnit } from '../lib/building-3d.js';
+import { DEFAULT_ROOMS, mergeRoomData } from '../lib/rooms.js';
+import {
+  initBuilding3DViewer,
+  BUILDING_UNITS,
+  resolveBuildingUnit,
+  syncBuildingUnitsWithRooms
+} from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
@@ -310,21 +316,25 @@ function renderTenant3DUnitInspector(unit) {
 
   const priceEl = document.getElementById('tenant3DUnitPrice');
   if (priceEl) {
-    const rate = isOwnUnit && tenantRent ? tenantRent : unit.price;
+    const rate = unit.price || (isOwnUnit && tenantRent ? tenantRent : 10000);
     priceEl.textContent = `₱${Number(rate).toLocaleString()}/mo`;
   }
 
   const descEl = document.getElementById('tenant3DUnitDesc');
   if (descEl) {
     descEl.textContent =
-      unit.type === 'Commercial Space'
+      unit.description ||
+      (unit.type === 'Commercial Space'
         ? "1st Floor center-right storefront under the white canopy overhang — separated from the owner's MJ Parungao Purified Water Station on the left and the gated side hallway on the right."
-        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`;
+        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`);
   }
 
   const featsEl = document.getElementById('tenant3DUnitFeatures');
   if (featsEl) {
-    featsEl.innerHTML = (unit.features || [])
+    const combinedFeats = Array.from(
+      new Set([...(unit.listingFeatures || []), ...(unit.features || [])])
+    );
+    featsEl.innerHTML = combinedFeats
       .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
       .join('');
   }
@@ -349,6 +359,7 @@ function renderTenant3DUnitInspector(unit) {
 }
 
 function syncTenant3DBuildingState() {
+  subscribeTenant3DRooms();
   const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
   if (!tenantSelected3DUnitId && ownUnit) {
     tenantSelected3DUnitId = ownUnit.id;
@@ -363,7 +374,31 @@ function syncTenant3DBuildingState() {
   }
 }
 
+let tenant3DRoomsSubscribed = false;
+
+function subscribeTenant3DRooms() {
+  if (tenant3DRoomsSubscribed) return;
+  tenant3DRoomsSubscribed = true;
+  try {
+    supabaseData.onSnapshot(
+      supabaseData.collection(supabase, 'rooms'),
+      (snap) => {
+        const rooms = [];
+        snap.forEach((doc) => {
+          rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
+        });
+        syncBuildingUnitsWithRooms(rooms.length ? rooms : DEFAULT_ROOMS);
+        syncTenant3DBuildingState();
+      },
+      (err) => console.warn('Tenant 3D rooms listener error:', err)
+    );
+  } catch (err) {
+    console.warn('Could not subscribe to rooms for 3D viewer:', err);
+  }
+}
+
 function ensureTenantBuilding3DInitialized() {
+  subscribeTenant3DRooms();
   const viewport = document.getElementById('tenantBuilding3DViewport');
   if (!viewport) return;
   if (!tenantBuilding3D) {
