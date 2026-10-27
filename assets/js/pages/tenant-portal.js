@@ -628,6 +628,9 @@ async function fetchTenantSupabaseProfile() {
 fetchTenantSupabaseProfile();
 
 function switchTab(tabName, evt) {
+  try {
+    sessionStorage.setItem('tenant_portal_active_tab', tabName);
+  } catch { }
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach((tab) => tab.classList.remove('active'));
   const tabButtons = document.querySelectorAll('.tab');
@@ -661,6 +664,40 @@ function switchTab(tabName, evt) {
     }, 40);
   }
 }
+
+function hasPendingPaymentReturn() {
+  const href = window.location.href || '';
+  if (/[?&](payment|payment_intent_id|sessionId)=/.test(href)) {
+    return true;
+  }
+  try {
+    if (
+      sessionStorage.getItem('pending_paymongo_payment') ||
+      localStorage.getItem('pending_paymongo_payment') ||
+      sessionStorage.getItem('paymongo_checkout_active') === '1'
+    ) {
+      return true;
+    }
+  } catch { }
+  return false;
+}
+
+// Synchronously activate the payment tab (or last active tab) before authPending
+// reveals the page, so returning from PayMongo never flashes the Messages tab first.
+(function syncInitialTabBeforeReveal() {
+  const initialTab = hasPendingPaymentReturn()
+    ? 'payment'
+    : sessionStorage.getItem('tenant_portal_active_tab');
+  if (initialTab && initialTab !== 'messages') {
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach((tab) => tab.classList.remove('active'));
+    const tabButtons = document.querySelectorAll('.tab');
+    tabButtons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.tabTarget === initialTab);
+    });
+    document.getElementById(`${initialTab}-tab`)?.classList.add('active');
+  }
+})();
 
 async function logout() {
   await logoutStaff('./login.html');
@@ -836,7 +873,10 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     document.getElementById('fullName')?.value ||
     sessionStorage.getItem('tenantName') ||
     'Juan Dela Cruz';
-  const tenantPhone = document.getElementById('phone')?.value || '+63 912 345 6789';
+  const rawPhoneVal = document.getElementById('phone')?.value || '';
+  const tenantPhone = isValidPhilippinePhone(rawPhoneVal)
+    ? normalizePhilippinePhone(rawPhoneVal)
+    : '';
 
   if (!amountVal || amountVal <= 0) {
     if (currentRemainingDue <= 0) {
@@ -893,16 +933,12 @@ document.getElementById('paymentForm').addEventListener('submit', async function
         tenantName: tenantName,
         tenantEmail: userEmail
       });
-      // Store in BOTH storages for maximum reliability across cross-origin redirects
       sessionStorage.setItem('pending_paymongo_payment', pendingPayload);
       localStorage.setItem('pending_paymongo_payment', pendingPayload);
-      // Mark that we are leaving for PayMongo checkout — used to force fresh load on return
       sessionStorage.setItem('paymongo_checkout_active', '1');
+      sessionStorage.setItem('tenant_portal_active_tab', 'payment');
 
-      // Use location.replace() so HomeSpot is NOT in browser history stack.
-      // This means pressing Back from PayMongo checkout does a FRESH load of HomeSpot
-      // (not a BF-cache restore), ensuring checkUrlPaymentReturn() runs on DOMContentLoaded.
-      window.location.replace(session.checkoutUrl);
+      window.location.href = session.checkoutUrl;
       return;
     } else {
       throw new Error('Unable to generate PayMongo checkout session.');
@@ -1522,6 +1558,13 @@ async function checkUrlPaymentReturn() {
     paymentIntentId = pending.paymentIntentId;
   }
 
+  // If any payment return indicator is present, switch to the payment tab immediately
+  // BEFORE awaiting any PayMongo verification calls so the Messages tab never flashes first.
+  if (paymentIntentId || paymentStatus || pending?.sessionId) {
+    sessionStorage.removeItem('paymongo_checkout_active');
+    switchTab('payment');
+  }
+
   // SCENARIO: Returned from PayMongo hosted checkout with no URL params
   // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
   // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
@@ -1806,12 +1849,14 @@ async function checkUrlPaymentReturn() {
 
 // Initialize on DOM load or immediately if already loaded
 async function initPortal() {
+  if (hasPendingPaymentReturn()) {
+    switchTab('payment');
+  }
   updateSubmitButton();
   try {
     await authReady;
   } catch (e) { }
-  await loadTenantPaymentHistory();
-  await checkUrlPaymentReturn();
+  await Promise.all([loadTenantPaymentHistory(), checkUrlPaymentReturn()]);
 }
 
 if (document.readyState === 'loading') {

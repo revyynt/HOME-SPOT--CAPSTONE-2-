@@ -136,6 +136,17 @@ Deno.serve(async (request: Request) => {
         if (!methods.length)
           return jsonResponse(request, { error: 'No valid payment methods.' }, 400);
 
+        const rawPhone = typeof input.tenantPhone === 'string' ? input.tenantPhone.trim() : '';
+        const digitsOnly = rawPhone.replace(/\D/g, '');
+        let validBillingPhone = '';
+        if (/^09\d{9}$/.test(digitsOnly)) {
+          validBillingPhone = digitsOnly.slice(1);
+        } else if (/^639\d{9}$/.test(digitsOnly)) {
+          validBillingPhone = digitsOnly.slice(2);
+        } else if (/^9\d{9}$/.test(digitsOnly)) {
+          validBillingPhone = digitsOnly;
+        }
+
         const description = notes
           ? `${purpose} (${notes}) - ${MERCHANT_NAME}`
           : `${purpose} - ${MERCHANT_NAME}`;
@@ -159,7 +170,7 @@ Deno.serve(async (request: Request) => {
               billing: {
                 name: typeof input.tenantName === 'string' ? input.tenantName.slice(0, 120) : '',
                 email: auth.user.email || '',
-                phone: typeof input.tenantPhone === 'string' ? input.tenantPhone.slice(0, 64) : ''
+                ...(validBillingPhone ? { phone: validBillingPhone } : {})
               },
               metadata: { supabaseUserId: auth.user.id, tenantEmail: auth.user.email || '' },
               success_url: successUrl,

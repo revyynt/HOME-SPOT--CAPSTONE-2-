@@ -7,7 +7,11 @@
  */
 
 import { supabase } from './supabase-service.js';
-import { deduplicatePayments } from './lib/format.js';
+import {
+  deduplicatePayments,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone
+} from './lib/format.js';
 
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',
@@ -146,6 +150,10 @@ export async function createCheckoutSession({
       ? window.location.pathname
       : '/tenant-portal.html';
 
+  const cleanPhone = isValidPhilippinePhone(tenantPhone)
+    ? normalizePhilippinePhone(tenantPhone).replace(/^0/, '')
+    : '';
+
   const requestBody = {
     amount,
     purpose: finalPurpose,
@@ -153,7 +161,7 @@ export async function createCheckoutSession({
     description: finalDescription,
     tenantName,
     tenantEmail,
-    tenantPhone,
+    tenantPhone: cleanPhone,
     payment_method_types: (paymentMethodTypes || PAYMONGO_CONFIG.supportedMethods).filter(
       (m) => m !== 'dob' && m !== 'billease'
     ),
