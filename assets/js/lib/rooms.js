@@ -84,10 +84,10 @@ export const DEFAULT_ROOMS = [
     capacity: 4,
     available: 1,
     size: '35 sqm',
-    image: 'assets/img/commercial-space-panorama.png',
-    mainImage: 'assets/img/commercial-space-panorama.png',
+    image: 'assets/img/commercial-space.jpg',
+    mainImage: 'assets/img/commercial-space.jpg',
     panorama: 'assets/img/commercial-space-panorama.png',
-    images: ['assets/img/commercial-space-panorama.png', 'assets/img/commercial-space.jpg'],
+    images: ['assets/img/commercial-space.jpg', 'assets/img/commercial-space-panorama.png'],
     description:
       'Premium commercial space ideal for business operations. Spacious unit suitable for small offices, retail, or service-based businesses with comfortable working capacity.',
     features: ['4 People', 'Bathroom']
@@ -201,16 +201,8 @@ export function mergeRoomData(baseOrKey, remote = {}) {
           ? Number(data.capacity)
           : base.capacity,
     size: data.size || base.size,
-    image:
-      base.id === 'commercial-space' && data.image === 'assets/img/commercial-space.jpg'
-        ? base.image
-        : data.image || base.image,
-    mainImage:
-      base.id === 'commercial-space' &&
-        (data.mainImage === 'assets/img/commercial-space.jpg' ||
-          (!data.mainImage && data.image === 'assets/img/commercial-space.jpg'))
-        ? base.mainImage
-        : data.mainImage || data.image || base.mainImage,
+    image: data.image || base.image,
+    mainImage: data.mainImage || data.image || base.mainImage,
     panorama: data.panorama || base.panorama,
     images,
     description: data.description || base.description,
