@@ -157,7 +157,13 @@ async function addDoc(ref, data) {
 async function updateDoc(ref, changes) {
   const existing = await getDoc(ref);
   if (!existing.exists()) throw new Error(`Document ${ref.name}/${ref.id} does not exist.`);
-  await setDoc(ref, { ...existing.data(), ...changes });
+  const data = { ...existing.data(), ...changes };
+  const { error } = await supabase
+    .from('app_documents')
+    .update({ data, updated_at: new Date().toISOString() })
+    .eq('collection', ref.name)
+    .eq('id', ref.id);
+  if (error) throw error;
 }
 
 async function deleteDoc(ref) {

@@ -252,3 +252,63 @@ export function deduplicatePayments(payments) {
 
   return results;
 }
+
+/**
+ * Validates a Philippine mobile or landline phone number.
+ * Accepts:
+ *   - 09XXXXXXXXX (11 digits)
+ *   - +639XXXXXXXXX or 639XXXXXXXXX (12 digits)
+ *   - 9XXXXXXXXX (10 digits)
+ *   - (02) XXXX-XXXX / 02XXXXXXX(X) (Metro Manila landline)
+ * @param {string} raw
+ * @returns {boolean}
+ */
+export function isValidPhilippinePhone(raw) {
+  const str = String(raw || '').trim();
+  if (!str) return false;
+  if (/[^0-9+\s()-]/.test(str)) return false;
+  const compact = str.replace(/[\s()-]/g, '');
+  return /^(\+?639\d{9}|09\d{9}|9\d{9}|\+?632\d{7,8}|02\d{7,8})$/.test(compact);
+}
+
+/**
+ * Normalizes a valid Philippine phone number into a clean standard format
+ * (09XXXXXXXXX for mobile), or returns '' if invalid.
+ * @param {string} raw
+ * @returns {string}
+ */
+export function normalizePhilippinePhone(raw) {
+  if (!isValidPhilippinePhone(raw)) return '';
+  const compact = String(raw || '')
+    .trim()
+    .replace(/[\s()-]/g, '');
+  if (/^\+?639\d{9}$/.test(compact)) {
+    return '0' + compact.replace(/^\+?63/, '');
+  }
+  if (/^9\d{9}$/.test(compact)) {
+    return '0' + compact;
+  }
+  return compact;
+}
+
+/**
+ * Returns today's date in local timezone as YYYY-MM-DD.
+ * @param {Date} [now]
+ * @returns {string}
+ */
+export function todayIsoLocal(now = new Date()) {
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+/**
+ * Returns true if a YYYY-MM-DD date string is strictly before today in local time.
+ * @param {string} dateStr
+ * @param {Date} [now]
+ * @returns {boolean}
+ */
+export function isPastDate(dateStr, now = new Date()) {
+  const clean = String(dateStr || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return false;
+  return clean < todayIsoLocal(now);
+}

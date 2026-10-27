@@ -7,6 +7,12 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { db, supabase, supabaseData } from '../../supabase-service.js';
+import {
+  isPastDate,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone,
+  todayIsoLocal
+} from '../../lib/format.js';
 
 const PASSWORD_WORDS = ['Home', 'Spot', 'Dorm', 'MJP', 'Stay'];
 
@@ -40,8 +46,12 @@ export function openCreateTenantModal() {
   form?.reset();
 
   const moveIn = document.getElementById('tenantMoveInDate');
-  if (moveIn && !moveIn.value) {
-    moveIn.value = new Date().toISOString().split('T')[0];
+  const minDate = todayIsoLocal();
+  if (moveIn) {
+    moveIn.min = minDate;
+    if (!moveIn.value || moveIn.value < minDate) {
+      moveIn.value = minDate;
+    }
   }
 
   generateTemporaryPassword();
@@ -234,6 +244,15 @@ export async function createTenant() {
     showFormError('Password must be at least 6 characters.');
     return null;
   }
+  if (!isValidPhilippinePhone(form.phone)) {
+    showFormError('Please enter a valid 11-digit Philippine mobile number (e.g. 0912 345 6789).');
+    return null;
+  }
+  if (isPastDate(form.moveInDate)) {
+    showFormError('Move-in date cannot be in the past.');
+    return null;
+  }
+  form.phone = normalizePhilippinePhone(form.phone) || form.phone;
 
   try {
     const { data, error } = await supabase.functions.invoke('create-tenant', {

@@ -56,7 +56,7 @@
             </svg>
           </span>
           <input type="password" id="password" name="password" required autocomplete="current-password"
-            placeholder="••••••••"
+            placeholder="Enter your password"
             class="w-full pl-11 pr-11 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm" />
           <button type="button" id="togglePasswordBtn"
             class="absolute right-3.5 text-gray-400 hover:text-gray-600 p-1 focus:outline-none"
@@ -123,21 +123,31 @@
         </button>
       </div>
       <div class="p-6 text-gray-600 text-sm leading-relaxed">
-        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
+        <div class="flex items-center gap-3 mb-3">
+          <div
+            class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+              </path>
+            </svg>
+          </div>
+          <h3 class="text-base font-bold text-gray-900">Moving into MJP Residences?</h3>
         </div>
-        <h3 class="text-base font-bold text-gray-900 mb-2">Moving into MJP Residences?</h3>
         <p class="mb-3">
           Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
           to link your assigned room, lease term, and monthly rent schedule.
         </p>
-        <p class="mb-6 text-xs text-gray-500">
+        <p class="mb-4 text-xs text-gray-500">
           If you have moved in or finalized your reservation, please ask the admin for your
-          official login credentials.
+          official login credentials or visit the on-site office:
         </p>
+        <a href="https://www.google.com/maps/search/?api=1&amp;query=MX2H%2B53C%2C+9th+Ave%2C+Grace+Park+West%2C+Caloocan%2C+Metro+Manila"
+          target="_blank" rel="noopener noreferrer"
+          class="mb-5 p-3 bg-blue-50/70 hover:bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold text-blue-700 transition-colors">
+          <span>📍 MX2H+53C, 9th Ave, Grace Park West (Open in Google Maps)</span>
+          <span>↗</span>
+        </a>
         <button type="button" id="understoodBtn"
           class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
           Understood
@@ -151,11 +161,13 @@
   <script type="module" src="./assets/js/pages/login.js"></script>
 
   <!-- Forgot Password Modal -->
-  <div id="forgotPasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="forgotPasswordModal"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
       <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <h2 class="text-lg font-bold text-gray-900">Reset Your Password</h2>
-        <button type="button" id="closeForgotModalBtn" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        <button type="button" id="closeForgotModalBtn"
+          class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
       </div>
       <form id="forgotPasswordForm" class="p-6 space-y-4">
         <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2">
@@ -169,7 +181,8 @@
         </p>
         <div id="forgotAlert" class="hidden p-3 rounded-lg text-sm"></div>
         <div>
-          <label for="forgotEmail" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Email Address</label>
+          <label for="forgotEmail" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Email
+            Address</label>
           <input type="email" id="forgotEmail" required placeholder="e.g. tenant@example.com"
             class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
         </div>
@@ -188,7 +201,8 @@
   </div>
 
   <!-- Update Password Modal (Triggered after recovery link redirect) -->
-  <div id="updatePasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+  <div id="updatePasswordModal"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
       <div class="px-6 py-4 border-b border-gray-100">
         <h2 class="text-lg font-bold text-gray-900">Set New Password</h2>
@@ -210,7 +224,8 @@
             class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
         </div>
         <div>
-          <label for="confirmNewPassword" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Confirm New Password</label>
+          <label for="confirmNewPassword" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Confirm New
+            Password</label>
           <input type="password" id="confirmNewPassword" required minlength="6" placeholder="Re-enter your new password"
             class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
         </div>

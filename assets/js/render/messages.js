@@ -301,11 +301,25 @@ export function renderMessages(docs) {
       ? `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-xs font-semibold">Topic: ${escapeHtml(subject)}</span>`
       : '';
 
+    const unitLabel =
+      !isSupport && (data.room || data.property) && data.room !== 'Customer Support'
+        ? data.room || data.property
+        : data.property || '';
+    const moveInLabel = data.moveInDate
+      ? (() => {
+        const dt = new Date(data.moveInDate);
+        return Number.isNaN(dt.getTime())
+          ? String(data.moveInDate)
+          : dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+      })()
+      : '';
+
     const metaHtml =
-      !isTenant && (data.property || data.email || data.phone || subject)
+      !isTenant && (unitLabel || moveInLabel || data.email || data.phone || subject)
         ? `<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1.5">
            ${subjectBadge}
-           ${data.property ? `<span class="bg-gray-100 px-2 py-0.5 rounded">Property: ${escapeHtml(data.property)}</span>` : ''}
+           ${unitLabel ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-medium">Unit: ${escapeHtml(unitLabel)}</span>` : ''}
+           ${moveInLabel ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-semibold">Preferred Move-in: ${escapeHtml(moveInLabel)}</span>` : ''}
            ${data.email ? `<span class="bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(data.email)}</span>` : ''}
            ${data.phone ? `<span class="bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(data.phone)}</span>` : ''}
          </div>`

@@ -16,7 +16,11 @@ import { initBackButtonGuard, logoutStaff } from '../lib/session.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
-import { escapeHtml } from '../lib/format.js';
+import {
+  escapeHtml,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone
+} from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
 import { DEFAULT_ROOMS, mergeRoomData } from '../lib/rooms.js';
 import {
@@ -550,6 +554,7 @@ async function fetchTenantSupabaseProfile() {
   try {
     const user = await getCurrentUser();
     if (!user) return;
+    const meta = user.user_metadata || {};
     const tenantsRef = supabaseData.collection(supabase, 'tenants');
     const q = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
 
@@ -561,13 +566,20 @@ async function fetchTenantSupabaseProfile() {
           currentTenantDocId = tenantDoc.id;
           sessionStorage.setItem('tenantDocId', currentTenantDocId);
           const docData = tenantDoc.data();
-          if (docData.name) {
-            tenantName = docData.name;
-            sessionStorage.setItem('tenantName', docData.name);
+          const useMetaOverride =
+            meta.profileUpdatedAt &&
+            (!docData.updatedAt || String(meta.profileUpdatedAt) >= String(docData.updatedAt));
+          const resolvedName = (useMetaOverride && meta.name) || docData.name;
+          const resolvedPhone = (useMetaOverride && meta.phone) || docData.phone;
+          const resolvedEmergency =
+            (useMetaOverride && meta.emergencyContact) || docData.emergencyContact;
+          if (resolvedName) {
+            tenantName = resolvedName;
+            sessionStorage.setItem('tenantName', resolvedName);
           }
-          if (docData.phone) {
-            tenantPhone = docData.phone;
-            sessionStorage.setItem('tenantPhone', docData.phone);
+          if (resolvedPhone) {
+            tenantPhone = resolvedPhone;
+            sessionStorage.setItem('tenantPhone', resolvedPhone);
           }
           if (docData.room) {
             tenantRoom = docData.room;
@@ -599,9 +611,9 @@ async function fetchTenantSupabaseProfile() {
             sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
             localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
           }
-          if (docData.emergencyContact) {
-            tenantEmergency = docData.emergencyContact;
-            sessionStorage.setItem('tenantEmergencyContact', docData.emergencyContact);
+          if (resolvedEmergency) {
+            tenantEmergency = resolvedEmergency;
+            sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
           }
           populateTenantUI();
         }
@@ -654,6 +666,20 @@ async function logout() {
   await logoutStaff('./login.html');
 }
 
+function attachTenantPhoneFilter() {
+  for (const id of ['phone', 'emergencyContact']) {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.phoneGuard === '1') continue;
+    input.dataset.phoneGuard = '1';
+    input.addEventListener('input', () => {
+      const cleaned = input.value.replace(/[^0-9+\s()-]/g, '');
+      if (cleaned !== input.value) input.value = cleaned;
+    });
+  }
+}
+
+attachTenantPhoneFilter();
+
 async function saveProfile() {
   const saveBtn = document.querySelector('[data-action="save-profile"]');
   const nameInput = document.getElementById('fullName');
@@ -661,13 +687,35 @@ async function saveProfile() {
   const emergencyInput = document.getElementById('emergencyContact');
 
   const newName = (nameInput?.value || '').trim();
-  const newPhone = (phoneInput?.value || '').trim();
-  const newEmergency = (emergencyInput?.value || '').trim();
+  const rawPhone = (phoneInput?.value || '').trim();
+  const rawEmergency = (emergencyInput?.value || '').trim();
 
   if (!newName) {
     Toast.alert({ title: 'Missing Name', message: 'Please enter your full name.' });
     return;
   }
+
+  if (!rawPhone || !isValidPhilippinePhone(rawPhone)) {
+    Toast.alert({
+      title: 'Invalid Phone Number',
+      message: 'Please enter a valid 11-digit Philippine mobile number (e.g. 0912 345 6789).'
+    });
+    return;
+  }
+
+  if (rawEmergency && !isValidPhilippinePhone(rawEmergency)) {
+    Toast.alert({
+      title: 'Invalid Emergency Contact',
+      message:
+        'Please enter a valid 11-digit Philippine mobile number for your emergency contact (e.g. 0923 456 7890).'
+    });
+    return;
+  }
+
+  const newPhone = normalizePhilippinePhone(rawPhone) || rawPhone;
+  const newEmergency = rawEmergency
+    ? normalizePhilippinePhone(rawEmergency) || rawEmergency
+    : '';
 
   const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
   if (saveBtn) {
@@ -676,14 +724,47 @@ async function saveProfile() {
   }
 
   try {
-    if (currentTenantDocId) {
-      const ref = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
-      await supabaseData.updateDoc(ref, {
+    const nowIso = supabaseData.serverTimestamp();
+
+    // 1. Update verified Supabase Auth user metadata (always permitted for own session)
+    const { error: authUpdateErr } = await supabase.auth.updateUser({
+      data: {
         name: newName,
         phone: newPhone,
         emergencyContact: newEmergency,
-        updatedAt: supabaseData.serverTimestamp()
-      });
+        profileUpdatedAt: nowIso
+      }
+    });
+    if (authUpdateErr) {
+      console.warn('Auth metadata update warning:', authUpdateErr);
+    }
+
+    // 2. Update relational profiles row if present (permitted by "users can update own profile")
+    try {
+      const user = await getCurrentUser();
+      if (user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ name: newName, phone: newPhone, updated_at: nowIso })
+          .eq('id', user.id);
+      }
+    } catch {
+      // Non-fatal if profiles row does not exist
+    }
+
+    // 3. Update tenants document in app_documents
+    if (currentTenantDocId) {
+      try {
+        const ref = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
+        await supabaseData.updateDoc(ref, {
+          name: newName,
+          phone: newPhone,
+          emergencyContact: newEmergency,
+          updatedAt: nowIso
+        });
+      } catch (docErr) {
+        console.warn('Tenant document update fallback (persisted via Auth metadata):', docErr);
+      }
     }
 
     tenantName = newName;
@@ -693,12 +774,15 @@ async function saveProfile() {
     sessionStorage.setItem('tenantPhone', newPhone);
     sessionStorage.setItem('tenantEmergencyContact', newEmergency);
     populateTenantUI();
-    Toast.alert({ title: 'Profile Updated', message: 'Your profile has been updated successfully!' });
+    Toast.alert({
+      title: 'Profile Updated',
+      message: 'Your personal and contact information has been saved.'
+    });
   } catch (err) {
     console.error('Failed to update tenant profile:', err);
     Toast.alert({
-      title: 'Update Failed',
-      message: 'Failed to save profile: ' + (err.message || 'Unknown error')
+      title: 'Unable to Save Changes',
+      message: 'We could not save your profile changes right now. Please check your connection and try again.'
     });
   } finally {
     if (saveBtn) {
