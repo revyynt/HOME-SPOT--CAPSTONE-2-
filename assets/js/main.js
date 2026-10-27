@@ -192,6 +192,8 @@ function initAdminRealtime() {
       m.watchPendingReservations((count) => {
         const el = byId('pendingRequestsCount');
         if (el) el.textContent = count;
+        const tabBadge = byId('reservationsTabBadge');
+        if (tabBadge) tabBadge.textContent = count;
       })
     ),
     import('./render/messages.js').then((m) =>
@@ -239,6 +241,9 @@ async function initAdminActions() {
         break;
       case 'decline':
         reservations.declineReservation(id);
+        break;
+      case 'delete-reservation':
+        reservations.deleteReservation(id);
         break;
       case 'reply':
         messages.replyToMessage(id);
@@ -381,7 +386,7 @@ if (typeof window !== 'undefined') {
       if (updatePassModal) updatePassModal.classList.add('hidden');
       try {
         history.replaceState(null, '', window.location.pathname);
-      } catch {}
+      } catch { }
 
       alert('Password updated successfully! Redirecting to login...');
       window.location.href = './login.html';

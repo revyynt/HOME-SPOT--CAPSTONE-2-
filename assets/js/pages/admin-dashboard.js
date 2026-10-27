@@ -349,15 +349,17 @@ function mountAdminPanoramaPreview(container, imageUrl) {
 function updateTenantDormSelect(rooms) {
   const select = document.getElementById('tenantDorm');
   if (!select || !Array.isArray(rooms)) return;
+  select.disabled = true;
   const currentVal = select.value;
   if (!rooms.length) {
-    select.innerHTML = '<option value="">No units available</option>';
+    select.innerHTML =
+      '<option value="Triple Occupancy Room">Triple Occupancy Room</option><option value="Commercial Space">Commercial Space</option>';
     return;
   }
   select.innerHTML = rooms
     .map((r) => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`)
     .join('');
-  if (currentVal && rooms.some((r) => r.name === currentVal)) {
+  if (currentVal && Array.from(select.options).some((o) => o.value === currentVal)) {
     select.value = currentVal;
   }
 }

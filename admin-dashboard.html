@@ -80,7 +80,8 @@
             <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Pending Requests</p>
             <p id="pendingRequestsCount" class="text-2xl sm:text-3xl font-bold">0</p>
           </div>
-          <div class="bg-yellow-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+          <div
+            class="bg-yellow-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -95,10 +96,12 @@
             <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Tenant Messages</p>
             <p id="unreadTenantMessagesStatCount" class="text-2xl sm:text-3xl font-bold">0</p>
           </div>
-          <div class="bg-emerald-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+          <div
+            class="bg-emerald-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+              </path>
             </svg>
           </div>
         </div>
@@ -110,7 +113,8 @@
             <p class="text-xs sm:text-sm text-gray-600 mb-1 truncate">Unread Inquiries</p>
             <p id="unreadInquiriesStatCount" class="text-2xl sm:text-3xl font-bold">0</p>
           </div>
-          <div class="bg-purple-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
+          <div
+            class="bg-purple-600 w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center shrink-0 ml-2">
             <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
@@ -131,8 +135,10 @@
         <button data-tab-button="listings" class="tab-button px-6 py-3 font-medium">
           My Listings
         </button>
-        <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium">
-          Reservations
+        <button data-tab-button="reservations" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
+          <span>Reservations</span>
+          <span id="reservationsTabBadge"
+            class="bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
         </button>
         <button data-tab-button="tenants" class="tab-button px-6 py-3 font-medium flex items-center gap-2">
           <span>Tenants</span>
@@ -665,13 +671,15 @@
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
             <div>
               <div class="flex items-center gap-2.5 mb-1">
-                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500">
+                <span
+                  class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500">
                   THREE.JS X-RAY BLUEPRINT
                 </span>
                 <h3 class="text-xl font-bold text-gray-900">MJP Residences — 3D Building &amp; Room Foundation</h3>
               </div>
               <p class="text-sm text-gray-600">
-                Interactive 3D architectural model with 1F Owner Water Station &amp; Commercial Space, 2F–5F Triple Occupancy Rooms (3 rooms per floor), side hallway, and rear staircase.
+                Interactive 3D architectural model with 1F Owner Water Station &amp; Commercial Space, 2F–5F Triple
+                Occupancy Rooms (3 rooms per floor), side hallway, and rear staircase.
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -723,7 +731,8 @@
             <!-- Left 8 cols: 3D X-Ray Viewport -->
             <div class="lg:col-span-8 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden shadow-lg">
               <div id="adminBuilding3DViewport" class="w-full h-[380px] sm:h-[520px]"></div>
-              <div class="px-4 py-3 bg-slate-900 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
+              <div
+                class="px-4 py-3 bg-slate-900 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
                 <div class="flex flex-wrap items-center gap-4">
                   <span class="inline-flex items-center gap-1.5">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Occupied Unit
@@ -738,7 +747,8 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> 1F Owner Water Station
                   </span>
                   <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Side Hallway &amp; Rear Stairs
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Side Hallway &amp; Rear
+                    Stairs
                   </span>
                 </div>
                 <span class="text-slate-400">Drag to orbit • Scroll to zoom • Click room to inspect</span>
@@ -753,7 +763,8 @@
                     class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
                     Occupied
                   </span>
-                  <span id="admin3DUnitFloorBadge" class="text-xs font-semibold text-gray-500">3rd Floor • Front Wing</span>
+                  <span id="admin3DUnitFloorBadge" class="text-xs font-semibold text-gray-500">3rd Floor • Front
+                    Wing</span>
                 </div>
                 <h4 id="admin3DUnitTitle" class="text-xl font-extrabold text-gray-900">Room 201</h4>
                 <p id="admin3DUnitType" class="text-sm text-gray-600 mb-4">Triple Occupancy Room • 30 sqm</p>
@@ -1096,21 +1107,16 @@
                 <option value="Room 203">3F • Room 203 (Rear)</option>
                 <option value="Room 301">4F • Room 301 (Front Balcony)</option>
                 <option value="Room 302">4F • Room 302 (Middle)</option>
-                <option value="Room 303">4F • Room 303 (Rear)</option>
                 <option value="Room 401">5F • Room 401 (Front)</option>
-                <option value="Room 402">5F • Room 402 (Middle)</option>
                 <option value="Room 410">5F • Room 410 (Rear)</option>
-                <option value="Room 105">Room 105</option>
-                <option value="Room 208">Room 208</option>
               </select>
             </div>
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-1">Residence Type</label>
-              <select id="tenantDorm"
-                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+              <label class="block text-sm font-semibold text-gray-700 mb-1">Residence Type <span
+                  class="text-xs font-normal text-gray-400">(Auto-matched)</span></label>
+              <select id="tenantDorm" disabled
+                class="w-full px-3 py-2 border rounded-lg outline-none text-sm bg-gray-100 text-gray-700 cursor-not-allowed">
                 <option value="Triple Occupancy Room">Triple Occupancy Room</option>
-                <option value="Single Occupancy Room">Single Occupancy Room</option>
-                <option value="Double Occupancy Room">Double Occupancy Room</option>
                 <option value="Commercial Space">Commercial Space</option>
               </select>
             </div>
