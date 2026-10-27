@@ -162,11 +162,13 @@ export function initPanoramaViewer(
     container.addEventListener(
       'wheel',
       (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         camera.fov = clamp(camera.fov + e.deltaY * 0.04, 30, 110);
         camera.updateProjectionMatrix();
         updateZoomUI();
       },
-      { passive: true }
+      { passive: false }
     );
 
     // Keyboard

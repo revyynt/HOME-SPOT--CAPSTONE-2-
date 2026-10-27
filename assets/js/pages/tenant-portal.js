@@ -279,6 +279,7 @@ function populateTenantUI() {
 let tenantBuilding3D = null;
 let tenantSelected3DUnitId = '';
 let tenant3DXrayEnabled = true;
+let tenant3DFireEnabled = true;
 let tenant3DSpinEnabled = true;
 
 function renderTenant3DUnitInspector(unit) {
@@ -335,8 +336,12 @@ function renderTenant3DUnitInspector(unit) {
 
   const featsEl = document.getElementById('tenant3DUnitFeatures');
   if (featsEl) {
+    const fireRouteChip =
+      unit.floor === 1
+        ? 'Direct 1F Street Fire Exit & Hallway Extinguisher'
+        : `${unit.floor}F Fire Extinguisher + Green Exit Route to 1F Street`;
     const combinedFeats = Array.from(
-      new Set([...(unit.listingFeatures || []), ...(unit.features || [])])
+      new Set([fireRouteChip, ...(unit.listingFeatures || []), ...(unit.features || [])])
     );
     featsEl.innerHTML = combinedFeats
       .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
@@ -2124,6 +2129,7 @@ document.addEventListener('click', function (event) {
       renderTenantPaymentCalendar();
       break;
     case 'tenant-3d-xray': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       tenant3DXrayEnabled = !tenant3DXrayEnabled;
       if (tenantBuilding3D) tenantBuilding3D.setXrayMode(tenant3DXrayEnabled);
@@ -2131,7 +2137,17 @@ document.addEventListener('click', function (event) {
       button.textContent = tenant3DXrayEnabled ? 'X-Ray Mode: ON' : 'X-Ray Mode: OFF';
       break;
     }
+    case 'tenant-3d-fire': {
+      window.getSelection?.()?.removeAllRanges?.();
+      ensureTenantBuilding3DInitialized();
+      tenant3DFireEnabled = !tenant3DFireEnabled;
+      if (tenantBuilding3D) tenantBuilding3D.setFireSafetyMode(tenant3DFireEnabled);
+      button.classList.toggle('active', tenant3DFireEnabled);
+      button.textContent = tenant3DFireEnabled ? 'Fire Safety: ON' : 'Fire Safety: OFF';
+      break;
+    }
     case 'tenant-3d-spin': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       tenant3DSpinEnabled = !tenant3DSpinEnabled;
       if (tenantBuilding3D) tenantBuilding3D.setAutoRotate(tenant3DSpinEnabled);
@@ -2140,6 +2156,7 @@ document.addEventListener('click', function (event) {
       break;
     }
     case 'tenant-3d-my-unit': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
       tenantSelected3DUnitId = ownUnit.id;
@@ -2155,11 +2172,14 @@ document.addEventListener('click', function (event) {
       break;
     }
     case 'tenant-3d-reset': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       tenant3DXrayEnabled = true;
+      tenant3DFireEnabled = true;
       tenant3DSpinEnabled = true;
       if (tenantBuilding3D) {
         tenantBuilding3D.setXrayMode(true);
+        tenantBuilding3D.setFireSafetyMode(true);
         tenantBuilding3D.setAutoRotate(true);
         tenantBuilding3D.setFloorFilter('all');
         tenantBuilding3D.resetCamera();
@@ -2168,6 +2188,11 @@ document.addEventListener('click', function (event) {
       if (xrayBtn) {
         xrayBtn.classList.add('active');
         xrayBtn.textContent = 'X-Ray Mode: ON';
+      }
+      const fireBtn = document.getElementById('tenant3DFireBtn');
+      if (fireBtn) {
+        fireBtn.classList.add('active');
+        fireBtn.textContent = 'Fire Safety: ON';
       }
       const spinBtn = document.getElementById('tenant3DSpinBtn');
       if (spinBtn) {
@@ -2180,6 +2205,7 @@ document.addEventListener('click', function (event) {
       break;
     }
     case 'tenant-3d-floor': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       const floor = button.dataset.floor || 'all';
       if (tenantBuilding3D) tenantBuilding3D.setFloorFilter(floor);

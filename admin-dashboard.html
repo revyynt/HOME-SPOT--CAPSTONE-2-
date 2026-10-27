@@ -682,10 +682,14 @@
                 Occupancy Rooms (3 rooms per floor), side hallway, and rear staircase.
               </p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2 select-none">
               <button type="button" id="admin3DXrayBtn" data-action="admin-3d-xray"
                 class="px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors">
                 X-Ray Mode: ON
+              </button>
+              <button type="button" id="admin3DFireBtn" data-action="admin-3d-fire"
+                class="px-3.5 py-2 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors">
+                Fire Safety: ON
               </button>
               <button type="button" id="admin3DSpinBtn" data-action="admin-3d-spin"
                 class="px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white border border-slate-800 hover:bg-slate-900 transition-colors">
@@ -699,7 +703,7 @@
           </div>
 
           <!-- Floor Isolation Bar -->
-          <div class="flex flex-wrap items-center gap-2 mb-5 pb-4 border-b border-gray-200">
+          <div class="flex flex-wrap items-center gap-2 mb-5 pb-4 border-b border-gray-200 select-none">
             <span class="text-xs font-bold uppercase tracking-wider text-gray-500 mr-1">Isolate Floor:</span>
             <button type="button" data-action="admin-3d-floor" data-floor="all"
               class="px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500">
@@ -747,8 +751,12 @@
                     <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> 1F Owner Water Station
                   </span>
                   <span class="inline-flex items-center gap-1.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Side Hallway &amp; Rear
-                    Stairs
+                    <span class="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_8px_#22c55e] inline-block"></span>
+                    Fire Exit Pathing
+                  </span>
+                  <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Fire Extinguisher &amp; Hose
+                    Cabinet
                   </span>
                 </div>
                 <span class="text-slate-400">Drag to orbit • Scroll to zoom • Click room to inspect</span>

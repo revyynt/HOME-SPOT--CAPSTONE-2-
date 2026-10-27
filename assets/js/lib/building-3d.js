@@ -365,6 +365,8 @@ export function initBuilding3DViewer(container, options = {}) {
   container.style.overflow = 'hidden';
   container.style.background = 'radial-gradient(circle at 50% 32%, #13213c 0%, #070c18 100%)';
   container.style.cursor = 'grab';
+  container.style.userSelect = 'none';
+  container.style.webkitUserSelect = 'none';
 
   const state = {
     mode: options.mode || 'tenant',
@@ -373,6 +375,7 @@ export function initBuilding3DViewer(container, options = {}) {
     tenants: Array.isArray(options.tenants) ? options.tenants : [],
     isXray: true,
     autoSpin: true,
+    fireSafety: true,
     activeFloor: 'all',
     selectedUnitId: null
   };
@@ -455,8 +458,97 @@ export function initBuilding3DViewer(container, options = {}) {
 
     const shellMeshes = [];
     const shellEdgeLines = [];
+    const fireSafetyObjects = [];
+    const firePulseMats = [];
     const unitMeshMap = new Map();
     const pickableMeshes = [];
+
+    const addFireSafetyMesh = (floorNum, mesh) => {
+      mesh.visible = state.fireSafety;
+      floorGroups[floorNum].add(mesh);
+      fireSafetyObjects.push(mesh);
+      return mesh;
+    };
+
+    const addFireExtinguisherStation = (floorNum, y0, zPos) => {
+      const extMat = new THREE.MeshPhongMaterial({
+        color: 0xef4444,
+        emissive: 0xdc2626,
+        emissiveIntensity: 0.55,
+        shininess: 90
+      });
+      firePulseMats.push({ mat: extMat, base: 0.5, amp: 0.25 });
+
+      // Red pressurized cylinder body mounted on corridor wall
+      const cylGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.68, 14);
+      const cylMesh = new THREE.Mesh(cylGeo, extMat);
+      cylMesh.position.set(5.05, y0 + 1.12, zPos);
+      addFireSafetyMesh(floorNum, cylMesh);
+
+      // White/red edge highlight around extinguisher
+      const cylEdge = new THREE.LineSegments(
+        new THREE.EdgesGeometry(cylGeo),
+        new THREE.LineBasicMaterial({ color: 0xfecaca, transparent: true, opacity: 0.95 })
+      );
+      cylEdge.position.copy(cylMesh.position);
+      addFireSafetyMesh(floorNum, cylEdge);
+
+      // Valve & nozzle assembly at top
+      const valveGeo = new THREE.BoxGeometry(0.18, 0.16, 0.22);
+      const valveMat = new THREE.MeshLambertMaterial({ color: 0xf8fafc });
+      const valveMesh = new THREE.Mesh(valveGeo, valveMat);
+      valveMesh.position.set(5.05, y0 + 1.52, zPos);
+      addFireSafetyMesh(floorNum, valveMesh);
+
+      // Glowing red wall locator placa & floor beacon ring
+      const beaconGeo = new THREE.CylinderGeometry(0.34, 0.34, 0.04, 16);
+      const beaconMat = new THREE.MeshBasicMaterial({
+        color: 0xf87171,
+        transparent: true,
+        opacity: 0.78
+      });
+      const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
+      beaconMesh.position.set(5.02, y0 + 0.24, zPos);
+      addFireSafetyMesh(floorNum, beaconMesh);
+    };
+
+    const addFireExitPathStrip = (floorNum, w, d, x, y, z) => {
+      const stripGeo = new THREE.BoxGeometry(w, 0.04, d);
+      const stripMat = new THREE.MeshPhongMaterial({
+        color: 0x10b981,
+        emissive: 0x22c55e,
+        emissiveIntensity: 0.55,
+        transparent: true,
+        opacity: 0.86
+      });
+      firePulseMats.push({ mat: stripMat, base: 0.52, amp: 0.28 });
+      const stripMesh = new THREE.Mesh(stripGeo, stripMat);
+      stripMesh.position.set(x, y, z);
+      addFireSafetyMesh(floorNum, stripMesh);
+
+      const stripEdge = new THREE.LineSegments(
+        new THREE.EdgesGeometry(stripGeo),
+        new THREE.LineBasicMaterial({ color: 0x86efac, transparent: true, opacity: 0.95 })
+      );
+      stripEdge.position.copy(stripMesh.position);
+      addFireSafetyMesh(floorNum, stripEdge);
+    };
+
+    const addFireExitChevron = (floorNum, x, y, z, dirZ = -1) => {
+      const arrowMat = new THREE.MeshPhongMaterial({
+        color: 0x4ade80,
+        emissive: 0x22c55e,
+        emissiveIntensity: 0.75,
+        transparent: true,
+        opacity: 0.95
+      });
+      firePulseMats.push({ mat: arrowMat, base: 0.7, amp: 0.3 });
+      const coneGeo = new THREE.ConeGeometry(0.24, 0.52, 4);
+      const cone = new THREE.Mesh(coneGeo, arrowMat);
+      cone.position.set(x, y, z);
+      cone.rotation.x = dirZ < 0 ? -Math.PI / 2 : Math.PI / 2;
+      addFireSafetyMesh(floorNum, cone);
+    };
 
     const createShellMat = (hexColor, xrayOpacity = 0.14, solidOpacity = 0.95) => {
       const mat = new THREE.MeshLambertMaterial({
@@ -774,11 +866,57 @@ export function initBuilding3DViewer(container, options = {}) {
         addArchBox(5, 0.08, 0.85, 2.2, 3.74, y0 + 0.55, 1.4, 0x1e293b, 0.6, 0x7dd3fc, 0.85);
       }
 
-      // Red Fire Hose Cabinet + Room Doors & Sliding Windows along the hallway
-      if (f >= 2) {
-        const fireCabinetZ = f <= 3 ? 2.25 : 6.1;
-        addArchBox(f, 0.18, 0.92, 0.72, 5.22, y0 + 1.55, fireCabinetZ, 0xdc2626, 0.8, 0xfca5a5, 0.95);
+      // Red Fire Hose Cabinet + Fire Extinguisher + Fire Exit Pathing + Room Doors along the hallway
+      const fireCabinetZ = f <= 3 ? 2.25 : 6.1;
+      addArchBox(f, 0.18, 0.92, 0.72, 5.22, y0 + 1.55, fireCabinetZ, 0xdc2626, 0.8, 0xfca5a5, 0.95);
+      addFireExtinguisherStation(f, y0, fireCabinetZ - 0.62);
 
+      // Fire Exit Evacuation Path along each floor's hallway & stairs
+      if (f === 1) {
+        // 1F Evacuation Path: from Rear Staircase base (z = -6.35) to Front Street Exit (z = +7.8) and Rear Exit (z = -9.6)
+        addFireExitPathStrip(1, 0.44, 17.2, 3.72, y0 + 0.25, -0.9);
+        addFireExitPathStrip(1, 1.5, 0.36, 2.85, y0 + 0.25, 1.2); // Spur from Commercial Space
+        for (const az of [-4.5, -1.5, 1.8, 5.0]) {
+          addFireExitChevron(1, 3.72, y0 + 0.34, az, 1); // Toward Front Street Exit
+        }
+        addFireExitChevron(1, 3.72, y0 + 0.34, -8.2, -1); // Toward Secondary Rear Exit
+        // Glowing Green Street EXIT Portal Beacon at 1F Front Gate (z = 7.72) & Rear Gate (z = -9.72)
+        addFireExitPathStrip(1, 2.6, 0.35, 3.72, y0 + 2.68, 7.72);
+        addFireExitPathStrip(1, 2.6, 0.35, 3.72, y0 + 2.68, -9.72);
+      } else if (f === 2 || f === 3) {
+        // 2F & 3F Evacuation Path: from Front Room (z = 5.9) straight back to Rear Staircase (z = -6.35)
+        addFireExitPathStrip(f, 0.42, 12.6, 3.72, y0 + 0.25, -0.2);
+        for (const doorZ of [5.9, 0.5, -4.9]) {
+          addFireExitPathStrip(f, 1.45, 0.34, 2.92, y0 + 0.25, doorZ);
+        }
+        for (const az of [4.2, 1.2, -2.0, -5.0]) {
+          addFireExitChevron(f, 3.72, y0 + 0.34, az, -1); // Toward Rear Staircase
+        }
+        // Stairwell descent indicator strips on the 1F-3F dog-leg stairs
+        addFireExitPathStrip(f, 0.34, 2.1, 3.02, y0 + FLOOR_H * 0.26, -7.45);
+        addFireExitPathStrip(f, 0.34, 2.1, 4.46, y0 + FLOOR_H * 0.74, -7.45);
+      } else if (f === 4) {
+        // 4F Evacuation Path: from Room 301 (z = 5.05) & Room 302 (z = -0.45) through 4F Gate (z = -3.0)
+        // across Back Deck walkway (z = -3.0 .. -6.0) into Rear Shed stairs (z = -6.35)
+        addFireExitPathStrip(4, 0.42, 11.6, 3.72, y0 + 0.26, -0.65);
+        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, 5.05);
+        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, -0.45);
+        for (const az of [3.5, -1.6, -4.5]) {
+          addFireExitChevron(4, 3.72, y0 + 0.35, az, -1); // Toward 4F Gate & Rear Shed Stairs
+        }
+        // 4F->5F staircase descent indicator
+        addFireExitPathStrip(4, 0.32, 1.25, 3.02, y0 + FLOOR_H * 0.28, 1.2);
+        addFireExitPathStrip(4, 0.32, 1.25, 4.46, y0 + FLOOR_H * 0.75, 1.2);
+      } else if (f === 5) {
+        // 5F Evacuation Path: from Room 401 (z = 5.05) & Room 410 (z = -0.45) to 4F-5F Stair Head (z = 0.55)
+        addFireExitPathStrip(5, 0.42, 6.0, 3.72, y0 + 0.25, 2.3);
+        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, 5.05);
+        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, -0.45);
+        addFireExitChevron(5, 3.72, y0 + 0.34, 3.6, -1);
+        addFireExitChevron(5, 3.72, y0 + 0.34, -0.1, 1);
+      }
+
+      if (f >= 2) {
         if (f <= 3) {
           for (const roomZ of [5.0, -0.4, -5.8]) {
             addArchBox(f, 0.2, 2.0, 0.82, 2.12, y0 + 1.2, roomZ + 0.9, 0x475569, 0.48, 0xe2e8f0, 0.85);
@@ -1118,14 +1256,35 @@ export function initBuilding3DViewer(container, options = {}) {
     }
 
     let isDragging = false;
+    let dragButton = 0;
     let downX = 0;
     let downY = 0;
     let moveDist = 0;
     const raycaster = new THREE.Raycaster();
     const pointerNDC = new THREE.Vector2();
 
+    const preventNativeMenuAndDrag = (e) => {
+      e.preventDefault();
+    };
+    container.addEventListener('contextmenu', preventNativeMenuAndDrag);
+    container.addEventListener('dragstart', preventNativeMenuAndDrag);
+    renderer.domElement.addEventListener('contextmenu', preventNativeMenuAndDrag);
+    renderer.domElement.addEventListener('dragstart', preventNativeMenuAndDrag);
+    renderer.domElement.draggable = false;
+    renderer.domElement.style.userSelect = 'none';
+    renderer.domElement.style.webkitUserSelect = 'none';
+
     renderer.domElement.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      window.getSelection?.()?.removeAllRanges?.();
+      if (
+        document.activeElement instanceof HTMLElement &&
+        document.activeElement !== renderer.domElement
+      ) {
+        document.activeElement.blur();
+      }
       isDragging = true;
+      dragButton = e.button;
       downX = e.clientX;
       downY = e.clientY;
       moveDist = 0;
@@ -1137,11 +1296,17 @@ export function initBuilding3DViewer(container, options = {}) {
 
     renderer.domElement.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
+      e.preventDefault();
       const dx = e.clientX - downX;
       const dy = e.clientY - downY;
       moveDist += Math.abs(dx) + Math.abs(dy);
-      targetAzimuth -= dx * 0.0075;
-      targetElevation = clamp(targetElevation + dy * 0.006, 0.05, 1.38);
+      if (dragButton === 2 || e.shiftKey) {
+        lookTarget.y = clamp(lookTarget.y + dy * 0.025, 1.2, 15.0);
+        targetAzimuth -= dx * 0.006;
+      } else {
+        targetAzimuth -= dx * 0.0075;
+        targetElevation = clamp(targetElevation + dy * 0.006, 0.05, 1.38);
+      }
       downX = e.clientX;
       downY = e.clientY;
     });
@@ -1154,7 +1319,7 @@ export function initBuilding3DViewer(container, options = {}) {
         renderer.domElement.releasePointerCapture(e.pointerId);
       } catch (_) { }
 
-      if (moveDist < 8) {
+      if (moveDist < 8 && dragButton === 0) {
         const rect = renderer.domElement.getBoundingClientRect();
         pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
@@ -1173,9 +1338,11 @@ export function initBuilding3DViewer(container, options = {}) {
     container.addEventListener(
       'wheel',
       (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         targetDistance = clamp(targetDistance + e.deltaY * 0.02, 15, 56);
       },
-      { passive: true }
+      { passive: false }
     );
 
     const handleResize = () => {
@@ -1211,6 +1378,13 @@ export function initBuilding3DViewer(container, options = {}) {
         }
       });
 
+      if (state.fireSafety) {
+        firePulseMats.forEach((item, idx) => {
+          item.mat.emissiveIntensity =
+            item.base + Math.sin(pulseTick * 3.0 - idx * 0.45) * item.amp;
+        });
+      }
+
       const rCos = distance * Math.cos(elevation);
       camera.position.set(
         currentLook.x + rCos * Math.sin(azimuth),
@@ -1238,7 +1412,15 @@ export function initBuilding3DViewer(container, options = {}) {
         state.autoSpin = Boolean(enabled);
         return state.autoSpin;
       },
+      setFireSafetyMode(enabled) {
+        state.fireSafety = Boolean(enabled);
+        fireSafetyObjects.forEach((obj) => {
+          obj.visible = state.fireSafety;
+        });
+        return state.fireSafety;
+      },
       setFloorFilter(floorKey) {
+        window.getSelection?.()?.removeAllRanges?.();
         applyFloorVisibility(floorKey);
         if (floorKey !== 'all') {
           const fNum = Number(floorKey);
@@ -1314,6 +1496,11 @@ export function initBuilding3DViewer(container, options = {}) {
     },
     setAutoSpin(enabled) {
       return this.setAutoRotate(enabled);
+    },
+    setFireSafetyMode(enabled) {
+      state.fireSafety = Boolean(enabled);
+      if (internalApi) internalApi.setFireSafetyMode(state.fireSafety);
+      return state.fireSafety;
     },
     setFloorFilter(floorKey) {
       state.activeFloor = String(floorKey || 'all');

@@ -1486,6 +1486,8 @@ html[data-auth-pending] body {
   font-weight: 700;
   color: #475569;
   text-transform: uppercase;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .building-3d-floor-pill {
@@ -1498,6 +1500,8 @@ html[data-auth-pending] body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .building-3d-floor-pill:hover {
@@ -1516,6 +1520,8 @@ html[data-auth-pending] body {
   overflow: hidden;
   border: 1px solid #1e293b;
   background: #08101d;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .building-3d-canvas {
