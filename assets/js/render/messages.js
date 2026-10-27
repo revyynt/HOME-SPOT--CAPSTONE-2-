@@ -174,7 +174,12 @@ function renderTenantMessenger(tenantContainer, docList) {
     </div>`;
 
   const historyEl = document.getElementById('adminChatHistory');
-  if (historyEl) historyEl.scrollTop = historyEl.scrollHeight;
+  if (historyEl) {
+    historyEl.scrollTop = historyEl.scrollHeight;
+    requestAnimationFrame(() => {
+      historyEl.scrollTop = historyEl.scrollHeight;
+    });
+  }
 }
 
 export function refreshTenantMessenger() {
@@ -217,6 +222,17 @@ export async function sendAdminChatMessage(email, name, messageText) {
     return;
   }
 
+  let latestThreadMs = 0;
+  const emailLower = cleanEmail.toLowerCase();
+  for (const doc of latestMessageDocs) {
+    const d = doc.data();
+    if ((d.email || '').trim().toLowerCase() !== emailLower) continue;
+    const raw = d._serverCreatedAt || d.createdAt;
+    const ms = raw?.seconds ? raw.seconds * 1000 : new Date(raw || 0).getTime();
+    if (Number.isFinite(ms) && ms > latestThreadMs) latestThreadMs = ms;
+  }
+  const safeCreatedAt = new Date(Math.max(Date.now(), latestThreadMs + 1000)).toISOString();
+
   try {
     const messagesRef = supabaseData.collection(db, 'messages');
     await supabaseData.addDoc(messagesRef, {
@@ -225,7 +241,7 @@ export async function sendAdminChatMessage(email, name, messageText) {
       message: cleanText,
       status: 'Read',
       sender: 'admin',
-      createdAt: supabaseData.serverTimestamp(),
+      createdAt: safeCreatedAt,
       reply: null
     });
     await selectTenantChat(cleanEmail);
@@ -301,11 +317,25 @@ export function renderMessages(docs) {
       ? `<span class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded text-xs font-semibold">Topic: ${escapeHtml(subject)}</span>`
       : '';
 
+    const unitLabel =
+      !isSupport && (data.room || data.property) && data.room !== 'Customer Support'
+        ? data.room || data.property
+        : data.property || '';
+    const moveInLabel = data.moveInDate
+      ? (() => {
+        const dt = new Date(data.moveInDate);
+        return Number.isNaN(dt.getTime())
+          ? String(data.moveInDate)
+          : dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+      })()
+      : '';
+
     const metaHtml =
-      !isTenant && (data.property || data.email || data.phone || subject)
+      !isTenant && (unitLabel || moveInLabel || data.email || data.phone || subject)
         ? `<div class="flex flex-wrap items-center gap-2 text-xs text-gray-500 mt-1.5">
            ${subjectBadge}
-           ${data.property ? `<span class="bg-gray-100 px-2 py-0.5 rounded">Property: ${escapeHtml(data.property)}</span>` : ''}
+           ${unitLabel ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-medium">Unit: ${escapeHtml(unitLabel)}</span>` : ''}
+           ${moveInLabel ? `<span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-semibold">Preferred Move-in: ${escapeHtml(moveInLabel)}</span>` : ''}
            ${data.email ? `<span class="bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(data.email)}</span>` : ''}
            ${data.phone ? `<span class="bg-gray-100 px-2 py-0.5 rounded">${escapeHtml(data.phone)}</span>` : ''}
          </div>`
@@ -320,6 +350,14 @@ export function renderMessages(docs) {
     const actionButtons = `
         <button
           type="button"
+          data-action="reply"
+          data-id="${attr(doc.id)}"
+          class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+        >
+          Reply in App
+        </button>
+        <button
+          type="button"
           data-action="gcompose"
           data-id="${attr(doc.id)}"
           data-email="${attr(data.email || '')}"
@@ -327,6 +365,7 @@ export function renderMessages(docs) {
           ${!isSupport ? `data-room="${attr(data.room || data.property || '')}"` : ''}
           data-subject="${attr(targetSubject)}"
           data-message="${attr(displayMessage)}"
+          title="Opens Gmail specifically for homespotapartment@gmail.com (never uses personal browser accounts)"
           class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,6 +447,8 @@ export function formatRecipientName(rawName) {
  * Also marks the message read in Supabase.
  * @param {{ email: string, name?: string, subject?: string, message?: string, id?: string, room?: string }} params
  */
+const OFFICIAL_SUPPORT_GMAIL = 'homespotapartment@gmail.com';
+
 export function openGCompose({ email, name, subject, message, id, room }) {
   if (!email) {
     Toast.error('No email address available for this message.');
@@ -422,7 +463,8 @@ export function openGCompose({ email, name, subject, message, id, room }) {
     `"${message || ''}"\n\n\n\n` +
     'Best regards,\nHomeSpot Support Team\nMJP Residences';
   const body = encodeURIComponent(bodyText);
-  const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
+  const composeTarget = `https://mail.google.com/mail/?authuser=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
+  const gmailUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&continue=${encodeURIComponent(composeTarget)}`;
 
   window.open(gmailUrl, '_blank', 'noopener,noreferrer');
 

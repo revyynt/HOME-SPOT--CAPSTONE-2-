@@ -52,9 +52,20 @@ function constraintsFor(ref) {
 }
 
 function snapshotRow(row) {
+  const raw = row.data && typeof row.data === 'object' ? row.data : {};
+  const merged = row.created_at
+    ? {
+      ...raw,
+      _clientCreatedAt: raw.createdAt,
+      createdAt:
+        row.collection === 'messages' ? row.created_at : raw.createdAt || row.created_at,
+      _serverCreatedAt: row.created_at,
+      _serverUpdatedAt: row.updated_at || row.created_at
+    }
+    : raw;
   return {
     id: row.id,
-    data: () => row.data
+    data: () => merged
   };
 }
 
@@ -88,7 +99,10 @@ function queryRows(ref, rows) {
 
 async function fetchDocuments(ref) {
   const target = dataRef(ref);
-  let request = supabase.from('app_documents').select('id,data').eq('collection', target.name);
+  let request = supabase
+    .from('app_documents')
+    .select('id,collection,data,created_at,updated_at')
+    .eq('collection', target.name);
   if (target.type === 'document') request = request.eq('id', target.id);
   for (const constraint of constraintsFor(ref)) {
     if (constraint.type === 'where') {
@@ -99,6 +113,7 @@ async function fetchDocuments(ref) {
       request = request.filter(`data->>${constraint.field}`, operator, constraint.value);
     }
   }
+  request = request.order('created_at', { ascending: true });
   const { data, error } = await request;
   if (error) throw error;
   return data || [];
@@ -157,7 +172,13 @@ async function addDoc(ref, data) {
 async function updateDoc(ref, changes) {
   const existing = await getDoc(ref);
   if (!existing.exists()) throw new Error(`Document ${ref.name}/${ref.id} does not exist.`);
-  await setDoc(ref, { ...existing.data(), ...changes });
+  const data = { ...existing.data(), ...changes };
+  const { error } = await supabase
+    .from('app_documents')
+    .update({ data, updated_at: new Date().toISOString() })
+    .eq('collection', ref.name)
+    .eq('id', ref.id);
+  if (error) throw error;
 }
 
 async function deleteDoc(ref) {

@@ -16,9 +16,19 @@ import { initBackButtonGuard, logoutStaff } from '../lib/session.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
-import { escapeHtml } from '../lib/format.js';
+import {
+  escapeHtml,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone
+} from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
-import { initBuilding3DViewer, BUILDING_UNITS, resolveBuildingUnit } from '../lib/building-3d.js';
+import { DEFAULT_ROOMS, mergeRoomData } from '../lib/rooms.js';
+import {
+  initBuilding3DViewer,
+  BUILDING_UNITS,
+  resolveBuildingUnit,
+  syncBuildingUnitsWithRooms
+} from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
@@ -269,6 +279,7 @@ function populateTenantUI() {
 let tenantBuilding3D = null;
 let tenantSelected3DUnitId = '';
 let tenant3DXrayEnabled = true;
+let tenant3DFireEnabled = true;
 let tenant3DSpinEnabled = true;
 
 function renderTenant3DUnitInspector(unit) {
@@ -310,21 +321,29 @@ function renderTenant3DUnitInspector(unit) {
 
   const priceEl = document.getElementById('tenant3DUnitPrice');
   if (priceEl) {
-    const rate = isOwnUnit && tenantRent ? tenantRent : unit.price;
+    const rate = unit.price || (isOwnUnit && tenantRent ? tenantRent : 10000);
     priceEl.textContent = `₱${Number(rate).toLocaleString()}/mo`;
   }
 
   const descEl = document.getElementById('tenant3DUnitDesc');
   if (descEl) {
     descEl.textContent =
-      unit.type === 'Commercial Space'
+      unit.description ||
+      (unit.type === 'Commercial Space'
         ? "1st Floor center-right storefront under the white canopy overhang — separated from the owner's MJ Parungao Purified Water Station on the left and the gated side hallway on the right."
-        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`;
+        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`);
   }
 
   const featsEl = document.getElementById('tenant3DUnitFeatures');
   if (featsEl) {
-    featsEl.innerHTML = (unit.features || [])
+    const fireRouteChip =
+      unit.floor === 1
+        ? 'Direct 1F Street Fire Exit & Hallway Extinguisher'
+        : `${unit.floor}F Fire Extinguisher + Green Exit Route to 1F Street`;
+    const combinedFeats = Array.from(
+      new Set([fireRouteChip, ...(unit.listingFeatures || []), ...(unit.features || [])])
+    );
+    featsEl.innerHTML = combinedFeats
       .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
       .join('');
   }
@@ -349,6 +368,7 @@ function renderTenant3DUnitInspector(unit) {
 }
 
 function syncTenant3DBuildingState() {
+  subscribeTenant3DRooms();
   const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
   if (!tenantSelected3DUnitId && ownUnit) {
     tenantSelected3DUnitId = ownUnit.id;
@@ -363,7 +383,31 @@ function syncTenant3DBuildingState() {
   }
 }
 
+let tenant3DRoomsSubscribed = false;
+
+function subscribeTenant3DRooms() {
+  if (tenant3DRoomsSubscribed) return;
+  tenant3DRoomsSubscribed = true;
+  try {
+    supabaseData.onSnapshot(
+      supabaseData.collection(supabase, 'rooms'),
+      (snap) => {
+        const rooms = [];
+        snap.forEach((doc) => {
+          rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
+        });
+        syncBuildingUnitsWithRooms(rooms.length ? rooms : DEFAULT_ROOMS);
+        syncTenant3DBuildingState();
+      },
+      (err) => console.warn('Tenant 3D rooms listener error:', err)
+    );
+  } catch (err) {
+    console.warn('Could not subscribe to rooms for 3D viewer:', err);
+  }
+}
+
 function ensureTenantBuilding3DInitialized() {
+  subscribeTenant3DRooms();
   const viewport = document.getElementById('tenantBuilding3DViewport');
   if (!viewport) return;
   if (!tenantBuilding3D) {
@@ -515,6 +559,7 @@ async function fetchTenantSupabaseProfile() {
   try {
     const user = await getCurrentUser();
     if (!user) return;
+    const meta = user.user_metadata || {};
     const tenantsRef = supabaseData.collection(supabase, 'tenants');
     const q = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
 
@@ -526,13 +571,20 @@ async function fetchTenantSupabaseProfile() {
           currentTenantDocId = tenantDoc.id;
           sessionStorage.setItem('tenantDocId', currentTenantDocId);
           const docData = tenantDoc.data();
-          if (docData.name) {
-            tenantName = docData.name;
-            sessionStorage.setItem('tenantName', docData.name);
+          const useMetaOverride =
+            meta.profileUpdatedAt &&
+            (!docData.updatedAt || String(meta.profileUpdatedAt) >= String(docData.updatedAt));
+          const resolvedName = (useMetaOverride && meta.name) || docData.name;
+          const resolvedPhone = (useMetaOverride && meta.phone) || docData.phone;
+          const resolvedEmergency =
+            (useMetaOverride && meta.emergencyContact) || docData.emergencyContact;
+          if (resolvedName) {
+            tenantName = resolvedName;
+            sessionStorage.setItem('tenantName', resolvedName);
           }
-          if (docData.phone) {
-            tenantPhone = docData.phone;
-            sessionStorage.setItem('tenantPhone', docData.phone);
+          if (resolvedPhone) {
+            tenantPhone = resolvedPhone;
+            sessionStorage.setItem('tenantPhone', resolvedPhone);
           }
           if (docData.room) {
             tenantRoom = docData.room;
@@ -564,9 +616,9 @@ async function fetchTenantSupabaseProfile() {
             sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
             localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
           }
-          if (docData.emergencyContact) {
-            tenantEmergency = docData.emergencyContact;
-            sessionStorage.setItem('tenantEmergencyContact', docData.emergencyContact);
+          if (resolvedEmergency) {
+            tenantEmergency = resolvedEmergency;
+            sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
           }
           populateTenantUI();
         }
@@ -581,6 +633,9 @@ async function fetchTenantSupabaseProfile() {
 fetchTenantSupabaseProfile();
 
 function switchTab(tabName, evt) {
+  try {
+    sessionStorage.setItem('tenant_portal_active_tab', tabName);
+  } catch { }
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach((tab) => tab.classList.remove('active'));
   const tabButtons = document.querySelectorAll('.tab');
@@ -615,9 +670,57 @@ function switchTab(tabName, evt) {
   }
 }
 
+function hasPendingPaymentReturn() {
+  const href = window.location.href || '';
+  if (/[?&](payment|payment_intent_id|sessionId)=/.test(href)) {
+    return true;
+  }
+  try {
+    if (
+      sessionStorage.getItem('pending_paymongo_payment') ||
+      localStorage.getItem('pending_paymongo_payment') ||
+      sessionStorage.getItem('paymongo_checkout_active') === '1'
+    ) {
+      return true;
+    }
+  } catch { }
+  return false;
+}
+
+// Synchronously activate the payment tab (or last active tab) before authPending
+// reveals the page, so returning from PayMongo never flashes the Messages tab first.
+(function syncInitialTabBeforeReveal() {
+  const initialTab = hasPendingPaymentReturn()
+    ? 'payment'
+    : sessionStorage.getItem('tenant_portal_active_tab');
+  if (initialTab && initialTab !== 'messages') {
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach((tab) => tab.classList.remove('active'));
+    const tabButtons = document.querySelectorAll('.tab');
+    tabButtons.forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.tabTarget === initialTab);
+    });
+    document.getElementById(`${initialTab}-tab`)?.classList.add('active');
+  }
+})();
+
 async function logout() {
   await logoutStaff('./login.html');
 }
+
+function attachTenantPhoneFilter() {
+  for (const id of ['phone', 'emergencyContact']) {
+    const input = document.getElementById(id);
+    if (!input || input.dataset.phoneGuard === '1') continue;
+    input.dataset.phoneGuard = '1';
+    input.addEventListener('input', () => {
+      const cleaned = input.value.replace(/[^0-9+\s()-]/g, '');
+      if (cleaned !== input.value) input.value = cleaned;
+    });
+  }
+}
+
+attachTenantPhoneFilter();
 
 async function saveProfile() {
   const saveBtn = document.querySelector('[data-action="save-profile"]');
@@ -626,13 +729,35 @@ async function saveProfile() {
   const emergencyInput = document.getElementById('emergencyContact');
 
   const newName = (nameInput?.value || '').trim();
-  const newPhone = (phoneInput?.value || '').trim();
-  const newEmergency = (emergencyInput?.value || '').trim();
+  const rawPhone = (phoneInput?.value || '').trim();
+  const rawEmergency = (emergencyInput?.value || '').trim();
 
   if (!newName) {
     Toast.alert({ title: 'Missing Name', message: 'Please enter your full name.' });
     return;
   }
+
+  if (!rawPhone || !isValidPhilippinePhone(rawPhone)) {
+    Toast.alert({
+      title: 'Invalid Phone Number',
+      message: 'Please enter a valid 11-digit Philippine mobile number (e.g. 0912 345 6789).'
+    });
+    return;
+  }
+
+  if (rawEmergency && !isValidPhilippinePhone(rawEmergency)) {
+    Toast.alert({
+      title: 'Invalid Emergency Contact',
+      message:
+        'Please enter a valid 11-digit Philippine mobile number for your emergency contact (e.g. 0923 456 7890).'
+    });
+    return;
+  }
+
+  const newPhone = normalizePhilippinePhone(rawPhone) || rawPhone;
+  const newEmergency = rawEmergency
+    ? normalizePhilippinePhone(rawEmergency) || rawEmergency
+    : '';
 
   const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
   if (saveBtn) {
@@ -641,14 +766,47 @@ async function saveProfile() {
   }
 
   try {
-    if (currentTenantDocId) {
-      const ref = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
-      await supabaseData.updateDoc(ref, {
+    const nowIso = supabaseData.serverTimestamp();
+
+    // 1. Update verified Supabase Auth user metadata (always permitted for own session)
+    const { error: authUpdateErr } = await supabase.auth.updateUser({
+      data: {
         name: newName,
         phone: newPhone,
         emergencyContact: newEmergency,
-        updatedAt: supabaseData.serverTimestamp()
-      });
+        profileUpdatedAt: nowIso
+      }
+    });
+    if (authUpdateErr) {
+      console.warn('Auth metadata update warning:', authUpdateErr);
+    }
+
+    // 2. Update relational profiles row if present (permitted by "users can update own profile")
+    try {
+      const user = await getCurrentUser();
+      if (user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ name: newName, phone: newPhone, updated_at: nowIso })
+          .eq('id', user.id);
+      }
+    } catch {
+      // Non-fatal if profiles row does not exist
+    }
+
+    // 3. Update tenants document in app_documents
+    if (currentTenantDocId) {
+      try {
+        const ref = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
+        await supabaseData.updateDoc(ref, {
+          name: newName,
+          phone: newPhone,
+          emergencyContact: newEmergency,
+          updatedAt: nowIso
+        });
+      } catch (docErr) {
+        console.warn('Tenant document update fallback (persisted via Auth metadata):', docErr);
+      }
     }
 
     tenantName = newName;
@@ -658,12 +816,15 @@ async function saveProfile() {
     sessionStorage.setItem('tenantPhone', newPhone);
     sessionStorage.setItem('tenantEmergencyContact', newEmergency);
     populateTenantUI();
-    Toast.alert({ title: 'Profile Updated', message: 'Your profile has been updated successfully!' });
+    Toast.alert({
+      title: 'Profile Updated',
+      message: 'Your personal and contact information has been saved.'
+    });
   } catch (err) {
     console.error('Failed to update tenant profile:', err);
     Toast.alert({
-      title: 'Update Failed',
-      message: 'Failed to save profile: ' + (err.message || 'Unknown error')
+      title: 'Unable to Save Changes',
+      message: 'We could not save your profile changes right now. Please check your connection and try again.'
     });
   } finally {
     if (saveBtn) {
@@ -717,7 +878,10 @@ document.getElementById('paymentForm').addEventListener('submit', async function
     document.getElementById('fullName')?.value ||
     sessionStorage.getItem('tenantName') ||
     'Juan Dela Cruz';
-  const tenantPhone = document.getElementById('phone')?.value || '+63 912 345 6789';
+  const rawPhoneVal = document.getElementById('phone')?.value || '';
+  const tenantPhone = isValidPhilippinePhone(rawPhoneVal)
+    ? normalizePhilippinePhone(rawPhoneVal)
+    : '';
 
   if (!amountVal || amountVal <= 0) {
     if (currentRemainingDue <= 0) {
@@ -774,16 +938,12 @@ document.getElementById('paymentForm').addEventListener('submit', async function
         tenantName: tenantName,
         tenantEmail: userEmail
       });
-      // Store in BOTH storages for maximum reliability across cross-origin redirects
       sessionStorage.setItem('pending_paymongo_payment', pendingPayload);
       localStorage.setItem('pending_paymongo_payment', pendingPayload);
-      // Mark that we are leaving for PayMongo checkout — used to force fresh load on return
       sessionStorage.setItem('paymongo_checkout_active', '1');
+      sessionStorage.setItem('tenant_portal_active_tab', 'payment');
 
-      // Use location.replace() so HomeSpot is NOT in browser history stack.
-      // This means pressing Back from PayMongo checkout does a FRESH load of HomeSpot
-      // (not a BF-cache restore), ensuring checkUrlPaymentReturn() runs on DOMContentLoaded.
-      window.location.replace(session.checkoutUrl);
+      window.location.href = session.checkoutUrl;
       return;
     } else {
       throw new Error('Unable to generate PayMongo checkout session.');
@@ -1403,6 +1563,13 @@ async function checkUrlPaymentReturn() {
     paymentIntentId = pending.paymentIntentId;
   }
 
+  // If any payment return indicator is present, switch to the payment tab immediately
+  // BEFORE awaiting any PayMongo verification calls so the Messages tab never flashes first.
+  if (paymentIntentId || paymentStatus || pending?.sessionId) {
+    sessionStorage.removeItem('paymongo_checkout_active');
+    switchTab('payment');
+  }
+
   // SCENARIO: Returned from PayMongo hosted checkout with no URL params
   // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
   // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
@@ -1687,12 +1854,14 @@ async function checkUrlPaymentReturn() {
 
 // Initialize on DOM load or immediately if already loaded
 async function initPortal() {
+  if (hasPendingPaymentReturn()) {
+    switchTab('payment');
+  }
   updateSubmitButton();
   try {
     await authReady;
   } catch (e) { }
-  await loadTenantPaymentHistory();
-  await checkUrlPaymentReturn();
+  await Promise.all([loadTenantPaymentHistory(), checkUrlPaymentReturn()]);
 }
 
 if (document.readyState === 'loading') {
@@ -1730,6 +1899,16 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+let latestTenantChatMs = 0;
+
+function resolveMessageTimeMs(item) {
+  const raw = item?._serverCreatedAt || item?.createdAt;
+  if (!raw) return 0;
+  if (typeof raw?.seconds === 'number') return raw.seconds * 1000;
+  const ms = new Date(raw).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
 function subscribeTenantMessages() {
   if (!userEmail) return;
   try {
@@ -1745,15 +1924,12 @@ function subscribeTenantMessages() {
         const docs = (snapshot.docs || [])
           .map((doc) => doc.data())
           .filter((item) => item.sender === 'tenant' || item.sender === 'admin');
-        docs.sort((a, b) => {
-          const timeA = a.createdAt?.seconds
-            ? a.createdAt.seconds * 1000
-            : new Date(a.createdAt || 0).getTime();
-          const timeB = b.createdAt?.seconds
-            ? b.createdAt.seconds * 1000
-            : new Date(b.createdAt || 0).getTime();
-          return timeA - timeB;
-        });
+        docs.sort((a, b) => resolveMessageTimeMs(a) - resolveMessageTimeMs(b));
+
+        latestTenantChatMs = docs.reduce(
+          (max, item) => Math.max(max, resolveMessageTimeMs(item)),
+          0
+        );
 
         if (!docs.length) {
           chatMessages.innerHTML = `
@@ -1768,9 +1944,8 @@ function subscribeTenantMessages() {
           const msgBubble = document.createElement('div');
           msgBubble.className =
             item.sender === 'tenant' ? 'message-bubble sent' : 'message-bubble received';
-          const dateObj = item.createdAt?.seconds
-            ? new Date(item.createdAt.seconds * 1000)
-            : new Date(item.createdAt || Date.now());
+          const timeMs = resolveMessageTimeMs(item);
+          const dateObj = timeMs ? new Date(timeMs) : new Date();
           const timeStr = dateObj.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
@@ -1801,6 +1976,9 @@ function subscribeTenantMessages() {
           }
         });
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => {
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        });
       },
       (err) => console.warn('Messages subscription error:', err)
     );
@@ -1817,7 +1995,9 @@ async function sendMessage() {
   const chatMessages = document.getElementById('chatMessages');
   const messageDiv = document.createElement('div');
   messageDiv.className = 'message-bubble sent';
-  const now = new Date();
+  const safeMs = Math.max(Date.now(), latestTenantChatMs + 1000);
+  latestTenantChatMs = safeMs;
+  const now = new Date(safeMs);
   const timeStr = now.toLocaleTimeString('en-US', {
     hour: 'numeric',
     minute: '2-digit',
@@ -1841,7 +2021,7 @@ async function sendMessage() {
       message: messageText,
       status: 'Unread',
       sender: 'tenant',
-      createdAt: supabaseData.serverTimestamp(),
+      createdAt: now.toISOString(),
       reply: null
     });
   } catch (error) {
@@ -1949,6 +2129,7 @@ document.addEventListener('click', function (event) {
       renderTenantPaymentCalendar();
       break;
     case 'tenant-3d-xray': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       tenant3DXrayEnabled = !tenant3DXrayEnabled;
       if (tenantBuilding3D) tenantBuilding3D.setXrayMode(tenant3DXrayEnabled);
@@ -1956,7 +2137,17 @@ document.addEventListener('click', function (event) {
       button.textContent = tenant3DXrayEnabled ? 'X-Ray Mode: ON' : 'X-Ray Mode: OFF';
       break;
     }
+    case 'tenant-3d-fire': {
+      window.getSelection?.()?.removeAllRanges?.();
+      ensureTenantBuilding3DInitialized();
+      tenant3DFireEnabled = !tenant3DFireEnabled;
+      if (tenantBuilding3D) tenantBuilding3D.setFireSafetyMode(tenant3DFireEnabled);
+      button.classList.toggle('active', tenant3DFireEnabled);
+      button.textContent = tenant3DFireEnabled ? 'Fire Safety: ON' : 'Fire Safety: OFF';
+      break;
+    }
     case 'tenant-3d-spin': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       tenant3DSpinEnabled = !tenant3DSpinEnabled;
       if (tenantBuilding3D) tenantBuilding3D.setAutoRotate(tenant3DSpinEnabled);
@@ -1965,6 +2156,7 @@ document.addEventListener('click', function (event) {
       break;
     }
     case 'tenant-3d-my-unit': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
       tenantSelected3DUnitId = ownUnit.id;
@@ -1980,11 +2172,14 @@ document.addEventListener('click', function (event) {
       break;
     }
     case 'tenant-3d-reset': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       tenant3DXrayEnabled = true;
+      tenant3DFireEnabled = true;
       tenant3DSpinEnabled = true;
       if (tenantBuilding3D) {
         tenantBuilding3D.setXrayMode(true);
+        tenantBuilding3D.setFireSafetyMode(true);
         tenantBuilding3D.setAutoRotate(true);
         tenantBuilding3D.setFloorFilter('all');
         tenantBuilding3D.resetCamera();
@@ -1993,6 +2188,11 @@ document.addEventListener('click', function (event) {
       if (xrayBtn) {
         xrayBtn.classList.add('active');
         xrayBtn.textContent = 'X-Ray Mode: ON';
+      }
+      const fireBtn = document.getElementById('tenant3DFireBtn');
+      if (fireBtn) {
+        fireBtn.classList.add('active');
+        fireBtn.textContent = 'Fire Safety: ON';
       }
       const spinBtn = document.getElementById('tenant3DSpinBtn');
       if (spinBtn) {
@@ -2005,6 +2205,7 @@ document.addEventListener('click', function (event) {
       break;
     }
     case 'tenant-3d-floor': {
+      window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
       const floor = button.dataset.floor || 'all';
       if (tenantBuilding3D) tenantBuilding3D.setFloorFilter(floor);

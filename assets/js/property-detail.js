@@ -463,12 +463,6 @@ function applyRoomDetails(room) {
       .join('');
   }
 
-  const panoramaUrl = room.panorama || room.image;
-  if (panoramaUrl && panoramaUrl !== currentPanoramaUrl) {
-    currentPanoramaUrl = panoramaUrl;
-    initPanoramaViewer(panoramaUrl);
-  }
-
   document.getElementById('roomPrice').textContent = formatRoomPrice(room.price, true);
   const priceSubtitle = document.getElementById('roomPriceSubtitle');
   if (priceSubtitle) {
@@ -511,11 +505,18 @@ async function loadRemoteRoomData(room) {
 }
 
 // Load room data when page loads
-document.addEventListener('DOMContentLoaded', () => {
+function initPropertyDetailPage() {
   const rawParam = getUrlParam('id') || '1';
   const room = { ...mergeRoomData(rawParam) };
   applyRoomDetails(room);
   loadRemoteRoomData(room);
+}
+
+if (document.readyState !== 'loading') {
+  initPropertyDetailPage();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  initPropertyDetailPage();
 });
 
 // Modal keyboard navigation and Escape key press// Modal keyboard navigation and Escape key press

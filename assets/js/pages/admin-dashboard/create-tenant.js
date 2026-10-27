@@ -7,6 +7,117 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { db, supabase, supabaseData } from '../../supabase-service.js';
+import {
+  isPastDate,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone,
+  todayIsoLocal
+} from '../../lib/format.js';
+import { BUILDING_UNITS, resolveBuildingUnit } from '../../lib/building-3d.js';
+import { getTenants } from './tenants.js';
+
+const UNIT_SHORT_LABELS = {
+  'Commercial Space 1': '1F • Commercial Space 1',
+  'Room 101': '2F • Room 101 (Front)',
+  'Room 102': '2F • Room 102 (Middle)',
+  'Room 103': '2F • Room 103 (Rear)',
+  'Room 201': '3F • Room 201 (Front)',
+  'Room 202': '3F • Room 202 (Middle)',
+  'Room 203': '3F • Room 203 (Rear)',
+  'Room 301': '4F • Room 301 (Front Balcony)',
+  'Room 302': '4F • Room 302 (Middle)',
+  'Room 401': '5F • Room 401 (Front)',
+  'Room 410': '5F • Room 410 (Rear)'
+};
+
+function getUnitOccupants(unitId) {
+  const tenants = getTenants() || [];
+  return tenants.filter((t) => {
+    const status = String(t.status || 'Active').toLowerCase();
+    if (status === 'archived' || status === 'inactive') return false;
+    if (!t.room) return false;
+    const resolved = resolveBuildingUnit(t.room, t.dormName || t.dorm || '');
+    return resolved && resolved.id === unitId;
+  });
+}
+
+export function syncDormAndRentWithRoom(forceRent = false) {
+  const roomSelect = document.getElementById('tenantRoom');
+  const dormSelect = document.getElementById('tenantDorm');
+  const rentInput = document.getElementById('tenantMonthlyRent');
+  if (!roomSelect) return;
+
+  const selectedRoom = roomSelect.value;
+  const unit = BUILDING_UNITS.find((u) => u.id === selectedRoom);
+  const residenceType =
+    unit?.floor === 1 || String(selectedRoom).toLowerCase().includes('commercial')
+      ? 'Commercial Space'
+      : 'Triple Occupancy Room';
+
+  if (dormSelect) {
+    dormSelect.disabled = true;
+    const exists = Array.from(dormSelect.options).some((o) => o.value === residenceType);
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = residenceType;
+      opt.textContent = residenceType;
+      dormSelect.appendChild(opt);
+    }
+    dormSelect.value = residenceType;
+  }
+
+  if (rentInput && (forceRent || !rentInput.value)) {
+    rentInput.value = residenceType === 'Commercial Space' ? '10000' : '5000';
+  }
+}
+
+export function refreshTenantRoomOptions(preferredRoom = '') {
+  const roomSelect = document.getElementById('tenantRoom');
+  if (!roomSelect) return;
+
+  const currentVal = preferredRoom || roomSelect.value;
+  roomSelect.innerHTML = '<option value="" disabled selected>Select Room / Unit</option>';
+
+  BUILDING_UNITS.forEach((unit) => {
+    const cap = Number(unit.capacity) || (unit.floor === 1 ? 4 : 3);
+    const occ = getUnitOccupants(unit.id).length;
+    const isFull = occ >= cap;
+    const baseLabel = UNIT_SHORT_LABELS[unit.id] || `${unit.floor}F • ${unit.name}`;
+    const statusText = isFull
+      ? `FULL (${occ}/${cap} Occupied)`
+      : occ > 0
+        ? `(${occ}/${cap} Occupied)`
+        : `Available (0/${cap})`;
+
+    const opt = document.createElement('option');
+    opt.value = unit.id;
+    opt.textContent = `${baseLabel} — ${statusText}`;
+    opt.disabled = isFull;
+    roomSelect.appendChild(opt);
+  });
+
+  if (currentVal) {
+    const exactOpt = Array.from(roomSelect.options).find(
+      (o) => o.value === currentVal && !o.disabled
+    );
+    if (exactOpt) {
+      roomSelect.value = currentVal;
+    } else {
+      const wantsCommercial = String(currentVal).toLowerCase().includes('commercial');
+      const fallbackUnit = BUILDING_UNITS.find((u) => {
+        const cap = Number(u.capacity) || (u.floor === 1 ? 4 : 3);
+        const isFull = getUnitOccupants(u.id).length >= cap;
+        if (isFull) return false;
+        return wantsCommercial ? u.floor === 1 : u.floor > 1;
+      });
+      if (fallbackUnit) {
+        roomSelect.value = fallbackUnit.id;
+      }
+    }
+  }
+
+  syncDormAndRentWithRoom(false);
+}
 
 const PASSWORD_WORDS = ['Home', 'Spot', 'Dorm', 'MJP', 'Stay'];
 
@@ -40,10 +151,15 @@ export function openCreateTenantModal() {
   form?.reset();
 
   const moveIn = document.getElementById('tenantMoveInDate');
-  if (moveIn && !moveIn.value) {
-    moveIn.value = new Date().toISOString().split('T')[0];
+  const minDate = todayIsoLocal();
+  if (moveIn) {
+    moveIn.min = minDate;
+    if (!moveIn.value || moveIn.value < minDate) {
+      moveIn.value = minDate;
+    }
   }
 
+  refreshTenantRoomOptions();
   generateTemporaryPassword();
   document.getElementById('createTenantModal')?.classList.remove('hidden');
 }
@@ -70,36 +186,19 @@ export function openCreateTenantModalFromData(data = {}) {
   assign('tenantFullName', data.name);
   assign('tenantEmail', data.email);
   assign('tenantPhone', data.phone);
-  const roomSelect = document.getElementById('tenantRoom');
-  if (roomSelect && data.room) {
-    const optionExists = Array.from(roomSelect.options).some((o) => o.value === data.room);
-    if (!optionExists) {
-      const opt = document.createElement('option');
-      opt.value = data.room;
-      opt.textContent = data.room;
-      roomSelect.appendChild(opt);
-    }
-  }
-  assign('tenantRoom', data.room);
-  assign('tenantMonthlyRent', data.amount);
 
-  const dormSelect = document.getElementById('tenantDorm');
-  const targetDorm = data.dormName || data.room;
-  if (dormSelect && targetDorm) {
-    const optionExists = Array.from(dormSelect.options).some((o) => o.value === targetDorm);
-    if (!optionExists) {
-      const opt = document.createElement('option');
-      opt.value = targetDorm;
-      opt.textContent = targetDorm;
-      dormSelect.appendChild(opt);
-    }
-    dormSelect.value = targetDorm;
+  refreshTenantRoomOptions(data.room || data.dormName || '');
+  if (data.amount) {
+    assign('tenantMonthlyRent', data.amount);
   }
+  syncDormAndRentWithRoom(!data.amount);
 
   if (data.moveInDate) {
     const parsed = new Date(data.moveInDate);
     if (!isNaN(parsed.getTime())) {
-      assign('tenantMoveInDate', parsed.toISOString().split('T')[0]);
+      const minDate = todayIsoLocal();
+      const iso = parsed.toISOString().split('T')[0];
+      assign('tenantMoveInDate', iso < minDate ? minDate : iso);
     }
   }
 }
@@ -234,6 +333,28 @@ export async function createTenant() {
     showFormError('Password must be at least 6 characters.');
     return null;
   }
+  if (!isValidPhilippinePhone(form.phone)) {
+    showFormError('Please enter a valid 11-digit Philippine mobile number (e.g. 0912 345 6789).');
+    return null;
+  }
+  if (isPastDate(form.moveInDate)) {
+    showFormError('Move-in date cannot be in the past.');
+    return null;
+  }
+  const targetUnit =
+    BUILDING_UNITS.find((u) => u.id === form.room) || resolveBuildingUnit(form.room, form.dormName);
+  if (targetUnit) {
+    const cap = Number(targetUnit.capacity) || (targetUnit.floor === 1 ? 4 : 3);
+    const occ = getUnitOccupants(targetUnit.id).length;
+    if (occ >= cap) {
+      showFormError(
+        `${targetUnit.name} is already at full capacity (${occ}/${cap} occupants). Please select another available unit.`
+      );
+      return null;
+    }
+    form.dormName = targetUnit.floor === 1 ? 'Commercial Space' : 'Triple Occupancy Room';
+  }
+  form.phone = normalizePhilippinePhone(form.phone) || form.phone;
 
   try {
     const { data, error } = await supabase.functions.invoke('create-tenant', {
@@ -285,6 +406,11 @@ function showCreatedTenantInModal(created) {
 export function initCreateTenant() {
   const form = document.getElementById('createTenantForm');
   if (!form) return;
+
+  refreshTenantRoomOptions();
+  document.getElementById('tenantRoom')?.addEventListener('change', () => {
+    syncDormAndRentWithRoom(true);
+  });
 
   // Modal and helper controls, previously inline onclick attributes.
   document.addEventListener('click', (event) => {

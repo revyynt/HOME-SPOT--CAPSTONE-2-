@@ -127,37 +127,37 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     typeof baseOrKey === 'object' && baseOrKey !== null
       ? baseOrKey
       : DEFAULT_ROOMS.find(
-          (r) =>
-            r.id === baseOrKey ||
-            r.detailId === Number(baseOrKey) ||
-            r.id === normalizeRoomDocId(baseOrKey)
-        ) || {
-          id: typeof baseOrKey === 'string' ? normalizeRoomDocId(baseOrKey) : 'triple-occupancy-room',
-          detailId: Number(baseOrKey) || 1,
-          name: typeof baseOrKey === 'string' ? baseOrKey : 'Apartment Unit',
-          type: 'Living Space',
-          badge: '',
-          price: 10000,
-          beds: 1,
-          capacity: 2,
-          available: 1,
-          size: '25 sqm',
-          image: 'assets/img/triple-occupancy-panorama.png',
-          mainImage: 'assets/img/triple-occupancy.jpg',
-          panorama: 'assets/img/triple-occupancy-panorama.png',
-          images: ['assets/img/triple-occupancy.jpg'],
-          description: 'Comfortable apartment unit living space.',
-          features: ['1 Room', 'Bathroom']
-        };
+        (r) =>
+          r.id === baseOrKey ||
+          r.detailId === Number(baseOrKey) ||
+          r.id === normalizeRoomDocId(baseOrKey)
+      ) || {
+        id: typeof baseOrKey === 'string' ? normalizeRoomDocId(baseOrKey) : 'triple-occupancy-room',
+        detailId: Number(baseOrKey) || 1,
+        name: typeof baseOrKey === 'string' ? baseOrKey : 'Apartment Unit',
+        type: 'Living Space',
+        badge: '',
+        price: 10000,
+        beds: 1,
+        capacity: 2,
+        available: 1,
+        size: '25 sqm',
+        image: 'assets/img/triple-occupancy-panorama.png',
+        mainImage: 'assets/img/triple-occupancy.jpg',
+        panorama: 'assets/img/triple-occupancy-panorama.png',
+        images: ['assets/img/triple-occupancy.jpg'],
+        description: 'Comfortable apartment unit living space.',
+        features: ['1 Room', 'Bathroom']
+      };
 
   const data = remote || {};
   const features = Array.isArray(data.features)
     ? data.features.filter(Boolean)
     : typeof data.features === 'string' && data.features.trim()
       ? data.features
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
       : Array.isArray(data.amenities) && data.amenities.length > 0
         ? data.amenities
         : base.features;
@@ -166,9 +166,9 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     ? data.images.map((s) => String(s).trim()).filter(Boolean)
     : typeof data.images === 'string'
       ? data.images
-          .split(/[\n,]+/)
-          .map((s) => s.trim())
-          .filter(Boolean)
+        .split(/[\n,]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
       : Array.isArray(base.images)
         ? [...base.images]
         : [data.mainImage || base.mainImage || base.image].filter(Boolean);

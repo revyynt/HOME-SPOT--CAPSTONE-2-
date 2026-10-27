@@ -172,7 +172,9 @@ function initSmoothScroll() {
   document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
     anchor.addEventListener('click', (event) => {
       const href = anchor.getAttribute('href');
-      if (href === '#' || !href || href.length < 2) return;
+      if (!href || !href.startsWith('#') || href.length < 2) return;
+      const target = document.querySelector(href);
+      if (!target) return;
       event.preventDefault();
       document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
@@ -192,6 +194,8 @@ function initAdminRealtime() {
       m.watchPendingReservations((count) => {
         const el = byId('pendingRequestsCount');
         if (el) el.textContent = count;
+        const tabBadge = byId('reservationsTabBadge');
+        if (tabBadge) tabBadge.textContent = count;
       })
     ),
     import('./render/messages.js').then((m) =>
@@ -239,6 +243,9 @@ async function initAdminActions() {
         break;
       case 'decline':
         reservations.declineReservation(id);
+        break;
+      case 'delete-reservation':
+        reservations.deleteReservation(id);
         break;
       case 'reply':
         messages.replyToMessage(id);
@@ -306,7 +313,10 @@ async function initStatusLine() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+let mainPageInitialized = false;
+function initMainPage() {
+  if (mainPageInitialized) return;
+  mainPageInitialized = true;
   enforceStaffLockOnPublicPages();
   initSmoothScroll();
   initTabs();
@@ -318,6 +328,15 @@ document.addEventListener('DOMContentLoaded', () => {
     initStatusLine();
     initAdminRealtime();
     initAdminActions();
+  }
+}
+
+if (document.readyState !== 'loading') {
+  initMainPage();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (!mainPageInitialized) {
+    initMainPage();
   }
 });
 
@@ -381,7 +400,7 @@ if (typeof window !== 'undefined') {
       if (updatePassModal) updatePassModal.classList.add('hidden');
       try {
         history.replaceState(null, '', window.location.pathname);
-      } catch {}
+      } catch { }
 
       alert('Password updated successfully! Redirecting to login...');
       window.location.href = './login.html';

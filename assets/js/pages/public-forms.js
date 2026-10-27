@@ -12,7 +12,13 @@ import {
   isDataReady,
   waitForSupabaseReady
 } from '../supabase-service.js';
-import { getUrlParam } from '../lib/format.js';
+import {
+  getUrlParam,
+  isPastDate,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone,
+  todayIsoLocal
+} from '../lib/format.js';
 import { resolveRoom } from '../lib/rooms.js';
 import { Toast } from '../render/toast.js';
 
@@ -57,6 +63,34 @@ function hidePanel(id) {
   document.getElementById(id)?.classList.add('hidden');
 }
 
+function applyMinMoveInDates() {
+  const minDate = todayIsoLocal();
+  document.querySelectorAll('input[type="date"][name="moveInDate"]').forEach((input) => {
+    input.min = minDate;
+    if (input.value && input.value < minDate) {
+      input.value = minDate;
+    }
+  });
+}
+
+function attachPhoneValidation(root = document) {
+  root.querySelectorAll('input[type="tel"]').forEach((input) => {
+    if (input.dataset.phoneGuardBound === '1') return;
+    input.dataset.phoneGuardBound = '1';
+    input.setAttribute('maxlength', '13');
+    input.addEventListener('input', () => {
+      const cleaned = input.value.replace(/[^0-9+\s()-]/g, '');
+      if (cleaned !== input.value) input.value = cleaned;
+      const val = input.value.trim();
+      if (val && !isValidPhilippinePhone(val)) {
+        input.setCustomValidity('Enter a valid PH mobile number (e.g. 0912 345 6789)');
+      } else {
+        input.setCustomValidity('');
+      }
+    });
+  });
+}
+
 /**
  * @param {SubmitEvent} event
  */
@@ -67,6 +101,17 @@ async function handleInquirySubmit(event) {
   const { name, email, phone } = readCommonFields(form);
   if (!name || !email || !phone) {
     Toast.error('Please fill in all required fields');
+    return;
+  }
+
+  if (!isValidPhilippinePhone(phone)) {
+    Toast.error('Please enter a valid Philippine mobile number (e.g. 0912 345 6789).');
+    return;
+  }
+
+  const moveInDateVal = form.querySelector('[name="moveInDate"]')?.value || null;
+  if (moveInDateVal && isPastDate(moveInDateVal)) {
+    Toast.error('Preferred move-in date cannot be in the past.');
     return;
   }
 
@@ -86,9 +131,9 @@ async function handleInquirySubmit(event) {
   const inquiry = {
     name,
     email,
-    phone,
+    phone: normalizePhilippinePhone(phone) || phone,
     room,
-    moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
+    moveInDate: moveInDateVal,
     message,
     status: 'New',
     createdAt: supabaseData.serverTimestamp()
@@ -168,6 +213,17 @@ async function handleReservationSubmit(event) {
     return;
   }
 
+  if (!isValidPhilippinePhone(phone)) {
+    Toast.error('Please enter a valid Philippine mobile number (e.g. 0912 345 6789).');
+    return;
+  }
+
+  const moveInDateVal = form.querySelector('[name="moveInDate"]')?.value || null;
+  if (moveInDateVal && isPastDate(moveInDateVal)) {
+    Toast.error('Preferred move-in date cannot be in the past.');
+    return;
+  }
+
   const fileInput = form.querySelector('[name="validId"]');
   const validIdFile = fileInput?.files?.[0];
   if (!validIdFile) {
@@ -211,9 +267,9 @@ async function handleReservationSubmit(event) {
   const reservation = {
     name,
     email,
-    phone,
+    phone: normalizePhilippinePhone(phone) || phone,
     room: getRoomNameFromPage(),
-    moveInDate: form.querySelector('[name="moveInDate"]')?.value || null,
+    moveInDate: moveInDateVal,
     message: form.querySelector('[name="message"]')?.value.trim() || null,
     additionalInfo: additionalInfoPayload,
     status: 'Pending',
@@ -248,14 +304,26 @@ async function handleReservationSubmit(event) {
 
 /** Shows the inquiry panel, hiding the reservation panel. */
 export function toggleInquiryForm() {
-  document.getElementById('inquiryForm')?.classList.toggle('hidden');
+  applyMinMoveInDates();
+  window.getSelection?.()?.removeAllRanges?.();
+  const modal = document.getElementById('inquiryForm');
+  modal?.classList.toggle('hidden');
   hidePanel('reservationForm');
+  if (modal && !modal.classList.contains('hidden')) {
+    requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
+  }
 }
 
 /** Shows the reservation panel, hiding the inquiry panel. */
 export function toggleReservationForm() {
-  document.getElementById('reservationForm')?.classList.toggle('hidden');
+  applyMinMoveInDates();
+  window.getSelection?.()?.removeAllRanges?.();
+  const modal = document.getElementById('reservationForm');
+  modal?.classList.toggle('hidden');
   hidePanel('inquiryForm');
+  if (modal && !modal.classList.contains('hidden')) {
+    requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
+  }
 }
 
 /**
@@ -296,7 +364,7 @@ export function initPublicFormToggles() {
     }
   });
 
-    // Copy support email logic
+  // Copy support email logic
   const copyBtn = document.getElementById('copySupportEmailBtn');
   copyBtn?.addEventListener('click', async () => {
     try {
@@ -391,6 +459,9 @@ function initValidIdUploader() {
 }
 
 export function initPublicForms() {
+  applyMinMoveInDates();
+  attachPhoneValidation();
+
   const inquiryForm = document.getElementById('inquiryFormElement');
   if (inquiryForm) inquiryForm.addEventListener('submit', handleInquirySubmit);
 

@@ -57,6 +57,11 @@ export const Toast = {
   },
 
   /** @param {string} message */
+  info(message) {
+    this.show(message, 'success');
+  },
+
+  /** @param {string} message */
   error(message) {
     this.show(message, 'error');
   },

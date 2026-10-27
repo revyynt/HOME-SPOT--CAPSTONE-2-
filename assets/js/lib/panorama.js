@@ -162,11 +162,13 @@ export function initPanoramaViewer(
     container.addEventListener(
       'wheel',
       (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         camera.fov = clamp(camera.fov + e.deltaY * 0.04, 30, 110);
         camera.updateProjectionMatrix();
         updateZoomUI();
       },
-      { passive: true }
+      { passive: false }
     );
 
     // Keyboard
@@ -207,6 +209,7 @@ export function initPanoramaViewer(
     let rafId;
     (function loop() {
       rafId = requestAnimationFrame(loop);
+      if (!container.isConnected || container.offsetParent === null || document.hidden) return;
       if (!isDragging && !isEnlarged) {
         targetLon += 0.08;
       }

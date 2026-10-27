@@ -220,7 +220,12 @@ import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } fro
 import { initPanoramaViewer } from '../lib/panorama.js';
 import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../lib/format.js';
 import { buildPaymentCalendar, buildSalesForecast } from '../lib/payment-calendar.js';
-import { initBuilding3DViewer, BUILDING_UNITS, resolveBuildingUnit } from '../lib/building-3d.js';
+import {
+  initBuilding3DViewer,
+  BUILDING_UNITS,
+  resolveBuildingUnit,
+  syncBuildingUnitsWithRooms
+} from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
 import { attr } from '../lib/dom.js';
 
@@ -344,15 +349,17 @@ function mountAdminPanoramaPreview(container, imageUrl) {
 function updateTenantDormSelect(rooms) {
   const select = document.getElementById('tenantDorm');
   if (!select || !Array.isArray(rooms)) return;
+  select.disabled = true;
   const currentVal = select.value;
   if (!rooms.length) {
-    select.innerHTML = '<option value="">No units available</option>';
+    select.innerHTML =
+      '<option value="Triple Occupancy Room">Triple Occupancy Room</option><option value="Commercial Space">Commercial Space</option>';
     return;
   }
   select.innerHTML = rooms
     .map((r) => `<option value="${escapeHtml(r.name)}">${escapeHtml(r.name)}</option>`)
     .join('');
-  if (currentVal && rooms.some((r) => r.name === currentVal)) {
+  if (currentVal && Array.from(select.options).some((o) => o.value === currentVal)) {
     select.value = currentVal;
   }
 }
@@ -572,6 +579,7 @@ function initAdminListings() {
         rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
       currentAdminRooms = rooms;
+      syncBuildingUnitsWithRooms(rooms);
       renderListings(rooms);
       updateTenantDormSelect(rooms);
     },
@@ -1546,6 +1554,7 @@ function initAdminBuilding3D() {
   let tenantsList = [];
   let selectedUnitId = 'Room 201';
   let xrayEnabled = true;
+  let fireEnabled = true;
   let spinEnabled = true;
 
   const getOccupantsForUnit = (unitId) =>
@@ -1616,7 +1625,14 @@ function initAdminBuilding3D() {
 
     const featsEl = document.getElementById('admin3DUnitFeatures');
     if (featsEl) {
-      featsEl.innerHTML = (unit.features || [])
+      const fireRouteChip =
+        unit.floor === 1
+          ? 'Direct 1F Street Fire Exit & Hallway Extinguisher'
+          : `${unit.floor}F Fire Extinguisher + Green Exit Route to 1F Street`;
+      const combinedFeats = Array.from(
+        new Set([fireRouteChip, ...(unit.listingFeatures || []), ...(unit.features || [])])
+      );
+      featsEl.innerHTML = combinedFeats
         .map(
           (f) =>
             `<span class="px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(f)}</span>`
@@ -1681,6 +1697,19 @@ function initAdminBuilding3D() {
     (err) => console.warn('3D Building tenants listener error:', err)
   );
 
+  supabaseData.onSnapshot(
+    supabaseData.collection(supabase, 'rooms'),
+    (snap) => {
+      const rooms = [];
+      snap.forEach((doc) => {
+        rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
+      });
+      syncBuildingUnitsWithRooms(rooms.length ? rooms : DEFAULT_ROOMS);
+      renderInspector();
+    },
+    (err) => console.warn('3D Building rooms listener error:', err)
+  );
+
   document.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
@@ -1696,6 +1725,7 @@ function initAdminBuilding3D() {
 
     switch (actionBtn.dataset.action) {
       case 'admin-3d-xray':
+        window.getSelection?.()?.removeAllRanges?.();
         ensureViewer();
         xrayEnabled = !xrayEnabled;
         if (viewer) viewer.setXrayMode(xrayEnabled);
@@ -1704,7 +1734,18 @@ function initAdminBuilding3D() {
           ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors'
           : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
         break;
+      case 'admin-3d-fire':
+        window.getSelection?.()?.removeAllRanges?.();
+        ensureViewer();
+        fireEnabled = !fireEnabled;
+        if (viewer) viewer.setFireSafetyMode(fireEnabled);
+        actionBtn.textContent = fireEnabled ? 'Fire Safety: ON' : 'Fire Safety: OFF';
+        actionBtn.className = fireEnabled
+          ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors'
+          : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
+        break;
       case 'admin-3d-spin':
+        window.getSelection?.()?.removeAllRanges?.();
         ensureViewer();
         spinEnabled = !spinEnabled;
         if (viewer) viewer.setAutoRotate(spinEnabled);
@@ -1714,11 +1755,14 @@ function initAdminBuilding3D() {
           : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
         break;
       case 'admin-3d-reset': {
+        window.getSelection?.()?.removeAllRanges?.();
         ensureViewer();
         xrayEnabled = true;
+        fireEnabled = true;
         spinEnabled = true;
         if (viewer) {
           viewer.setXrayMode(true);
+          viewer.setFireSafetyMode(true);
           viewer.setAutoRotate(true);
           viewer.setFloorFilter('all');
           viewer.resetCamera();
@@ -1728,6 +1772,12 @@ function initAdminBuilding3D() {
           xrayBtn.textContent = 'X-Ray Mode: ON';
           xrayBtn.className =
             'px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors';
+        }
+        const fireBtn = document.getElementById('admin3DFireBtn');
+        if (fireBtn) {
+          fireBtn.textContent = 'Fire Safety: ON';
+          fireBtn.className =
+            'px-3.5 py-2 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors';
         }
         const spinBtn = document.getElementById('admin3DSpinBtn');
         if (spinBtn) {
@@ -1744,6 +1794,7 @@ function initAdminBuilding3D() {
         break;
       }
       case 'admin-3d-floor': {
+        window.getSelection?.()?.removeAllRanges?.();
         ensureViewer();
         const floor = actionBtn.dataset.floor || 'all';
         if (viewer) viewer.setFloorFilter(floor);
