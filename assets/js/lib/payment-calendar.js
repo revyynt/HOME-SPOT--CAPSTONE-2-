@@ -200,6 +200,7 @@ export function buildPaymentCalendar({
         tenantEmail: p.tenantEmail || '',
         amount: Number(p.amount) || 0,
         purpose: p.purpose || 'Monthly Rent',
+        notes: p.notes || '',
         method: p.method || p.paymentMethod || 'PayMongo',
         referenceNumber: p.referenceNumber || '',
         status: normalizeStatus(p.status),
@@ -353,14 +354,27 @@ export function buildPaymentCalendar({
       const rent = Number(tenant.monthlyRent) || 0;
       const rawDueDay = Math.max(1, Math.min(31, parseInt(tenant.dueDay, 10) || 5));
       const dueDay = Math.min(rawDueDay, uDaysInMonth);
+      const dueDateObj = new Date(uYear, uMonth, dueDay);
+      if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
+
       const paidInTargetMonth = filteredPayments
         .filter((p) => {
           if (normalizeStatus(p.status) !== 'Paid') return false;
           if (!matchesTenant(p, tenant)) return false;
           const dt = parsePaymentDate(p);
-          return dt && dt.getFullYear() === uYear && dt.getMonth() === uMonth;
+          const isDateMatch = dt && dt.getFullYear() === uYear && dt.getMonth() === uMonth;
+          const notesText = String(p.notes || '').toLowerCase();
+          const targetMonthName = MONTH_NAMES[uMonth].toLowerCase();
+          const isNotesMatch = notesText.includes(targetMonthName);
+          return isDateMatch || isNotesMatch;
         })
         .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+      const isSettledByAmountDue =
+        Boolean(tenant.settledDueDate && tenant.settledDueDate.includes(MONTH_NAMES[uMonth])) &&
+        tenant.amountDue !== undefined &&
+        tenant.amountDue !== null &&
+        Number(tenant.amountDue) <= 0;
 
       const settledInCurrent =
         offset === 0 &&
@@ -368,11 +382,23 @@ export function buildPaymentCalendar({
         tenant.amountDue !== null &&
         Number(tenant.amountDue) <= 0;
 
-      const isPaid = settledInCurrent || (rent > 0 && paidInTargetMonth >= rent);
-      if (offset === 0 && isPaid) continue;
+      const isPaid = isSettledByAmountDue || settledInCurrent || (rent > 0 && paidInTargetMonth >= rent);
+      if (offset === 0 && isPaid && !isSettledByAmountDue) continue;
 
-      const dueDateObj = new Date(uYear, uMonth, dueDay);
-      if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
+      const status = isPaid
+        ? 'Settled'
+        : dueDateObj.getTime() < todayStart
+          ? 'Overdue'
+          : offset === 0
+            ? 'Due Soon'
+            : 'Scheduled';
+
+      const remainingAmount = isPaid
+        ? 0
+        : offset === 0 && tenant.amountDue != null
+          ? Math.max(0, Number(tenant.amountDue))
+          : Math.max(0, rent - paidInTargetMonth);
+
       upcomingSchedule.push({
         tenantName: tenant.name || 'Tenant',
         room: tenant.room || 'Unassigned',
@@ -380,11 +406,10 @@ export function buildPaymentCalendar({
         dateKey: formatDateKey(uYear, uMonth, dueDay),
         year: uYear,
         month: uMonth,
-        amount:
-          offset === 0 && tenant.amountDue != null
-            ? Math.max(0, Number(tenant.amountDue))
-            : Math.max(0, rent - paidInTargetMonth),
-        status: dueDateObj.getTime() < todayStart ? 'Overdue' : offset === 0 ? 'Due Soon' : 'Scheduled'
+        amount: remainingAmount,
+        originalAmount: rent,
+        isSettled: isPaid,
+        status: status
       });
     }
   }

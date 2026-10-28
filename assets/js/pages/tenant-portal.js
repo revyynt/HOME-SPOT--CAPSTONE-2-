@@ -115,11 +115,67 @@ function getMoveInInfo() {
   };
 }
 
+function getTenantDefaultDueDate() {
+  const moveInInfo = getMoveInInfo();
+  const now = new Date();
+  const dueDay = tenantDueDay || 5;
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+  let checkYear = now.getFullYear();
+  let checkMonth = now.getMonth();
+
+  if (
+    moveInInfo.moveInDate &&
+    (moveInInfo.moveInDate.getFullYear() > checkYear ||
+      (moveInInfo.moveInDate.getFullYear() === checkYear &&
+        moveInInfo.moveInDate.getMonth() > checkMonth))
+  ) {
+    checkYear = moveInInfo.moveInDate.getFullYear();
+    checkMonth = moveInInfo.moveInDate.getMonth();
+  }
+
+  const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
+  let candidate = new Date(checkYear, checkMonth, Math.min(dueDay, daysInM));
+
+  if (
+    (moveInInfo.moveInStart && candidate.getTime() < moveInInfo.moveInStart) ||
+    currentRemainingDue <= 0
+  ) {
+    checkMonth++;
+    if (checkMonth > 11) {
+      checkMonth = 0;
+      checkYear++;
+    }
+    const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
+    candidate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
+  }
+
+  return moveInInfo.isPending
+    ? `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()} (First Due)`
+    : `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()}`;
+}
+
 function updateAmountDueUI() {
   const moveInInfo = getMoveInInfo();
   const summaryAmountDue = document.getElementById('summaryAmountDue');
   if (summaryAmountDue) {
-    if (moveInInfo.isPending) {
+    if (selectedUpcomingDueDate && selectedUpcomingAmount > 0) {
+      summaryAmountDue.textContent =
+        '₱' + selectedUpcomingAmount.toLocaleString(undefined, { minimumFractionDigits: 2 });
+      summaryAmountDue.style.color = '#059669';
+    } else if (moveInInfo.isPending) {
       summaryAmountDue.textContent =
         '₱' + tenantRent.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' (Scheduled)';
       summaryAmountDue.style.color = '#0284c7';
@@ -135,61 +191,16 @@ function updateAmountDueUI() {
 
   const summaryDueDate = document.getElementById('summaryDueDate');
   if (summaryDueDate) {
-    const now = new Date();
-    const dueDay = tenantDueDay || 5;
-    const monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
-    let checkYear = now.getFullYear();
-    let checkMonth = now.getMonth();
-
-    if (
-      moveInInfo.moveInDate &&
-      (moveInInfo.moveInDate.getFullYear() > checkYear ||
-        (moveInInfo.moveInDate.getFullYear() === checkYear &&
-          moveInInfo.moveInDate.getMonth() > checkMonth))
-    ) {
-      checkYear = moveInInfo.moveInDate.getFullYear();
-      checkMonth = moveInInfo.moveInDate.getMonth();
-    }
-
-    const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
-    let candidate = new Date(checkYear, checkMonth, Math.min(dueDay, daysInM));
-
-    if (
-      (moveInInfo.moveInStart && candidate.getTime() < moveInInfo.moveInStart) ||
-      currentRemainingDue <= 0
-    ) {
-      checkMonth++;
-      if (checkMonth > 11) {
-        checkMonth = 0;
-        checkYear++;
-      }
-      const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
-      candidate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
-    }
-
-    summaryDueDate.textContent = moveInInfo.isPending
-      ? `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()} (First Due)`
-      : `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()}`;
+    summaryDueDate.textContent = selectedUpcomingDueDate || getTenantDefaultDueDate();
   }
 
   const paymentAmountInput = document.getElementById('paymentAmount');
   if (paymentAmountInput) {
     if (currentRemainingDue <= 0) {
-      paymentAmountInput.value = '0';
-      paymentAmountInput.placeholder = '0.00 (Rent Settled)';
+      if (!selectedUpcomingDueDate) {
+        paymentAmountInput.value = '0';
+        paymentAmountInput.placeholder = '0.00 (Rent Settled)';
+      }
     } else if (
       !paymentAmountInput.value ||
       paymentAmountInput.value === '5000' ||
@@ -466,6 +477,8 @@ function ensureTenantBuilding3DInitialized() {
 let tenantCalYear = new Date().getFullYear();
 let tenantCalMonth = new Date().getMonth();
 let tenantSelectedDateKey = '';
+let selectedUpcomingDueDate = '';
+let selectedUpcomingAmount = 0;
 
 function renderTenantPaymentCalendar() {
   const gridEl = document.getElementById('tenantCalendarGrid');
@@ -474,6 +487,7 @@ function renderTenantPaymentCalendar() {
   const detailEl = document.getElementById('tenantCalendarDayDetail');
   if (!gridEl || !monthLabelEl) return;
 
+  const defaultDueDateText = getTenantDefaultDueDate();
   const tenantRecord = {
     id: currentTenantDocId || userEmail || 'tenant',
     name: tenantName,
@@ -484,7 +498,8 @@ function renderTenantPaymentCalendar() {
     dueDay: tenantDueDay,
     moveInDate: tenantMoveIn,
     movedIn: tenantMovedIn,
-    amountDue: currentRemainingDue
+    amountDue: currentRemainingDue,
+    settledDueDate: currentRemainingDue <= 0 ? defaultDueDateText : ''
   };
 
   const cal = buildPaymentCalendar({
@@ -570,16 +585,42 @@ function renderTenantPaymentCalendar() {
         '<div style="color:#64748b;font-size:12px;">All scheduled dues settled.</div>';
     } else {
       upcomingEl.innerHTML = cal.upcomingSchedule
-        .map(
-          (item) => `
-          <div class="cal-upcoming-item">
+        .map((item) => {
+          const isSelected = selectedUpcomingDueDate === item.dueDate;
+          const isSettled = !isSelected && (item.isSettled || item.status === 'Settled' || item.status === 'Paid');
+
+          if (isSettled) {
+            return `
+          <div class="cal-upcoming-item settled"
+               style="cursor: default; background: #f0fdf4; border-color: #86efac;">
             <div>
               <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
-              <div style="color:#64748b;font-size:11px;">₱${item.amount.toLocaleString()} • ${escapeHtml(item.room)}</div>
+              <div style="color:#15803d;font-size:11px;font-weight:600;">₱0.00 • Settled</div>
             </div>
-            <span class="cal-chip ${chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
-          </div>`
-        )
+            <span class="cal-chip cal-chip-paid">
+              ✓ Settled
+            </span>
+          </div>`;
+          }
+
+          const billAmount = item.originalAmount || item.amount || tenantRent;
+          return `
+          <div class="cal-upcoming-item ${isSelected ? 'selected' : ''}"
+               role="button"
+               tabindex="0"
+               data-action="tenant-toggle-upcoming"
+               data-due-date="${escapeHtml(item.dueDate)}"
+               data-amount="${billAmount}"
+               title="${isSelected ? 'Click to unselect and wait for upcoming month' : 'Click to select and pay early'}">
+            <div>
+              <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
+              <div style="color:#64748b;font-size:11px;">₱${billAmount.toLocaleString()} • ${escapeHtml(item.room)}</div>
+            </div>
+            <span class="cal-chip ${isSelected ? 'cal-chip-paid' : chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">
+              ${isSelected ? 'Pay Early ✓' : escapeHtml(item.status)}
+            </span>
+          </div>`;
+        })
         .join('');
     }
   }
@@ -896,7 +937,16 @@ function updateSubmitButton() {
   submitBtn.disabled = false;
 }
 
-document.getElementById('paymentAmount')?.addEventListener('input', updateSubmitButton);
+document.getElementById('paymentAmount')?.addEventListener('input', () => {
+  const val = parseFloat(document.getElementById('paymentAmount')?.value || '0');
+  if (val <= 0 && selectedUpcomingDueDate) {
+    selectedUpcomingDueDate = '';
+    selectedUpcomingAmount = 0;
+    updateAmountDueUI();
+    renderTenantPaymentCalendar();
+  }
+  updateSubmitButton();
+});
 
 // Payment Form Submission - Direct to PayMongo Hosted Checkout
 document.getElementById('paymentForm').addEventListener('submit', async function (e) {
@@ -1295,6 +1345,17 @@ function showReceiptModal(record) {
   if (residenceEl)
     residenceEl.textContent = `${tenantDorm || 'Triple Occupancy Room'} (${tenantRoom || 'Room 201'})`;
   document.getElementById('receiptPurpose').textContent = record.purpose || 'Monthly Rent';
+  const notesRow = document.getElementById('receiptNotesRow');
+  const notesEl = document.getElementById('receiptNotes');
+  if (notesRow && notesEl) {
+    if (record.notes) {
+      notesEl.textContent = record.notes;
+      notesRow.style.display = 'flex';
+    } else {
+      notesRow.style.display = 'none';
+      notesEl.textContent = '';
+    }
+  }
   document.getElementById('receiptMethod').textContent = PayMongo.formatPaymentMethod(
     record.method,
     record
@@ -1532,28 +1593,8 @@ async function loadTenantPaymentHistory() {
 
 function renderMethodBadge(rawMethod, record) {
   const formatted = PayMongo.formatPaymentMethod(rawMethod, record);
-  const lower = formatted.toLowerCase();
-  let variantClass = '';
-  let icon = '⚡';
-
-  if (lower.includes('gcash')) {
-    variantClass = 'method-pill-gcash';
-    icon = '📱';
-  } else if (lower.includes('maya')) {
-    variantClass = 'method-pill-maya';
-    icon = '🟢';
-  } else if (lower.includes('qr ph')) {
-    variantClass = 'method-pill-qrph';
-    icon = '🔳';
-  } else if (lower.includes('card')) {
-    variantClass = 'method-pill-card';
-    icon = '💳';
-  } else if (lower.includes('grabpay')) {
-    variantClass = 'method-pill-grabpay';
-    icon = '🚗';
-  }
-
-  return `<span class="method-pill ${variantClass}"><span>${icon}</span><span>${escapeHtml(formatted)}</span></span>`;
+  const label = formatted.replace(/^PayMongo Checkout\s*\((.+)\)$/i, 'PayMongo ($1)');
+  return `<span class="method-badge">${escapeHtml(label)}</span>`;
 }
 
 // Render payment history rows
@@ -2227,6 +2268,42 @@ document.addEventListener('click', function (event) {
       tenantSelectedDateKey = button.dataset.dateKey || '';
       renderTenantPaymentCalendar();
       break;
+    case 'tenant-toggle-upcoming': {
+      const dueDate = button.dataset.dueDate || '';
+      const amount = parseFloat(button.dataset.amount || '0');
+      const paymentAmountInput = document.getElementById('paymentAmount');
+      const paymentNotesInput = document.getElementById('paymentNotes');
+
+      if (selectedUpcomingDueDate === dueDate) {
+        // Unclick / deselect -> choice to wait for upcoming month
+        selectedUpcomingDueDate = '';
+        selectedUpcomingAmount = 0;
+        if (paymentAmountInput) {
+          paymentAmountInput.value = (currentRemainingDue > 0 ? currentRemainingDue : 0).toString();
+        }
+        if (paymentNotesInput && paymentNotesInput.value.startsWith('Advance Rent for ')) {
+          paymentNotesInput.value = '';
+        }
+      } else {
+        // Click / select -> choice to pay early
+        selectedUpcomingDueDate = dueDate;
+        selectedUpcomingAmount = amount;
+        if (paymentAmountInput) {
+          paymentAmountInput.value = amount.toString();
+        }
+        if (paymentNotesInput && (!paymentNotesInput.value || paymentNotesInput.value.startsWith('Advance Rent for '))) {
+          paymentNotesInput.value = `Advance Rent for ${dueDate}`;
+        }
+        if (window.innerWidth < 1024) {
+          document.getElementById('paymentForm')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+
+      updateAmountDueUI();
+      updateSubmitButton();
+      renderTenantPaymentCalendar();
+      break;
+    }
     case 'tenant-3d-xray': {
       window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();

@@ -891,7 +891,7 @@ function initAdminPaymentCalendar() {
   let calPayments = [];
 
   const badgeStyle = (status) => {
-    if (status === 'Paid') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (status === 'Paid' || status === 'Settled') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     if (status === 'Overdue' || status === 'Failed')
       return 'bg-red-100 text-red-800 border-red-200';
     if (status === 'Scheduled') return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -1122,9 +1122,12 @@ function initAdminPaymentCalendar() {
           }),
           ...selectedCell.paymentEvents.map(
             (p) =>
-              `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
-                <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(formatPaymentMethod(p.method, p))}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''})</span>
-                <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
+              `<div class="py-1.5 border-b last:border-b-0">
+                <div class="flex items-center justify-between">
+                  <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(formatPaymentMethod(p.method, p))}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''})</span>
+                  <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
+                </div>
+                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1 font-normal">📝 Note: ${escapeHtml(p.notes)}</div>` : ''}
               </div>`
           )
         ].join('');

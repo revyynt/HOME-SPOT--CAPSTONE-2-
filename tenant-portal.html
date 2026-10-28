@@ -116,13 +116,6 @@
         <div class="payment-main-grid">
           <!-- Make a Payment Action Card -->
           <div class="payment-form-card">
-            <div class="paymongo-header-badge">
-              <div class="badge-left">
-                <span class="paymongo-live-dot"></span>
-                <span>Secured by <strong>PayMongo</strong></span>
-              </div>
-              <span class="paymongo-tag">Test Gateway</span>
-            </div>
 
             <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px">Make a Payment</h2>
 
@@ -161,83 +154,11 @@
               <div class="payment-field">
                 <label for="paymentAmount">Amount (₱)</label>
                 <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required />
-                <div class="quick-amounts-bar">
-                  <span class="quick-amount-label">Quick select:</span>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="full">
-                    Full Balance
-                  </button>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="1000">
-                    ₱1,000
-                  </button>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="2500">
-                    ₱2,500
-                  </button>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="5000">
-                    ₱5,000
-                  </button>
-                </div>
               </div>
 
               <div class="payment-field">
                 <label for="paymentNotes">Notes (Optional)</label>
                 <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026" />
-              </div>
-
-              <!-- Accepted Payment Methods Bar -->
-              <div class="payment-methods-strip" style="
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    flex-wrap: wrap;
-                    margin-top: 14px;
-                    margin-bottom: 6px;
-                  ">
-                <span style="font-size: 12px; color: #64748b; font-weight: 500">Accepted via PayMongo:</span>
-                <span style="
-                      background: #eff6ff;
-                      color: #1e40af;
-                      border: 1px solid #bfdbfe;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">💳 Card (Visa/MC)</span>
-                <span style="
-                      background: #ecfdf5;
-                      color: #065f46;
-                      border: 1px solid #a7f3d0;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">📱 GCash</span>
-                <span style="
-                      background: #f0fdf4;
-                      color: #166534;
-                      border: 1px solid #bbf7d0;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">🟢 Maya</span>
-                <span style="
-                      background: #faf5ff;
-                      color: #6b21a8;
-                      border: 1px solid #e9d5ff;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">🏁 GrabPay</span>
-                <span style="
-                      background: #fff7ed;
-                      color: #9a3412;
-                      border: 1px solid #fed7aa;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">🔳 QR Ph</span>
               </div>
 
               <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 14px">
@@ -298,6 +219,9 @@
 
             <div class="cal-upcoming-box">
               <div class="cal-upcoming-title">Upcoming &amp; Future Rent Schedule</div>
+              <p style="margin: 2px 0 8px; font-size: 11px; color: #64748b">
+                Click any upcoming month to pay early, or click again to wait for the next billing cycle.
+              </p>
               <div class="cal-upcoming-list" id="tenantUpcomingScheduleList"></div>
             </div>
           </div>
@@ -613,6 +537,10 @@
             <span class="receipt-row-value" id="receiptStatusBadge">
               <span class="status-badge-paid">✓ Paid</span>
             </span>
+          </div>
+          <div class="receipt-row" id="receiptNotesRow" style="display: none">
+            <span class="receipt-row-label">Note</span>
+            <span class="receipt-row-value" id="receiptNotes" style="font-style: italic; color: #475569"></span>
           </div>
           <div class="receipt-row" id="receiptFailureRow" style="display: none">
             <span class="receipt-row-label">Failure Reason</span>
