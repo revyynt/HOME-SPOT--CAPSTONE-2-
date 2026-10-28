@@ -76,7 +76,7 @@
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
           </path>
         </svg>
-        <span>3D Building View</span>
+        <span>Floor Plan</span>
       </button>
     </div>
 
@@ -384,49 +384,34 @@
           <div class="building-3d-header">
             <div>
               <div class="building-3d-title-row">
-                <span class="building-3d-live-badge">X-RAY BLUEPRINT</span>
-                <h2 class="building-3d-heading">MJP Residences — 3D Building &amp; Room Foundation</h2>
+                <span class="building-3d-live-badge">3D FLOOR PLAN</span>
+                <h2 class="building-3d-heading">MJP Residences — Floor Plan</h2>
               </div>
               <p class="building-3d-sub">
-                Drag to rotate 360° • Scroll to zoom • Click any room to inspect its floor foundation
+                Drag to rotate 360° • Scroll to zoom • Auto-spin pauses on click and resumes after 10s of inactivity
               </p>
             </div>
             <div class="building-3d-controls">
-              <button type="button" class="building-3d-btn active" id="tenant3DXrayBtn" data-action="tenant-3d-xray">
-                X-Ray Mode: ON
-              </button>
-              <button type="button" class="building-3d-btn active" id="tenant3DSpinBtn" data-action="tenant-3d-spin">
-                Auto-Spin: ON
+              <button type="button" class="building-3d-btn active" id="tenant3DFireBtn" data-action="tenant-3d-fire">
+                Fire Safety: ON
               </button>
               <button type="button" class="building-3d-btn" data-action="tenant-3d-my-unit">
                 My Unit
-              </button>
-              <button type="button" class="building-3d-btn" data-action="tenant-3d-reset">
-                Reset View
               </button>
             </div>
           </div>
 
           <div class="building-3d-floor-bar">
-            <span class="building-3d-floor-label">Floor Filter:</span>
-            <button type="button" class="building-3d-floor-pill active" data-action="tenant-3d-floor" data-floor="all">
-              All Floors
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="1">
-              1F • Commercial &amp; Water Station
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="2">
-              2F • Rooms (101–103)
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="3">
-              3F • Rooms (201–203)
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="4">
-              4F • Rooms &amp; Back Deck
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="5">
-              5F • Upper Rooms (401 &amp; 410)
-            </button>
+            <label for="tenant3DFloorSelect" class="building-3d-floor-label">Isolate Floor:</label>
+            <select id="tenant3DFloorSelect"
+              style="padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;background:#0f172a;color:#38bdf8;border:1px solid #0284c7;cursor:pointer;outline:none;">
+              <option value="all">All Floors • 1F–5F</option>
+              <option value="1">1F • Commercial &amp; Water Station</option>
+              <option value="2">2F • Rooms 101–103</option>
+              <option value="3">3F • Rooms 201–203</option>
+              <option value="4">4F • Rooms &amp; Back Deck</option>
+              <option value="5">5F • Upper Rooms 401 &amp; 410</option>
+            </select>
           </div>
 
           <div class="building-3d-canvas-wrap">
@@ -461,8 +446,8 @@
               <strong id="tenant3DUnitSize" class="spec-val">30 sqm</strong>
             </div>
             <div class="building-3d-spec-box">
-              <span class="spec-label">Capacity</span>
-              <strong id="tenant3DUnitCap" class="spec-val">3 Occupants</strong>
+              <span class="spec-label">User</span>
+              <strong id="tenant3DUnitCap" class="spec-val">1 User</strong>
             </div>
             <div class="building-3d-spec-box">
               <span class="spec-label">Monthly Rate</span>

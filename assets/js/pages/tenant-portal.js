@@ -304,7 +304,7 @@ function renderTenant3DUnitInspector(unit) {
 
   const subEl = document.getElementById('tenant3DUnitSubtitle');
   if (subEl) {
-    subEl.textContent = `${unit.floorLabel} (${unit.wing || unit.positionLabel}) • ${unit.type}`;
+    subEl.textContent = `${unit.floorLabel} • ${unit.wing || unit.positionLabel} • ${unit.type}`;
   }
 
   const floorEl = document.getElementById('tenant3DUnitFloor');
@@ -315,8 +315,7 @@ function renderTenant3DUnitInspector(unit) {
 
   const capEl = document.getElementById('tenant3DUnitCap');
   if (capEl) {
-    capEl.textContent =
-      unit.type === 'Commercial Space' ? 'Commercial Utility' : `${unit.capacity} Occupants`;
+    capEl.textContent = '1 User';
   }
 
   const priceEl = document.getElementById('tenant3DUnitPrice');
@@ -340,9 +339,10 @@ function renderTenant3DUnitInspector(unit) {
       unit.floor === 1
         ? 'Direct 1F Street Fire Exit & Hallway Extinguisher'
         : `${unit.floor}F Fire Extinguisher + Green Exit Route to 1F Street`;
-    const combinedFeats = Array.from(
-      new Set([fireRouteChip, ...(unit.listingFeatures || []), ...(unit.features || [])])
-    );
+    const syncedUnitFeats = Array.isArray(unit.listingFeatures)
+      ? unit.listingFeatures
+      : unit.features || [];
+    const combinedFeats = Array.from(new Set([fireRouteChip, ...syncedUnitFeats]));
     featsEl.innerHTML = combinedFeats
       .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
       .join('');
@@ -357,7 +357,7 @@ function renderTenant3DUnitInspector(unit) {
         <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
           <div>
             <strong style="color:#0f172a">${escapeHtml(u.id)}</strong>
-            <span style="color:#64748b;font-size:12px;margin-left:6px">${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
+            <span style="color:#64748b;font-size:12px;margin-left:6px">• ${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
           </div>
           <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${isMine ? '#d1fae5' : '#f1f5f9'};color:${isMine ? '#065f46' : '#475569'}">
             ${isMine ? 'My Room' : escapeHtml(u.type === 'Commercial Space' ? '1F Commercial' : 'Triple Room')}
@@ -408,6 +408,15 @@ function subscribeTenant3DRooms() {
 
 function ensureTenantBuilding3DInitialized() {
   subscribeTenant3DRooms();
+  const floorSelect = document.getElementById('tenant3DFloorSelect');
+  if (floorSelect && !floorSelect.dataset.bound) {
+    floorSelect.dataset.bound = 'true';
+    floorSelect.addEventListener('change', () => {
+      ensureTenantBuilding3DInitialized();
+      const floor = floorSelect.value || 'all';
+      if (tenantBuilding3D) tenantBuilding3D.setFloorFilter(floor);
+    });
+  }
   const viewport = document.getElementById('tenantBuilding3DViewport');
   if (!viewport) return;
   if (!tenantBuilding3D) {
@@ -2223,6 +2232,8 @@ document.addEventListener('click', function (event) {
         tenantBuilding3D.setFloorFilter(floorStr);
         tenantBuilding3D.selectUnit(ownUnit.id);
       }
+      const floorSel = document.getElementById('tenant3DFloorSelect');
+      if (floorSel) floorSel.value = floorStr;
       document.querySelectorAll('[data-action="tenant-3d-floor"]').forEach((pill) => {
         pill.classList.toggle('active', pill.dataset.floor === floorStr);
       });

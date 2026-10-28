@@ -213,7 +213,7 @@ function closeRoomPreviewModal() {
 import { guardPage } from '../lib/guard.js';
 import { initBackButtonGuard, initLogoutButtons } from '../lib/session.js';
 import { initTenantTable, listenToTenants } from './admin-dashboard/tenants.js';
-import { initCreateTenant } from './admin-dashboard/create-tenant.js';
+import { initCreateTenant, openCreateTenantModalFromData } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
@@ -1559,6 +1559,244 @@ function initAdminOverviewActivity() {
   }
 }
 
+const ANALYSIS_MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+];
+
+const ANALYSIS_MONTH_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
+];
+
+function initAdminDataAnalysis() {
+  const section = document.getElementById('adminDataAnalysisSection');
+  if (!section) return;
+
+  const yearSelect = document.getElementById('adminAnalysisYearSelect');
+  const monthSelect = document.getElementById('adminAnalysisMonthSelect');
+  let tenantsList = [];
+
+  const now = new Date();
+  if (yearSelect) {
+    const curY = String(now.getFullYear());
+    if (Array.from(yearSelect.options).some((o) => o.value === curY)) {
+      yearSelect.value = curY;
+    }
+  }
+
+  const isTenantActiveInMonth = (tenant, year, monthIdx) => {
+    const status = String(tenant.status || 'Active').toLowerCase();
+    if (status === 'archived' || status === 'inactive') return false;
+
+    const monthEnd = new Date(year, monthIdx + 1, 0, 23, 59, 59).getTime();
+    const monthStart = new Date(year, monthIdx, 1, 0, 0, 0).getTime();
+
+    const rawStart = tenant.moveInDate || tenant.createdAt || '';
+    if (rawStart) {
+      const parsedStart = new Date(rawStart).getTime();
+      if (!Number.isNaN(parsedStart) && parsedStart > monthEnd) {
+        return false;
+      }
+    }
+
+    const rawEnd = tenant.leaseEnd || tenant.moveOutDate || '';
+    if (rawEnd) {
+      const parsedEnd = new Date(rawEnd).getTime();
+      if (!Number.isNaN(parsedEnd) && parsedEnd < monthStart) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const renderAnalysis = () => {
+    const totalRooms = BUILDING_UNITS.length;
+    const selectedYear = Number(yearSelect?.value) || now.getFullYear();
+    const selectedMonthVal = monthSelect?.value || 'all';
+
+    const monthlyStats = Array.from({ length: 12 }, (_, mIdx) => {
+      const activeTenants = tenantsList.filter((t) =>
+        isTenantActiveInMonth(t, selectedYear, mIdx)
+      );
+      const occupiedUnitIds = new Set();
+      activeTenants.forEach((t) => {
+        if (!t.room && !t.dormName && !t.dorm) return;
+        const unit = resolveBuildingUnit(t.room || '', t.dormName || t.dorm || '');
+        if (unit) occupiedUnitIds.add(unit.id);
+      });
+      const occupiedRooms = Math.min(totalRooms, occupiedUnitIds.size);
+      const availableRooms = Math.max(0, totalRooms - occupiedRooms);
+      return {
+        monthIdx: mIdx,
+        label: ANALYSIS_MONTH_NAMES[mIdx],
+        shortLabel: ANALYSIS_MONTH_SHORT[mIdx],
+        tenants: activeTenants.length,
+        occupiedRooms,
+        availableRooms
+      };
+    });
+
+    const focusMonthIdx =
+      selectedMonthVal === 'all'
+        ? selectedYear === now.getFullYear()
+          ? now.getMonth()
+          : 11
+        : Number(selectedMonthVal) || 0;
+    const focusStat = monthlyStats[focusMonthIdx] || monthlyStats[0];
+
+    // Calculate accurate Yearly Room Summary:
+    // Use active months in the year (or current live room count) rather than diluting with 0s from pre-launch months
+    const activeMonthsInYear = monthlyStats.filter((s) => s.occupiedRooms > 0 || s.tenants > 0);
+    const yearOccupiedRooms = activeMonthsInYear.length
+      ? Math.max(...activeMonthsInYear.map((s) => s.occupiedRooms))
+      : 0;
+    const yearAvailableRooms = Math.max(0, totalRooms - yearOccupiedRooms);
+    const yearOccupancyPct = Math.round((yearOccupiedRooms / totalRooms) * 100);
+
+    const tenantsCountEl = document.getElementById('adminAnalysisTenantsCount');
+    const tenantsSubEl = document.getElementById('adminAnalysisTenantsSub');
+    const occMonthEl = document.getElementById('adminAnalysisOccupiedMonth');
+    const occSubEl = document.getElementById('adminAnalysisOccupiedSub');
+    const availMonthEl = document.getElementById('adminAnalysisAvailableMonth');
+    const availSubEl = document.getElementById('adminAnalysisAvailableSub');
+    const yearSummaryEl = document.getElementById('adminAnalysisYearSummary');
+    const yearSubEl = document.getElementById('adminAnalysisYearSub');
+
+    if (tenantsCountEl) {
+      tenantsCountEl.textContent = `${focusStat.tenants} ${focusStat.tenants === 1 ? 'Tenant' : 'Tenants'}`;
+    }
+    if (tenantsSubEl) {
+      tenantsSubEl.textContent =
+        selectedMonthVal === 'all'
+          ? `Active in ${focusStat.label} ${selectedYear} (Current)`
+          : `Active in ${focusStat.label} ${selectedYear}`;
+    }
+
+    if (occMonthEl) {
+      occMonthEl.textContent = `${focusStat.occupiedRooms} / ${totalRooms} Rooms`;
+    }
+    if (occSubEl) {
+      occSubEl.textContent = `Occupied in ${focusStat.label} ${selectedYear}`;
+    }
+
+    if (availMonthEl) {
+      availMonthEl.textContent = `${focusStat.availableRooms} / ${totalRooms} Rooms`;
+    }
+    if (availSubEl) {
+      availSubEl.textContent = `Available in ${focusStat.label} ${selectedYear}`;
+    }
+
+    if (yearSummaryEl) {
+      yearSummaryEl.textContent = `${yearOccupiedRooms} Occ • ${yearAvailableRooms} Avail`;
+    }
+    if (yearSubEl) {
+      yearSubEl.textContent = `${selectedYear} Room Occupancy (${yearOccupancyPct}% of ${totalRooms} rooms)`;
+    }
+
+    const chartGrid = document.getElementById('adminAnalysisChartGrid');
+    if (chartGrid) {
+      const maxScale = Math.max(totalRooms, ...monthlyStats.map((s) => s.tenants), 1);
+      chartGrid.innerHTML = monthlyStats
+        .map((stat) => {
+          const isSelectedMonth =
+            selectedMonthVal !== 'all' && Number(selectedMonthVal) === stat.monthIdx;
+          const isCurrentFocus = stat.monthIdx === focusMonthIdx;
+          const occPct =
+            stat.occupiedRooms > 0
+              ? Math.max(10, Math.round((stat.occupiedRooms / totalRooms) * 100))
+              : 4;
+          const availPct =
+            stat.availableRooms > 0
+              ? Math.max(10, Math.round((stat.availableRooms / totalRooms) * 100))
+              : 4;
+          const tenPct =
+            stat.tenants > 0
+              ? Math.max(10, Math.round((stat.tenants / maxScale) * 100))
+              : 4;
+
+          return `
+            <button type="button" data-action="admin-analysis-pick-month" data-month="${stat.monthIdx}"
+              class="flex flex-col justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                isSelectedMonth
+                  ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-200 shadow-xs'
+                  : isCurrentFocus && selectedMonthVal === 'all'
+                    ? 'bg-slate-50 border-blue-300 ring-1 ring-blue-100'
+                    : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-gray-50/60'
+              }">
+              <div class="flex items-center justify-between gap-1 mb-2">
+                <span class="text-xs font-extrabold text-gray-900">${escapeHtml(stat.shortLabel)}</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                  stat.occupiedRooms > 0
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-slate-100 text-slate-600'
+                }">${stat.occupiedRooms}/${totalRooms}</span>
+              </div>
+              <div class="h-24 flex items-end justify-center gap-1.5 px-1 py-1 bg-slate-50 rounded-lg border border-slate-100">
+                <div class="w-3 bg-emerald-500 rounded-t transition-all" style="height:${occPct}%" title="Occupied Rooms: ${stat.occupiedRooms} / ${totalRooms}"></div>
+                <div class="w-3 bg-sky-400 rounded-t transition-all" style="height:${availPct}%" title="Available Rooms: ${stat.availableRooms} / ${totalRooms}"></div>
+                <div class="w-3 bg-blue-600 rounded-t transition-all" style="height:${tenPct}%" title="Active Tenants: ${stat.tenants}"></div>
+              </div>
+              <div class="mt-2 space-y-0.5 text-[10px] leading-tight text-gray-600">
+                <div class="flex justify-between"><span>Occ:</span><strong class="text-emerald-700">${stat.occupiedRooms} rm</strong></div>
+                <div class="flex justify-between"><span>Avail:</span><strong class="text-sky-700">${stat.availableRooms} rm</strong></div>
+                <div class="flex justify-between"><span>Tenants:</span><strong class="text-blue-700">${stat.tenants}</strong></div>
+              </div>
+            </button>`;
+        })
+        .join('');
+    }
+  };
+
+  yearSelect?.addEventListener('change', renderAnalysis);
+  monthSelect?.addEventListener('change', renderAnalysis);
+
+  section.addEventListener('click', (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const btn = target?.closest('[data-action="admin-analysis-pick-month"]');
+    if (!btn || !monthSelect) return;
+    const m = btn.dataset.month;
+    if (m !== undefined) {
+      monthSelect.value = monthSelect.value === m ? 'all' : m;
+      renderAnalysis();
+    }
+  });
+
+  supabaseData.onSnapshot(
+    supabaseData.collection(supabase, 'tenants'),
+    (snap) => {
+      tenantsList = snap.docs
+        .map((d) => ({ ...d.data(), id: d.id }))
+        .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
+      renderAnalysis();
+    },
+    (err) => console.warn('Admin data analysis tenants listener error:', err)
+  );
+
+  renderAnalysis();
+}
+
 function initAdminBuilding3D() {
   const viewport = document.getElementById('adminBuilding3DViewport');
   if (!viewport) return;
@@ -1566,15 +1804,51 @@ function initAdminBuilding3D() {
   let viewer = null;
   let tenantsList = [];
   let selectedUnitId = 'Room 201';
-  let xrayEnabled = true;
   let fireEnabled = true;
-  let spinEnabled = true;
 
   const getOccupantsForUnit = (unitId) =>
     tenantsList.filter((t) => {
-      const resolved = resolveBuildingUnit(t.room, t.dormName);
+      if (!t.room && !t.dormName && !t.dorm) return false;
+      const resolved = resolveBuildingUnit(t.room, t.dormName || t.dorm || '');
       return resolved && resolved.id === unitId;
     });
+
+  const getEditableFeatures = (unit) => {
+    if (Array.isArray(unit.listingFeatures)) {
+      return [...unit.listingFeatures];
+    }
+    return Array.isArray(unit.features) ? [...unit.features] : [];
+  };
+
+  const persistUnitListingPatch = async (unit, patch) => {
+    const docId = normalizeRoomDocId(unit.listingDocId || unit.listingId || unit.id);
+    BUILDING_UNITS.forEach((u) => {
+      if (u.listingId === unit.listingId || u.id === unit.id) {
+        if (patch.features !== undefined) {
+          u.listingFeatures = [...patch.features];
+        }
+        if (patch.price !== undefined) {
+          u.price = Number(patch.price) || u.price;
+        }
+        if (patch.capacity !== undefined) {
+          u.capacity = Number(patch.capacity) || u.capacity;
+        }
+        if (patch.size !== undefined) {
+          u.size = String(patch.size);
+        }
+      }
+    });
+    renderInspector();
+
+    await supabaseData.setDoc(
+      supabaseData.doc(supabase, 'rooms', docId),
+      {
+        ...patch,
+        updatedAt: supabaseData.serverTimestamp()
+      },
+      { merge: true }
+    );
+  };
 
   const renderInspector = () => {
     const unit = BUILDING_UNITS.find((u) => u.id === selectedUnitId) || BUILDING_UNITS[0];
@@ -1586,7 +1860,7 @@ function initAdminBuilding3D() {
     const statusBadge = document.getElementById('admin3DUnitStatusBadge');
     if (statusBadge) {
       statusBadge.textContent = isOccupied
-        ? `● Occupied (${occupants.length})`
+        ? '● Occupied'
         : '○ Vacant Unit';
       statusBadge.className = isOccupied
         ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800'
@@ -1602,12 +1876,19 @@ function initAdminBuilding3D() {
     const typeEl = document.getElementById('admin3DUnitType');
     if (typeEl) typeEl.textContent = `${unit.type} • ${unit.size}`;
 
+    const editPriceInput = document.getElementById('admin3DEditPriceInput');
+    if (editPriceInput) editPriceInput.value = String(unit.price || 5000);
+    const editCapInput = document.getElementById('admin3DEditCapInput');
+    if (editCapInput) editCapInput.value = String(unit.capacity || 3);
+    const editSizeInput = document.getElementById('admin3DEditSizeInput');
+    if (editSizeInput) editSizeInput.value = String(unit.size || '30 sqm');
+
     const occEl = document.getElementById('admin3DUnitOccupancy');
     if (occEl) {
       occEl.textContent =
         unit.type === 'Commercial Space'
           ? `${occupants.length} / 1 Lease`
-          : `${occupants.length} / ${unit.capacity} Occupants`;
+          : `${occupants.length} / 1 User`;
     }
 
     const priceEl = document.getElementById('admin3DUnitPrice');
@@ -1617,7 +1898,7 @@ function initAdminBuilding3D() {
     if (tenantsEl) {
       if (!occupants.length) {
         tenantsEl.innerHTML =
-          '<p class="text-xs text-gray-400 italic py-1">No active tenants assigned to this unit yet.</p>';
+          '<p class="text-xs text-gray-400 italic py-1">No active tenants assigned to this unit yet. Click "+ Create Tenant Account" above to assign a tenant.</p>';
       } else {
         tenantsEl.innerHTML = occupants
           .map(
@@ -1625,11 +1906,19 @@ function initAdminBuilding3D() {
           <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-emerald-50/70 border border-emerald-200">
             <div class="min-w-0">
               <div class="font-bold text-gray-900 truncate">${escapeHtml(t.name || 'Tenant')}</div>
-              <div class="text-[11px] text-gray-500 truncate">${escapeHtml(t.email || '')} • ${escapeHtml(t.room || unit.id)}</div>
+              <div class="text-[11px] text-gray-500 truncate">${escapeHtml(t.email || '')} • ${escapeHtml(formatPHP(Number(t.monthlyRent) || unit.price))}/mo</div>
             </div>
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-white text-emerald-700 border border-emerald-200 flex-shrink-0">
-              ${escapeHtml(formatPHP(Number(t.monthlyRent) || unit.price))}
-            </span>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button type="button" data-action="view" data-id="${attr(t.id)}"
+                class="px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-blue-700 border border-blue-200 hover:bg-blue-50">
+                View
+              </button>
+              <button type="button" data-action="admin-3d-unassign-tenant" data-id="${attr(t.id)}" data-name="${attr(t.name || 'Tenant')}"
+                class="px-2 py-0.5 rounded text-[11px] font-semibold bg-white text-red-600 border border-red-200 hover:bg-red-50"
+                title="Remove room assignment">
+                Unassign
+              </button>
+            </div>
           </div>`
           )
           .join('');
@@ -1641,16 +1930,25 @@ function initAdminBuilding3D() {
       const fireRouteChip =
         unit.floor === 1
           ? 'Direct 1F Street Fire Exit & Hallway Extinguisher'
-          : `${unit.floor}F Fire Extinguisher + Green Exit Route to 1F Street`;
-      const combinedFeats = Array.from(
-        new Set([fireRouteChip, ...(unit.listingFeatures || []), ...(unit.features || [])])
-      );
-      featsEl.innerHTML = combinedFeats
+          : `${unit.floor}F Fire Extinguisher + Green Exit Route`;
+      const editableFeats = getEditableFeatures(unit);
+      const fireChipHtml = `<span class="px-2 py-1 rounded-md text-[11px] font-semibold bg-red-50 text-red-700 border border-red-200">${escapeHtml(fireRouteChip)}</span>`;
+      const editableChipsHtml = editableFeats
         .map(
-          (f) =>
-            `<span class="px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(f)}</span>`
+          (f, idx) => `
+          <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-800 border border-slate-300 group">
+            <button type="button" data-action="admin-3d-edit-feature" data-feature-idx="${idx}"
+              class="hover:text-blue-600 cursor-pointer text-left" title="Click to edit feature text">
+              ${escapeHtml(f)}
+            </button>
+            <button type="button" data-action="admin-3d-remove-feature" data-feature-idx="${idx}"
+              class="text-slate-400 hover:text-red-600 font-bold ml-0.5 cursor-pointer leading-none" title="Remove feature">
+              ×
+            </button>
+          </span>`
         )
         .join('');
+      featsEl.innerHTML = fireChipHtml + editableChipsHtml;
     }
 
     const dirEl = document.getElementById('admin3DUnitDirectory');
@@ -1660,22 +1958,25 @@ function initAdminBuilding3D() {
         const active = u.id === unit.id;
         return `
           <button type="button" data-action="admin-3d-select-unit" data-unit-id="${escapeHtml(u.id)}"
-            class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-left text-xs transition-colors ${active
-            ? 'bg-emerald-50 border-emerald-500 text-gray-900 font-bold'
-            : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'
-          }">
+            class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-left text-xs transition-colors ${
+              active
+                ? 'bg-emerald-50 border-emerald-500 text-gray-900 font-bold'
+                : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'
+            }">
             <div>
               <span class="font-bold text-gray-900">${escapeHtml(u.id)}</span>
-              <span class="text-gray-500 ml-1">${escapeHtml(u.floorLabel)} (${escapeHtml(u.wing)})</span>
+              <span class="text-gray-500 ml-1">• ${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
             </div>
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${uOcc.length > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'
-          }">
-              ${u.type === 'Commercial Space'
-            ? uOcc.length > 0
-              ? 'Leased'
-              : 'Available'
-            : `${uOcc.length}/${u.capacity} Beds`
-          }
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold ${
+              uOcc.length > 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800'
+            }">
+              ${
+                u.type === 'Commercial Space'
+                  ? uOcc.length > 0
+                    ? 'Leased'
+                    : 'Available'
+                  : `${uOcc.length}/1 User`
+              }
             </span>
           </button>`;
       }).join('');
@@ -1700,16 +2001,60 @@ function initAdminBuilding3D() {
     renderInspector();
   };
 
+  const floorSelect = document.getElementById('admin3DFloorSelect');
+  floorSelect?.addEventListener('change', () => {
+    ensureViewer();
+    const floor = floorSelect.value || 'all';
+    if (viewer) viewer.setFloorFilter(floor);
+  });
+
+  const addFeatureInput = document.getElementById('admin3DAddFeatureInput');
+  addFeatureInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.querySelector('[data-action="admin-3d-add-feature"]')?.click();
+    }
+  });
+
+  let lastOccupancySyncSignature = '';
+  const syncPublicUnitOccupancyMap = (activeTenants) => {
+    const unitOccupancy = {};
+    BUILDING_UNITS.forEach((u) => {
+      unitOccupancy[u.id] = 0;
+    });
+    activeTenants.forEach((t) => {
+      if (!t.room && !t.dormName && !t.dorm) return;
+      const resolved = resolveBuildingUnit(t.room || '', t.dormName || t.dorm || '');
+      if (resolved) {
+        unitOccupancy[resolved.id] = (unitOccupancy[resolved.id] || 0) + 1;
+      }
+    });
+    BUILDING_UNITS.forEach((u) => {
+      u.publicOccupiedCount = unitOccupancy[u.id] || 0;
+    });
+    const sig = JSON.stringify(unitOccupancy);
+    if (sig === lastOccupancySyncSignature) return;
+    lastOccupancySyncSignature = sig;
+    supabaseData
+      .setDoc(
+        supabaseData.doc(supabase, 'rooms', 'triple-occupancy-room'),
+        { unitOccupancy },
+        { merge: true }
+      )
+      .catch(() => {});
+  };
+
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'tenants'),
     (snap) => {
       tenantsList = snap.docs
         .map((d) => ({ ...d.data(), id: d.id }))
         .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
+      syncPublicUnitOccupancyMap(tenantsList);
       if (viewer) viewer.setTenants(tenantsList);
       renderInspector();
     },
-    (err) => console.warn('3D Building tenants listener error:', err)
+    (err) => console.warn('Floor Plan tenants listener error:', err)
   );
 
   supabaseData.onSnapshot(
@@ -1722,10 +2067,10 @@ function initAdminBuilding3D() {
       syncBuildingUnitsWithRooms(rooms.length ? rooms : DEFAULT_ROOMS);
       renderInspector();
     },
-    (err) => console.warn('3D Building rooms listener error:', err)
+    (err) => console.warn('Floor Plan rooms listener error:', err)
   );
 
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', async (event) => {
     const target = event.target instanceof Element ? event.target : null;
     if (!target) return;
 
@@ -1738,17 +2083,9 @@ function initAdminBuilding3D() {
     const actionBtn = target.closest('[data-action]');
     if (!actionBtn) return;
 
+    const unit = BUILDING_UNITS.find((u) => u.id === selectedUnitId) || BUILDING_UNITS[0];
+
     switch (actionBtn.dataset.action) {
-      case 'admin-3d-xray':
-        window.getSelection?.()?.removeAllRanges?.();
-        ensureViewer();
-        xrayEnabled = !xrayEnabled;
-        if (viewer) viewer.setXrayMode(xrayEnabled);
-        actionBtn.textContent = xrayEnabled ? 'X-Ray Mode: ON' : 'X-Ray Mode: OFF';
-        actionBtn.className = xrayEnabled
-          ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors'
-          : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
-        break;
       case 'admin-3d-fire':
         window.getSelection?.()?.removeAllRanges?.();
         ensureViewer();
@@ -1759,74 +2096,124 @@ function initAdminBuilding3D() {
           ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors'
           : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
         break;
-      case 'admin-3d-spin':
-        window.getSelection?.()?.removeAllRanges?.();
-        ensureViewer();
-        spinEnabled = !spinEnabled;
-        if (viewer) viewer.setAutoRotate(spinEnabled);
-        actionBtn.textContent = spinEnabled ? 'Auto-Spin: ON' : 'Auto-Spin: OFF';
-        actionBtn.className = spinEnabled
-          ? 'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white border border-slate-800 hover:bg-slate-900 transition-colors'
-          : 'px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors';
-        break;
-      case 'admin-3d-reset': {
-        window.getSelection?.()?.removeAllRanges?.();
-        ensureViewer();
-        xrayEnabled = true;
-        fireEnabled = true;
-        spinEnabled = true;
-        if (viewer) {
-          viewer.setXrayMode(true);
-          viewer.setFireSafetyMode(true);
-          viewer.setAutoRotate(true);
-          viewer.setFloorFilter('all');
-          viewer.resetCamera();
-        }
-        const xrayBtn = document.getElementById('admin3DXrayBtn');
-        if (xrayBtn) {
-          xrayBtn.textContent = 'X-Ray Mode: ON';
-          xrayBtn.className =
-            'px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-700 text-white border border-emerald-700 hover:bg-emerald-800 transition-colors';
-        }
-        const fireBtn = document.getElementById('admin3DFireBtn');
-        if (fireBtn) {
-          fireBtn.textContent = 'Fire Safety: ON';
-          fireBtn.className =
-            'px-3.5 py-2 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-600 hover:bg-red-700 transition-colors';
-        }
-        const spinBtn = document.getElementById('admin3DSpinBtn');
-        if (spinBtn) {
-          spinBtn.textContent = 'Auto-Spin: ON';
-          spinBtn.className =
-            'px-3.5 py-2 rounded-lg text-xs font-bold bg-slate-800 text-white border border-slate-800 hover:bg-slate-900 transition-colors';
-        }
-        document.querySelectorAll('[data-action="admin-3d-floor"]').forEach((pill) => {
-          pill.className =
-            pill.dataset.floor === 'all'
-              ? 'px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500'
-              : 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200';
-        });
-        break;
-      }
-      case 'admin-3d-floor': {
-        window.getSelection?.()?.removeAllRanges?.();
-        ensureViewer();
-        const floor = actionBtn.dataset.floor || 'all';
-        if (viewer) viewer.setFloorFilter(floor);
-        document.querySelectorAll('[data-action="admin-3d-floor"]').forEach((pill) => {
-          pill.className =
-            pill.dataset.floor === floor
-              ? 'px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-sky-400 border border-sky-500'
-              : 'px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200';
-        });
-        break;
-      }
       case 'admin-3d-select-unit': {
         ensureViewer();
         const unitId = actionBtn.dataset.unitId || '';
         if (unitId) {
           selectedUnitId = unitId;
-          if (viewer) viewer.selectUnit(unitId);
+          if (viewer) viewer.selectUnit(unitId, true);
+        }
+        break;
+      }
+      case 'admin-3d-assign-tenant': {
+        openCreateTenantModalFromData({
+          room: selectedUnitId,
+          amount: unit ? String(unit.price || '') : ''
+        });
+        break;
+      }
+      case 'admin-3d-toggle-edit-unit': {
+        const formEl = document.getElementById('admin3DUnitEditForm');
+        formEl?.classList.toggle('hidden');
+        break;
+      }
+      case 'admin-3d-save-unit-info': {
+        if (!unit) break;
+        const newPrice = Number(document.getElementById('admin3DEditPriceInput')?.value) || unit.price;
+        const newCap = Number(document.getElementById('admin3DEditCapInput')?.value) || unit.capacity;
+        const newSize = (document.getElementById('admin3DEditSizeInput')?.value || unit.size || '30 sqm').trim();
+        try {
+          await persistUnitListingPatch(unit, {
+            price: newPrice,
+            capacity: newCap,
+            size: newSize
+          });
+          document.getElementById('admin3DUnitEditForm')?.classList.add('hidden');
+          Toast.success(`Updated ${unit.id} specifications and synced with Property Listings.`);
+        } catch (err) {
+          console.error('Failed to save unit specs:', err);
+          Toast.error('Could not save room info: ' + (err.message || 'Unknown error'));
+        }
+        break;
+      }
+      case 'admin-3d-add-feature': {
+        if (!unit) break;
+        const inputEl = document.getElementById('admin3DAddFeatureInput');
+        const val = (inputEl?.value || '').trim();
+        if (!val) break;
+        const currentFeats = getEditableFeatures(unit);
+        if (!currentFeats.includes(val)) {
+          const nextFeats = [...currentFeats, val];
+          if (inputEl) inputEl.value = '';
+          try {
+            await persistUnitListingPatch(unit, { features: nextFeats });
+            Toast.success('Feature added and synced to Property Listings & Tenant Floor Plan.');
+          } catch (err) {
+            console.error('Failed to add feature:', err);
+            Toast.error('Could not add feature.');
+          }
+        } else if (inputEl) {
+          inputEl.value = '';
+        }
+        break;
+      }
+      case 'admin-3d-remove-feature': {
+        if (!unit) break;
+        const idx = Number(actionBtn.dataset.featureIdx);
+        const currentFeats = getEditableFeatures(unit);
+        if (!Number.isFinite(idx) || idx < 0 || idx >= currentFeats.length) break;
+        const nextFeats = currentFeats.filter((_, i) => i !== idx);
+        try {
+          await persistUnitListingPatch(unit, { features: nextFeats });
+          Toast.success('Feature removed and synced to Property Listings & Tenant Floor Plan.');
+        } catch (err) {
+          console.error('Failed to remove feature:', err);
+          Toast.error('Could not remove feature.');
+        }
+        break;
+      }
+      case 'admin-3d-edit-feature': {
+        if (!unit) break;
+        const idx = Number(actionBtn.dataset.featureIdx);
+        const currentFeats = getEditableFeatures(unit);
+        if (!Number.isFinite(idx) || idx < 0 || idx >= currentFeats.length) break;
+        const currentVal = currentFeats[idx];
+        const nextVal = window.prompt('Edit room feature chip:', currentVal);
+        if (nextVal === null) break;
+        const trimmed = nextVal.trim();
+        const nextFeats = trimmed
+          ? currentFeats.map((f, i) => (i === idx ? trimmed : f))
+          : currentFeats.filter((_, i) => i !== idx);
+        try {
+          await persistUnitListingPatch(unit, { features: nextFeats });
+          Toast.success('Feature updated and synced to Property Listings & Tenant Floor Plan.');
+        } catch (err) {
+          console.error('Failed to update feature:', err);
+          Toast.error('Could not update feature.');
+        }
+        break;
+      }
+      case 'admin-3d-unassign-tenant': {
+        const tenantId = actionBtn.dataset.id;
+        const tenantName = actionBtn.dataset.name || 'Tenant';
+        if (!tenantId) break;
+        const confirmed = await Toast.confirm({
+          title: 'Unassign Tenant from Room',
+          message: `Unassign ${tenantName} from ${selectedUnitId}?`,
+          confirmText: 'Unassign Room',
+          cancelText: 'Cancel',
+          danger: true
+        });
+        if (!confirmed) break;
+        try {
+          await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenantId), {
+            room: '',
+            updatedAt: supabaseData.serverTimestamp()
+          });
+          Toast.success(`${tenantName} unassigned from ${selectedUnitId}.`);
+        } catch (err) {
+          console.error('Failed to unassign tenant:', err);
+          Toast.error('Could not unassign tenant: ' + (err.message || 'Unknown error'));
         }
         break;
       }
@@ -1857,6 +2244,7 @@ document.addEventListener(
     initAdminListings();
     initAdminPaymentCalendar();
     initAdminOverviewActivity();
+    initAdminDataAnalysis();
     initAdminBuilding3D();
   },
   { once: true }
