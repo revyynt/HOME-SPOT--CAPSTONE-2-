@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tenant Portal - MJP Residences</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="stylesheet" href="./assets/css/tenant-portal.css" />
 </head>
 
@@ -384,7 +385,7 @@
           <div class="building-3d-header">
             <div>
               <div class="building-3d-title-row">
-                <span class="building-3d-live-badge">3D FLOOR PLAN</span>
+
                 <h2 class="building-3d-heading">MJP Residences — Floor Plan</h2>
               </div>
               <p class="building-3d-sub">
@@ -404,7 +405,7 @@
           <div class="building-3d-floor-bar">
             <label for="tenant3DFloorSelect" class="building-3d-floor-label">Isolate Floor:</label>
             <select id="tenant3DFloorSelect"
-              style="padding:6px 14px;border-radius:10px;font-size:12px;font-weight:700;background:#0f172a;color:#38bdf8;border:1px solid #0284c7;cursor:pointer;outline:none;">
+              style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:#ffffff;color:#1e293b;border:1px solid #cbd5e1;cursor:pointer;outline:none;">
               <option value="all">All Floors • 1F–5F</option>
               <option value="1">1F • Commercial &amp; Water Station</option>
               <option value="2">2F • Rooms 101–103</option>
@@ -457,10 +458,6 @@
 
           <div class="building-3d-foundation-note">
             <strong>Interior Foundation Layout</strong>
-            <p id="tenant3DUnitDesc">
-              Front-to-back apartment room aligned along the right-side tiled hallway with red fire hose cabinet,
-              sliding hallway windows, private bathroom, and staircase access.
-            </p>
             <div id="tenant3DUnitFeatures" class="building-3d-feature-chips"></div>
           </div>
 

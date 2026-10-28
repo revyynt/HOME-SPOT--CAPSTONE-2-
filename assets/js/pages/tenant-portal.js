@@ -283,9 +283,52 @@ let tenant3DFireEnabled = true;
 let tenant3DSpinEnabled = true;
 
 function renderTenant3DUnitInspector(unit) {
-  if (!unit) return;
   const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm);
-  const isOwnUnit = ownUnit && ownUnit.id === unit.id;
+  const isOwnUnit = Boolean(ownUnit && unit && ownUnit.id === unit.id);
+
+  const listEl = document.getElementById('tenant3DUnitList');
+  if (listEl) {
+    listEl.innerHTML = BUILDING_UNITS.map((u) => {
+      const isMine = ownUnit && ownUnit.id === u.id;
+      const isSelected = Boolean(unit && u.id === unit.id);
+      return `
+        <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
+          <div>
+            <strong style="color:#0f172a">${escapeHtml(u.id)}</strong>
+            <span style="color:#64748b;font-size:12px;margin-left:6px">• ${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
+          </div>
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${isMine ? '#d1fae5' : '#f1f5f9'};color:${isMine ? '#065f46' : '#475569'}">
+            ${isMine ? 'My Room' : escapeHtml(u.type === 'Commercial Space' ? '1F Commercial' : 'Triple Room')}
+          </span>
+        </button>`;
+    }).join('');
+  }
+
+  if (!unit) {
+    const badgeEl = document.getElementById('tenant3DUnitBadge');
+    if (badgeEl) {
+      badgeEl.textContent = 'NO ROOM SELECTED';
+      badgeEl.style.background = '#f1f5f9';
+      badgeEl.style.color = '#64748b';
+    }
+    const titleEl = document.getElementById('tenant3DUnitTitle');
+    if (titleEl) titleEl.textContent = 'MJP Residences';
+    const subEl = document.getElementById('tenant3DUnitSubtitle');
+    if (subEl) subEl.textContent = 'Click any room or directory item to view details';
+    const floorEl = document.getElementById('tenant3DUnitFloor');
+    if (floorEl) floorEl.textContent = '—';
+    const sizeEl = document.getElementById('tenant3DUnitSize');
+    if (sizeEl) sizeEl.textContent = '—';
+    const capEl = document.getElementById('tenant3DUnitCap');
+    if (capEl) capEl.textContent = '—';
+    const priceEl = document.getElementById('tenant3DUnitPrice');
+    if (priceEl) priceEl.textContent = '—';
+    const descEl = document.getElementById('tenant3DUnitDesc');
+    if (descEl) descEl.textContent = 'Click any unit on the 3D model or in the directory below to view room specs, safety features, and pricing.';
+    const featsEl = document.getElementById('tenant3DUnitFeatures');
+    if (featsEl) featsEl.innerHTML = '';
+    return;
+  }
 
   const badgeEl = document.getElementById('tenant3DUnitBadge');
   if (badgeEl) {
@@ -330,7 +373,7 @@ function renderTenant3DUnitInspector(unit) {
       unit.description ||
       (unit.type === 'Commercial Space'
         ? "1st Floor center-right storefront under the white canopy overhang — separated from the owner's MJ Parungao Purified Water Station on the left and the gated side hallway on the right."
-        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`);
+        : `${unit.floorLabel} • ${unit.wing || unit.positionLabel} Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`);
   }
 
   const featsEl = document.getElementById('tenant3DUnitFeatures');
@@ -346,24 +389,6 @@ function renderTenant3DUnitInspector(unit) {
     featsEl.innerHTML = combinedFeats
       .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
       .join('');
-  }
-
-  const listEl = document.getElementById('tenant3DUnitList');
-  if (listEl) {
-    listEl.innerHTML = BUILDING_UNITS.map((u) => {
-      const isMine = ownUnit && ownUnit.id === u.id;
-      const isSelected = u.id === unit.id;
-      return `
-        <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
-          <div>
-            <strong style="color:#0f172a">${escapeHtml(u.id)}</strong>
-            <span style="color:#64748b;font-size:12px;margin-left:6px">• ${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
-          </div>
-          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${isMine ? '#d1fae5' : '#f1f5f9'};color:${isMine ? '#065f46' : '#475569'}">
-            ${isMine ? 'My Room' : escapeHtml(u.type === 'Commercial Space' ? '1F Commercial' : 'Triple Room')}
-          </span>
-        </button>`;
-    }).join('');
   }
 }
 
@@ -1929,6 +1954,13 @@ async function initPortal() {
     await authReady;
   } catch (e) { }
   await Promise.all([loadTenantPaymentHistory(), checkUrlPaymentReturn()]);
+  const activeTab = sessionStorage.getItem('tenant_portal_active_tab');
+  if (
+    activeTab === 'building-3d' ||
+    document.getElementById('building-3d-tab')?.classList.contains('active')
+  ) {
+    ensureTenantBuilding3DInitialized();
+  }
 }
 
 if (document.readyState === 'loading') {
@@ -2286,10 +2318,17 @@ document.addEventListener('click', function (event) {
     case 'tenant-3d-select-unit': {
       ensureTenantBuilding3DInitialized();
       const unitId = button.dataset.unitId || '';
-      const unit = BUILDING_UNITS.find((u) => u.id === unitId);
-      if (unit) {
-        tenantSelected3DUnitId = unit.id;
-        if (tenantBuilding3D) tenantBuilding3D.selectUnit(unit.id);
+      if (tenantSelected3DUnitId === unitId) {
+        tenantSelected3DUnitId = '';
+        if (tenantBuilding3D) tenantBuilding3D.selectUnit(null);
+        renderTenant3DUnitInspector(null);
+      } else {
+        const unit = BUILDING_UNITS.find((u) => u.id === unitId);
+        if (unit) {
+          tenantSelected3DUnitId = unit.id;
+          if (tenantBuilding3D) tenantBuilding3D.selectUnit(unit.id);
+          renderTenant3DUnitInspector(unit);
+        }
       }
       break;
     }
