@@ -103,6 +103,7 @@ let pendingAdminUser = null;
 let pendingAdminDestination = '';
 let resendTimerInterval = null;
 let resendSecondsRemaining = 0;
+let isSendingAdminOtp = false;
 
 function maskEmail(email) {
   if (!email || !email.includes('@')) return email || '';
@@ -152,6 +153,9 @@ function startResendCooldown(seconds = 60) {
 }
 
 async function triggerAdminOtp(user, destination) {
+  if (isSendingAdminOtp) return;
+  if (adminOtpModal && !adminOtpModal.classList.contains('hidden') && pendingAdminUser?.id === user?.id) return;
+  isSendingAdminOtp = true;
   pendingAdminUser = user;
   pendingAdminDestination = destination;
   clearAlert();
@@ -171,14 +175,6 @@ async function triggerAdminOtp(user, destination) {
 
   startResendCooldown(60);
 
-  isSubmitting = false;
-  if (loginSubmitBtn) {
-    loginSubmitBtn.disabled = false;
-    loginSubmitBtn.innerHTML =
-      '<span>Sign In to Account</span><span class="transition-transform group-hover:translate-x-1">→</span>';
-    loginSubmitBtn.style.opacity = '1';
-  }
-
   // Trigger Supabase Reauthentication email template
   try {
     const { error } = await supabase.auth.signInWithOtp({
@@ -190,8 +186,17 @@ async function triggerAdminOtp(user, destination) {
       showAdminOtpAlert(error.message || 'Error sending verification code. Click Resend to try again.');
     }
   } catch (err) {
-    console.warn('Reauthentication error:', err);
+    console.warn('OTP error:', err);
     showAdminOtpAlert(err.message || 'Error sending verification code. Click Resend to try again.');
+  } finally {
+    isSendingAdminOtp = false;
+    isSubmitting = false;
+    if (loginSubmitBtn) {
+      loginSubmitBtn.disabled = false;
+      loginSubmitBtn.innerHTML =
+        '<span>Sign In to Account</span><span class="transition-transform group-hover:translate-x-1">→</span>';
+      loginSubmitBtn.style.opacity = '1';
+    }
   }
 }
 
@@ -585,6 +590,8 @@ async function checkExistingSession() {
     const destination = ROLE_DESTINATIONS[role];
     if (destination) {
       if ((role === 'admin' || role === 'superadmin') && sessionStorage.getItem('admin_otp_verified') !== 'true') {
+        if (adminOtpModal && !adminOtpModal.classList.contains('hidden')) return;
+        if (isSubmitting || isSendingAdminOtp) return;
         await triggerAdminOtp(user, destination);
         return;
       }
