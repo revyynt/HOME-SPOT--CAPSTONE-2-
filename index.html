@@ -94,21 +94,74 @@
         </div>
 
         <div class="relative">
-          <div class="relative rounded-2xl overflow-hidden shadow-2xl">
-            <img src="assets/img/building-exterior.jpg" alt="MJP Residences" class="w-full h-80 object-cover" />
-          </div>
-          <!-- Floating Occupancy Badge -->
-          <div class="absolute -bottom-4 right-4 bg-white rounded-xl px-4 py-3 shadow-xl flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-5.13a4 4 0 11-8 0 4 4 0 018 0zm6 0a4 4 0 11-8 0 4 4 0 018 0z">
-                </path>
-              </svg>
+          <div class="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-white text-gray-900">
+            <!-- Top Floor Plan Bar -->
+            <div class="px-4 py-2.5 bg-white border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-gray-900">MJP Residences — Floor Plan</span>
+                <span class="text-[11px] text-gray-500 hidden sm:inline">• Click any room to check vacancy</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <select id="landing3DFloorSelect" aria-label="Isolate Floor"
+                  class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-gray-800 border border-gray-300 focus:outline-none cursor-pointer">
+                  <option value="all">All Floors • 1F–5F</option>
+                  <option value="1">1F • Commercial &amp; Water Station</option>
+                  <option value="2">2F • Rooms 101–103</option>
+                  <option value="3">3F • Rooms 201–203</option>
+                  <option value="4">4F • Rooms &amp; Back Deck</option>
+                  <option value="5">5F • Upper Rooms 401 &amp; 410</option>
+                </select>
+                <button type="button" id="landing3DFireBtn" data-action="landing-3d-fire"
+                  class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-500 hover:bg-red-700 transition-colors cursor-pointer">
+                  Fire Safety: ON
+                </button>
+              </div>
             </div>
-            <div>
-              <div class="text-base font-bold text-gray-900">95% Occupancy</div>
-              <div class="text-xs text-gray-500">Rate</div>
+
+            <!-- Interactive 3D Floor Plan Canvas -->
+            <div id="landingHero3DViewport" class="w-full h-72 sm:h-80 bg-slate-950"></div>
+
+            <!-- Occupancy Legend Bar -->
+            <div class="px-4 py-2 bg-white border-t border-gray-200 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-600">
+              <div class="flex flex-wrap items-center gap-3">
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> <span class="font-medium text-gray-700">Occupied Room</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span> <span class="font-medium text-gray-700">Vacant / Available</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> <span class="font-medium text-gray-700">1F Commercial</span>
+                </span>
+              </div>
+              <span class="text-gray-400">Drag to rotate • Resumes spin after 10s idle</span>
+            </div>
+
+            <!-- Selected Room Apartment Information Panel (Public Inquiry View - No Tenant PII) -->
+            <div id="landingHero3DUnitPanel" class="p-4 bg-white border-t border-gray-200">
+              <div class="mb-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span id="landing3DUnitStatusBadge"
+                    class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-300">
+                    ○ Vacant — Available
+                  </span>
+                  <span id="landing3DUnitFloor" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                    3rd Floor • Front Wing
+                  </span>
+                  <h3 id="landing3DUnitTitle" class="text-base font-extrabold text-gray-900">Room 201</h3>
+                </div>
+                <p id="landing3DUnitSpecs" class="text-xs text-gray-500 mt-1">
+                  Triple Occupancy Room • 30 sqm • 1 User
+                </p>
+              </div>
+              <div class="mb-3">
+                <div id="landing3DUnitPrice" class="text-lg font-extrabold text-emerald-600">₱5,000.00/mo</div>
+                <a id="landing3DUnitLink" href="property-detail.html?id=triple-occupancy-room"
+                  class="inline-flex items-center gap-1 mt-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors">
+                  View Unit &amp; Inquire
+                </a>
+              </div>
+              <div id="landing3DUnitFeatures" class="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100"></div>
             </div>
           </div>
         </div>
@@ -330,6 +383,40 @@
                 <div class="text-gray-600 font-medium">Security</div>
               </div>
             </div>
+
+            <!-- Client Address & Apartment Google Minimap -->
+            <div class="mt-6 bg-white p-4 rounded-2xl shadow-lg border border-gray-100">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                    </svg>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-gray-900">MJP Residences • MJ Parungao Water Station</div>
+                    <div class="text-[11px] text-gray-500 font-medium">MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila</div>
+                  </div>
+                </div>
+                <a href="https://www.google.com/maps?q=14.650403,120.977636"
+                  target="_blank" rel="noopener noreferrer"
+                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors">
+                  <span>Open in Google Maps</span>
+                  <span>↗</span>
+                </a>
+              </div>
+              <div class="w-full h-56 rounded-xl overflow-hidden border border-gray-200 shadow-inner relative">
+                <iframe
+                  id="minimapIframe"
+                  title="Google Minimap - MJ Parungao Water Station & MJP Residences"
+                  src="https://maps.google.com/maps?q=14.650403,120.977636&amp;t=m&amp;z=18&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
+                  class="w-full h-full border-0"
+                  loading="lazy"
+                  allowfullscreen
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+              </div>
+            </div>
         </div>
         <div class="relative">
           <div class="absolute -inset-4 bg-gradient-to-r from-blue-400 to-green-400 rounded-3xl blur-2xl opacity-20">
@@ -397,7 +484,7 @@
         </div>
 
         <!-- On-Site Office -->
-        <a href="https://www.google.com/maps/search/?api=1&amp;query=MX2H%2B53C%2C+9th+Ave%2C+Grace+Park+West%2C+Caloocan%2C+Metro+Manila"
+        <a href="https://www.google.com/maps?q=14.650403,120.977636"
           target="_blank" rel="noopener noreferrer"
           class="bg-gradient-to-br from-blue-50/50 via-white to-gray-50 rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-center flex flex-col justify-between group cursor-pointer">
           <div>
@@ -412,7 +499,7 @@
             </div>
             <h3 class="font-bold text-gray-900 text-lg mb-1">Visit Admin Office</h3>
             <p class="text-xs text-gray-500 mb-2">On-site assistance</p>
-            <p class="text-gray-700 text-xs font-medium mb-3">MX2H+53C, 9th Ave, Grace Park West, Caloocan, Metro Manila
+            <p class="text-gray-700 text-xs font-medium mb-3">MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila
             </p>
           </div>
           <span
@@ -618,7 +705,7 @@
         <div>
           <h3 class="font-bold mb-4 text-lg">Contact</h3>
           <div class="space-y-3">
-            <a href="https://www.google.com/maps/search/?api=1&amp;query=MX2H%2B53C%2C+9th+Ave%2C+Grace+Park+West%2C+Caloocan%2C+Metro+Manila"
+            <a href="https://www.google.com/maps?q=14.650403,120.977636"
               target="_blank" rel="noopener noreferrer"
               class="text-gray-300 hover:text-blue-400 transition-colors text-sm flex items-start gap-2">
               <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
@@ -628,7 +715,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
-              <span>MX2H+53C, 9th Ave, Grace Park West, Caloocan, Metro Manila ↗</span>
+              <span>MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila ↗</span>
             </a>
             <p class="text-gray-300 text-sm flex items-center gap-2">
               <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

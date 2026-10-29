@@ -18,16 +18,16 @@ import { getTenants } from './tenants.js';
 
 const UNIT_SHORT_LABELS = {
   'Commercial Space 1': '1F • Commercial Space 1',
-  'Room 101': '2F • Room 101 (Front)',
-  'Room 102': '2F • Room 102 (Middle)',
-  'Room 103': '2F • Room 103 (Rear)',
-  'Room 201': '3F • Room 201 (Front)',
-  'Room 202': '3F • Room 202 (Middle)',
-  'Room 203': '3F • Room 203 (Rear)',
-  'Room 301': '4F • Room 301 (Front Balcony)',
-  'Room 302': '4F • Room 302 (Middle)',
-  'Room 401': '5F • Room 401 (Front)',
-  'Room 410': '5F • Room 410 (Rear)'
+  'Room 101': '2F • Room 101',
+  'Room 102': '2F • Room 102',
+  'Room 103': '2F • Room 103',
+  'Room 201': '3F • Room 201',
+  'Room 202': '3F • Room 202',
+  'Room 203': '3F • Room 203',
+  'Room 301': '4F • Room 301',
+  'Room 302': '4F • Room 302',
+  'Room 401': '5F • Room 401',
+  'Room 410': '5F • Room 410'
 };
 
 function getUnitOccupants(unitId) {
@@ -79,15 +79,13 @@ export function refreshTenantRoomOptions(preferredRoom = '') {
   roomSelect.innerHTML = '<option value="" disabled selected>Select Room / Unit</option>';
 
   BUILDING_UNITS.forEach((unit) => {
-    const cap = Number(unit.capacity) || (unit.floor === 1 ? 4 : 3);
+    const cap = 1;
     const occ = getUnitOccupants(unit.id).length;
     const isFull = occ >= cap;
     const baseLabel = UNIT_SHORT_LABELS[unit.id] || `${unit.floor}F • ${unit.name}`;
     const statusText = isFull
-      ? `FULL (${occ}/${cap} Occupied)`
-      : occ > 0
-        ? `(${occ}/${cap} Occupied)`
-        : `Available (0/${cap})`;
+      ? `FULL • ${occ}/1 User`
+      : 'Available • 0/1 User';
 
     const opt = document.createElement('option');
     opt.value = unit.id;

@@ -56,7 +56,12 @@ import { initPublicForms } from './pages/public-forms.js';
 import { setRoomAvailability, decrementRoomAvailability } from './room-availability.js';
 import { supabase, supabaseData } from './supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData } from './lib/rooms.js';
-import { escapeHtml } from './lib/format.js';
+import { escapeHtml, formatPHP } from './lib/format.js';
+import {
+  BUILDING_UNITS,
+  initBuilding3DViewer,
+  syncBuildingUnitsWithRooms
+} from './lib/building-3d.js';
 
 const byId = (id) => document.getElementById(id);
 
@@ -136,6 +141,141 @@ function renderLandingRoomCard(room) {
   `;
 }
 
+let activeLanding3DUnitId = 'Room 201';
+let landingHero3DViewer = null;
+
+function renderLandingHero3DUnitInfo(unitOverride = null) {
+  const unit =
+    unitOverride ||
+    BUILDING_UNITS.find((u) => u.id === activeLanding3DUnitId) ||
+    BUILDING_UNITS[4] ||
+    BUILDING_UNITS[0];
+  if (!unit) return;
+  activeLanding3DUnitId = unit.id;
+
+  const occCount =
+    Array.isArray(unit._occupants) && unit._occupants.length > 0
+      ? unit._occupants.length
+      : Number(unit.publicOccupiedCount) || 0;
+
+  const isOccupied = occCount > 0;
+
+  const statusBadge = document.getElementById('landing3DUnitStatusBadge');
+  if (statusBadge) {
+    if (!isOccupied) {
+      statusBadge.textContent =
+        unit.type === 'Commercial Space'
+          ? '○ Vacant — Available for Lease'
+          : '○ Truly Vacant — Available • 0/1 User';
+      statusBadge.className =
+        'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-300';
+    } else {
+      statusBadge.textContent =
+        unit.type === 'Commercial Space'
+          ? '● Occupied — Currently Leased'
+          : '● Occupied by Tenant — 1/1 User';
+      statusBadge.className =
+        'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-300';
+    }
+  }
+
+  const titleEl = document.getElementById('landing3DUnitTitle');
+  if (titleEl) titleEl.textContent = unit.id;
+
+  const floorEl = document.getElementById('landing3DUnitFloor');
+  if (floorEl) floorEl.textContent = `${unit.floorLabel} • ${unit.wing}`;
+
+  const specsEl = document.getElementById('landing3DUnitSpecs');
+  if (specsEl) {
+    const capLabel =
+      unit.type === 'Commercial Space'
+        ? 'Commercial Utility'
+        : '1 User';
+    specsEl.textContent = `${unit.type} • ${unit.size} • ${capLabel}`;
+  }
+
+  const priceEl = document.getElementById('landing3DUnitPrice');
+  if (priceEl) priceEl.textContent = `${formatPHP(unit.price)}/mo`;
+
+  const linkEl = document.getElementById('landing3DUnitLink');
+  if (linkEl) {
+    if (isOccupied) {
+      linkEl.removeAttribute('href');
+      linkEl.setAttribute('aria-disabled', 'true');
+      linkEl.className =
+        'inline-flex items-center gap-1.5 mt-1 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 text-xs font-semibold border border-gray-300 cursor-not-allowed select-none';
+      linkEl.innerHTML = `
+        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        </svg>
+        ${unit.type === 'Commercial Space' ? 'Currently Leased — Inquiries Closed' : 'Occupied by Tenant — Inquiries Closed'}
+      `;
+    } else {
+      const listingId = unit.listingDocId || unit.listingId || 'triple-occupancy-room';
+      linkEl.href = `property-detail.html?id=${encodeURIComponent(listingId)}`;
+      linkEl.removeAttribute('aria-disabled');
+      linkEl.className =
+        'inline-flex items-center gap-1 mt-1 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer';
+      linkEl.textContent = 'View Unit & Inquire';
+    }
+  }
+
+  const featsEl = document.getElementById('landing3DUnitFeatures');
+  if (featsEl) {
+    const feats = Array.isArray(unit.listingFeatures)
+      ? unit.listingFeatures
+      : unit.features || [];
+    featsEl.innerHTML = feats
+      .map(
+        (f) =>
+          `<span class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">${escapeHtml(f)}</span>`
+      )
+      .join('');
+  }
+}
+
+function initLandingHero3D() {
+  const viewport = document.getElementById('landingHero3DViewport');
+  if (!viewport) return;
+
+  let fireEnabled = true;
+  landingHero3DViewer = initBuilding3DViewer(viewport, {
+    mode: 'public',
+    onSelectUnit: (unit) => {
+      renderLandingHero3DUnitInfo(unit);
+    }
+  });
+
+  renderLandingHero3DUnitInfo();
+
+  // Also fetch privacy-safe room occupancy via RPC or tenants snapshot if available
+  supabase
+    .rpc('get_public_room_occupancy')
+    .then(({ data, error }) => {
+      if (!error && Array.isArray(data) && landingHero3DViewer) {
+        landingHero3DViewer.setTenants(data);
+        renderLandingHero3DUnitInfo();
+      }
+    })
+    .catch(() => {});
+
+  const floorSelect = document.getElementById('landing3DFloorSelect');
+  floorSelect?.addEventListener('change', () => {
+    const floor = floorSelect.value || 'all';
+    if (landingHero3DViewer) landingHero3DViewer.setFloorFilter(floor);
+  });
+
+  const fireBtn = document.getElementById('landing3DFireBtn');
+  fireBtn?.addEventListener('click', () => {
+    fireEnabled = !fireEnabled;
+    if (landingHero3DViewer) landingHero3DViewer.setFireSafetyMode(fireEnabled);
+    fireBtn.textContent = fireEnabled ? 'Fire Safety: ON' : 'Fire Safety: OFF';
+    fireBtn.className = fireEnabled
+      ? 'px-2.5 py-1 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-500 hover:bg-red-700 transition-colors cursor-pointer'
+      : 'px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200 transition-colors cursor-pointer';
+  });
+}
+
 function initLandingRooms() {
   const grid = document.querySelector('[data-rooms-grid]');
   if (!grid) return;
@@ -146,21 +286,27 @@ function initLandingRooms() {
     (snapshot) => {
       const rooms = [];
       snapshot.forEach((doc) => {
-        rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
+        const raw = doc.data() || {};
+        rooms.push(
+          mergeRoomData(doc.id, {
+            id: doc.id,
+            ...raw,
+            unitOccupancy: raw.unitOccupancy || null
+          })
+        );
       });
+      const activeRooms = rooms.length > 0 ? rooms : DEFAULT_ROOMS;
+      syncBuildingUnitsWithRooms(activeRooms);
+      if (landingHero3DViewer) {
+        landingHero3DViewer.refreshStates();
+      }
+      renderLandingHero3DUnitInfo();
+
       const countBadge = document.getElementById('landingUnitsCountBadge');
-      if (rooms.length > 0) {
-        grid.innerHTML = rooms.map(renderLandingRoomCard).join('');
-        if (countBadge) {
-          countBadge.textContent = `${rooms.length} ${rooms.length === 1 ? 'Unit' : 'Units'} Available`;
-          countBadge.classList.remove('hidden');
-        }
-      } else {
-        grid.innerHTML = DEFAULT_ROOMS.map(renderLandingRoomCard).join('');
-        if (countBadge) {
-          countBadge.textContent = `${DEFAULT_ROOMS.length} Units Available`;
-          countBadge.classList.remove('hidden');
-        }
+      grid.innerHTML = activeRooms.map(renderLandingRoomCard).join('');
+      if (countBadge) {
+        countBadge.textContent = `${activeRooms.length} ${activeRooms.length === 1 ? 'Unit' : 'Units'} Available`;
+        countBadge.classList.remove('hidden');
       }
     },
     (error) => console.error('Failed to sync landing room cards:', error)
@@ -322,6 +468,7 @@ function initMainPage() {
   initTabs();
   initPublicForms();
   initLandingRooms();
+  initLandingHero3D();
 
   // admin-dashboard.html only.
   if (byId('reservationRequestsContainer') || byId('messagesContainer')) {

@@ -347,3 +347,59 @@ test('buildSalesForecast computes run rate, 6-month projected inflow, and monthl
   assert.equal(forecast.projectedMonths[0].projectedAmount, 22000);
   assert.equal(forecast.projectedMonths[5].label, 'Oct 2026');
 });
+
+test('buildPaymentCalendar allocates advance notes and cycle payments to upcoming schedules accurately', async () => {
+  const { buildPaymentCalendar } = await import('../assets/js/lib/payment-calendar.js');
+  const today = new Date(2026, 9, 29); // Oct 29, 2026
+  const tenants = [
+    {
+      id: 'symon',
+      name: 'Symon Sy-gaco',
+      email: 'sygacosymon@gmail.com',
+      room: 'Commercial Space 1',
+      monthlyRent: 5000,
+      dueDay: 5,
+      moveInDate: '2026-10-01'
+    }
+  ];
+  const payments = [
+    {
+      id: 'p-nov',
+      tenantName: 'Symon Sy-gaco',
+      tenantEmail: 'sygacosymon@gmail.com',
+      amount: 5000,
+      status: 'Paid',
+      notes: 'Monthly Rent',
+      createdAt: '2026-10-28T10:00:00Z'
+    },
+    {
+      id: 'p-dec-1',
+      tenantName: 'Symon Sy-gaco',
+      tenantEmail: 'sygacosymon@gmail.com',
+      amount: 1565,
+      status: 'Paid',
+      notes: 'Advance Rent for December 5, 2026',
+      createdAt: '2026-10-29T10:00:00Z'
+    },
+    {
+      id: 'p-dec-2',
+      tenantName: 'Symon Sy-gaco',
+      tenantEmail: 'sygacosymon@gmail.com',
+      amount: 1223,
+      status: 'Paid',
+      notes: 'Advance Rent for December 5, 2026',
+      createdAt: '2026-10-29T10:05:00Z'
+    }
+  ];
+
+  const cal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 9, today });
+  const novItem = cal.upcomingSchedule.find((item) => item.dueDate.includes('November'));
+  assert.ok(novItem, 'November schedule exists');
+  assert.equal(novItem.isSettled, true, 'November is settled from Oct 28 payment');
+  assert.equal(novItem.amount, 0, 'November remaining amount is 0');
+
+  const decItem = cal.upcomingSchedule.find((item) => item.dueDate.includes('December'));
+  assert.ok(decItem, 'December schedule exists');
+  assert.equal(decItem.isSettled, false, 'December is not yet fully settled');
+  assert.equal(decItem.amount, 5000 - 1565 - 1223, 'December remaining amount lowers by paid sum (2212 remaining)');
+});

@@ -9,7 +9,8 @@ import {
   avatarGradient,
   getUrlParam,
   deduplicatePayments,
-  formatPaymentMethod
+  formatPaymentMethod,
+  getPaymentFailureReason
 } from '../assets/js/lib/format.js';
 
 test('escapeHtml neutralises every HTML-significant character', () => {
@@ -166,3 +167,34 @@ test('formatPaymentMethod formats PayMongo channels into specific labels', () =>
   );
   assert.equal(formatPaymentMethod('PayMongo Checkout'), 'PayMongo Checkout');
 });
+test('getPaymentFailureReason resolves failure reasons tailored to the payment channel', () => {
+  assert.equal(
+    getPaymentFailureReason(null, 'PayMongo Checkout (GCash)'),
+    'GCash authorization failed, was declined, or expired on PayMongo.'
+  );
+  assert.equal(
+    getPaymentFailureReason(null, 'PayMongo Checkout (Maya)'),
+    'Maya authorization failed, was declined, or expired on PayMongo.'
+  );
+  assert.equal(
+    getPaymentFailureReason(null, 'PayMongo Checkout (QR Ph)'),
+    'QR Ph payment was cancelled, expired, or declined on PayMongo.'
+  );
+  assert.equal(
+    getPaymentFailureReason(null, 'PayMongo Checkout (Card)'),
+    'Card was declined or 3DS verification failed on PayMongo.'
+  );
+  assert.equal(
+    getPaymentFailureReason({
+      attributes: {
+        payment_intent: {
+          attributes: {
+            last_payment_error: { failed_message: 'Insufficient balance in e-wallet' }
+          }
+        }
+      }
+    }, 'PayMongo Checkout (GCash)'),
+    'Insufficient balance in e-wallet'
+  );
+});
+

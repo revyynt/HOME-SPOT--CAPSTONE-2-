@@ -60,7 +60,7 @@ export const DEFAULT_ROOMS = [
     name: 'Triple Occupancy Room',
     type: 'Living Space',
     badge: 'Most Popular',
-    price: 10000,
+    price: 5000,
     beds: 1,
     capacity: 3,
     available: 3,
@@ -206,6 +206,7 @@ export function mergeRoomData(baseOrKey, remote = {}) {
     panorama: data.panorama || base.panorama,
     images,
     description: data.description || base.description,
-    features
+    features,
+    unitOccupancy: data.unitOccupancy || base.unitOccupancy || null
   };
 }

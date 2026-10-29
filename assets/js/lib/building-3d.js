@@ -35,12 +35,12 @@ export const BUILDING_UNITS = [
     aliases: ['commercial space 1', 'commercial space', 'commercial', 'unit-1f-commercial', 'hezekiah'],
     listingId: 'commercial-space',
     floor: 1,
-    floorLabel: '1st Floor (Ground)',
-    wing: 'Front Right Storefront (Under Canopy)',
-    positionLabel: '1st Floor • Front Center-Right Storefront',
+    floorLabel: '1st Floor',
+    wing: 'Front Right Storefront',
+    positionLabel: '1st Floor • Front Storefront',
     type: 'Commercial Space',
     size: '35 sqm',
-    capacity: 4,
+    capacity: 1,
     price: 12000,
     description:
       "1st Floor center-right storefront under the white canopy overhang — separated from the owner's MJ Parungao Purified Water Station on the left and the gated side hallway on the right.",
@@ -59,11 +59,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 2,
     floorLabel: '2nd Floor',
-    wing: 'Front Wing (Street Side)',
-    positionLabel: '2nd Floor • Front Unit (Street Side)',
+    wing: 'Front Wing',
+    positionLabel: '2nd Floor • Front Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -84,7 +84,7 @@ export const BUILDING_UNITS = [
     positionLabel: '2nd Floor • Middle Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -101,11 +101,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 2,
     floorLabel: '2nd Floor',
-    wing: 'Rear Wing (Under Back Deck)',
+    wing: 'Rear Wing',
     positionLabel: '2nd Floor • Rear Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -122,11 +122,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 3,
     floorLabel: '3rd Floor',
-    wing: 'Front Wing (Street Side)',
-    positionLabel: '3rd Floor • Front Unit (Street Side)',
+    wing: 'Front Wing',
+    positionLabel: '3rd Floor • Front Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -147,7 +147,7 @@ export const BUILDING_UNITS = [
     positionLabel: '3rd Floor • Middle Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -164,11 +164,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 3,
     floorLabel: '3rd Floor',
-    wing: 'Rear Wing (Below Back Deck)',
+    wing: 'Rear Wing',
     positionLabel: '3rd Floor • Rear Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -189,7 +189,7 @@ export const BUILDING_UNITS = [
     positionLabel: '4th Floor • Front Balcony Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       'Double-Bay Front Balcony Access',
@@ -206,11 +206,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 4,
     floorLabel: '4th Floor',
-    wing: 'Middle Wing (Beside Back Deck)',
-    positionLabel: '4th Floor • Middle Unit (Back Deck Access)',
+    wing: 'Middle Wing',
+    positionLabel: '4th Floor • Middle Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -227,11 +227,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 5,
     floorLabel: '5th Floor',
-    wing: 'Front Wing (Top Facade)',
-    positionLabel: '5th Floor • Front Unit (Street View)',
+    wing: 'Front Wing',
+    positionLabel: '5th Floor • Front Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Protruding Front Box Windows',
@@ -248,11 +248,11 @@ export const BUILDING_UNITS = [
     listingId: 'triple-occupancy-room',
     floor: 5,
     floorLabel: '5th Floor',
-    wing: 'Upper Middle Wing (Overlooking Back Deck)',
-    positionLabel: '5th Floor • Upper Rear-Facing Unit',
+    wing: 'Upper Middle Wing',
+    positionLabel: '5th Floor • Upper Middle Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
-    capacity: 3,
+    capacity: 1,
     price: 10000,
     features: [
       '3 Beds (Triple Occupancy)',
@@ -295,9 +295,28 @@ export function syncBuildingUnitsWithRooms(rooms = []) {
     });
   };
 
+  // Collect any public unitOccupancy maps stored on rooms docs
+  const mergedOccupancyMap = {};
+  rooms.forEach((r) => {
+    if (r && r.unitOccupancy && typeof r.unitOccupancy === 'object') {
+      Object.entries(r.unitOccupancy).forEach(([uId, cnt]) => {
+        const n = Number(cnt);
+        if (Number.isFinite(n) && n >= 0) {
+          mergedOccupancyMap[uId] = n;
+        }
+      });
+    }
+  });
+
   BUILDING_UNITS.forEach((unit) => {
+    if (mergedOccupancyMap[unit.id] !== undefined) {
+      unit.publicOccupiedCount = mergedOccupancyMap[unit.id];
+    }
+
     const match = findListing(unit);
     if (!match) return;
+
+    unit.listingDocId = match.id || unit.listingId;
 
     const rawPrice = Number(
       String(match.price ?? '')
@@ -305,23 +324,23 @@ export function syncBuildingUnitsWithRooms(rooms = []) {
         .replace(/\/month$/i, '')
     );
     if (Number.isFinite(rawPrice) && rawPrice > 0) {
-      unit.price = rawPrice;
+      // Preserve 5000 default on 2F-5F rooms if match.price is just the unedited 10000 seed default
+      if (!(unit.floor > 1 && rawPrice === 10000 && unit.price === 5000 && !match.updatedAt)) {
+        unit.price = rawPrice;
+      }
     }
     if (match.size) {
       unit.size = String(match.size);
     }
-    const rawCap = Number(match.capacity);
-    if (Number.isFinite(rawCap) && rawCap > 0) {
-      unit.capacity = rawCap;
-    }
+    unit.capacity = 1;
     if (match.name) {
       unit.type = String(match.name);
     }
     if (match.description) {
       unit.description = String(match.description);
     }
-    if (Array.isArray(match.features) && match.features.length > 0) {
-      unit.listingFeatures = match.features;
+    if (Array.isArray(match.features)) {
+      unit.listingFeatures = [...match.features];
     }
   });
 
@@ -1129,11 +1148,23 @@ export function initBuilding3DViewer(container, options = {}) {
     // =========================================================================
     // 5. COLOR CODING & SELECTION STATE
     // =========================================================================
+    let spinResumeTimer = null;
+    function pauseSpinAndScheduleResume() {
+      state.autoSpin = false;
+      if (spinResumeTimer) clearTimeout(spinResumeTimer);
+      spinResumeTimer = setTimeout(() => {
+        state.autoSpin = true;
+      }, 10000);
+    }
+
     function computeUnitStates() {
       const highlightedTenantUnit =
         state.mode === 'tenant'
           ? resolveBuildingUnit(state.highlightRoom, state.highlightDorm)
           : null;
+
+      const selectedFloorNum =
+        state.activeFloor !== 'all' ? Number(state.activeFloor) : null;
 
       BUILDING_UNITS.forEach((unit) => {
         const entry = unitMeshMap.get(unit.id);
@@ -1144,9 +1175,18 @@ export function initBuilding3DViewer(container, options = {}) {
           return resolved && resolved.id === unit.id;
         });
 
+        const occCount =
+          unitTenants.length > 0
+            ? unitTenants.length
+            : Number(unit.publicOccupiedCount) || 0;
+
         unit._occupants = unitTenants;
+        unit._occupiedCount = occCount;
         unit._isTenantOwnUnit = Boolean(
           highlightedTenantUnit && highlightedTenantUnit.id === unit.id
+        );
+        unit._isFloorHighlighted = Boolean(
+          selectedFloorNum && unit.floor === selectedFloorNum
         );
 
         const isSelected = state.selectedUnitId === unit.id;
@@ -1169,14 +1209,15 @@ export function initBuilding3DViewer(container, options = {}) {
             fillOp = state.isXray ? 0.24 : 0.58;
           }
         } else {
-          if (unitTenants.length >= unit.capacity) {
+          // Both 'admin' and 'public' (Landing Page) show Occupied vs Vacant rooms!
+          if (occCount >= unit.capacity) {
             fillHex = 0x059669;
             edgeHex = 0x34d399;
-            fillOp = state.isXray ? 0.54 : 0.84;
-          } else if (unitTenants.length > 0) {
+            fillOp = state.isXray ? 0.56 : 0.84;
+          } else if (occCount > 0) {
             fillHex = 0x10b981;
             edgeHex = 0x6ee7b7;
-            fillOp = state.isXray ? 0.48 : 0.8;
+            fillOp = state.isXray ? 0.5 : 0.8;
           } else if (unit.floor === 1) {
             fillHex = 0xd97706;
             edgeHex = 0xfcd34d;
@@ -1188,6 +1229,11 @@ export function initBuilding3DViewer(container, options = {}) {
           }
         }
 
+        if (unit._isFloorHighlighted) {
+          edgeHex = 0x7dd3fc;
+          fillOp = Math.min(fillOp + 0.14, 0.9);
+        }
+
         if (isSelected) {
           edgeHex = 0xfef08a;
           fillOp = Math.min(fillOp + 0.24, 0.94);
@@ -1195,7 +1241,11 @@ export function initBuilding3DViewer(container, options = {}) {
 
         entry.mat.color.setHex(fillHex);
         entry.mat.emissive.setHex(fillHex);
-        entry.mat.emissiveIntensity = isSelected ? 0.5 : unit._isTenantOwnUnit ? 0.38 : 0.2;
+        entry.mat.emissiveIntensity = isSelected
+          ? 0.52
+          : unit._isTenantOwnUnit || unit._isFloorHighlighted || occCount > 0
+            ? 0.38
+            : 0.2;
         entry.mat.opacity = fillOp;
         entry.edgeMat.color.setHex(edgeHex);
       });
@@ -1235,6 +1285,7 @@ export function initBuilding3DViewer(container, options = {}) {
         targetDistance = 23;
         targetElevation = 0.68;
       }
+      computeUnitStates();
     }
 
     function selectUnit(unitId, shouldNotify = true) {
@@ -1276,6 +1327,7 @@ export function initBuilding3DViewer(container, options = {}) {
 
     renderer.domElement.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      pauseSpinAndScheduleResume();
       window.getSelection?.()?.removeAllRanges?.();
       if (
         document.activeElement instanceof HTMLElement &&
@@ -1297,6 +1349,7 @@ export function initBuilding3DViewer(container, options = {}) {
     renderer.domElement.addEventListener('pointermove', (e) => {
       if (!isDragging) return;
       e.preventDefault();
+      pauseSpinAndScheduleResume();
       const dx = e.clientX - downX;
       const dy = e.clientY - downY;
       moveDist += Math.abs(dx) + Math.abs(dy);
@@ -1314,6 +1367,7 @@ export function initBuilding3DViewer(container, options = {}) {
     const onPointerUp = (e) => {
       if (!isDragging) return;
       isDragging = false;
+      pauseSpinAndScheduleResume();
       container.style.cursor = 'grab';
       try {
         renderer.domElement.releasePointerCapture(e.pointerId);
@@ -1340,6 +1394,7 @@ export function initBuilding3DViewer(container, options = {}) {
       (e) => {
         e.preventDefault();
         e.stopPropagation();
+        pauseSpinAndScheduleResume();
         targetDistance = clamp(targetDistance + e.deltaY * 0.02, 15, 56);
       },
       { passive: false }
@@ -1373,7 +1428,11 @@ export function initBuilding3DViewer(container, options = {}) {
       currentLook.lerp(lookTarget, 0.09);
 
       unitMeshMap.forEach((entry) => {
-        if (entry.unit.id === state.selectedUnitId || entry.unit._isTenantOwnUnit) {
+        if (
+          entry.unit.id === state.selectedUnitId ||
+          entry.unit._isTenantOwnUnit ||
+          entry.unit._isFloorHighlighted
+        ) {
           entry.mat.emissiveIntensity = 0.36 + Math.sin(pulseTick * 2.2) * 0.15;
         }
       });
@@ -1409,6 +1468,7 @@ export function initBuilding3DViewer(container, options = {}) {
         return state.isXray;
       },
       setAutoRotate(enabled) {
+        if (spinResumeTimer) clearTimeout(spinResumeTimer);
         state.autoSpin = Boolean(enabled);
         return state.autoSpin;
       },
@@ -1421,6 +1481,7 @@ export function initBuilding3DViewer(container, options = {}) {
       },
       setFloorFilter(floorKey) {
         window.getSelection?.()?.removeAllRanges?.();
+        pauseSpinAndScheduleResume();
         applyFloorVisibility(floorKey);
         if (floorKey !== 'all') {
           const fNum = Number(floorKey);
@@ -1434,7 +1495,8 @@ export function initBuilding3DViewer(container, options = {}) {
         targetElevation = 0.34;
         targetDistance = 34;
       },
-      selectUnit(unitId) {
+      selectUnit(unitId, isUserAction = false) {
+        if (isUserAction) pauseSpinAndScheduleResume();
         selectUnit(unitId, true);
         const targetUnit =
           BUILDING_UNITS.find((u) => u.id === unitId) || resolveBuildingUnit(unitId);
@@ -1454,10 +1516,14 @@ export function initBuilding3DViewer(container, options = {}) {
         state.tenants = Array.isArray(newTenants) ? newTenants : [];
         computeUnitStates();
       },
+      refreshStates() {
+        computeUnitStates();
+      },
       resize: handleResize
     };
 
     container._building3DCleanup = () => {
+      if (spinResumeTimer) clearTimeout(spinResumeTimer);
       cancelAnimationFrame(rafId);
       ro.disconnect();
       renderer.dispose();
@@ -1513,9 +1579,9 @@ export function initBuilding3DViewer(container, options = {}) {
     resetView() {
       this.resetCamera();
     },
-    selectUnit(unitId) {
+    selectUnit(unitId, isUserAction = false) {
       if (internalApi) {
-        internalApi.selectUnit(unitId);
+        internalApi.selectUnit(unitId, isUserAction);
       } else {
         const resolved =
           BUILDING_UNITS.find((u) => u.id === unitId) || resolveBuildingUnit(unitId);
@@ -1539,6 +1605,9 @@ export function initBuilding3DViewer(container, options = {}) {
     },
     updateTenants(newTenants) {
       this.setTenants(newTenants);
+    },
+    refreshStates() {
+      if (internalApi) internalApi.refreshStates();
     },
     resize() {
       if (internalApi) internalApi.resize();

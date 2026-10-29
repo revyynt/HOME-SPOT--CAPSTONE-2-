@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tenant Portal - MJP Residences</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="stylesheet" href="./assets/css/tenant-portal.css" />
 </head>
 
@@ -76,7 +77,7 @@
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
           </path>
         </svg>
-        <span>3D Building View</span>
+        <span>Floor Plan</span>
       </button>
     </div>
 
@@ -115,13 +116,6 @@
         <div class="payment-main-grid">
           <!-- Make a Payment Action Card -->
           <div class="payment-form-card">
-            <div class="paymongo-header-badge">
-              <div class="badge-left">
-                <span class="paymongo-live-dot"></span>
-                <span>Secured by <strong>PayMongo</strong></span>
-              </div>
-              <span class="paymongo-tag">Test Gateway</span>
-            </div>
 
             <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px">Make a Payment</h2>
 
@@ -160,83 +154,11 @@
               <div class="payment-field">
                 <label for="paymentAmount">Amount (₱)</label>
                 <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required />
-                <div class="quick-amounts-bar">
-                  <span class="quick-amount-label">Quick select:</span>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="full">
-                    Full Balance
-                  </button>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="1000">
-                    ₱1,000
-                  </button>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="2500">
-                    ₱2,500
-                  </button>
-                  <button type="button" class="quick-amount-pill" data-action="quick-amount" data-amount="5000">
-                    ₱5,000
-                  </button>
-                </div>
               </div>
 
               <div class="payment-field">
                 <label for="paymentNotes">Notes (Optional)</label>
                 <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026" />
-              </div>
-
-              <!-- Accepted Payment Methods Bar -->
-              <div class="payment-methods-strip" style="
-                    display: flex;
-                    align-items: center;
-                    gap: 6px;
-                    flex-wrap: wrap;
-                    margin-top: 14px;
-                    margin-bottom: 6px;
-                  ">
-                <span style="font-size: 12px; color: #64748b; font-weight: 500">Accepted via PayMongo:</span>
-                <span style="
-                      background: #eff6ff;
-                      color: #1e40af;
-                      border: 1px solid #bfdbfe;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">💳 Card (Visa/MC)</span>
-                <span style="
-                      background: #ecfdf5;
-                      color: #065f46;
-                      border: 1px solid #a7f3d0;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">📱 GCash</span>
-                <span style="
-                      background: #f0fdf4;
-                      color: #166534;
-                      border: 1px solid #bbf7d0;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">🟢 Maya</span>
-                <span style="
-                      background: #faf5ff;
-                      color: #6b21a8;
-                      border: 1px solid #e9d5ff;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">🏁 GrabPay</span>
-                <span style="
-                      background: #fff7ed;
-                      color: #9a3412;
-                      border: 1px solid #fed7aa;
-                      border-radius: 4px;
-                      padding: 2px 7px;
-                      font-size: 12px;
-                      font-weight: 600;
-                    ">🔳 QR Ph</span>
               </div>
 
               <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 14px">
@@ -297,6 +219,9 @@
 
             <div class="cal-upcoming-box">
               <div class="cal-upcoming-title">Upcoming &amp; Future Rent Schedule</div>
+              <p style="margin: 2px 0 8px; font-size: 11px; color: #64748b">
+                Click any upcoming month to pay early, or click again to wait for the next billing cycle.
+              </p>
               <div class="cal-upcoming-list" id="tenantUpcomingScheduleList"></div>
             </div>
           </div>
@@ -361,7 +286,7 @@
         <div class="profile-section">
           <h3>Current Residence</h3>
           <div class="profile-field">
-            <label>Dorm Name</label>
+            <label>Residence Type</label>
             <input type="text" id="tenantProfileDorm" value="Triple Occupancy Room" disabled />
           </div>
           <div class="profile-field">
@@ -384,49 +309,34 @@
           <div class="building-3d-header">
             <div>
               <div class="building-3d-title-row">
-                <span class="building-3d-live-badge">X-RAY BLUEPRINT</span>
-                <h2 class="building-3d-heading">MJP Residences — 3D Building &amp; Room Foundation</h2>
+
+                <h2 class="building-3d-heading">MJP Residences — Floor Plan</h2>
               </div>
               <p class="building-3d-sub">
-                Drag to rotate 360° • Scroll to zoom • Click any room to inspect its floor foundation
+                Drag to rotate 360° • Scroll to zoom • Auto-spin pauses on click and resumes after 10s of inactivity
               </p>
             </div>
             <div class="building-3d-controls">
-              <button type="button" class="building-3d-btn active" id="tenant3DXrayBtn" data-action="tenant-3d-xray">
-                X-Ray Mode: ON
-              </button>
-              <button type="button" class="building-3d-btn active" id="tenant3DSpinBtn" data-action="tenant-3d-spin">
-                Auto-Spin: ON
+              <button type="button" class="building-3d-btn active" id="tenant3DFireBtn" data-action="tenant-3d-fire">
+                Fire Safety: ON
               </button>
               <button type="button" class="building-3d-btn" data-action="tenant-3d-my-unit">
                 My Unit
-              </button>
-              <button type="button" class="building-3d-btn" data-action="tenant-3d-reset">
-                Reset View
               </button>
             </div>
           </div>
 
           <div class="building-3d-floor-bar">
-            <span class="building-3d-floor-label">Floor Filter:</span>
-            <button type="button" class="building-3d-floor-pill active" data-action="tenant-3d-floor" data-floor="all">
-              All Floors
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="1">
-              1F • Commercial &amp; Water Station
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="2">
-              2F • Rooms (101–103)
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="3">
-              3F • Rooms (201–203)
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="4">
-              4F • Rooms &amp; Back Deck
-            </button>
-            <button type="button" class="building-3d-floor-pill" data-action="tenant-3d-floor" data-floor="5">
-              5F • Upper Rooms (401 &amp; 410)
-            </button>
+            <label for="tenant3DFloorSelect" class="building-3d-floor-label">Isolate Floor:</label>
+            <select id="tenant3DFloorSelect"
+              style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:#ffffff;color:#1e293b;border:1px solid #cbd5e1;cursor:pointer;outline:none;">
+              <option value="all">All Floors • 1F–5F</option>
+              <option value="1">1F • Commercial &amp; Water Station</option>
+              <option value="2">2F • Rooms 101–103</option>
+              <option value="3">3F • Rooms 201–203</option>
+              <option value="4">4F • Rooms &amp; Back Deck</option>
+              <option value="5">5F • Upper Rooms 401 &amp; 410</option>
+            </select>
           </div>
 
           <div class="building-3d-canvas-wrap">
@@ -461,8 +371,8 @@
               <strong id="tenant3DUnitSize" class="spec-val">30 sqm</strong>
             </div>
             <div class="building-3d-spec-box">
-              <span class="spec-label">Capacity</span>
-              <strong id="tenant3DUnitCap" class="spec-val">3 Occupants</strong>
+              <span class="spec-label">User</span>
+              <strong id="tenant3DUnitCap" class="spec-val">1 User</strong>
             </div>
             <div class="building-3d-spec-box">
               <span class="spec-label">Monthly Rate</span>
@@ -472,10 +382,6 @@
 
           <div class="building-3d-foundation-note">
             <strong>Interior Foundation Layout</strong>
-            <p id="tenant3DUnitDesc">
-              Front-to-back apartment room aligned along the right-side tiled hallway with red fire hose cabinet,
-              sliding hallway windows, private bathroom, and staircase access.
-            </p>
             <div id="tenant3DUnitFeatures" class="building-3d-feature-chips"></div>
           </div>
 
@@ -575,6 +481,31 @@
     </div>
   </div>
 
+  <!-- PayMongo Payment in Progress Modal -->
+  <div id="paymongoProgressModal" class="paymongo-modal-backdrop" style="display: none">
+    <div class="paymongo-modal-card" style="max-width: 440px; text-align: center; padding: 24px;">
+      <div style="width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%; background: #ecfdf5; display: flex; align-items: center; justify-content: center;">
+        <div style="width: 28px; height: 28px; border: 3px solid #cbd5e1; border-top-color: #047857; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+      </div>
+      <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px;">Payment in Progress</h3>
+      <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 20px;">
+        A secure PayMongo window is open for authorization. Your receipt will appear here automatically once completed or cancelled.
+      </p>
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 12px; color: #475569; text-align: left;">
+        <div>Amount: <strong id="progressModalAmount" style="color: #047857;">₱0.00</strong></div>
+        <div style="margin-top: 4px;">Status: <span id="progressModalStatus" style="font-weight: 600; color: #0284c7;">Awaiting Payment Confirmation...</span></div>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="btnCheckPaymentStatus" data-action="check-progress-payment" style="background: #047857; color: white; padding: 10px 18px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;">
+          Check Status Now
+        </button>
+        <button id="btnCancelProgressPayment" data-action="cancel-progress-payment" style="background: white; border: 1px solid #cbd5e1; color: #64748b; padding: 10px 16px; font-weight: 600; border-radius: 6px; cursor: pointer; font-size: 13px;">
+          Cancel / Return
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- PayMongo Official Receipt Modal (Success & Failed States) -->
   <div id="paymongoReceiptModal" class="paymongo-modal-backdrop" style="display: none">
     <div class="paymongo-modal-card" id="receiptPrintArea">
@@ -631,6 +562,10 @@
             <span class="receipt-row-value" id="receiptStatusBadge">
               <span class="status-badge-paid">✓ Paid</span>
             </span>
+          </div>
+          <div class="receipt-row" id="receiptNotesRow" style="display: none">
+            <span class="receipt-row-label">Note</span>
+            <span class="receipt-row-value" id="receiptNotes" style="font-style: italic; color: #475569"></span>
           </div>
           <div class="receipt-row" id="receiptFailureRow" style="display: none">
             <span class="receipt-row-label">Failure Reason</span>

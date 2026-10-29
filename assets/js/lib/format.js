@@ -226,14 +226,26 @@ export function formatPaymentMethod(rawMethod, sessionOrPayment = null) {
 
   if (sessionOrPayment && typeof sessionOrPayment === 'object') {
     const attrs = sessionOrPayment.attributes || sessionOrPayment;
-    const payments = Array.isArray(attrs?.payments) ? attrs.payments : [];
-    const firstPayment = payments[0]?.attributes || payments[0] || null;
     const piAttrs = attrs?.payment_intent?.attributes || attrs?.payment_intent || null;
+    const payments = Array.isArray(attrs?.payments)
+      ? attrs.payments
+      : Array.isArray(piAttrs?.payments)
+        ? piAttrs.payments
+        : Array.isArray(attrs?.payment_intent?.payments)
+          ? attrs.payment_intent.payments
+          : [];
+    const lastPayment = payments[payments.length - 1]?.attributes || payments[payments.length - 1] || null;
+    const firstPayment = payments[0]?.attributes || payments[0] || null;
+    const lastErr = piAttrs?.last_payment_error || attrs?.last_payment_error || null;
 
     const detected =
       attrs?.payment_method_used ||
+      lastPayment?.source?.type ||
+      lastPayment?.payment_method_type ||
       firstPayment?.source?.type ||
       firstPayment?.payment_method_type ||
+      lastErr?.payment_method?.type ||
+      lastErr?.payment_method_type ||
       piAttrs?.payment_method_used ||
       (Array.isArray(attrs?.payment_method_types) && attrs.payment_method_types.length === 1
         ? attrs.payment_method_types[0]
@@ -267,6 +279,58 @@ export function formatPaymentMethod(rawMethod, sessionOrPayment = null) {
   }
 
   return candidate;
+}
+
+/**
+ * Resolves a human-readable failure reason tailored to the payment channel and gateway error.
+ * @param {Object} [sessionOrPayment]
+ * @param {string} [method]
+ * @returns {string}
+ */
+export function getPaymentFailureReason(sessionOrPayment = null, method = '') {
+  let detail = '';
+  if (sessionOrPayment && typeof sessionOrPayment === 'object') {
+    const attrs = sessionOrPayment.attributes || sessionOrPayment;
+    const piAttrs = attrs?.payment_intent?.attributes || attrs?.payment_intent || null;
+    const lastErr = piAttrs?.last_payment_error || attrs?.last_payment_error || null;
+    const payments = Array.isArray(attrs?.payments)
+      ? attrs.payments
+      : Array.isArray(piAttrs?.payments)
+        ? piAttrs.payments
+        : [];
+    const lastPayment = payments[payments.length - 1]?.attributes || payments[payments.length - 1] || null;
+
+    detail =
+      lastErr?.failed_message ||
+      lastErr?.detail ||
+      lastErr?.message ||
+      lastPayment?.failed_message ||
+      lastPayment?.error_message ||
+      '';
+  }
+
+  if (detail && typeof detail === 'string' && detail.trim().length > 3) {
+    return detail.trim();
+  }
+
+  const lowerMethod = String(method || '').toLowerCase();
+  if (lowerMethod.includes('gcash')) {
+    return 'GCash authorization failed, was declined, or expired on PayMongo.';
+  }
+  if (lowerMethod.includes('maya')) {
+    return 'Maya authorization failed, was declined, or expired on PayMongo.';
+  }
+  if (lowerMethod.includes('qrph') || lowerMethod.includes('qr ph')) {
+    return 'QR Ph payment was cancelled, expired, or declined on PayMongo.';
+  }
+  if (lowerMethod.includes('grab')) {
+    return 'GrabPay authorization failed, was declined, or expired on PayMongo.';
+  }
+  if (lowerMethod.includes('card') || lowerMethod.includes('3ds') || lowerMethod.includes('visa') || lowerMethod.includes('mastercard')) {
+    return 'Card was declined or 3DS verification failed on PayMongo.';
+  }
+
+  return 'Payment authorization failed, was cancelled, or expired on PayMongo.';
 }
 
 /**

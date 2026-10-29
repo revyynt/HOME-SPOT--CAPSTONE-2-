@@ -115,11 +115,67 @@ function getMoveInInfo() {
   };
 }
 
+function getTenantDefaultDueDate() {
+  const moveInInfo = getMoveInInfo();
+  const now = new Date();
+  const dueDay = tenantDueDay || 5;
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+  let checkYear = now.getFullYear();
+  let checkMonth = now.getMonth();
+
+  if (
+    moveInInfo.moveInDate &&
+    (moveInInfo.moveInDate.getFullYear() > checkYear ||
+      (moveInInfo.moveInDate.getFullYear() === checkYear &&
+        moveInInfo.moveInDate.getMonth() > checkMonth))
+  ) {
+    checkYear = moveInInfo.moveInDate.getFullYear();
+    checkMonth = moveInInfo.moveInDate.getMonth();
+  }
+
+  const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
+  let candidate = new Date(checkYear, checkMonth, Math.min(dueDay, daysInM));
+
+  if (
+    (moveInInfo.moveInStart && candidate.getTime() < moveInInfo.moveInStart) ||
+    currentRemainingDue <= 0
+  ) {
+    checkMonth++;
+    if (checkMonth > 11) {
+      checkMonth = 0;
+      checkYear++;
+    }
+    const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
+    candidate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
+  }
+
+  return moveInInfo.isPending
+    ? `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()} (First Due)`
+    : `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()}`;
+}
+
 function updateAmountDueUI() {
   const moveInInfo = getMoveInInfo();
   const summaryAmountDue = document.getElementById('summaryAmountDue');
   if (summaryAmountDue) {
-    if (moveInInfo.isPending) {
+    if (selectedUpcomingDueDate && selectedUpcomingAmount > 0) {
+      summaryAmountDue.textContent =
+        '₱' + selectedUpcomingAmount.toLocaleString(undefined, { minimumFractionDigits: 2 });
+      summaryAmountDue.style.color = '#059669';
+    } else if (moveInInfo.isPending) {
       summaryAmountDue.textContent =
         '₱' + tenantRent.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' (Scheduled)';
       summaryAmountDue.style.color = '#0284c7';
@@ -135,61 +191,16 @@ function updateAmountDueUI() {
 
   const summaryDueDate = document.getElementById('summaryDueDate');
   if (summaryDueDate) {
-    const now = new Date();
-    const dueDay = tenantDueDay || 5;
-    const monthNames = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December'
-    ];
-    let checkYear = now.getFullYear();
-    let checkMonth = now.getMonth();
-
-    if (
-      moveInInfo.moveInDate &&
-      (moveInInfo.moveInDate.getFullYear() > checkYear ||
-        (moveInInfo.moveInDate.getFullYear() === checkYear &&
-          moveInInfo.moveInDate.getMonth() > checkMonth))
-    ) {
-      checkYear = moveInInfo.moveInDate.getFullYear();
-      checkMonth = moveInInfo.moveInDate.getMonth();
-    }
-
-    const daysInM = new Date(checkYear, checkMonth + 1, 0).getDate();
-    let candidate = new Date(checkYear, checkMonth, Math.min(dueDay, daysInM));
-
-    if (
-      (moveInInfo.moveInStart && candidate.getTime() < moveInInfo.moveInStart) ||
-      currentRemainingDue <= 0
-    ) {
-      checkMonth++;
-      if (checkMonth > 11) {
-        checkMonth = 0;
-        checkYear++;
-      }
-      const nextDays = new Date(checkYear, checkMonth + 1, 0).getDate();
-      candidate = new Date(checkYear, checkMonth, Math.min(dueDay, nextDays));
-    }
-
-    summaryDueDate.textContent = moveInInfo.isPending
-      ? `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()} (First Due)`
-      : `${monthNames[candidate.getMonth()]} ${candidate.getDate()}, ${candidate.getFullYear()}`;
+    summaryDueDate.textContent = selectedUpcomingDueDate || getTenantDefaultDueDate();
   }
 
   const paymentAmountInput = document.getElementById('paymentAmount');
   if (paymentAmountInput) {
     if (currentRemainingDue <= 0) {
-      paymentAmountInput.value = '0';
-      paymentAmountInput.placeholder = '0.00 (Rent Settled)';
+      if (!selectedUpcomingDueDate) {
+        paymentAmountInput.value = '0';
+        paymentAmountInput.placeholder = '0.00 (Rent Settled)';
+      }
     } else if (
       !paymentAmountInput.value ||
       paymentAmountInput.value === '5000' ||
@@ -283,9 +294,52 @@ let tenant3DFireEnabled = true;
 let tenant3DSpinEnabled = true;
 
 function renderTenant3DUnitInspector(unit) {
-  if (!unit) return;
   const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm);
-  const isOwnUnit = ownUnit && ownUnit.id === unit.id;
+  const isOwnUnit = Boolean(ownUnit && unit && ownUnit.id === unit.id);
+
+  const listEl = document.getElementById('tenant3DUnitList');
+  if (listEl) {
+    listEl.innerHTML = BUILDING_UNITS.map((u) => {
+      const isMine = ownUnit && ownUnit.id === u.id;
+      const isSelected = Boolean(unit && u.id === unit.id);
+      return `
+        <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
+          <div>
+            <strong style="color:#0f172a">${escapeHtml(u.id)}</strong>
+            <span style="color:#64748b;font-size:12px;margin-left:6px">• ${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
+          </div>
+          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${isMine ? '#d1fae5' : '#f1f5f9'};color:${isMine ? '#065f46' : '#475569'}">
+            ${isMine ? 'My Room' : escapeHtml(u.type === 'Commercial Space' ? '1F Commercial' : 'Triple Room')}
+          </span>
+        </button>`;
+    }).join('');
+  }
+
+  if (!unit) {
+    const badgeEl = document.getElementById('tenant3DUnitBadge');
+    if (badgeEl) {
+      badgeEl.textContent = 'NO ROOM SELECTED';
+      badgeEl.style.background = '#f1f5f9';
+      badgeEl.style.color = '#64748b';
+    }
+    const titleEl = document.getElementById('tenant3DUnitTitle');
+    if (titleEl) titleEl.textContent = 'MJP Residences';
+    const subEl = document.getElementById('tenant3DUnitSubtitle');
+    if (subEl) subEl.textContent = 'Click any room or directory item to view details';
+    const floorEl = document.getElementById('tenant3DUnitFloor');
+    if (floorEl) floorEl.textContent = '—';
+    const sizeEl = document.getElementById('tenant3DUnitSize');
+    if (sizeEl) sizeEl.textContent = '—';
+    const capEl = document.getElementById('tenant3DUnitCap');
+    if (capEl) capEl.textContent = '—';
+    const priceEl = document.getElementById('tenant3DUnitPrice');
+    if (priceEl) priceEl.textContent = '—';
+    const descEl = document.getElementById('tenant3DUnitDesc');
+    if (descEl) descEl.textContent = 'Click any unit on the 3D model or in the directory below to view room specs, safety features, and pricing.';
+    const featsEl = document.getElementById('tenant3DUnitFeatures');
+    if (featsEl) featsEl.innerHTML = '';
+    return;
+  }
 
   const badgeEl = document.getElementById('tenant3DUnitBadge');
   if (badgeEl) {
@@ -304,7 +358,7 @@ function renderTenant3DUnitInspector(unit) {
 
   const subEl = document.getElementById('tenant3DUnitSubtitle');
   if (subEl) {
-    subEl.textContent = `${unit.floorLabel} (${unit.wing || unit.positionLabel}) • ${unit.type}`;
+    subEl.textContent = `${unit.floorLabel} • ${unit.wing || unit.positionLabel} • ${unit.type}`;
   }
 
   const floorEl = document.getElementById('tenant3DUnitFloor');
@@ -315,8 +369,7 @@ function renderTenant3DUnitInspector(unit) {
 
   const capEl = document.getElementById('tenant3DUnitCap');
   if (capEl) {
-    capEl.textContent =
-      unit.type === 'Commercial Space' ? 'Commercial Utility' : `${unit.capacity} Occupants`;
+    capEl.textContent = '1 User';
   }
 
   const priceEl = document.getElementById('tenant3DUnitPrice');
@@ -331,7 +384,7 @@ function renderTenant3DUnitInspector(unit) {
       unit.description ||
       (unit.type === 'Commercial Space'
         ? "1st Floor center-right storefront under the white canopy overhang — separated from the owner's MJ Parungao Purified Water Station on the left and the gated side hallway on the right."
-        : `${unit.floorLabel} (${unit.wing || unit.positionLabel}) Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`);
+        : `${unit.floorLabel} • ${unit.wing || unit.positionLabel} Triple Occupancy Room accessed from the right-side chevron-tiled hallway with red fire hose cabinet, sliding windows, 3 bed spaces, private bathroom, and staircase at the rear end of the hallway.`);
   }
 
   const featsEl = document.getElementById('tenant3DUnitFeatures');
@@ -340,30 +393,13 @@ function renderTenant3DUnitInspector(unit) {
       unit.floor === 1
         ? 'Direct 1F Street Fire Exit & Hallway Extinguisher'
         : `${unit.floor}F Fire Extinguisher + Green Exit Route to 1F Street`;
-    const combinedFeats = Array.from(
-      new Set([fireRouteChip, ...(unit.listingFeatures || []), ...(unit.features || [])])
-    );
+    const syncedUnitFeats = Array.isArray(unit.listingFeatures)
+      ? unit.listingFeatures
+      : unit.features || [];
+    const combinedFeats = Array.from(new Set([fireRouteChip, ...syncedUnitFeats]));
     featsEl.innerHTML = combinedFeats
       .map((f) => `<span class="building-3d-chip">${escapeHtml(f)}</span>`)
       .join('');
-  }
-
-  const listEl = document.getElementById('tenant3DUnitList');
-  if (listEl) {
-    listEl.innerHTML = BUILDING_UNITS.map((u) => {
-      const isMine = ownUnit && ownUnit.id === u.id;
-      const isSelected = u.id === unit.id;
-      return `
-        <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
-          <div>
-            <strong style="color:#0f172a">${escapeHtml(u.id)}</strong>
-            <span style="color:#64748b;font-size:12px;margin-left:6px">${escapeHtml(u.floorLabel)} • ${escapeHtml(u.wing)}</span>
-          </div>
-          <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:${isMine ? '#d1fae5' : '#f1f5f9'};color:${isMine ? '#065f46' : '#475569'}">
-            ${isMine ? 'My Room' : escapeHtml(u.type === 'Commercial Space' ? '1F Commercial' : 'Triple Room')}
-          </span>
-        </button>`;
-    }).join('');
   }
 }
 
@@ -408,6 +444,15 @@ function subscribeTenant3DRooms() {
 
 function ensureTenantBuilding3DInitialized() {
   subscribeTenant3DRooms();
+  const floorSelect = document.getElementById('tenant3DFloorSelect');
+  if (floorSelect && !floorSelect.dataset.bound) {
+    floorSelect.dataset.bound = 'true';
+    floorSelect.addEventListener('change', () => {
+      ensureTenantBuilding3DInitialized();
+      const floor = floorSelect.value || 'all';
+      if (tenantBuilding3D) tenantBuilding3D.setFloorFilter(floor);
+    });
+  }
   const viewport = document.getElementById('tenantBuilding3DViewport');
   if (!viewport) return;
   if (!tenantBuilding3D) {
@@ -432,6 +477,8 @@ function ensureTenantBuilding3DInitialized() {
 let tenantCalYear = new Date().getFullYear();
 let tenantCalMonth = new Date().getMonth();
 let tenantSelectedDateKey = '';
+let selectedUpcomingDueDate = '';
+let selectedUpcomingAmount = 0;
 
 function renderTenantPaymentCalendar() {
   const gridEl = document.getElementById('tenantCalendarGrid');
@@ -440,6 +487,7 @@ function renderTenantPaymentCalendar() {
   const detailEl = document.getElementById('tenantCalendarDayDetail');
   if (!gridEl || !monthLabelEl) return;
 
+  const defaultDueDateText = getTenantDefaultDueDate();
   const tenantRecord = {
     id: currentTenantDocId || userEmail || 'tenant',
     name: tenantName,
@@ -450,7 +498,8 @@ function renderTenantPaymentCalendar() {
     dueDay: tenantDueDay,
     moveInDate: tenantMoveIn,
     movedIn: tenantMovedIn,
-    amountDue: currentRemainingDue
+    amountDue: currentRemainingDue,
+    settledDueDate: currentRemainingDue <= 0 ? defaultDueDateText : ''
   };
 
   const cal = buildPaymentCalendar({
@@ -536,16 +585,43 @@ function renderTenantPaymentCalendar() {
         '<div style="color:#64748b;font-size:12px;">All scheduled dues settled.</div>';
     } else {
       upcomingEl.innerHTML = cal.upcomingSchedule
-        .map(
-          (item) => `
-          <div class="cal-upcoming-item">
+        .map((item) => {
+          const isSelected = selectedUpcomingDueDate === item.dueDate;
+          const remaining = (item.amount !== undefined && item.amount !== null) ? Number(item.amount) : (item.originalAmount || tenantRent);
+          const isSettled = !isSelected && (item.isSettled || item.status === 'Settled' || item.status === 'Paid' || remaining <= 0);
+
+          if (isSettled) {
+            return `
+          <div class="cal-upcoming-item settled"
+               style="cursor: default; background: #f0fdf4; border-color: #86efac;">
             <div>
               <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
-              <div style="color:#64748b;font-size:11px;">₱${item.amount.toLocaleString()} • ${escapeHtml(item.room)}</div>
+              <div style="color:#15803d;font-size:11px;font-weight:600;">₱0.00 • Settled</div>
             </div>
-            <span class="cal-chip ${chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
-          </div>`
-        )
+            <span class="cal-chip cal-chip-paid">
+              ✓ Settled
+            </span>
+          </div>`;
+          }
+
+          const billAmount = remaining > 0 ? remaining : (item.originalAmount || tenantRent);
+          return `
+          <div class="cal-upcoming-item ${isSelected ? 'selected' : ''}"
+               role="button"
+               tabindex="0"
+               data-action="tenant-toggle-upcoming"
+               data-due-date="${escapeHtml(item.dueDate)}"
+               data-amount="${billAmount}"
+               title="${isSelected ? 'Click to unselect and wait for upcoming month' : 'Click to select and pay early'}">
+            <div>
+              <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
+              <div style="color:#64748b;font-size:11px;">₱${billAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} • ${escapeHtml(item.room)}</div>
+            </div>
+            <span class="cal-chip ${isSelected ? 'cal-chip-paid' : chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">
+              ${isSelected ? 'Pay Early ✓' : escapeHtml(item.status)}
+            </span>
+          </div>`;
+        })
         .join('');
     }
   }
@@ -862,7 +938,16 @@ function updateSubmitButton() {
   submitBtn.disabled = false;
 }
 
-document.getElementById('paymentAmount')?.addEventListener('input', updateSubmitButton);
+document.getElementById('paymentAmount')?.addEventListener('input', () => {
+  const val = parseFloat(document.getElementById('paymentAmount')?.value || '0');
+  if (val <= 0 && selectedUpcomingDueDate) {
+    selectedUpcomingDueDate = '';
+    selectedUpcomingAmount = 0;
+    updateAmountDueUI();
+    renderTenantPaymentCalendar();
+  }
+  updateSubmitButton();
+});
 
 // Payment Form Submission - Direct to PayMongo Hosted Checkout
 document.getElementById('paymentForm').addEventListener('submit', async function (e) {
@@ -942,6 +1027,20 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       localStorage.setItem('pending_paymongo_payment', pendingPayload);
       sessionStorage.setItem('paymongo_checkout_active', '1');
       sessionStorage.setItem('tenant_portal_active_tab', 'payment');
+
+      let checkoutWindow = null;
+      try {
+        checkoutWindow = window.open(session.checkoutUrl, '_blank');
+      } catch (e) {
+        checkoutWindow = null;
+      }
+
+      if (checkoutWindow && !checkoutWindow.closed) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        showProgressModal(session, amountVal, checkoutWindow);
+        return;
+      }
 
       window.location.href = session.checkoutUrl;
       return;
@@ -1167,7 +1266,7 @@ async function saveAndFinalizePayment(record) {
         created_at: record.createdAt || new Date().toISOString()
       });
 
-      await supabase.from('app_documents').upsert({
+      const { error: appDocErr } = await supabase.from('app_documents').upsert({
         collection: 'payments',
         id: canonicalDocId,
         data: {
@@ -1175,6 +1274,16 @@ async function saveAndFinalizePayment(record) {
           tenantUid: session.user.id
         }
       });
+      if (appDocErr) {
+        await supabase.from('app_documents').insert({
+          collection: 'payments',
+          id: canonicalDocId,
+          data: {
+            ...record,
+            tenantUid: session.user.id
+          }
+        }).catch(() => null);
+      }
     }
   } catch (err) {
     console.warn('Direct payment persistence sync to Supabase:', err);
@@ -1189,9 +1298,53 @@ async function saveAndFinalizePayment(record) {
   showReceiptModal(record);
 }
 
-// Failed payment state is recorded by the provider webhook, not the browser.
+// Failed or expired payment state is cached immediately and synced.
 async function saveFailedPayment(record) {
-  await loadTenantPaymentHistory();
+  const alreadyInCache = cachedPayments.some((p) => {
+    if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
+    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId) return true;
+    return false;
+  });
+
+  if (!alreadyInCache) {
+    cachedPayments.unshift(record);
+    renderPaymentHistoryTable(cachedPayments);
+  }
+
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (session) {
+      const canonicalDocId = record.paymentMethodId || record.referenceNumber;
+      await supabase.from('payments').upsert({
+        id: record.referenceNumber,
+        session_id: canonicalDocId,
+        tenant_name: record.tenantName,
+        tenant_email: record.tenantEmail,
+        tenant_uid: session.user.id,
+        amount: record.amount,
+        status: record.status || 'Failed',
+        payment_method: record.method,
+        purpose: record.purpose,
+        notes: record.notes,
+        reference_number: record.referenceNumber,
+        created_at: record.createdAt || new Date().toISOString()
+      }).catch(() => null);
+
+      await supabase.from('app_documents').upsert({
+        collection: 'payments',
+        id: canonicalDocId,
+        data: {
+          ...record,
+          tenantUid: session.user.id
+        }
+      }).catch(() => null);
+    }
+  } catch (err) {
+    console.warn('Failed payment persistence sync to Supabase:', err);
+  }
+
   showReceiptModal(record);
 }
 
@@ -1235,12 +1388,64 @@ function formatPaymentDate(record) {
   });
 }
 
+let activePaymentWatcher = null;
+let currentCheckoutWindow = null;
+
+function showProgressModal(session, amount, checkoutWindow) {
+  currentCheckoutWindow = checkoutWindow;
+  const modal = document.getElementById('paymongoProgressModal');
+  const amountEl = document.getElementById('progressModalAmount');
+  const statusEl = document.getElementById('progressModalStatus');
+
+  if (amountEl) {
+    amountEl.textContent = '₱' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  }
+  if (statusEl) {
+    statusEl.textContent = 'Awaiting Payment Confirmation...';
+    statusEl.style.color = '#0284c7';
+  }
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+
+  if (activePaymentWatcher) {
+    clearInterval(activePaymentWatcher);
+  }
+
+  // Poll PayMongo session every 2 seconds for status change
+  activePaymentWatcher = setInterval(async () => {
+    const isResolved = await checkUrlPaymentReturn();
+    if (isResolved) {
+      closeProgressModal();
+    }
+  }, 2000);
+}
+
+function closeProgressModal(closeWindow = false) {
+  if (activePaymentWatcher) {
+    clearInterval(activePaymentWatcher);
+    activePaymentWatcher = null;
+  }
+  const modal = document.getElementById('paymongoProgressModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  if (closeWindow && currentCheckoutWindow && !currentCheckoutWindow.closed) {
+    try {
+      currentCheckoutWindow.close();
+    } catch (e) {}
+    currentCheckoutWindow = null;
+  }
+}
+
 // Show Official Receipt Modal (Supports Paid & Failed states)
 function showReceiptModal(record) {
+  const isExpired = (record.status || '').toLowerCase().includes('expire');
   const isFailed =
-    (record.status || '').toLowerCase().includes('fail') ||
-    (record.status || '').toLowerCase().includes('declined') ||
-    (record.status || '').toLowerCase().includes('cancel');
+    !isExpired &&
+    ((record.status || '').toLowerCase().includes('fail') ||
+      (record.status || '').toLowerCase().includes('declined') ||
+      (record.status || '').toLowerCase().includes('cancel'));
 
   const headerEl = document.getElementById('receiptModalHeader');
   const dotEl = document.getElementById('receiptModalDot');
@@ -1261,6 +1466,17 @@ function showReceiptModal(record) {
   if (residenceEl)
     residenceEl.textContent = `${tenantDorm || 'Triple Occupancy Room'} (${tenantRoom || 'Room 201'})`;
   document.getElementById('receiptPurpose').textContent = record.purpose || 'Monthly Rent';
+  const notesRow = document.getElementById('receiptNotesRow');
+  const notesEl = document.getElementById('receiptNotes');
+  if (notesRow && notesEl) {
+    if (record.notes) {
+      notesEl.textContent = record.notes;
+      notesRow.style.display = 'flex';
+    } else {
+      notesRow.style.display = 'none';
+      notesEl.textContent = '';
+    }
+  }
   document.getElementById('receiptMethod').textContent = PayMongo.formatPaymentMethod(
     record.method,
     record
@@ -1271,7 +1487,63 @@ function showReceiptModal(record) {
 
   const formattedAmount = `₱${parseFloat(record.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-  if (isFailed) {
+  if (isExpired) {
+    // Expired Payment Styling (e.g. QR Ph timeout, source expired)
+    if (headerEl) headerEl.style.background = '#fff7ed';
+    if (dotEl) {
+      dotEl.style.background = '#f97316';
+      dotEl.style.boxShadow = '0 0 0 3px rgba(249, 115, 22, 0.2)';
+    }
+    if (headerTitleEl) {
+      headerTitleEl.textContent = 'PayMongo Payment Notice - Expired';
+      headerTitleEl.style.color = '#9a3412';
+    }
+    if (iconContainer) {
+      iconContainer.innerHTML = '<div class="receipt-fail-icon" style="background: #ffedd5; color: #ea580c;">⏱</div>';
+    }
+    if (titleEl) {
+      titleEl.textContent = 'Payment Expired';
+      titleEl.style.color = '#ea580c';
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent =
+        'The QR Ph payment code or checkout session expired before completion.';
+    }
+    if (statusBadgeEl) {
+      statusBadgeEl.innerHTML = '<span class="status-badge-expired">⏱ Expired</span>';
+    }
+    if (failureRow) {
+      failureRow.style.display = 'flex';
+      const rowLabel = failureRow.querySelector('.receipt-row-label');
+      if (rowLabel) rowLabel.textContent = 'Expiry Reason';
+      if (failureReasonEl) {
+        failureReasonEl.textContent =
+          record.failureReason || 'QR Ph payment code expired on PayMongo';
+        failureReasonEl.style.color = '#c2410c';
+      }
+    }
+    if (amountLabelEl) amountLabelEl.textContent = 'Amount (Unpaid)';
+    if (amountEl) {
+      amountEl.textContent = `${formattedAmount} (Expired / Not Charged)`;
+      amountEl.style.color = '#ea580c';
+    }
+    if (printBtn) {
+      printBtn.style.borderColor = '#f97316';
+      printBtn.style.color = '#c2410c';
+      printBtn.innerHTML = `
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                <span>Print Expiry Notice</span>
+            `;
+    }
+    if (closeBtn) {
+      closeBtn.style.background = '#ea580c';
+      closeBtn.textContent = 'Try Again';
+    }
+  } else if (isFailed) {
     // Failed Payment Styling
     if (headerEl) headerEl.style.background = '#fef2f2';
     if (dotEl) {
@@ -1298,9 +1570,12 @@ function showReceiptModal(record) {
     }
     if (failureRow) {
       failureRow.style.display = 'flex';
+      const rowLabel = failureRow.querySelector('.receipt-row-label');
+      if (rowLabel) rowLabel.textContent = 'Failure Reason';
       if (failureReasonEl) {
         failureReasonEl.textContent =
           record.failureReason || 'Card authentication failed / cancelled in PayMongo test mode';
+        failureReasonEl.style.color = '#dc2626';
       }
     }
     if (amountLabelEl) amountLabelEl.textContent = 'Amount (Unpaid)';
@@ -1399,6 +1674,7 @@ function printReceipt() {
                 .receipt-fail-icon { font-size: 40px; color: #dc2626; text-align: center; margin-bottom: 10px; }
                 .paymongo-tag { background: #10B981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
                 .status-badge-paid { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+                .status-badge-expired { background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
                 .status-badge-failed { background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
                 .no-print { display: none !important; }
             </style>
@@ -1498,28 +1774,8 @@ async function loadTenantPaymentHistory() {
 
 function renderMethodBadge(rawMethod, record) {
   const formatted = PayMongo.formatPaymentMethod(rawMethod, record);
-  const lower = formatted.toLowerCase();
-  let variantClass = '';
-  let icon = '⚡';
-
-  if (lower.includes('gcash')) {
-    variantClass = 'method-pill-gcash';
-    icon = '📱';
-  } else if (lower.includes('maya')) {
-    variantClass = 'method-pill-maya';
-    icon = '🟢';
-  } else if (lower.includes('qr ph')) {
-    variantClass = 'method-pill-qrph';
-    icon = '🔳';
-  } else if (lower.includes('card')) {
-    variantClass = 'method-pill-card';
-    icon = '💳';
-  } else if (lower.includes('grabpay')) {
-    variantClass = 'method-pill-grabpay';
-    icon = '🚗';
-  }
-
-  return `<span class="method-pill ${variantClass}"><span>${icon}</span><span>${escapeHtml(formatted)}</span></span>`;
+  const label = formatted.replace(/^PayMongo Checkout\s*\((.+)\)$/i, 'PayMongo ($1)');
+  return `<span class="method-badge">${escapeHtml(label)}</span>`;
 }
 
 // Render payment history rows
@@ -1545,17 +1801,21 @@ function renderPaymentHistoryTable(payments) {
 
   tableBody.innerHTML = payments
     .map((p, idx) => {
+      const isExpired = (p.status || '').toLowerCase().includes('expire');
       const isFailed =
-        (p.status || '').toLowerCase().includes('fail') ||
-        (p.status || '').toLowerCase().includes('declined') ||
-        (p.status || '').toLowerCase().includes('cancel');
+        !isExpired &&
+        ((p.status || '').toLowerCase().includes('fail') ||
+          (p.status || '').toLowerCase().includes('declined') ||
+          (p.status || '').toLowerCase().includes('cancel'));
       const isPending = (p.status || '').toLowerCase() === 'pending';
-      const statusBadge = isFailed
-        ? `<span class="status-badge-failed">✗ Failed</span>`
-        : isPending
-          ? `<span class="status-badge-pending">⏱ Pending</span>`
-          : `<span class="status-badge-paid">✓ Paid</span>`;
-      const amountColor = isFailed ? '#dc2626' : isPending ? '#b45309' : '#059669';
+      const statusBadge = isExpired
+        ? `<span class="status-badge-expired">⏱ Expired</span>`
+        : isFailed
+          ? `<span class="status-badge-failed">✗ Failed</span>`
+          : isPending
+            ? `<span class="status-badge-pending">⏱ Pending</span>`
+            : `<span class="status-badge-paid">✓ Paid</span>`;
+      const amountColor = isExpired ? '#ea580c' : isFailed ? '#dc2626' : isPending ? '#b45309' : '#059669';
 
       return `
         <tr>
@@ -1595,6 +1855,20 @@ async function checkUrlPaymentReturn() {
     }
   }
 
+  // If returning to a child checkout window with an active opener, hand off to opener and close child
+  if (
+    (paymentStatus === 'success' || paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'expired') &&
+    window.opener &&
+    !window.opener.closed
+  ) {
+    try {
+      window.opener.focus();
+      
+      window.close();
+      return true;
+    } catch (e) {}
+  }
+
   // Read pending payment from BOTH storages (localStorage survives more edge cases)
   let pending = null;
   try {
@@ -1625,44 +1899,89 @@ async function checkUrlPaymentReturn() {
     switchTab('payment');
   }
 
-  // SCENARIO: Returned from PayMongo hosted checkout with no URL params
-  // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
-  // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
+  // SCENARIO: Checking or returned from PayMongo hosted checkout session
+  // Detects card declines, 3DS fails, and e-wallet / QR Ph expirations and redirects stuck windows.
   if (!paymentIntentId && !paymentStatus && pending?.sessionId) {
     console.log('[PayReturn] Checking pending checkout session:', pending.sessionId);
     const sessionId = pending.sessionId;
-    sessionStorage.removeItem('pending_paymongo_payment');
-    localStorage.removeItem('pending_paymongo_payment');
 
     let sessionStatus = null;
     let checkedSession = null;
-    let failureDetail = 'Card declined or 3DS authentication failed.';
     try {
       if (PayMongo?.getCheckoutSession) {
         checkedSession = await PayMongo.getCheckoutSession(sessionId);
         console.log('[PayReturn] Session data:', checkedSession);
         if (checkedSession) {
           sessionStatus = checkedSession.attributes?.status;
-          const lastErr = checkedSession.attributes?.payment_intent?.attributes?.last_payment_error;
-          if (lastErr && (lastErr.failed_message || lastErr.detail)) {
-            failureDetail = lastErr.failed_message || lastErr.detail;
-          }
         }
       }
     } catch (e) {
       console.warn('[PayReturn] Could not inspect checkout session:', e);
     }
 
-    console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
+    const paymentsList = Array.isArray(checkedSession?.attributes?.payments)
+      ? checkedSession.attributes.payments
+      : Array.isArray(checkedSession?.attributes?.payment_intent?.attributes?.payments)
+        ? checkedSession.attributes.payment_intent.attributes.payments
+        : [];
 
-    const hasPaidPayment =
-      Array.isArray(checkedSession?.attributes?.payments) &&
-      checkedSession.attributes.payments.some((p) => p?.attributes?.status === 'paid');
+    const hasPaidPayment = paymentsList.some((p) => {
+      const s = (p?.attributes?.status || p?.status || '').toLowerCase();
+      return s === 'paid' || s === 'succeeded';
+    });
     const hasSucceededPI =
       checkedSession?.attributes?.payment_intent?.attributes?.status === 'succeeded';
     const isPaid = sessionStatus === 'paid' || hasPaidPayment || hasSucceededPI;
 
+    const sourceStatus = (checkedSession?.attributes?.source?.status || '').toLowerCase();
+    const isSourceExpired = sourceStatus === 'expired';
+    const isSourceFailed = sourceStatus === 'failed' || sourceStatus === 'cancelled';
+
+    const hasExpiredPayment = paymentsList.some((p) => {
+      const s = (p?.attributes?.status || p?.status || '').toLowerCase();
+      return s === 'expired';
+    });
+    const piStatus = (checkedSession?.attributes?.payment_intent?.attributes?.status || '').toLowerCase();
+    const hasExpiredPI = piStatus === 'expired';
+    const isSessionExpired = sessionStatus === 'expired';
+
+    const hasFailedPayment = paymentsList.some((p) => {
+      const s = (p?.attributes?.status || p?.status || '').toLowerCase();
+      return s === 'failed' || s === 'cancelled';
+    });
+    const hasFailedPI =
+      piStatus === 'cancelled' ||
+      Boolean(checkedSession?.attributes?.payment_intent?.attributes?.last_payment_error);
+
+    const isWindowClosed = Boolean(currentCheckoutWindow && currentCheckoutWindow.closed);
+
+    const isFailed = !isPaid && (
+      isSessionExpired ||
+      hasExpiredPayment ||
+      hasExpiredPI ||
+      isSourceExpired ||
+      hasFailedPayment ||
+      hasFailedPI ||
+      isSourceFailed ||
+      isWindowClosed
+    );
+
+    console.log('[PayReturn] isPaid:', isPaid, '| isFailed:', isFailed, '| sessionStatus:', sessionStatus);
+
     if (isPaid) {
+      if (currentCheckoutWindow && !currentCheckoutWindow.closed) {
+        const statusEl = document.getElementById('progressModalStatus');
+        if (statusEl) {
+          statusEl.textContent = 'Payment Received! Redirecting in 10 seconds...';
+          statusEl.style.color = '#047857';
+        }
+        return false;
+      }
+
+      sessionStorage.removeItem('pending_paymongo_payment');
+      localStorage.removeItem('pending_paymongo_payment');
+      currentCheckoutWindow = null;
+
       const lineItemsSum =
         ((checkedSession?.attributes?.line_items || []).reduce(
           (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
@@ -1675,11 +1994,12 @@ async function checkUrlPaymentReturn() {
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
+      const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, checkedSession);
       const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
-        method: PayMongo.formatPaymentMethod(pending?.method, checkedSession),
+        method: detectedMethod,
         amount: amountParam2,
         purpose: purposeParam2,
         notes: pending?.notes || 'Completed via PayMongo Checkout',
@@ -1689,47 +2009,57 @@ async function checkUrlPaymentReturn() {
           dateStyle: 'medium',
           timeStyle: 'short'
         }),
+        createdAt: new Date().toISOString(),
         status: 'Paid'
       };
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
+      closeProgressModal();
       await saveAndFinalizePayment(record2);
-    } else if (sessionStatus === 'expired') {
+      return true;
+    } else if (isFailed) {
+      sessionStorage.removeItem('pending_paymongo_payment');
+      localStorage.removeItem('pending_paymongo_payment');
+
+      if (currentCheckoutWindow && !currentCheckoutWindow.closed) {
+        try { currentCheckoutWindow.close(); } catch (e) {}
+        currentCheckoutWindow = null;
+      }
+
       const amountParam2 = parseFloat(pending?.amount) || 5000;
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
-      const refNumber2 = pending?.referenceNumber || 'PM-FAIL-' + Date.now().toString().slice(-6);
+      const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, checkedSession);
+      const failureReason = PayMongo.getPaymentFailureReason(checkedSession, detectedMethod);
+      const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
-        method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+        method: detectedMethod,
         amount: amountParam2,
         purpose: purposeParam2,
-        notes: pending?.notes || 'Card declined / 3DS authentication failed',
-        failureReason: failureDetail,
+        notes: pending?.notes || `Payment Failed (${detectedMethod})`,
+        failureReason: failureReason,
         tenantName: tenantNameVal2,
         tenantEmail: userEmail,
         dateFormatted: new Date().toLocaleString('en-US', {
           dateStyle: 'medium',
           timeStyle: 'short'
         }),
+        createdAt: new Date().toISOString(),
         status: 'Failed'
       };
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      // Save receipt first, then expire session in background (non-blocking)
+      closeProgressModal();
+      if (sessionStatus !== 'expired' && PayMongo?.expireCheckoutSession) {
+        PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+      }
       await saveFailedPayment(record2);
-    } else {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      switchTab('payment');
-      Toast.alert({
-        title: 'Payment Status Pending',
-        message:
-          'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
-      });
+      return true;
     }
-    return;
+    return false;
   }
 
   // If neither parameter is present and no pending, nothing to do
@@ -1859,54 +2189,51 @@ async function checkUrlPaymentReturn() {
     switchTab('payment');
     await saveAndFinalizePayment(record);
   }
-  // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED OR CANCELLED via cancel_url)
-  else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
+  // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED, EXPIRED OR CANCELLED)
+  else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'expired') {
     const sessionId = pending?.sessionId || urlParams.get('sessionId') || '';
-    let failureDetail = 'Payment declined / 3DS authentication failed on PayMongo';
+    let sessionData = null;
 
-    console.log('[PayReturn] Scenario 3 - failed/cancelled. sessionId:', sessionId);
+    console.log('[PayReturn] Scenario 3 - outcome status:', paymentStatus, 'sessionId:', sessionId);
 
-    if (sessionId && PayMongo) {
+    if (sessionId && PayMongo?.getCheckoutSession) {
       try {
-        const sessionData = await PayMongo.getCheckoutSession(sessionId);
+        sessionData = await PayMongo.getCheckoutSession(sessionId);
         console.log('[PayReturn] Scenario 3 session data:', sessionData);
-        if (sessionData) {
-          const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
-          if (lastErr && (lastErr.failed_message || lastErr.detail)) {
-            failureDetail = lastErr.failed_message || lastErr.detail;
-          }
-        }
       } catch (err) {
         console.warn('[PayReturn] Scenario 3 getCheckoutSession error:', err);
       }
     }
 
-    const refNumber = pending?.referenceNumber || 'PM-FAIL-' + Date.now().toString().slice(-6);
+    const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, sessionData);
+    const failureReason = PayMongo.getPaymentFailureReason(sessionData, detectedMethod);
+    const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6));
     const record = {
       referenceNumber: refNumber,
       paymentMethodId: sessionId || 'pm_failed_' + Date.now().toString(36),
-      method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+      method: detectedMethod,
       amount: amountParam,
       purpose: purposeParam,
-      notes: pending?.notes || 'PayMongo Checkout: 3DS Test Failed / Cancelled',
-      failureReason: failureDetail,
+      notes: pending?.notes || `Payment Failed (${detectedMethod})`,
+      failureReason: failureReason,
       tenantName: tenantNameVal,
       tenantEmail: userEmail,
       dateFormatted: new Date().toLocaleString('en-US', {
         dateStyle: 'medium',
         timeStyle: 'short'
       }),
+      createdAt: new Date().toISOString(),
       status: 'Failed'
     };
 
     window.history.replaceState({}, document.title, window.location.pathname);
     switchTab('payment');
-    // Save receipt FIRST — non-blocking expire after
-    await saveFailedPayment(record);
-    // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
-    if (sessionId && PayMongo?.expireCheckoutSession) {
-      PayMongo.expireCheckoutSession(sessionId).catch(() => { });
+    closeProgressModal();
+    if (sessionData?.attributes?.status !== 'expired' && PayMongo?.expireCheckoutSession && sessionId) {
+      PayMongo.expireCheckoutSession(sessionId).catch(() => {});
     }
+    await saveFailedPayment(record);
+    return true;
   }
 }
 
@@ -1920,6 +2247,13 @@ async function initPortal() {
     await authReady;
   } catch (e) { }
   await Promise.all([loadTenantPaymentHistory(), checkUrlPaymentReturn()]);
+  const activeTab = sessionStorage.getItem('tenant_portal_active_tab');
+  if (
+    activeTab === 'building-3d' ||
+    document.getElementById('building-3d-tab')?.classList.contains('active')
+  ) {
+    ensureTenantBuilding3DInitialized();
+  }
 }
 
 if (document.readyState === 'loading') {
@@ -2102,7 +2436,7 @@ window.addEventListener('load', function () {
 // to inline handlers, so the markup now carries data-* attributes instead.
 // ---------------------------------------------------------------------------
 
-document.addEventListener('click', function (event) {
+document.addEventListener('click', async function (event) {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
@@ -2116,6 +2450,52 @@ document.addEventListener('click', function (event) {
   if (!button) return;
 
   switch (button.dataset.action) {
+    case 'check-progress-payment': {
+      const statusEl = document.getElementById('progressModalStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Checking with PayMongo...';
+      }
+      const isResolved = await checkUrlPaymentReturn();
+      if (isResolved) {
+        closeProgressModal();
+      } else if (statusEl) {
+        statusEl.textContent = 'Awaiting payment confirmation. If you cancelled or expired on PayMongo, click Cancel / Return below.';
+      }
+      break;
+    }
+    case 'cancel-progress-payment': {
+      closeProgressModal(true);
+      const pendingRaw = sessionStorage.getItem('pending_paymongo_payment') || localStorage.getItem('pending_paymongo_payment');
+      if (pendingRaw) {
+        try {
+          const pendingData = JSON.parse(pendingRaw);
+          sessionStorage.removeItem('pending_paymongo_payment');
+          localStorage.removeItem('pending_paymongo_payment');
+          const sessionId = pendingData.sessionId;
+          if (sessionId && PayMongo?.expireCheckoutSession) {
+            PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+          }
+          const detectedMethod = PayMongo.formatPaymentMethod(pendingData.method);
+          const failureReason = PayMongo.getPaymentFailureReason(null, detectedMethod);
+          const record = {
+            referenceNumber: pendingData.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6)),
+            paymentMethodId: sessionId || 'pm_cancel_' + Date.now().toString(36),
+            method: detectedMethod,
+            amount: parseFloat(pendingData.amount) || 5000,
+            purpose: pendingData.purpose || 'Monthly Rent',
+            notes: pendingData.notes || `Payment Cancelled (${detectedMethod})`,
+            failureReason: failureReason,
+            tenantName: pendingData.tenantName || 'Tenant',
+            tenantEmail: userEmail,
+            dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+            createdAt: new Date().toISOString(),
+            status: 'Failed'
+          };
+          await saveFailedPayment(record);
+        } catch (e) {}
+      }
+      break;
+    }
     case 'logout':
       logout();
       break;
@@ -2186,6 +2566,42 @@ document.addEventListener('click', function (event) {
       tenantSelectedDateKey = button.dataset.dateKey || '';
       renderTenantPaymentCalendar();
       break;
+    case 'tenant-toggle-upcoming': {
+      const dueDate = button.dataset.dueDate || '';
+      const amount = parseFloat(button.dataset.amount || '0');
+      const paymentAmountInput = document.getElementById('paymentAmount');
+      const paymentNotesInput = document.getElementById('paymentNotes');
+
+      if (selectedUpcomingDueDate === dueDate) {
+        // Unclick / deselect -> choice to wait for upcoming month
+        selectedUpcomingDueDate = '';
+        selectedUpcomingAmount = 0;
+        if (paymentAmountInput) {
+          paymentAmountInput.value = (currentRemainingDue > 0 ? currentRemainingDue : 0).toString();
+        }
+        if (paymentNotesInput && paymentNotesInput.value.startsWith('Advance Rent for ')) {
+          paymentNotesInput.value = '';
+        }
+      } else {
+        // Click / select -> choice to pay early
+        selectedUpcomingDueDate = dueDate;
+        selectedUpcomingAmount = amount;
+        if (paymentAmountInput) {
+          paymentAmountInput.value = amount.toString();
+        }
+        if (paymentNotesInput && (!paymentNotesInput.value || paymentNotesInput.value.startsWith('Advance Rent for '))) {
+          paymentNotesInput.value = `Advance Rent for ${dueDate}`;
+        }
+        if (window.innerWidth < 1024) {
+          document.getElementById('paymentForm')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+
+      updateAmountDueUI();
+      updateSubmitButton();
+      renderTenantPaymentCalendar();
+      break;
+    }
     case 'tenant-3d-xray': {
       window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
@@ -2223,6 +2639,8 @@ document.addEventListener('click', function (event) {
         tenantBuilding3D.setFloorFilter(floorStr);
         tenantBuilding3D.selectUnit(ownUnit.id);
       }
+      const floorSel = document.getElementById('tenant3DFloorSelect');
+      if (floorSel) floorSel.value = floorStr;
       document.querySelectorAll('[data-action="tenant-3d-floor"]').forEach((pill) => {
         pill.classList.toggle('active', pill.dataset.floor === floorStr);
       });
@@ -2275,10 +2693,17 @@ document.addEventListener('click', function (event) {
     case 'tenant-3d-select-unit': {
       ensureTenantBuilding3DInitialized();
       const unitId = button.dataset.unitId || '';
-      const unit = BUILDING_UNITS.find((u) => u.id === unitId);
-      if (unit) {
-        tenantSelected3DUnitId = unit.id;
-        if (tenantBuilding3D) tenantBuilding3D.selectUnit(unit.id);
+      if (tenantSelected3DUnitId === unitId) {
+        tenantSelected3DUnitId = '';
+        if (tenantBuilding3D) tenantBuilding3D.selectUnit(null);
+        renderTenant3DUnitInspector(null);
+      } else {
+        const unit = BUILDING_UNITS.find((u) => u.id === unitId);
+        if (unit) {
+          tenantSelected3DUnitId = unit.id;
+          if (tenantBuilding3D) tenantBuilding3D.selectUnit(unit.id);
+          renderTenant3DUnitInspector(unit);
+        }
       }
       break;
     }
