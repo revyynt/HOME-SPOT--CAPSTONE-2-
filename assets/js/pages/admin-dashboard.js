@@ -1247,14 +1247,43 @@ function initAdminPaymentCalendar() {
     (err) => console.error('Calendar tenants listener failed:', err)
   );
 
+  const syncAdminPayments = async () => {
+    let appDocPayments = [];
+    let relPayments = [];
+    try {
+      const snap = await supabaseData.getDocs(supabaseData.collection(supabase, 'payments'));
+      appDocPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch { }
+    try {
+      const { data, error } = await supabase.from('payments').select('*');
+      if (!error && Array.isArray(data)) {
+        relPayments = data.map((p) => ({
+          id: p.id,
+          referenceNumber: p.reference_number || p.id,
+          paymentMethodId: p.session_id || p.id,
+          amount: Number(p.amount) || 0,
+          purpose: p.purpose || 'Monthly Rent',
+          notes: p.notes || '',
+          tenantName: p.tenant_name || '',
+          tenantEmail: p.tenant_email || '',
+          status: p.status || 'Paid',
+          method: p.payment_method || 'PayMongo',
+          createdAt: p.created_at
+        }));
+      }
+    } catch { }
+    calPayments = deduplicatePayments([...appDocPayments, ...relPayments]);
+    renderCalendar();
+  };
+
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'payments'),
-    (snap) => {
-      calPayments = deduplicatePayments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      renderCalendar();
+    () => {
+      syncAdminPayments();
     },
     (err) => console.error('Calendar payments listener failed:', err)
   );
+  syncAdminPayments();
 
   filterSelect?.addEventListener('change', () => {
     tenantFilter = filterSelect.value;

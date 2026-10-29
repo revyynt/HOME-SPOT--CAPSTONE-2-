@@ -73,6 +73,51 @@ function matchesTenant(payment, tenant) {
   return Boolean(pName && tName && pName === tName);
 }
 
+function getPaymentsForMonth(payments, tenant, year, month) {
+  const targetMonthName = MONTH_NAMES[month].toLowerCase();
+  const rawDueDay = Math.max(1, Math.min(31, parseInt(tenant.dueDay, 10) || 5));
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const dueDay = Math.min(rawDueDay, daysInMonth);
+  const targetDueDate = new Date(year, month, dueDay);
+
+  const prevMonthDate = new Date(year, month - 1, 1);
+  const prevDays = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth() + 1, 0).getDate();
+  const prevDueDay = Math.min(rawDueDay, prevDays);
+  const prevDueDate = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), prevDueDay);
+
+  return payments.filter((p) => {
+    if (normalizeStatus(p.status) !== 'Paid') return false;
+    if (!matchesTenant(p, tenant)) return false;
+
+    const notesText = String(p.notes || '').toLowerCase();
+
+    // 1. If notes explicitly specifies target month (e.g. "Advance Rent for December 5, 2026"), it matches
+    if (notesText.includes(targetMonthName)) return true;
+
+    // If notes explicitly mentions another month (e.g. "december"), do not allocate to this month
+    const mentionsOtherMonth = MONTH_NAMES.some((m) => {
+      const mn = m.toLowerCase();
+      return mn !== targetMonthName && notesText.includes(mn);
+    });
+    if (mentionsOtherMonth) return false;
+
+    // 2. Transaction date matching
+    const dt = parsePaymentDate(p);
+    if (!dt) return false;
+
+    // If paid in the calendar month of target
+    if (dt.getFullYear() === year && dt.getMonth() === month) return true;
+
+    // If paid within the billing cycle window (between previous due date and target due date)
+    const pTime = dt.getTime();
+    if (pTime > prevDueDate.getTime() && pTime <= targetDueDate.getTime()) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
 function isDueDateBeforeMoveIn(dueDateObj, moveInDateStr) {
   if (!moveInDateStr) return false;
   const d = new Date(moveInDateStr);
@@ -230,12 +275,7 @@ export function buildPaymentCalendar({
     const dueDateFormatted = `${SHORT_MONTHS[month]} ${dueDay}, ${year}`;
     const isMoveInMonthDuePassed = isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate);
 
-    const monthPaidPayments = filteredPayments.filter((p) => {
-      if (normalizeStatus(p.status) !== 'Paid') return false;
-      if (!matchesTenant(p, tenant)) return false;
-      const dt = parsePaymentDate(p);
-      return dt && dt.getFullYear() === year && dt.getMonth() === month;
-    });
+    const monthPaidPayments = getPaymentsForMonth(filteredPayments, tenant, year, month);
 
     const paidSum = monthPaidPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
     const explicitSettled =
@@ -357,17 +397,7 @@ export function buildPaymentCalendar({
       const dueDateObj = new Date(uYear, uMonth, dueDay);
       if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
 
-      const paidInTargetMonth = filteredPayments
-        .filter((p) => {
-          if (normalizeStatus(p.status) !== 'Paid') return false;
-          if (!matchesTenant(p, tenant)) return false;
-          const dt = parsePaymentDate(p);
-          const isDateMatch = dt && dt.getFullYear() === uYear && dt.getMonth() === uMonth;
-          const notesText = String(p.notes || '').toLowerCase();
-          const targetMonthName = MONTH_NAMES[uMonth].toLowerCase();
-          const isNotesMatch = notesText.includes(targetMonthName);
-          return isDateMatch || isNotesMatch;
-        })
+      const paidInTargetMonth = getPaymentsForMonth(filteredPayments, tenant, uYear, uMonth)
         .reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
       const isSettledByAmountDue =

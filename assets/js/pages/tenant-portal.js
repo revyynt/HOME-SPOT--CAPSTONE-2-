@@ -587,7 +587,8 @@ function renderTenantPaymentCalendar() {
       upcomingEl.innerHTML = cal.upcomingSchedule
         .map((item) => {
           const isSelected = selectedUpcomingDueDate === item.dueDate;
-          const isSettled = !isSelected && (item.isSettled || item.status === 'Settled' || item.status === 'Paid');
+          const remaining = (item.amount !== undefined && item.amount !== null) ? Number(item.amount) : (item.originalAmount || tenantRent);
+          const isSettled = !isSelected && (item.isSettled || item.status === 'Settled' || item.status === 'Paid' || remaining <= 0);
 
           if (isSettled) {
             return `
@@ -603,7 +604,7 @@ function renderTenantPaymentCalendar() {
           </div>`;
           }
 
-          const billAmount = item.originalAmount || item.amount || tenantRent;
+          const billAmount = remaining > 0 ? remaining : (item.originalAmount || tenantRent);
           return `
           <div class="cal-upcoming-item ${isSelected ? 'selected' : ''}"
                role="button"
@@ -614,7 +615,7 @@ function renderTenantPaymentCalendar() {
                title="${isSelected ? 'Click to unselect and wait for upcoming month' : 'Click to select and pay early'}">
             <div>
               <div style="font-weight:700;color:#0f172a;">${escapeHtml(item.dueDate)}</div>
-              <div style="color:#64748b;font-size:11px;">₱${billAmount.toLocaleString()} • ${escapeHtml(item.room)}</div>
+              <div style="color:#64748b;font-size:11px;">₱${billAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })} • ${escapeHtml(item.room)}</div>
             </div>
             <span class="cal-chip ${isSelected ? 'cal-chip-paid' : chipClass(item.status === 'Due Soon' ? 'Pending' : item.status)}">
               ${isSelected ? 'Pay Early ✓' : escapeHtml(item.status)}
@@ -1265,7 +1266,7 @@ async function saveAndFinalizePayment(record) {
         created_at: record.createdAt || new Date().toISOString()
       });
 
-      await supabase.from('app_documents').upsert({
+      const { error: appDocErr } = await supabase.from('app_documents').upsert({
         collection: 'payments',
         id: canonicalDocId,
         data: {
@@ -1273,6 +1274,16 @@ async function saveAndFinalizePayment(record) {
           tenantUid: session.user.id
         }
       });
+      if (appDocErr) {
+        await supabase.from('app_documents').insert({
+          collection: 'payments',
+          id: canonicalDocId,
+          data: {
+            ...record,
+            tenantUid: session.user.id
+          }
+        }).catch(() => null);
+      }
     }
   } catch (err) {
     console.warn('Direct payment persistence sync to Supabase:', err);
