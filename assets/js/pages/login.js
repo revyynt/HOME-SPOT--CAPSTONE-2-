@@ -85,6 +85,195 @@ function seedSession({ data, docId }, email) {
   if (docId) sessionStorage.setItem('tenantDocId', docId);
 }
 
+// ---------------------------------------------------------------------------
+// Supabase Reauthentication via Gmail OTP for Admin and Superadmin
+// ---------------------------------------------------------------------------
+const adminOtpModal = document.getElementById('adminOtpModal');
+const adminOtpForm = document.getElementById('adminOtpForm');
+const adminOtpInput = document.getElementById('adminOtpInput');
+const adminOtpTargetEmail = document.getElementById('adminOtpTargetEmail');
+const adminOtpAlert = document.getElementById('adminOtpAlert');
+const submitAdminOtpBtn = document.getElementById('submitAdminOtpBtn');
+const cancelAdminOtpBtn = document.getElementById('cancelAdminOtpBtn');
+const closeAdminOtpBtn = document.getElementById('closeAdminOtpBtn');
+const resendAdminOtpBtn = document.getElementById('resendAdminOtpBtn');
+const resendAdminOtpCountdown = document.getElementById('resendAdminOtpCountdown');
+
+let pendingAdminUser = null;
+let pendingAdminDestination = '';
+let resendTimerInterval = null;
+let resendSecondsRemaining = 0;
+
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return email || '';
+  const [uname, domain] = email.split('@');
+  if (uname.length <= 2) return `${uname[0]}*@${domain}`;
+  return `${uname[0]}***${uname[uname.length - 1]}@${domain}`;
+}
+
+function showAdminOtpAlert(message, isSuccess = false) {
+  if (!adminOtpAlert) return;
+  adminOtpAlert.className = `p-3 rounded-lg text-xs ${
+    isSuccess
+      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+      : 'bg-red-50 text-red-700 border border-red-200'
+  }`;
+  adminOtpAlert.textContent = message;
+  adminOtpAlert.classList.remove('hidden');
+}
+
+function clearAdminOtpAlert() {
+  if (!adminOtpAlert) return;
+  adminOtpAlert.textContent = '';
+  adminOtpAlert.classList.add('hidden');
+}
+
+function startResendCooldown(seconds = 60) {
+  resendSecondsRemaining = seconds;
+  if (resendTimerInterval) clearInterval(resendTimerInterval);
+  if (resendAdminOtpBtn) resendAdminOtpBtn.disabled = true;
+
+  const update = () => {
+    if (resendSecondsRemaining <= 0) {
+      clearInterval(resendTimerInterval);
+      resendTimerInterval = null;
+      if (resendAdminOtpBtn) resendAdminOtpBtn.disabled = false;
+      if (resendAdminOtpCountdown) resendAdminOtpCountdown.textContent = '';
+    } else {
+      if (resendAdminOtpCountdown) {
+        resendAdminOtpCountdown.textContent = `(${resendSecondsRemaining}s)`;
+      }
+      resendSecondsRemaining--;
+    }
+  };
+
+  update();
+  resendTimerInterval = setInterval(update, 1000);
+}
+
+async function triggerAdminOtp(user, destination) {
+  pendingAdminUser = user;
+  pendingAdminDestination = destination;
+  clearAlert();
+  clearAdminOtpAlert();
+
+  if (adminOtpTargetEmail) {
+    adminOtpTargetEmail.textContent = maskEmail(user.email);
+  }
+
+  if (adminOtpModal) {
+    adminOtpModal.classList.remove('hidden');
+  }
+  if (adminOtpInput) {
+    adminOtpInput.value = '';
+    adminOtpInput.focus();
+  }
+
+  startResendCooldown(60);
+
+  isSubmitting = false;
+  if (loginSubmitBtn) {
+    loginSubmitBtn.disabled = false;
+    loginSubmitBtn.innerHTML =
+      '<span>Sign In to Account</span><span class="transition-transform group-hover:translate-x-1">→</span>';
+    loginSubmitBtn.style.opacity = '1';
+  }
+
+  // Trigger Supabase Reauthentication email template
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: user.email,
+      options: { shouldCreateUser: false }
+    });
+    if (error) {
+      console.warn('OTP send notice:', error);
+      showAdminOtpAlert(error.message || 'Error sending verification code. Click Resend to try again.');
+    }
+  } catch (err) {
+    console.warn('Reauthentication error:', err);
+    showAdminOtpAlert(err.message || 'Error sending verification code. Click Resend to try again.');
+  }
+}
+
+adminOtpForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearAdminOtpAlert();
+
+  const code = (adminOtpInput?.value || '').trim();
+  if (!code || code.length < 6) {
+    showAdminOtpAlert('Please enter the verification code sent to your Gmail.');
+    return;
+  }
+
+  if (!pendingAdminUser?.email) {
+    showAdminOtpAlert('Session expired. Please sign in again.');
+    return;
+  }
+
+  if (submitAdminOtpBtn) {
+    submitAdminOtpBtn.disabled = true;
+    submitAdminOtpBtn.textContent = 'Verifying...';
+  }
+
+  try {
+    const { error } = await supabase.auth.verifyOtp({
+      email: pendingAdminUser.email,
+      token: code,
+      type: 'email'
+    });
+
+    if (error) throw error;
+
+    showAdminOtpAlert('Verification successful! Entering dashboard...', true);
+    sessionStorage.setItem('admin_otp_verified', 'true');
+
+    setTimeout(() => {
+      window.location.href = pendingAdminDestination;
+    }, 400);
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    showAdminOtpAlert(
+      error.message || 'Invalid or expired verification code. Please check and try again.'
+    );
+    if (submitAdminOtpBtn) {
+      submitAdminOtpBtn.disabled = false;
+      submitAdminOtpBtn.textContent = 'Verify & Sign In';
+    }
+  }
+});
+
+resendAdminOtpBtn?.addEventListener('click', async () => {
+  if (resendSecondsRemaining > 0 || !pendingAdminUser?.email) return;
+  clearAdminOtpAlert();
+
+  try {
+    const { error } = await supabase.auth.signInWithOtp({
+      email: pendingAdminUser.email,
+      options: { shouldCreateUser: false }
+    });
+    if (error) throw error;
+
+    showAdminOtpAlert('A fresh verification code has been sent to your Gmail.', true);
+    startResendCooldown(60);
+  } catch (err) {
+    showAdminOtpAlert(err.message || 'Unable to resend verification code right now. Try again shortly.');
+  }
+});
+
+async function cancelAdminOtp() {
+  if (resendTimerInterval) clearInterval(resendTimerInterval);
+  if (adminOtpModal) adminOtpModal.classList.add('hidden');
+  pendingAdminUser = null;
+  pendingAdminDestination = '';
+  sessionStorage.removeItem('admin_otp_verified');
+  try {
+    await supabase.auth.signOut();
+  } catch {}
+}
+
+cancelAdminOtpBtn?.addEventListener('click', cancelAdminOtp);
+closeAdminOtpBtn?.addEventListener('click', cancelAdminOtp);
+
 async function routeUser(user, fallbackEmail) {
   const role =
     user?.app_metadata?.role || (user?.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
@@ -100,6 +289,14 @@ async function routeUser(user, fallbackEmail) {
   if (role === 'tenant') {
     const profile = await loadProfile(user.id, user.email || fallbackEmail);
     seedSession(profile, user.email || fallbackEmail);
+    window.location.href = destination;
+    return;
+  }
+
+  // Admin and Superadmin require Reauthentication PIN verification
+  if (role === 'admin' || role === 'superadmin') {
+    await triggerAdminOtp(user, destination);
+    return;
   }
 
   window.location.href = destination;
@@ -387,6 +584,10 @@ async function checkExistingSession() {
       user.app_metadata?.role || (user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
     const destination = ROLE_DESTINATIONS[role];
     if (destination) {
+      if ((role === 'admin' || role === 'superadmin') && sessionStorage.getItem('admin_otp_verified') !== 'true') {
+        await triggerAdminOtp(user, destination);
+        return;
+      }
       window.location.replace(destination);
     }
   } catch (error) {
