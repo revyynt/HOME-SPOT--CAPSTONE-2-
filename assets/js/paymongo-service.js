@@ -10,11 +10,12 @@ import { supabase } from './supabase-service.js';
 import {
   deduplicatePayments,
   formatPaymentMethod,
+  getPaymentFailureReason,
   isValidPhilippinePhone,
   normalizePhilippinePhone
 } from './lib/format.js';
 
-export { formatPaymentMethod };
+export { deduplicatePayments, formatPaymentMethod, getPaymentFailureReason };
 
 export const PAYMONGO_CONFIG = {
   merchantName: 'MJP Residences',

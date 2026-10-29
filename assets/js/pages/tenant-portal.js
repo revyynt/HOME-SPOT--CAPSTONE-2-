@@ -1027,6 +1027,20 @@ document.getElementById('paymentForm').addEventListener('submit', async function
       sessionStorage.setItem('paymongo_checkout_active', '1');
       sessionStorage.setItem('tenant_portal_active_tab', 'payment');
 
+      let checkoutWindow = null;
+      try {
+        checkoutWindow = window.open(session.checkoutUrl, '_blank');
+      } catch (e) {
+        checkoutWindow = null;
+      }
+
+      if (checkoutWindow && !checkoutWindow.closed) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+        showProgressModal(session, amountVal, checkoutWindow);
+        return;
+      }
+
       window.location.href = session.checkoutUrl;
       return;
     } else {
@@ -1273,9 +1287,53 @@ async function saveAndFinalizePayment(record) {
   showReceiptModal(record);
 }
 
-// Failed payment state is recorded by the provider webhook, not the browser.
+// Failed or expired payment state is cached immediately and synced.
 async function saveFailedPayment(record) {
-  await loadTenantPaymentHistory();
+  const alreadyInCache = cachedPayments.some((p) => {
+    if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
+    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId) return true;
+    return false;
+  });
+
+  if (!alreadyInCache) {
+    cachedPayments.unshift(record);
+    renderPaymentHistoryTable(cachedPayments);
+  }
+
+  try {
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+    if (session) {
+      const canonicalDocId = record.paymentMethodId || record.referenceNumber;
+      await supabase.from('payments').upsert({
+        id: record.referenceNumber,
+        session_id: canonicalDocId,
+        tenant_name: record.tenantName,
+        tenant_email: record.tenantEmail,
+        tenant_uid: session.user.id,
+        amount: record.amount,
+        status: record.status || 'Failed',
+        payment_method: record.method,
+        purpose: record.purpose,
+        notes: record.notes,
+        reference_number: record.referenceNumber,
+        created_at: record.createdAt || new Date().toISOString()
+      }).catch(() => null);
+
+      await supabase.from('app_documents').upsert({
+        collection: 'payments',
+        id: canonicalDocId,
+        data: {
+          ...record,
+          tenantUid: session.user.id
+        }
+      }).catch(() => null);
+    }
+  } catch (err) {
+    console.warn('Failed payment persistence sync to Supabase:', err);
+  }
+
   showReceiptModal(record);
 }
 
@@ -1319,12 +1377,64 @@ function formatPaymentDate(record) {
   });
 }
 
+let activePaymentWatcher = null;
+let currentCheckoutWindow = null;
+
+function showProgressModal(session, amount, checkoutWindow) {
+  currentCheckoutWindow = checkoutWindow;
+  const modal = document.getElementById('paymongoProgressModal');
+  const amountEl = document.getElementById('progressModalAmount');
+  const statusEl = document.getElementById('progressModalStatus');
+
+  if (amountEl) {
+    amountEl.textContent = '₱' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  }
+  if (statusEl) {
+    statusEl.textContent = 'Awaiting Payment Confirmation...';
+    statusEl.style.color = '#0284c7';
+  }
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+
+  if (activePaymentWatcher) {
+    clearInterval(activePaymentWatcher);
+  }
+
+  // Poll PayMongo session every 2 seconds for status change
+  activePaymentWatcher = setInterval(async () => {
+    const isResolved = await checkUrlPaymentReturn();
+    if (isResolved) {
+      closeProgressModal();
+    }
+  }, 2000);
+}
+
+function closeProgressModal(closeWindow = false) {
+  if (activePaymentWatcher) {
+    clearInterval(activePaymentWatcher);
+    activePaymentWatcher = null;
+  }
+  const modal = document.getElementById('paymongoProgressModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+  if (closeWindow && currentCheckoutWindow && !currentCheckoutWindow.closed) {
+    try {
+      currentCheckoutWindow.close();
+    } catch (e) {}
+    currentCheckoutWindow = null;
+  }
+}
+
 // Show Official Receipt Modal (Supports Paid & Failed states)
 function showReceiptModal(record) {
+  const isExpired = (record.status || '').toLowerCase().includes('expire');
   const isFailed =
-    (record.status || '').toLowerCase().includes('fail') ||
-    (record.status || '').toLowerCase().includes('declined') ||
-    (record.status || '').toLowerCase().includes('cancel');
+    !isExpired &&
+    ((record.status || '').toLowerCase().includes('fail') ||
+      (record.status || '').toLowerCase().includes('declined') ||
+      (record.status || '').toLowerCase().includes('cancel'));
 
   const headerEl = document.getElementById('receiptModalHeader');
   const dotEl = document.getElementById('receiptModalDot');
@@ -1366,7 +1476,63 @@ function showReceiptModal(record) {
 
   const formattedAmount = `₱${parseFloat(record.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-  if (isFailed) {
+  if (isExpired) {
+    // Expired Payment Styling (e.g. QR Ph timeout, source expired)
+    if (headerEl) headerEl.style.background = '#fff7ed';
+    if (dotEl) {
+      dotEl.style.background = '#f97316';
+      dotEl.style.boxShadow = '0 0 0 3px rgba(249, 115, 22, 0.2)';
+    }
+    if (headerTitleEl) {
+      headerTitleEl.textContent = 'PayMongo Payment Notice - Expired';
+      headerTitleEl.style.color = '#9a3412';
+    }
+    if (iconContainer) {
+      iconContainer.innerHTML = '<div class="receipt-fail-icon" style="background: #ffedd5; color: #ea580c;">⏱</div>';
+    }
+    if (titleEl) {
+      titleEl.textContent = 'Payment Expired';
+      titleEl.style.color = '#ea580c';
+    }
+    if (subtitleEl) {
+      subtitleEl.textContent =
+        'The QR Ph payment code or checkout session expired before completion.';
+    }
+    if (statusBadgeEl) {
+      statusBadgeEl.innerHTML = '<span class="status-badge-expired">⏱ Expired</span>';
+    }
+    if (failureRow) {
+      failureRow.style.display = 'flex';
+      const rowLabel = failureRow.querySelector('.receipt-row-label');
+      if (rowLabel) rowLabel.textContent = 'Expiry Reason';
+      if (failureReasonEl) {
+        failureReasonEl.textContent =
+          record.failureReason || 'QR Ph payment code expired on PayMongo';
+        failureReasonEl.style.color = '#c2410c';
+      }
+    }
+    if (amountLabelEl) amountLabelEl.textContent = 'Amount (Unpaid)';
+    if (amountEl) {
+      amountEl.textContent = `${formattedAmount} (Expired / Not Charged)`;
+      amountEl.style.color = '#ea580c';
+    }
+    if (printBtn) {
+      printBtn.style.borderColor = '#f97316';
+      printBtn.style.color = '#c2410c';
+      printBtn.innerHTML = `
+                <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                <span>Print Expiry Notice</span>
+            `;
+    }
+    if (closeBtn) {
+      closeBtn.style.background = '#ea580c';
+      closeBtn.textContent = 'Try Again';
+    }
+  } else if (isFailed) {
     // Failed Payment Styling
     if (headerEl) headerEl.style.background = '#fef2f2';
     if (dotEl) {
@@ -1393,9 +1559,12 @@ function showReceiptModal(record) {
     }
     if (failureRow) {
       failureRow.style.display = 'flex';
+      const rowLabel = failureRow.querySelector('.receipt-row-label');
+      if (rowLabel) rowLabel.textContent = 'Failure Reason';
       if (failureReasonEl) {
         failureReasonEl.textContent =
           record.failureReason || 'Card authentication failed / cancelled in PayMongo test mode';
+        failureReasonEl.style.color = '#dc2626';
       }
     }
     if (amountLabelEl) amountLabelEl.textContent = 'Amount (Unpaid)';
@@ -1494,6 +1663,7 @@ function printReceipt() {
                 .receipt-fail-icon { font-size: 40px; color: #dc2626; text-align: center; margin-bottom: 10px; }
                 .paymongo-tag { background: #10B981; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
                 .status-badge-paid { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+                .status-badge-expired { background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
                 .status-badge-failed { background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
                 .no-print { display: none !important; }
             </style>
@@ -1620,17 +1790,21 @@ function renderPaymentHistoryTable(payments) {
 
   tableBody.innerHTML = payments
     .map((p, idx) => {
+      const isExpired = (p.status || '').toLowerCase().includes('expire');
       const isFailed =
-        (p.status || '').toLowerCase().includes('fail') ||
-        (p.status || '').toLowerCase().includes('declined') ||
-        (p.status || '').toLowerCase().includes('cancel');
+        !isExpired &&
+        ((p.status || '').toLowerCase().includes('fail') ||
+          (p.status || '').toLowerCase().includes('declined') ||
+          (p.status || '').toLowerCase().includes('cancel'));
       const isPending = (p.status || '').toLowerCase() === 'pending';
-      const statusBadge = isFailed
-        ? `<span class="status-badge-failed">✗ Failed</span>`
-        : isPending
-          ? `<span class="status-badge-pending">⏱ Pending</span>`
-          : `<span class="status-badge-paid">✓ Paid</span>`;
-      const amountColor = isFailed ? '#dc2626' : isPending ? '#b45309' : '#059669';
+      const statusBadge = isExpired
+        ? `<span class="status-badge-expired">⏱ Expired</span>`
+        : isFailed
+          ? `<span class="status-badge-failed">✗ Failed</span>`
+          : isPending
+            ? `<span class="status-badge-pending">⏱ Pending</span>`
+            : `<span class="status-badge-paid">✓ Paid</span>`;
+      const amountColor = isExpired ? '#ea580c' : isFailed ? '#dc2626' : isPending ? '#b45309' : '#059669';
 
       return `
         <tr>
@@ -1670,6 +1844,20 @@ async function checkUrlPaymentReturn() {
     }
   }
 
+  // If returning to a child checkout window with an active opener, hand off to opener and close child
+  if (
+    (paymentStatus === 'success' || paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'expired') &&
+    window.opener &&
+    !window.opener.closed
+  ) {
+    try {
+      window.opener.focus();
+      
+      window.close();
+      return true;
+    } catch (e) {}
+  }
+
   // Read pending payment from BOTH storages (localStorage survives more edge cases)
   let pending = null;
   try {
@@ -1700,44 +1888,89 @@ async function checkUrlPaymentReturn() {
     switchTab('payment');
   }
 
-  // SCENARIO: Returned from PayMongo hosted checkout with no URL params
-  // This happens when card is declined or 3DS fails — PayMongo doesn't always redirect to cancel_url.
-  // Detect via pending checkout sessionId and fetch the actual session status from PayMongo.
+  // SCENARIO: Checking or returned from PayMongo hosted checkout session
+  // Detects card declines, 3DS fails, and e-wallet / QR Ph expirations and redirects stuck windows.
   if (!paymentIntentId && !paymentStatus && pending?.sessionId) {
     console.log('[PayReturn] Checking pending checkout session:', pending.sessionId);
     const sessionId = pending.sessionId;
-    sessionStorage.removeItem('pending_paymongo_payment');
-    localStorage.removeItem('pending_paymongo_payment');
 
     let sessionStatus = null;
     let checkedSession = null;
-    let failureDetail = 'Card declined or 3DS authentication failed.';
     try {
       if (PayMongo?.getCheckoutSession) {
         checkedSession = await PayMongo.getCheckoutSession(sessionId);
         console.log('[PayReturn] Session data:', checkedSession);
         if (checkedSession) {
           sessionStatus = checkedSession.attributes?.status;
-          const lastErr = checkedSession.attributes?.payment_intent?.attributes?.last_payment_error;
-          if (lastErr && (lastErr.failed_message || lastErr.detail)) {
-            failureDetail = lastErr.failed_message || lastErr.detail;
-          }
         }
       }
     } catch (e) {
       console.warn('[PayReturn] Could not inspect checkout session:', e);
     }
 
-    console.log('[PayReturn] Session status:', sessionStatus, '| failureDetail:', failureDetail);
+    const paymentsList = Array.isArray(checkedSession?.attributes?.payments)
+      ? checkedSession.attributes.payments
+      : Array.isArray(checkedSession?.attributes?.payment_intent?.attributes?.payments)
+        ? checkedSession.attributes.payment_intent.attributes.payments
+        : [];
 
-    const hasPaidPayment =
-      Array.isArray(checkedSession?.attributes?.payments) &&
-      checkedSession.attributes.payments.some((p) => p?.attributes?.status === 'paid');
+    const hasPaidPayment = paymentsList.some((p) => {
+      const s = (p?.attributes?.status || p?.status || '').toLowerCase();
+      return s === 'paid' || s === 'succeeded';
+    });
     const hasSucceededPI =
       checkedSession?.attributes?.payment_intent?.attributes?.status === 'succeeded';
     const isPaid = sessionStatus === 'paid' || hasPaidPayment || hasSucceededPI;
 
+    const sourceStatus = (checkedSession?.attributes?.source?.status || '').toLowerCase();
+    const isSourceExpired = sourceStatus === 'expired';
+    const isSourceFailed = sourceStatus === 'failed' || sourceStatus === 'cancelled';
+
+    const hasExpiredPayment = paymentsList.some((p) => {
+      const s = (p?.attributes?.status || p?.status || '').toLowerCase();
+      return s === 'expired';
+    });
+    const piStatus = (checkedSession?.attributes?.payment_intent?.attributes?.status || '').toLowerCase();
+    const hasExpiredPI = piStatus === 'expired';
+    const isSessionExpired = sessionStatus === 'expired';
+
+    const hasFailedPayment = paymentsList.some((p) => {
+      const s = (p?.attributes?.status || p?.status || '').toLowerCase();
+      return s === 'failed' || s === 'cancelled';
+    });
+    const hasFailedPI =
+      piStatus === 'cancelled' ||
+      Boolean(checkedSession?.attributes?.payment_intent?.attributes?.last_payment_error);
+
+    const isWindowClosed = Boolean(currentCheckoutWindow && currentCheckoutWindow.closed);
+
+    const isFailed = !isPaid && (
+      isSessionExpired ||
+      hasExpiredPayment ||
+      hasExpiredPI ||
+      isSourceExpired ||
+      hasFailedPayment ||
+      hasFailedPI ||
+      isSourceFailed ||
+      isWindowClosed
+    );
+
+    console.log('[PayReturn] isPaid:', isPaid, '| isFailed:', isFailed, '| sessionStatus:', sessionStatus);
+
     if (isPaid) {
+      if (currentCheckoutWindow && !currentCheckoutWindow.closed) {
+        const statusEl = document.getElementById('progressModalStatus');
+        if (statusEl) {
+          statusEl.textContent = 'Payment Received! Redirecting in 10 seconds...';
+          statusEl.style.color = '#047857';
+        }
+        return false;
+      }
+
+      sessionStorage.removeItem('pending_paymongo_payment');
+      localStorage.removeItem('pending_paymongo_payment');
+      currentCheckoutWindow = null;
+
       const lineItemsSum =
         ((checkedSession?.attributes?.line_items || []).reduce(
           (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
@@ -1750,11 +1983,12 @@ async function checkUrlPaymentReturn() {
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
+      const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, checkedSession);
       const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
-        method: PayMongo.formatPaymentMethod(pending?.method, checkedSession),
+        method: detectedMethod,
         amount: amountParam2,
         purpose: purposeParam2,
         notes: pending?.notes || 'Completed via PayMongo Checkout',
@@ -1764,47 +1998,57 @@ async function checkUrlPaymentReturn() {
           dateStyle: 'medium',
           timeStyle: 'short'
         }),
+        createdAt: new Date().toISOString(),
         status: 'Paid'
       };
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
+      closeProgressModal();
       await saveAndFinalizePayment(record2);
-    } else if (sessionStatus === 'expired') {
+      return true;
+    } else if (isFailed) {
+      sessionStorage.removeItem('pending_paymongo_payment');
+      localStorage.removeItem('pending_paymongo_payment');
+
+      if (currentCheckoutWindow && !currentCheckoutWindow.closed) {
+        try { currentCheckoutWindow.close(); } catch (e) {}
+        currentCheckoutWindow = null;
+      }
+
       const amountParam2 = parseFloat(pending?.amount) || 5000;
       const purposeParam2 = pending?.purpose || 'Monthly Rent';
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
-      const refNumber2 = pending?.referenceNumber || 'PM-FAIL-' + Date.now().toString().slice(-6);
+      const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, checkedSession);
+      const failureReason = PayMongo.getPaymentFailureReason(checkedSession, detectedMethod);
+      const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
-        method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+        method: detectedMethod,
         amount: amountParam2,
         purpose: purposeParam2,
-        notes: pending?.notes || 'Card declined / 3DS authentication failed',
-        failureReason: failureDetail,
+        notes: pending?.notes || `Payment Failed (${detectedMethod})`,
+        failureReason: failureReason,
         tenantName: tenantNameVal2,
         tenantEmail: userEmail,
         dateFormatted: new Date().toLocaleString('en-US', {
           dateStyle: 'medium',
           timeStyle: 'short'
         }),
+        createdAt: new Date().toISOString(),
         status: 'Failed'
       };
       window.history.replaceState({}, document.title, window.location.pathname);
       switchTab('payment');
-      // Save receipt first, then expire session in background (non-blocking)
+      closeProgressModal();
+      if (sessionStatus !== 'expired' && PayMongo?.expireCheckoutSession) {
+        PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+      }
       await saveFailedPayment(record2);
-    } else {
-      window.history.replaceState({}, document.title, window.location.pathname);
-      switchTab('payment');
-      Toast.alert({
-        title: 'Payment Status Pending',
-        message:
-          'PayMongo has not confirmed a completed payment yet. Check your payment history shortly.'
-      });
+      return true;
     }
-    return;
+    return false;
   }
 
   // If neither parameter is present and no pending, nothing to do
@@ -1934,54 +2178,51 @@ async function checkUrlPaymentReturn() {
     switchTab('payment');
     await saveAndFinalizePayment(record);
   }
-  // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED OR CANCELLED via cancel_url)
-  else if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
+  // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED, EXPIRED OR CANCELLED)
+  else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'expired') {
     const sessionId = pending?.sessionId || urlParams.get('sessionId') || '';
-    let failureDetail = 'Payment declined / 3DS authentication failed on PayMongo';
+    let sessionData = null;
 
-    console.log('[PayReturn] Scenario 3 - failed/cancelled. sessionId:', sessionId);
+    console.log('[PayReturn] Scenario 3 - outcome status:', paymentStatus, 'sessionId:', sessionId);
 
-    if (sessionId && PayMongo) {
+    if (sessionId && PayMongo?.getCheckoutSession) {
       try {
-        const sessionData = await PayMongo.getCheckoutSession(sessionId);
+        sessionData = await PayMongo.getCheckoutSession(sessionId);
         console.log('[PayReturn] Scenario 3 session data:', sessionData);
-        if (sessionData) {
-          const lastErr = sessionData.attributes?.payment_intent?.attributes?.last_payment_error;
-          if (lastErr && (lastErr.failed_message || lastErr.detail)) {
-            failureDetail = lastErr.failed_message || lastErr.detail;
-          }
-        }
       } catch (err) {
         console.warn('[PayReturn] Scenario 3 getCheckoutSession error:', err);
       }
     }
 
-    const refNumber = pending?.referenceNumber || 'PM-FAIL-' + Date.now().toString().slice(-6);
+    const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, sessionData);
+    const failureReason = PayMongo.getPaymentFailureReason(sessionData, detectedMethod);
+    const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6));
     const record = {
       referenceNumber: refNumber,
       paymentMethodId: sessionId || 'pm_failed_' + Date.now().toString(36),
-      method: pending?.method || 'Credit/Debit Card (PayMongo Checkout)',
+      method: detectedMethod,
       amount: amountParam,
       purpose: purposeParam,
-      notes: pending?.notes || 'PayMongo Checkout: 3DS Test Failed / Cancelled',
-      failureReason: failureDetail,
+      notes: pending?.notes || `Payment Failed (${detectedMethod})`,
+      failureReason: failureReason,
       tenantName: tenantNameVal,
       tenantEmail: userEmail,
       dateFormatted: new Date().toLocaleString('en-US', {
         dateStyle: 'medium',
         timeStyle: 'short'
       }),
+      createdAt: new Date().toISOString(),
       status: 'Failed'
     };
 
     window.history.replaceState({}, document.title, window.location.pathname);
     switchTab('payment');
-    // Save receipt FIRST — non-blocking expire after
-    await saveFailedPayment(record);
-    // Fire-and-forget: expire session so PayMongo dashboard shows it as expired
-    if (sessionId && PayMongo?.expireCheckoutSession) {
-      PayMongo.expireCheckoutSession(sessionId).catch(() => { });
+    closeProgressModal();
+    if (sessionData?.attributes?.status !== 'expired' && PayMongo?.expireCheckoutSession && sessionId) {
+      PayMongo.expireCheckoutSession(sessionId).catch(() => {});
     }
+    await saveFailedPayment(record);
+    return true;
   }
 }
 
@@ -2184,7 +2425,7 @@ window.addEventListener('load', function () {
 // to inline handlers, so the markup now carries data-* attributes instead.
 // ---------------------------------------------------------------------------
 
-document.addEventListener('click', function (event) {
+document.addEventListener('click', async function (event) {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
@@ -2198,6 +2439,52 @@ document.addEventListener('click', function (event) {
   if (!button) return;
 
   switch (button.dataset.action) {
+    case 'check-progress-payment': {
+      const statusEl = document.getElementById('progressModalStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Checking with PayMongo...';
+      }
+      const isResolved = await checkUrlPaymentReturn();
+      if (isResolved) {
+        closeProgressModal();
+      } else if (statusEl) {
+        statusEl.textContent = 'Awaiting payment confirmation. If you cancelled or expired on PayMongo, click Cancel / Return below.';
+      }
+      break;
+    }
+    case 'cancel-progress-payment': {
+      closeProgressModal(true);
+      const pendingRaw = sessionStorage.getItem('pending_paymongo_payment') || localStorage.getItem('pending_paymongo_payment');
+      if (pendingRaw) {
+        try {
+          const pendingData = JSON.parse(pendingRaw);
+          sessionStorage.removeItem('pending_paymongo_payment');
+          localStorage.removeItem('pending_paymongo_payment');
+          const sessionId = pendingData.sessionId;
+          if (sessionId && PayMongo?.expireCheckoutSession) {
+            PayMongo.expireCheckoutSession(sessionId).catch(() => {});
+          }
+          const detectedMethod = PayMongo.formatPaymentMethod(pendingData.method);
+          const failureReason = PayMongo.getPaymentFailureReason(null, detectedMethod);
+          const record = {
+            referenceNumber: pendingData.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6)),
+            paymentMethodId: sessionId || 'pm_cancel_' + Date.now().toString(36),
+            method: detectedMethod,
+            amount: parseFloat(pendingData.amount) || 5000,
+            purpose: pendingData.purpose || 'Monthly Rent',
+            notes: pendingData.notes || `Payment Cancelled (${detectedMethod})`,
+            failureReason: failureReason,
+            tenantName: pendingData.tenantName || 'Tenant',
+            tenantEmail: userEmail,
+            dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+            createdAt: new Date().toISOString(),
+            status: 'Failed'
+          };
+          await saveFailedPayment(record);
+        } catch (e) {}
+      }
+      break;
+    }
     case 'logout':
       logout();
       break;

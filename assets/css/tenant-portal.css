@@ -773,6 +773,18 @@ body {
   font-weight: 600;
 }
 
+.status-badge-expired {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #ffedd5;
+  color: #c2410c;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .status-badge-failed {
   display: inline-flex;
   align-items: center;
