@@ -393,6 +393,18 @@ async function initAdminActions() {
       case 'delete-reservation':
         reservations.deleteReservation(id);
         break;
+      case 'email-reservation': {
+        const { email, name, room, status, reason, moveInDate } = trigger.dataset;
+        reservations.sendReservationNotificationEmail({
+          email,
+          name,
+          room,
+          status,
+          reason,
+          moveInDate
+        });
+        break;
+      }
       case 'reply':
         messages.replyToMessage(id);
         break;
