@@ -1052,16 +1052,9 @@ function initAdminPaymentCalendar() {
           .slice(0, 3)
           .map((ev) => {
             if (ev.isMoveInMarker) {
-              return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate bg-amber-50 text-amber-900 border-amber-200" title="Scheduled Move-in: ${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)})">📦 ${escapeHtml(ev.tenantName)}: Move-In</div>`;
+              return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate bg-amber-50 text-amber-900 border-amber-200" title="Scheduled Move-in: ${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)})">${escapeHtml(ev.tenantName)}: Move-In</div>`;
             }
-            const prefix =
-              ev.status === 'Paid'
-                ? '✓'
-                : ev.status === 'Overdue'
-                  ? '!'
-                  : ev.status === 'Scheduled'
-                    ? '📅'
-                    : '•';
+            const prefix = ev.status === 'Paid' ? '✓' : ev.status === 'Overdue' ? '!' : '•';
             return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(ev.status)}" title="${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)}) - ${escapeHtml(formatPHP(ev.amount))} [${escapeHtml(ev.status)}]">${prefix} ${escapeHtml(ev.tenantName)}: ${escapeHtml(formatPHP(ev.amount))}</div>`;
           })
           .join('');
@@ -1070,7 +1063,7 @@ function initAdminPaymentCalendar() {
           .slice(0, 2)
           .map(
             (p) =>
-              `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(p.status)}" title="Payment by ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))} (${escapeHtml(p.status)})">💳 ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))}</div>`
+              `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(p.status)}" title="Payment by ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))} (${escapeHtml(p.status)})">${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))}</div>`
           )
           .join('');
 
@@ -1100,7 +1093,6 @@ function initAdminPaymentCalendar() {
               return `
                 <div class="flex items-center justify-between py-2 border-b last:border-b-0 gap-2 flex-wrap sm:flex-nowrap">
                   <div class="flex items-center gap-2 min-w-0">
-                    <span class="text-base flex-shrink-0">📦</span>
                     <div class="min-w-0">
                       <div class="text-sm font-bold text-gray-900 truncate">${escapeHtml(ev.tenantName)}</div>
                       <div class="text-xs text-amber-800 font-medium">${escapeHtml(ev.room)} • Scheduled Move-In</div>
@@ -1134,7 +1126,7 @@ function initAdminPaymentCalendar() {
                   <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(formatPaymentMethod(p.method, p))}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''})</span>
                   <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
                 </div>
-                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1 font-normal">📝 Note: ${escapeHtml(p.notes)}</div>` : ''}
+                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1 font-normal">Note: ${escapeHtml(p.notes)}</div>` : ''}
               </div>`
           )
         ].join('');
