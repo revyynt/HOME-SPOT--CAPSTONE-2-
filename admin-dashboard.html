@@ -280,9 +280,7 @@
               <div class="bg-white border rounded-lg p-3.5 sm:p-6">
                 <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Recent Activity</h3>
                 <div id="adminRecentActivityList" class="space-y-4">
-                  <p class="text-sm text-gray-500 py-4 text-center">
-                    Loading recent activity from Supabase...
-                  </p>
+                  <p class="text-sm text-gray-500 py-4 text-center">Loading recent activity...</p>
                 </div>
               </div>
 
@@ -551,9 +549,6 @@
           <!-- Reservations Tab -->
           <div data-tab-content="reservations" class="hidden">
             <h3 class="text-xl font-bold mb-6">Reservation Requests</h3>
-            <div id="supabaseStatus" class="text-sm text-gray-500 mb-4">
-              Connecting to Supabase...
-            </div>
 
             <div id="reservationRequestsContainer" class="space-y-4"></div>
           </div>
@@ -703,11 +698,6 @@
                   <option value="Room 410">5F • Room 410</option>
                   <option value="__archived__">📁 Archived Tenants (Former)</option>
                 </select>
-                <span
-                  id="tenantsSupabaseStatus"
-                  class="text-xs text-gray-500 hidden sm:inline-block"
-                  >Syncing...</span
-                >
               </div>
             </div>
 
@@ -735,7 +725,7 @@
                           <div
                             class="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full"
                           ></div>
-                          <span>Loading tenants from Supabase...</span>
+                          <span>Loading tenants...</span>
                         </div>
                       </td>
                     </tr>
@@ -1133,7 +1123,7 @@
                   <tbody id="adminPaymentDueTableBody" class="bg-white divide-y divide-gray-200">
                     <tr>
                       <td colspan="6" class="px-6 py-8 text-center text-sm text-gray-500">
-                        Loading tenant payment schedule from Supabase...
+                        Loading tenant payment schedule...
                       </td>
                     </tr>
                   </tbody>
@@ -2000,7 +1990,7 @@
                 id="submitTenantSpinner"
                 class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"
               ></span>
-              <span id="submitTenantText">Create Account & Save to Supabase</span>
+              <span id="submitTenantText">Create Account</span>
             </button>
           </div>
         </form>

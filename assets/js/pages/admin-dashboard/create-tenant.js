@@ -489,7 +489,7 @@ export function initCreateTenant() {
     } finally {
       submitBtn.disabled = false;
       spinner?.classList.add('hidden');
-      if (submitText) submitText.textContent = 'Create Account & Save to Supabase';
+      if (submitText) submitText.textContent = 'Create Account';
     }
   });
 }

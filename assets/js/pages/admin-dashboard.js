@@ -487,7 +487,7 @@ function renderListings(rooms) {
                 <span>Upload Card Image</span>
                 <input type="file" accept="image/*" class="hidden" data-upload-field="image" data-room-id="${escapeHtml(room.id)}" />
               </label>
-              <p data-status-for="image" class="text-[11px] text-gray-500">Stored in Supabase Storage (room-media)</p>
+              <p data-status-for="image" class="text-[11px] text-gray-500">Stored in media storage (room-media)</p>
             </div>
           </div>
         </div>
@@ -554,7 +554,7 @@ function renderListings(rooms) {
         </div>
         <div class="md:col-span-2 flex justify-end gap-2">
           <button type="button" data-action="toggle-edit-room" data-room-id="${escapeHtml(room.id)}" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
-          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save to Supabase</button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save</button>
         </div>
       </form>
     </div>
@@ -797,7 +797,7 @@ function initAdminListings() {
           mountAdminPanoramaPreview(panoBox, publicUrl);
         }
         if (statusEl) statusEl.textContent = `Uploaded: ${file.name} (click Save to publish)`;
-        Toast.success('Uploaded to Supabase Storage! Click "Save to Supabase" to publish.');
+        Toast.success('Uploaded successfully! Click "Save" to publish.');
       } catch (err) {
         console.error('Supabase Storage upload failed:', err);
         if (statusEl) statusEl.textContent = 'Upload failed.';
@@ -816,7 +816,7 @@ function initAdminListings() {
       if (!form || !galleryList) return;
 
       try {
-        Toast.success(`Uploading ${files.length} image(s) to Supabase...`);
+        Toast.success(`Uploading ${files.length} image(s)...`);
         const existingUrls = Array.from(form.querySelectorAll('input[name="galleryImage"]')).map(
           (el) => el.value
         );
@@ -825,7 +825,7 @@ function initAdminListings() {
           existingUrls.push(url);
         }
         galleryList.innerHTML = renderGalleryItemsHtml(existingUrls);
-        Toast.success('Gallery images uploaded! Click "Save to Supabase" to publish.');
+        Toast.success('Gallery images uploaded! Click "Save" to publish.');
       } catch (err) {
         console.error('Gallery upload failed:', err);
         Toast.error(`Gallery upload failed: ${err.message || 'Unknown error'}`);
@@ -871,7 +871,7 @@ function initAdminListings() {
       await supabaseData.setDoc(supabaseData.doc(supabase, 'rooms', roomId), updated, {
         merge: true
       });
-      Toast.success(`Saved "${updated.name}" to Supabase`);
+      Toast.success(`Saved "${updated.name}" successfully`);
     } catch (error) {
       console.error('Failed to save listing:', error);
       Toast.error(`Failed to save listing: ${error.message || 'Unknown error'}`);
