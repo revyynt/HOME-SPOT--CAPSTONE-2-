@@ -1311,6 +1311,9 @@ export function initBuilding3DViewer(container, options = {}) {
     let downX = 0;
     let downY = 0;
     let moveDist = 0;
+    const activePointers = new Map();
+    let initialPinchDistance = null;
+    let initialDistanceAtPinch = targetDistance;
     const raycaster = new THREE.Raycaster();
     const pointerNDC = new THREE.Vector2();
 
@@ -1322,6 +1325,7 @@ export function initBuilding3DViewer(container, options = {}) {
     renderer.domElement.addEventListener('contextmenu', preventNativeMenuAndDrag);
     renderer.domElement.addEventListener('dragstart', preventNativeMenuAndDrag);
     renderer.domElement.draggable = false;
+    renderer.domElement.style.touchAction = 'none';
     renderer.domElement.style.userSelect = 'none';
     renderer.domElement.style.webkitUserSelect = 'none';
 
@@ -1335,21 +1339,46 @@ export function initBuilding3DViewer(container, options = {}) {
       ) {
         document.activeElement.blur();
       }
+
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      try {
+        renderer.domElement.setPointerCapture(e.pointerId);
+      } catch (_) { }
+
+      if (activePointers.size === 2) {
+        const pts = Array.from(activePointers.values());
+        initialPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        initialDistanceAtPinch = targetDistance;
+        isDragging = false;
+        return;
+      }
+
       isDragging = true;
       dragButton = e.button;
       downX = e.clientX;
       downY = e.clientY;
       moveDist = 0;
       container.style.cursor = 'grabbing';
-      try {
-        renderer.domElement.setPointerCapture(e.pointerId);
-      } catch (_) { }
     });
 
     renderer.domElement.addEventListener('pointermove', (e) => {
+      if (!activePointers.has(e.pointerId)) return;
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      pauseSpinAndScheduleResume();
+
+      if (activePointers.size >= 2) {
+        e.preventDefault();
+        const pts = Array.from(activePointers.values());
+        const currentPinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        if (initialPinchDistance && initialPinchDistance > 0) {
+          const pinchDelta = currentPinchDistance - initialPinchDistance;
+          targetDistance = clamp(initialDistanceAtPinch - pinchDelta * 0.08, 15, 56);
+        }
+        return;
+      }
+
       if (!isDragging) return;
       e.preventDefault();
-      pauseSpinAndScheduleResume();
       const dx = e.clientX - downX;
       const dy = e.clientY - downY;
       moveDist += Math.abs(dx) + Math.abs(dy);
@@ -1365,15 +1394,31 @@ export function initBuilding3DViewer(container, options = {}) {
     });
 
     const onPointerUp = (e) => {
-      if (!isDragging) return;
-      isDragging = false;
-      pauseSpinAndScheduleResume();
-      container.style.cursor = 'grab';
+      const hadPinch = activePointers.size >= 2 || initialPinchDistance !== null;
+      activePointers.delete(e.pointerId);
       try {
         renderer.domElement.releasePointerCapture(e.pointerId);
       } catch (_) { }
 
-      if (moveDist < 8 && dragButton === 0) {
+      if (activePointers.size < 2) {
+        initialPinchDistance = null;
+      }
+
+      if (activePointers.size === 1) {
+        const [rem] = activePointers.values();
+        downX = rem.x;
+        downY = rem.y;
+        moveDist = 100;
+        isDragging = true;
+        return;
+      }
+
+      if (!isDragging && !hadPinch) return;
+      isDragging = false;
+      pauseSpinAndScheduleResume();
+      container.style.cursor = 'grab';
+
+      if (!hadPinch && moveDist < 8 && dragButton === 0) {
         const rect = renderer.domElement.getBoundingClientRect();
         pointerNDC.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
         pointerNDC.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;

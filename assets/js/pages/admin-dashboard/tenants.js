@@ -131,7 +131,7 @@ function renderTenantsTable(tenants) {
             </div>
           </td>
           <td class="px-4 py-3.5">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
               ${escapeHtml(t.room || 'Unassigned')}
             </span>
             <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>

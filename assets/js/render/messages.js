@@ -68,7 +68,7 @@ function renderTenantMessenger(tenantContainer, docList) {
               ${t.unreadCount
           ? `<span class="bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">${t.unreadCount}</span>`
           : t.room
-            ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded flex-shrink-0">${escapeHtml(t.room)}</span>`
+            ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap">${escapeHtml(t.room)}</span>`
             : ''
         }
             </div>
@@ -109,9 +109,9 @@ function renderTenantMessenger(tenantContainer, docList) {
        </div>`;
 
   tenantContainer.innerHTML = `
-    <div class="bg-white border rounded-xl shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-3 h-[600px]">
-      <div class="border-r flex flex-col h-full overflow-hidden">
-        <div class="p-4 border-b bg-gray-50/70 flex items-center justify-between">
+    <div class="bg-white border rounded-xl shadow-sm overflow-hidden flex flex-col md:grid md:grid-cols-3 h-auto md:h-[600px]">
+      <div class="border-b md:border-b-0 md:border-r flex flex-col max-h-[190px] md:max-h-none md:h-full overflow-hidden shrink-0">
+        <div class="px-3.5 py-3 md:p-4 border-b bg-gray-50/70 flex items-center justify-between">
           <span class="font-bold text-sm text-gray-800">Chats</span>
           <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">${threads.length}</span>
         </div>
@@ -120,10 +120,10 @@ function renderTenantMessenger(tenantContainer, docList) {
         </div>
       </div>
 
-      <div class="md:col-span-2 flex flex-col h-full bg-gray-50/50 overflow-hidden">
-        <div class="p-4 bg-white border-b flex items-center justify-between gap-3">
+      <div class="md:col-span-2 flex flex-col h-[440px] md:h-full bg-gray-50/50 overflow-hidden">
+        <div class="px-3.5 py-3 md:p-4 bg-white border-b flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-tr ${avatarGradient(
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr ${avatarGradient(
     activeThread.name
   )} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
               ${escapeHtml(initials(activeThread.name))}
@@ -134,7 +134,7 @@ function renderTenantMessenger(tenantContainer, docList) {
     activeThread.name
   )}</h4>
                 ${activeThread.room
-      ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold px-2 py-0.5 rounded-md">${escapeHtml(
+      ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">${escapeHtml(
         activeThread.room
       )}</span>`
       : ''
@@ -147,13 +147,13 @@ function renderTenantMessenger(tenantContainer, docList) {
           </div>
         </div>
 
-        <div id="adminChatHistory" class="flex-1 p-4 overflow-y-auto space-y-3">
+        <div id="adminChatHistory" class="flex-1 p-3 sm:p-4 overflow-y-auto space-y-3">
           ${bubblesHtml}
         </div>
 
         <form id="adminChatForm" data-email="${attr(
       activeThread.email
-    )}" data-name="${attr(activeThread.name)}" class="p-3 bg-white border-t flex items-center gap-2">
+    )}" data-name="${attr(activeThread.name)}" class="p-2.5 sm:p-3 bg-white border-t flex items-center gap-2">
           <input
             type="text"
             name="message"
@@ -161,11 +161,11 @@ function renderTenantMessenger(tenantContainer, docList) {
             required
             autocomplete="off"
             placeholder="Message ${attr(activeThread.name)}..."
-            class="flex-1 px-4 py-2.5 bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 rounded-full text-sm outline-none transition-all"
+            class="flex-1 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-gray-100 border border-transparent focus:bg-white focus:border-blue-500 rounded-full text-xs sm:text-sm outline-none transition-all"
           />
           <button
             type="submit"
-            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-full text-sm font-semibold transition-colors shadow-sm"
+            class="px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-full text-xs sm:text-sm font-semibold transition-colors shadow-sm shrink-0"
           >
             Send
           </button>
