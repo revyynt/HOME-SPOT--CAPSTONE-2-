@@ -308,31 +308,38 @@ export async function deleteTenantAccount(tenantId, tenantName) {
     const prevRoom = target?.room || '';
 
     // Archive tenant document: vacate room and set status to Archived
-    await supabaseData
-      .updateDoc(supabaseData.doc(db, 'tenants', tenantId), {
+    try {
+      await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', tenantId), {
         status: 'Archived',
         room: '',
         previousRoom: prevRoom,
         archivedAt: new Date().toISOString()
-      })
-      .catch(() => null);
+      });
+    } catch (e) {
+      console.warn('supabaseData updateDoc error:', e);
+    }
 
-    await supabase
-      .from('tenants')
-      .update({
-        status: 'Archived',
-        room_id: null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', tenantId)
-      .catch(() => null);
+    try {
+      await supabase
+        .from('tenants')
+        .update({
+          status: 'Archived',
+          room_id: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', tenantId);
+    } catch (e) {
+      console.warn('relational tenants table update error:', e);
+    }
 
-    // Invoke delete-tenant function (which now safely archives without deleting Auth user)
-    await supabase.functions
-      .invoke('delete-tenant', {
+    // Invoke delete-tenant function (which safely archives without deleting Auth user)
+    try {
+      await supabase.functions.invoke('delete-tenant', {
         body: { tenantId }
-      })
-      .catch(() => null);
+      });
+    } catch (e) {
+      console.warn('delete-tenant function error:', e);
+    }
 
     if (target) {
       target.status = 'Archived';
