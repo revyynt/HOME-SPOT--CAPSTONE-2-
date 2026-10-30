@@ -378,9 +378,27 @@ function updateTenantDormSelect(rooms) {
   }
 }
 
+function recalculateRoomsAvailability(rooms) {
+  if (!Array.isArray(rooms)) return;
+  rooms.forEach((r) => {
+    const matchingUnits = BUILDING_UNITS.filter((u) => (u.listingDocId || u.listingId) === r.id);
+    if (matchingUnits.length > 0) {
+      r.available = matchingUnits.filter(
+        (u) => (Number(u.publicOccupiedCount) || 0) < u.capacity
+      ).length;
+    }
+  });
+}
+
 function renderListings(rooms) {
   const container = document.getElementById('adminListingsContainer');
   if (!container) return;
+
+  const openFormIds = new Set(
+    Array.from(container.querySelectorAll('form[data-room-edit-form]:not(.hidden)')).map(
+      (f) => f.dataset.roomEditForm
+    )
+  );
 
   const countEl = document.getElementById('totalListingsCount');
   if (countEl) countEl.textContent = String(rooms.length);
@@ -561,6 +579,11 @@ function renderListings(rooms) {
   `
     )
     .join('');
+
+  openFormIds.forEach((id) => {
+    const f = container.querySelector(`form[data-room-edit-form="${id}"]`);
+    if (f) f.classList.remove('hidden');
+  });
 }
 
 function initAdminListings() {
@@ -592,8 +615,9 @@ function initAdminListings() {
       snapshot.forEach((doc) => {
         rooms.push(mergeRoomData(doc.id, { id: doc.id, ...doc.data() }));
       });
-      currentAdminRooms = rooms;
       syncBuildingUnitsWithRooms(rooms);
+      recalculateRoomsAvailability(rooms);
+      currentAdminRooms = rooms;
       renderListings(rooms);
       updateTenantDormSelect(rooms);
     },
@@ -2184,6 +2208,10 @@ function initAdminBuilding3D() {
     BUILDING_UNITS.forEach((u) => {
       u.publicOccupiedCount = unitOccupancy[u.id] || 0;
     });
+    if (Array.isArray(currentAdminRooms) && currentAdminRooms.length) {
+      recalculateRoomsAvailability(currentAdminRooms);
+      renderListings(currentAdminRooms);
+    }
     const sig = JSON.stringify(unitOccupancy);
     if (sig === lastOccupancySyncSignature) return;
     lastOccupancySyncSignature = sig;
