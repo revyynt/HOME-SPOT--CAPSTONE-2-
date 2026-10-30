@@ -266,35 +266,41 @@ export function sendReservationNotificationEmail({
 
   const bodyText = isApproved
     ? `Hi ${cleanName},\n\n` +
-    `Great news! Your reservation request for ${cleanRoom} at MJP Residences (HomeSpot) has been APPROVED.\n\n` +
-    (moveInDate ? `Target Move-in Date: ${moveInDate}\n\n` : '') +
-    `Next Steps:\n` +
-    `1. Please prepare 1 valid government ID and your advance/security deposit payment.\n` +
-    `2. Visit the property owner to sign your lease agreement..\n` +
-    `3. Once deposit has been received, your Tenant Portal account will be activated.\n\n` +
-    `If you have any questions or schedule adjustments, please reply directly to this email.\n\n` +
-    `Best regards,\n` +
-    `HomeSpot Management Team\n` +
-    `MJP Residences\n` +
-    `Contact: ${OFFICIAL_SUPPORT_GMAIL}`
+      `Great news! Your reservation request for ${cleanRoom} at MJP Residences (HomeSpot) has been APPROVED.\n\n` +
+      (moveInDate ? `Target Move-in Date: ${moveInDate}\n\n` : '') +
+      `Next Steps:\n` +
+      `1. Please prepare 1 valid government ID and your advance/security deposit payment.\n` +
+      `2. Visit the property owner to sign your lease agreement..\n` +
+      `3. Once deposit has been received, your Tenant Portal account will be activated.\n\n` +
+      `If you have any questions or schedule adjustments, please reply directly to this email.\n\n` +
+      `Best regards,\n` +
+      `HomeSpot Management Team\n` +
+      `MJP Residences\n` +
+      `Contact: ${OFFICIAL_SUPPORT_GMAIL}`
     : `Hi ${cleanName},\n\n` +
-    `Thank you for your interest in MJP Residences (HomeSpot).\n\n` +
-    `We regret to inform you that we are currently unable to approve your reservation request for ${cleanRoom}.` +
-    (reason ? `\n\nReason: ${reason}` : '') +
-    `\n\nIf you would like to explore other available rooms or adjust your dates, please reply to this email or visit our website.\n\n` +
-    `Best regards,\n` +
-    `HomeSpot Management Team\n` +
-    `MJP Residences\n` +
-    `Contact: ${OFFICIAL_SUPPORT_GMAIL}`;
+      `Thank you for your interest in MJP Residences (HomeSpot).\n\n` +
+      `We regret to inform you that we are currently unable to approve your reservation request for ${cleanRoom}.` +
+      (reason ? `\n\nReason: ${reason}` : '') +
+      `\n\nIf you would like to explore other available rooms or adjust your dates, please reply to this email or visit our website.\n\n` +
+      `Best regards,\n` +
+      `HomeSpot Management Team\n` +
+      `MJP Residences\n` +
+      `Contact: ${OFFICIAL_SUPPORT_GMAIL}`;
 
   const su = encodeURIComponent(subject);
   const body = encodeURIComponent(bodyText);
   const composeTarget = `https://mail.google.com/mail/?authuser=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&view=cm&fs=1&to=${encodeURIComponent(email)}&su=${su}&body=${body}`;
   const gmailUrl = `https://accounts.google.com/AccountChooser?Email=${encodeURIComponent(OFFICIAL_SUPPORT_GMAIL)}&continue=${encodeURIComponent(composeTarget)}`;
 
-  const win = window.open(gmailUrl, '_blank', 'noopener,noreferrer');
-  if (!win || win.closed || typeof win.closed === 'undefined') {
-    window.location.href = `mailto:${encodeURIComponent(email)}?subject=${su}&body=${body}`;
+  const popup = window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+  if (!popup) {
+    const a = document.createElement('a');
+    a.href = gmailUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
   }
 }
 

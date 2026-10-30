@@ -245,6 +245,7 @@ adminOtpForm?.addEventListener('submit', async (event) => {
 
     showAdminOtpAlert('Verification successful! Entering dashboard...', true);
     sessionStorage.setItem('admin_otp_verified', 'true');
+    localStorage.setItem('admin_otp_verified', 'true');
 
     setTimeout(() => {
       window.location.href = pendingAdminDestination;
@@ -287,6 +288,7 @@ async function cancelAdminOtp() {
   pendingAdminUser = null;
   pendingAdminDestination = '';
   sessionStorage.removeItem('admin_otp_verified');
+  localStorage.removeItem('admin_otp_verified');
   try {
     await supabase.auth.signOut();
   } catch {}
@@ -613,10 +615,10 @@ async function checkExistingSession() {
       user.app_metadata?.role || (user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
     const destination = ROLE_DESTINATIONS[role];
     if (destination) {
-      if (
-        (role === 'admin' || role === 'superadmin') &&
-        sessionStorage.getItem('admin_otp_verified') !== 'true'
-      ) {
+      const isOtpVerified =
+        sessionStorage.getItem('admin_otp_verified') === 'true' ||
+        localStorage.getItem('admin_otp_verified') === 'true';
+      if ((role === 'admin' || role === 'superadmin') && !isOtpVerified) {
         if (adminOtpModal && !adminOtpModal.classList.contains('hidden')) return;
         if (isSubmitting || isSendingAdminOtp) return;
         await triggerAdminOtp(user, destination);
