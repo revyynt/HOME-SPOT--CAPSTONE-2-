@@ -196,7 +196,7 @@ export function viewTenantDetails(tenantId) {
   set('viewTenantName', tenant.name || 'Tenant');
   set('viewTenantEmail', tenant.email || '—');
   set('viewTenantRoom', tenant.room || '—');
-  set('viewTenantDorm', tenant.dormName || 'Dormitory Unit');
+  set('viewTenantResidenceType', tenant.dormName || 'Residence Unit');
   set('viewTenantRent', formatPHP(Number(tenant.monthlyRent) || 0));
   set('viewTenantDue', `Due every ${tenant.dueDay || 5}th`);
   set('viewTenantMoveIn', tenant.moveInDate || '—');

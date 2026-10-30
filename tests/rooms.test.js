@@ -42,7 +42,7 @@ test('resolveRoom maps known aliases to canonical rooms', () => {
 });
 
 test('resolveRoom falls back to slugifying unknown rooms', () => {
-  assert.deepEqual(resolveRoom('Dorm B'), { id: 'dorm-b', name: 'Dorm B' });
+  assert.deepEqual(resolveRoom('Unit B'), { id: 'unit-b', name: 'Unit B' });
 });
 
 test('every ROOM_ALIASES entry is internally consistent', () => {

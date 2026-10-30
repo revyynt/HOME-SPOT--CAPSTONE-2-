@@ -230,7 +230,7 @@ function populateTenantUI() {
   const emergencyInput = document.getElementById('emergencyContact');
   if (emergencyInput) emergencyInput.value = tenantEmergency;
 
-  const dormInput = document.getElementById('tenantProfileDorm');
+  const dormInput = document.getElementById('tenantProfileResidenceType');
   if (dormInput) dormInput.value = tenantDorm;
 
   const roomInput = document.getElementById('tenantProfileRoom');

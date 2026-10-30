@@ -43,7 +43,7 @@ function getUnitOccupants(unitId) {
 
 export function syncDormAndRentWithRoom(forceRent = false) {
   const roomSelect = document.getElementById('tenantRoom');
-  const dormSelect = document.getElementById('tenantDorm');
+  const dormSelect = document.getElementById('tenantResidenceType');
   const rentInput = document.getElementById('tenantMonthlyRent');
   if (!roomSelect) return;
 
@@ -117,7 +117,7 @@ export function refreshTenantRoomOptions(preferredRoom = '') {
   syncDormAndRentWithRoom(false);
 }
 
-const PASSWORD_WORDS = ['Home', 'Spot', 'Dorm', 'MJP', 'Stay'];
+const PASSWORD_WORDS = ['Home', 'Spot', 'Room', 'MJP', 'Stay'];
 
 /**
  * Fills the password field with a readable temporary password.
@@ -218,7 +218,7 @@ function readForm() {
     phone: value('tenantPhone'),
     emergencyContact: value('tenantEmergency'),
     room: value('tenantRoom'),
-    dormName: document.getElementById('tenantDorm')?.value ?? '',
+    dormName: document.getElementById('tenantResidenceType')?.value ?? '',
     moveInDate: value('tenantMoveInDate'),
     monthlyRent: parseFloat(document.getElementById('tenantMonthlyRent')?.value) || 0,
     dueDay: parseInt(document.getElementById('tenantDueDay')?.value, 10) || 5,

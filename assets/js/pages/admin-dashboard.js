@@ -353,7 +353,7 @@ function mountAdminPanoramaPreview(container, imageUrl) {
 }
 
 function updateTenantDormSelect(rooms) {
-  const select = document.getElementById('tenantDorm');
+  const select = document.getElementById('tenantResidenceType');
   if (!select || !Array.isArray(rooms)) return;
   select.disabled = true;
   const currentVal = select.value;
