@@ -185,16 +185,18 @@ test('getPaymentFailureReason resolves failure reasons tailored to the payment c
     'Card was declined or 3DS verification failed on PayMongo.'
   );
   assert.equal(
-    getPaymentFailureReason({
-      attributes: {
-        payment_intent: {
-          attributes: {
-            last_payment_error: { failed_message: 'Insufficient balance in e-wallet' }
+    getPaymentFailureReason(
+      {
+        attributes: {
+          payment_intent: {
+            attributes: {
+              last_payment_error: { failed_message: 'Insufficient balance in e-wallet' }
+            }
           }
         }
-      }
-    }, 'PayMongo Checkout (GCash)'),
+      },
+      'PayMongo Checkout (GCash)'
+    ),
     'Insufficient balance in e-wallet'
   );
 });
-

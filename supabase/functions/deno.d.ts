@@ -8,9 +8,7 @@ declare namespace Deno {
     onError?: (error: unknown) => Response | Promise<Response>;
   }
 
-  export function serve(
-    handler: (request: Request) => Response | Promise<Response>
-  ): void;
+  export function serve(handler: (request: Request) => Response | Promise<Response>): void;
   export function serve(
     options: ServeOptions,
     handler: (request: Request) => Response | Promise<Response>

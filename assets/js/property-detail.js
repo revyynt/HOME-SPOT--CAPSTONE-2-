@@ -17,28 +17,36 @@ let activeSlideIndex = 0;
 
 function buildMediaSlides(room) {
   const seen = new Set();
-  const photos = [];
-  const candidates = [room.mainImage, ...(Array.isArray(room.images) ? room.images : []), room.image];
-  for (const raw of candidates) {
-    const url = String(raw || '').trim();
-    if (!url || seen.has(url)) continue;
-    seen.add(url);
-    photos.push({
-      type: 'photo',
-      src: url,
-      label: photos.length === 0 ? 'Main Photo' : `Photo ${photos.length + 1}`
-    });
-  }
+  const slides = [];
 
   const panoUrl = String(room.panorama || room.image || '').trim();
   if (panoUrl) {
-    photos.push({
+    slides.push({
       type: 'panorama',
       src: panoUrl,
       label: '360° Panoramic View'
     });
   }
-  return photos;
+
+  const candidates = [
+    room.mainImage,
+    ...(Array.isArray(room.images) ? room.images : []),
+    room.image
+  ];
+  let photoIndex = 1;
+  for (const raw of candidates) {
+    const url = String(raw || '').trim();
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    slides.push({
+      type: 'photo',
+      src: url,
+      label: photoIndex === 1 ? 'Main Photo' : 'Photo ' + photoIndex
+    });
+    photoIndex++;
+  }
+
+  return slides;
 }
 
 function renderMediaShowcase(room) {
@@ -195,8 +203,9 @@ function initMediaShowcaseControls() {
       case 'media-jump-360': {
         const panoIdx = mediaSlides.findIndex((s) => s.type === 'panorama');
         if (panoIdx === -1) break;
+        const firstPhotoIdx = mediaSlides.findIndex((s) => s.type === 'photo');
         if (activeSlideIndex === panoIdx) {
-          setActiveMediaSlide(0, roomName);
+          setActiveMediaSlide(firstPhotoIdx !== -1 ? firstPhotoIdx : 0, roomName);
         } else {
           setActiveMediaSlide(panoIdx, roomName);
         }
@@ -265,9 +274,10 @@ function renderLightboxSlide(index) {
           ? 'border-white ring-2 ring-white/60 scale-110 opacity-100 shadow-xl'
           : 'border-transparent opacity-60 hover:opacity-100';
 
-        const badgeHtml = s.type === 'panorama'
-          ? '<span class="absolute inset-0 bg-black/40 flex items-center justify-center text-[9px] font-black text-white">360°</span>'
-          : '';
+        const badgeHtml =
+          s.type === 'panorama'
+            ? '<span class="absolute inset-0 bg-black/40 flex items-center justify-center text-[9px] font-black text-white">360°</span>'
+            : '';
 
         return `
           <button type="button" data-lightbox-thumb="${idx}"
@@ -354,7 +364,6 @@ function initLightboxControls() {
     }
   });
 }
-
 
 function updateAvailabilityUI(room, availableCount) {
   const badge = document.getElementById('availabilityBadge');

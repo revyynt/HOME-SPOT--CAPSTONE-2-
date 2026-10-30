@@ -48,11 +48,7 @@ Deno.serve(async (request) => {
     .eq('id', input.tenantId);
   if (tenantDeleteError) {
     console.error('Failed to delete tenant record:', tenantDeleteError);
-    return jsonResponse(
-      request,
-      { error: 'Could not remove the tenant profile record.' },
-      500
-    );
+    return jsonResponse(request, { error: 'Could not remove the tenant profile record.' }, 500);
   }
 
   await admin.from('tenants').delete().eq('id', input.tenantId);
@@ -73,7 +69,10 @@ Deno.serve(async (request) => {
       if (authDeleteError) {
         const msg = String(authDeleteError.message || '').toLowerCase();
         if (!msg.includes('not found') && !msg.includes('user not found')) {
-          console.warn('Could not delete tenant Auth account (may already be removed):', authDeleteError);
+          console.warn(
+            'Could not delete tenant Auth account (may already be removed):',
+            authDeleteError
+          );
         }
       }
 
@@ -90,4 +89,3 @@ Deno.serve(async (request) => {
 
   return jsonResponse(request, { success: true });
 });
-

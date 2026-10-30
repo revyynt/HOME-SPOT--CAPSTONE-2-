@@ -1,4 +1,3 @@
-
 let currentAdminRooms = [];
 
 function openRoomPreviewModal(room) {
@@ -26,15 +25,18 @@ function openRoomPreviewModal(room) {
 
   if (breadcrumbEl) breadcrumbEl.textContent = room.name || 'Apartment Unit';
   if (titleEl) titleEl.textContent = room.name || 'Apartment Unit';
-  if (subtitleEl) subtitleEl.textContent = `${room.type || 'Living Space'} • ${room.size || '30 sqm'}`;
+  if (subtitleEl)
+    subtitleEl.textContent = `${room.type || 'Living Space'} • ${room.size || '30 sqm'}`;
 
   const avail = Number(room.available) || 0;
   if (availBadgeEl) {
     if (avail > 0) {
-      availBadgeEl.className = 'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-green-500 to-green-600';
+      availBadgeEl.className =
+        'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-green-500 to-green-600';
       availBadgeEl.textContent = `${avail} Available`;
     } else {
-      availBadgeEl.className = 'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-red-500 to-red-600';
+      availBadgeEl.className =
+        'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-red-500 to-red-600';
       availBadgeEl.textContent = 'Fully Booked';
     }
   }
@@ -62,9 +64,10 @@ function openRoomPreviewModal(room) {
   }
 
   if (detailFeaturesEl) {
-    const feats = Array.isArray(room.features) && room.features.length
-      ? room.features
-      : [`${room.capacity || 3} People`, 'Bathroom', 'Aircon Space'];
+    const feats =
+      Array.isArray(room.features) && room.features.length
+        ? room.features
+        : [`${room.capacity || 3} People`, 'Bathroom', 'Aircon Space'];
     detailFeaturesEl.innerHTML = feats
       .map(
         (f) => `
@@ -161,19 +164,21 @@ function openRoomPreviewModal(room) {
         <button
           type="button"
           data-preview-slide-idx="${i}"
-          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${i === 0
-            ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
-            : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
+          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${
+            i === 0
+              ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
+              : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
           } flex-shrink-0 transition-all cursor-pointer group"
         >
           <img src="${escapeHtml(slide.src)}" alt="${escapeHtml(slide.label)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
           <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-          ${slide.is360
-            ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
+          ${
+            slide.is360
+              ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">360°</span>
                    <span class="text-[9px] font-semibold text-white tracking-tight mt-0.5">Virtual Tour</span>
                  </div>`
-            : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
+              : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
           }
         </button>`
       )
@@ -213,7 +218,10 @@ function closeRoomPreviewModal() {
 import { guardPage } from '../lib/guard.js';
 import { initBackButtonGuard, initLogoutButtons } from '../lib/session.js';
 import { initTenantTable, listenToTenants } from './admin-dashboard/tenants.js';
-import { initCreateTenant, openCreateTenantModalFromData } from './admin-dashboard/create-tenant.js';
+import {
+  initCreateTenant,
+  openCreateTenantModalFromData
+} from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
@@ -353,7 +361,7 @@ function mountAdminPanoramaPreview(container, imageUrl) {
 }
 
 function updateTenantDormSelect(rooms) {
-  const select = document.getElementById('tenantDorm');
+  const select = document.getElementById('tenantResidenceType');
   if (!select || !Array.isArray(rooms)) return;
   select.disabled = true;
   const currentVal = select.value;
@@ -621,17 +629,15 @@ function initAdminListings() {
       const mainImg = document.getElementById('previewRoomMainImg');
       if (mainImg && src) mainImg.src = src;
       document.querySelectorAll('.preview-thumb-btn').forEach((b) => {
-        b.className = b === thumbBtn
-          ? 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-emerald-500 ring-2 ring-emerald-200 flex-shrink-0 transition-all cursor-pointer'
-          : 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 flex-shrink-0 transition-all cursor-pointer';
+        b.className =
+          b === thumbBtn
+            ? 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-emerald-500 ring-2 ring-emerald-200 flex-shrink-0 transition-all cursor-pointer'
+            : 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 flex-shrink-0 transition-all cursor-pointer';
       });
       return;
     }
 
-    if (
-      target.closest('#closePreviewRoomModalBtn') ||
-      target.id === 'previewRoomModal'
-    ) {
+    if (target.closest('#closePreviewRoomModalBtn') || target.id === 'previewRoomModal') {
       closeRoomPreviewModal();
       return;
     }
@@ -811,9 +817,9 @@ function initAdminListings() {
 
       try {
         Toast.success(`Uploading ${files.length} image(s) to Supabase...`);
-        const existingUrls = Array.from(
-          form.querySelectorAll('input[name="galleryImage"]')
-        ).map((el) => el.value);
+        const existingUrls = Array.from(form.querySelectorAll('input[name="galleryImage"]')).map(
+          (el) => el.value
+        );
         for (const file of files) {
           const url = await uploadRoomFile(roomId, file, 'gallery');
           existingUrls.push(url);
@@ -891,7 +897,8 @@ function initAdminPaymentCalendar() {
   let calPayments = [];
 
   const badgeStyle = (status) => {
-    if (status === 'Paid' || status === 'Settled') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (status === 'Paid' || status === 'Settled')
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     if (status === 'Overdue' || status === 'Failed')
       return 'bg-red-100 text-red-800 border-red-200';
     if (status === 'Scheduled') return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -1253,7 +1260,7 @@ function initAdminPaymentCalendar() {
     try {
       const snap = await supabaseData.getDocs(supabaseData.collection(supabase, 'payments'));
       appDocPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    } catch { }
+    } catch {}
     try {
       const { data, error } = await supabase.from('payments').select('*');
       if (!error && Array.isArray(data)) {
@@ -1271,7 +1278,7 @@ function initAdminPaymentCalendar() {
           createdAt: p.created_at
         }));
       }
-    } catch { }
+    } catch {}
     calPayments = deduplicatePayments([...appDocPayments, ...relPayments]);
     renderCalendar();
   };
@@ -1397,7 +1404,9 @@ function initAdminPaymentCalendar() {
             updatedAt: supabaseData.serverTimestamp()
           });
           selectedDateKey = '';
-          Toast.success(`Marked ${tenant.name} as moved in. Move-in schedule cleared from calendar.`);
+          Toast.success(
+            `Marked ${tenant.name} as moved in. Move-in schedule cleared from calendar.`
+          );
         } catch (err) {
           console.error('Failed to mark moved in:', err);
           Toast.error('Could not update status: ' + (err.message || 'Unknown error'));
@@ -1664,19 +1673,17 @@ function initAdminDataAnalysis() {
   };
 
   const renderAnalysis = () => {
-    const totalRooms = BUILDING_UNITS.length;
+    const totalRooms = BUILDING_UNITS.filter((u) => u.type !== 'Commercial Space').length || 12;
     const selectedYear = Number(yearSelect?.value) || now.getFullYear();
     const selectedMonthVal = monthSelect?.value || 'all';
 
     const monthlyStats = Array.from({ length: 12 }, (_, mIdx) => {
-      const activeTenants = tenantsList.filter((t) =>
-        isTenantActiveInMonth(t, selectedYear, mIdx)
-      );
+      const activeTenants = tenantsList.filter((t) => isTenantActiveInMonth(t, selectedYear, mIdx));
       const occupiedUnitIds = new Set();
       activeTenants.forEach((t) => {
         if (!t.room && !t.dormName && !t.dorm) return;
         const unit = resolveBuildingUnit(t.room || '', t.dormName || t.dorm || '');
-        if (unit) occupiedUnitIds.add(unit.id);
+        if (unit && unit.type !== 'Commercial Space') occupiedUnitIds.add(unit.id);
       });
       const occupiedRooms = Math.min(totalRooms, occupiedUnitIds.size);
       const availableRooms = Math.max(0, totalRooms - occupiedRooms);
@@ -1750,54 +1757,120 @@ function initAdminDataAnalysis() {
     const chartGrid = document.getElementById('adminAnalysisChartGrid');
     if (chartGrid) {
       const maxScale = Math.max(totalRooms, ...monthlyStats.map((s) => s.tenants), 1);
-      chartGrid.innerHTML = monthlyStats
-        .map((stat) => {
-          const isSelectedMonth =
-            selectedMonthVal !== 'all' && Number(selectedMonthVal) === stat.monthIdx;
-          const isCurrentFocus = stat.monthIdx === focusMonthIdx;
-          const occPct =
-            stat.occupiedRooms > 0
-              ? Math.max(10, Math.round((stat.occupiedRooms / totalRooms) * 100))
-              : 4;
-          const availPct =
-            stat.availableRooms > 0
-              ? Math.max(10, Math.round((stat.availableRooms / totalRooms) * 100))
-              : 4;
-          const tenPct =
-            stat.tenants > 0
-              ? Math.max(10, Math.round((stat.tenants / maxScale) * 100))
-              : 4;
+      const svgW = 960;
+      const svgH = 290;
+      const xStart = 70;
+      const xEnd = 920;
+      const yBottom = 225;
+      const yTop = 25;
+      const plotH = yBottom - yTop;
+      const plotW = xEnd - xStart;
 
+      const getX = (idx) => xStart + idx * (plotW / 11);
+      const getY = (val) => yBottom - (val / maxScale) * plotH;
+
+      const occPoints = monthlyStats.map(
+        (s, i) => `${getX(i).toFixed(1)},${getY(s.occupiedRooms).toFixed(1)}`
+      );
+      const availPoints = monthlyStats.map(
+        (s, i) => `${getX(i).toFixed(1)},${getY(s.availableRooms).toFixed(1)}`
+      );
+      const tenantPoints = monthlyStats.map(
+        (s, i) => `${getX(i).toFixed(1)},${getY(s.tenants).toFixed(1)}`
+      );
+
+      const yTicks = [0, 2, 4, 6, 8, 10, totalRooms].filter(
+        (v, i, arr) => arr.indexOf(v) === i && v <= maxScale
+      );
+
+      const horizontalGridHtml = yTicks
+        .map((val) => {
+          const y = getY(val).toFixed(1);
           return `
-            <button type="button" data-action="admin-analysis-pick-month" data-month="${stat.monthIdx}"
-              class="flex flex-col justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                isSelectedMonth
-                  ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-200 shadow-xs'
-                  : isCurrentFocus && selectedMonthVal === 'all'
-                    ? 'bg-slate-50 border-blue-300 ring-1 ring-blue-100'
-                    : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-gray-50/60'
-              }">
-              <div class="flex items-center justify-between gap-1 mb-2">
-                <span class="text-xs font-extrabold text-gray-900">${escapeHtml(stat.shortLabel)}</span>
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                  stat.occupiedRooms > 0
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-slate-100 text-slate-600'
-                }">${stat.occupiedRooms}/${totalRooms}</span>
-              </div>
-              <div class="h-24 flex items-end justify-center gap-1.5 px-1 py-1 bg-slate-50 rounded-lg border border-slate-100">
-                <div class="w-3 bg-emerald-500 rounded-t transition-all" style="height:${occPct}%" title="Occupied Rooms: ${stat.occupiedRooms} / ${totalRooms}"></div>
-                <div class="w-3 bg-sky-400 rounded-t transition-all" style="height:${availPct}%" title="Available Rooms: ${stat.availableRooms} / ${totalRooms}"></div>
-                <div class="w-3 bg-blue-600 rounded-t transition-all" style="height:${tenPct}%" title="Active Tenants: ${stat.tenants}"></div>
-              </div>
-              <div class="mt-2 space-y-0.5 text-[10px] leading-tight text-gray-600">
-                <div class="flex justify-between"><span>Occ:</span><strong class="text-emerald-700">${stat.occupiedRooms} rm</strong></div>
-                <div class="flex justify-between"><span>Avail:</span><strong class="text-sky-700">${stat.availableRooms} rm</strong></div>
-                <div class="flex justify-between"><span>Tenants:</span><strong class="text-blue-700">${stat.tenants}</strong></div>
-              </div>
-            </button>`;
+            <line x1="${xStart}" y1="${y}" x2="${xEnd}" y2="${y}" stroke="#cbd5e1" stroke-width="1" />
+            <line x1="${xStart - 6}" y1="${y}" x2="${xStart}" y2="${y}" stroke="#334155" stroke-width="1.5" />
+            <text x="${xStart - 10}" y="${Number(y) + 4}" text-anchor="end" font-size="11" font-weight="600" fill="#475569">${val}</text>`;
         })
         .join('');
+
+      const verticalGridHtml = monthlyStats
+        .map((s, i) => {
+          const x = getX(i).toFixed(1);
+          const isSelected = selectedMonthVal !== 'all' && Number(selectedMonthVal) === s.monthIdx;
+          const isFocus = s.monthIdx === focusMonthIdx;
+          return `
+            <line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke="#e2e8f0" stroke-width="1" />
+            <line x1="${x}" y1="${yBottom}" x2="${x}" y2="${yBottom + 6}" stroke="#334155" stroke-width="1.5" />
+            <text x="${x}" y="${yBottom + 20}" text-anchor="middle" font-size="11" font-weight="${isFocus || isSelected ? '700' : '600'}" fill="${isFocus || isSelected ? '#0f172a' : '#64748b'}">${s.shortLabel}</text>`;
+        })
+        .join('');
+
+      const focusX = getX(focusMonthIdx).toFixed(1);
+      const focusColumnHtml = `
+        <rect x="${Number(focusX) - 20}" y="${yTop}" width="40" height="${plotH}" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.8" />`;
+
+      const pointsHtml = monthlyStats
+        .map((s, i) => {
+          const x = getX(i).toFixed(1);
+          const yOcc = getY(s.occupiedRooms).toFixed(1);
+          const yAvail = getY(s.availableRooms).toFixed(1);
+          const yTen = getY(s.tenants).toFixed(1);
+          const isSelected = selectedMonthVal !== 'all' && Number(selectedMonthVal) === s.monthIdx;
+          const isFocus = s.monthIdx === focusMonthIdx;
+
+          return `
+            <g data-action="admin-analysis-pick-month" data-month="${s.monthIdx}" class="cursor-pointer">
+              <title>${s.label} ${selectedYear}:&#10;• Occupied Rooms: ${s.occupiedRooms} / ${totalRooms}&#10;• Available Rooms: ${s.availableRooms} / ${totalRooms}&#10;• Active Tenants: ${s.tenants}</title>
+              
+              <rect x="${Number(x) - 30}" y="${yTop}" width="60" height="${plotH + 30}" fill="transparent" />
+
+              <!-- Available marker (Dashed line series) -->
+              <circle cx="${x}" cy="${yAvail}" r="3" fill="#38bdf8" />
+
+              <!-- Tenant marker (Blue series) -->
+              <circle cx="${x}" cy="${yTen}" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" />
+
+              <!-- Occupied marker with direct value label on top (Matching reference image) -->
+              <circle cx="${x}" cy="${yOcc}" r="${isFocus || isSelected ? '6' : '5'}" fill="#16a34a" stroke="#ffffff" stroke-width="1.5" />
+              <text x="${x}" y="${Number(yOcc) - 8}" text-anchor="middle" font-size="11" font-weight="800" fill="#15803d">${s.occupiedRooms}</text>
+            </g>`;
+        })
+        .join('');
+
+      chartGrid.innerHTML = `
+        <div class="w-full overflow-x-auto bg-white rounded-lg p-2 sm:p-4 border border-gray-200">
+          <div class="min-w-[640px]">
+            <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-56 sm:h-72 select-none" style="overflow: visible;">
+              <!-- Outer frame border -->
+              <rect x="${xStart}" y="${yTop}" width="${plotW}" height="${plotH}" fill="#ffffff" stroke="#334155" stroke-width="1.5" />
+
+              <!-- Vertical grid lines -->
+              ${verticalGridHtml}
+
+              <!-- Horizontal grid lines -->
+              ${horizontalGridHtml}
+
+              <!-- Focus column -->
+              ${focusColumnHtml}
+
+              <!-- Series 1: Available Rooms (Dashed) -->
+              <polyline fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4" points="${availPoints.join(' ')}" />
+
+              <!-- Series 2: Active Tenants (Solid Blue) -->
+              <polyline fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${tenantPoints.join(' ')}" />
+
+              <!-- Series 3: Occupied Rooms (Solid Green, Primary line with data values) -->
+              <polyline fill="none" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="${occPoints.join(' ')}" />
+
+              <!-- Data Points with explicit values -->
+              ${pointsHtml}
+
+              <!-- Axis Titles -->
+              <text x="-125" y="24" transform="rotate(-90)" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Rooms / Units</text>
+              <text x="${xStart + plotW / 2}" y="272" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Month (${selectedYear})</text>
+            </svg>
+          </div>
+        </div>`;
     }
   };
 
@@ -1891,9 +1964,7 @@ function initAdminBuilding3D() {
 
     const statusBadge = document.getElementById('admin3DUnitStatusBadge');
     if (statusBadge) {
-      statusBadge.textContent = isOccupied
-        ? '● Occupied'
-        : '○ Vacant Unit';
+      statusBadge.textContent = isOccupied ? '● Occupied' : '○ Vacant Unit';
       statusBadge.className = isOccupied
         ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800'
         : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800';
@@ -2151,9 +2222,15 @@ function initAdminBuilding3D() {
       }
       case 'admin-3d-save-unit-info': {
         if (!unit) break;
-        const newPrice = Number(document.getElementById('admin3DEditPriceInput')?.value) || unit.price;
-        const newCap = Number(document.getElementById('admin3DEditCapInput')?.value) || unit.capacity;
-        const newSize = (document.getElementById('admin3DEditSizeInput')?.value || unit.size || '30 sqm').trim();
+        const newPrice =
+          Number(document.getElementById('admin3DEditPriceInput')?.value) || unit.price;
+        const newCap =
+          Number(document.getElementById('admin3DEditCapInput')?.value) || unit.capacity;
+        const newSize = (
+          document.getElementById('admin3DEditSizeInput')?.value ||
+          unit.size ||
+          '30 sqm'
+        ).trim();
         try {
           await persistUnitListingPatch(unit, {
             price: newPrice,

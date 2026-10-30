@@ -1,459 +1,595 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tenant Portal - MJP Residences</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="./assets/css/tenant-portal.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tenant Portal - MJP Residences</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <link rel="stylesheet" href="./assets/css/tenant-portal.css" />
-</head>
-
-<body>
-  <div class="header">
-    <div class="header-brand">
-      <img src="assets/img/logo.png" alt="HomeSpot Logo" class="brand-logo" />
-      <div class="logo">
-        <div class="brand-title-wrap">
-          <h1>Home-Spot Tenant</h1>
-          <span class="role-badge">Tenant</span>
-        </div>
-        <p>MJP Residences</p>
-      </div>
-    </div>
-    <div class="user-info">
-      <span class="user-email" id="userEmail">tenant@example.com</span>
-      <button class="logout-btn" data-action="logout">
-        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
-        <span>Logout</span>
-      </button>
-    </div>
-  </div>
-
-  <div class="container">
-    <!-- Tenant Welcome Banner -->
-    <div class="tenant-welcome-card">
-      <div class="welcome-left">
-        <div class="welcome-avatar" id="welcomeAvatar">JD</div>
-        <div class="welcome-text">
-          <h2 id="welcomeTenantName">Welcome back, Juan Dela Cruz! 👋</h2>
-          <p id="welcomeTenantSub">Room 201 • Triple Occupancy Room</p>
+  <body>
+    <div class="header">
+      <div class="header-brand">
+        <img src="assets/img/logo.png" alt="HomeSpot Logo" class="brand-logo" />
+        <div class="logo">
+          <div class="brand-title-wrap">
+            <h1>Home-Spot Tenant</h1>
+            <span class="role-badge">Tenant</span>
+          </div>
+          <p>MJP Residences</p>
         </div>
       </div>
-      <div class="welcome-right">
-        <span class="tenant-status-pill">● Active Resident</span>
+      <div class="user-info">
+        <span class="user-email" id="userEmail">tenant@example.com</span>
+        <button class="logout-btn" data-action="logout">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            ></path>
+          </svg>
+          <span>Logout</span>
+        </button>
       </div>
     </div>
 
-    <div class="tabs">
-      <button class="tab active" data-tab-target="messages">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
-          </path>
-        </svg>
-        <span>Messages</span>
-      </button>
-      <button class="tab" data-tab-target="payment">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
-        </svg>
-        <span>Make a Payment</span>
-      </button>
-      <button class="tab" data-tab-target="profile">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>
-        <span>Profile</span>
-      </button>
-      <button class="tab" data-tab-target="building-3d">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-          </path>
-        </svg>
-        <span>Floor Plan</span>
-      </button>
-    </div>
-
-    <div id="messages-tab" class="tab-content active">
-      <div class="messages-container">
-        <div class="chat-header">
-          <div class="owner-avatar">AD</div>
-          <div class="owner-info">
-            <div class="owner-name">Admin</div>
-            <div class="owner-status">● Online</div>
+    <div class="container">
+      <!-- Tenant Welcome Banner -->
+      <div class="tenant-welcome-card">
+        <div class="welcome-left">
+          <div class="welcome-avatar" id="welcomeAvatar">JD</div>
+          <div class="welcome-text">
+            <h2 id="welcomeTenantName">Welcome back, Juan Dela Cruz! 👋</h2>
+            <p id="welcomeTenantSub">Room 201 • Triple Occupancy Room</p>
           </div>
         </div>
-
-        <div class="chat-messages" id="chatMessages">
-          <div class="no-messages-placeholder"
-            style="text-align: center; color: #64748b; padding: 40px 20px; font-size: 14px">
-            No messages yet. Send a message below to reach the property administrator.
-          </div>
-        </div>
-
-        <div class="chat-input-area">
-          <input type="text" class="chat-input" id="messageInput" placeholder="Type your message..." />
-          <button class="send-button" data-action="send-message">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-            </svg>
-          </button>
+        <div class="welcome-right">
+          <span class="tenant-status-pill">● Active Resident</span>
         </div>
       </div>
-    </div>
 
-    <div id="payment-tab" class="tab-content">
-      <div class="payment-layout">
-        <!-- Top Split Grid (Form on Left, Calendar on Right on Desktop) -->
-        <div class="payment-main-grid">
-          <!-- Make a Payment Action Card -->
-          <div class="payment-form-card">
+      <div class="tabs">
+        <button class="tab active" data-tab-target="messages">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            ></path>
+          </svg>
+          <span>Messages</span>
+        </button>
+        <button class="tab" data-tab-target="payment">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+            ></path>
+          </svg>
+          <span>Make a Payment</span>
+        </button>
+        <button class="tab" data-tab-target="profile">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            ></path>
+          </svg>
+          <span>Profile</span>
+        </button>
+        <button class="tab" data-tab-target="building-3d">
+          <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            ></path>
+          </svg>
+          <span>Floor Plan</span>
+        </button>
+      </div>
 
-            <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px">Make a Payment</h2>
+      <div id="messages-tab" class="tab-content active">
+        <div class="messages-container">
+          <div class="chat-header">
+            <div class="owner-avatar">AD</div>
+            <div class="owner-info">
+              <div class="owner-name">Admin</div>
+              <div class="owner-status">● Online</div>
+            </div>
+          </div>
 
-            <div class="payment-summary">
-              <div class="payment-summary-item">
-                <span class="payment-summary-label">Current Residence:</span>
-                <span class="payment-summary-value" id="summaryResidence">Triple Occupancy Room</span>
+          <div class="chat-messages" id="chatMessages">
+            <div
+              class="no-messages-placeholder"
+              style="text-align: center; color: #64748b; padding: 40px 20px; font-size: 14px"
+            >
+              No messages yet. Send a message below to reach the property administrator.
+            </div>
+          </div>
+
+          <div class="chat-input-area">
+            <input
+              type="text"
+              class="chat-input"
+              id="messageInput"
+              placeholder="Type your message..."
+            />
+            <button class="send-button" data-action="send-message">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="payment-tab" class="tab-content">
+        <div class="payment-layout">
+          <!-- Top Split Grid (Form on Left, Calendar on Right on Desktop) -->
+          <div class="payment-main-grid">
+            <!-- Make a Payment Action Card -->
+            <div class="payment-form-card">
+              <h2 style="font-size: 20px; font-weight: 600; margin-bottom: 20px">Make a Payment</h2>
+
+              <div class="payment-summary">
+                <div class="payment-summary-item">
+                  <span class="payment-summary-label">Current Residence:</span>
+                  <span class="payment-summary-value" id="summaryResidence"
+                    >Triple Occupancy Room</span
+                  >
+                </div>
+                <div class="payment-summary-item">
+                  <span class="payment-summary-label">Monthly Rent:</span>
+                  <span class="payment-summary-value" id="summaryRent">₱10,000.00</span>
+                </div>
+                <div class="payment-summary-item">
+                  <span class="payment-summary-label">Due Date:</span>
+                  <span class="payment-summary-value" id="summaryDueDate">May 5, 2026</span>
+                </div>
+                <div class="payment-summary-item">
+                  <span class="payment-summary-label">Amount Due:</span>
+                  <span
+                    class="payment-summary-value"
+                    id="summaryAmountDue"
+                    style="color: #065f46; font-size: 18px; font-weight: 700"
+                    >₱10,000.00</span
+                  >
+                </div>
               </div>
-              <div class="payment-summary-item">
-                <span class="payment-summary-label">Monthly Rent:</span>
-                <span class="payment-summary-value" id="summaryRent">₱10,000.00</span>
-              </div>
-              <div class="payment-summary-item">
-                <span class="payment-summary-label">Due Date:</span>
-                <span class="payment-summary-value" id="summaryDueDate">May 5, 2026</span>
-              </div>
-              <div class="payment-summary-item">
-                <span class="payment-summary-label">Amount Due:</span>
-                <span class="payment-summary-value" id="summaryAmountDue"
-                  style="color: #065f46; font-size: 18px; font-weight: 700">₱10,000.00</span>
-              </div>
+
+              <form id="paymentForm" style="margin-top: 20px">
+                <div class="payment-field">
+                  <label for="paymentPurpose">Payment Purpose</label>
+                  <select id="paymentPurpose" required>
+                    <option value="Monthly Rent" selected>Monthly Rent</option>
+                    <option value="Security Deposit">Security Deposit</option>
+                    <option value="Utility / Electricity">Utility / Electricity</option>
+                    <option value="Parking Space Fee">Parking Space Fee (₱500)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="payment-field">
+                  <label for="paymentAmount">Amount (₱)</label>
+                  <input
+                    type="number"
+                    id="paymentAmount"
+                    value="5000"
+                    min="1"
+                    step="0.01"
+                    required
+                  />
+                </div>
+
+                <div class="payment-field">
+                  <label for="paymentNotes">Notes (Optional)</label>
+                  <input
+                    type="text"
+                    id="paymentNotes"
+                    placeholder="e.g. Rent payment for May 2026"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  class="submit-payment-btn"
+                  id="submitPaymentBtn"
+                  style="margin-top: 14px"
+                >
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    ></path>
+                  </svg>
+                  <span>Proceed to Pay</span>
+                </button>
+              </form>
             </div>
 
-            <form id="paymentForm" style="margin-top: 20px">
-              <div class="payment-field">
-                <label for="paymentPurpose">Payment Purpose</label>
-                <select id="paymentPurpose" required>
-                  <option value="Monthly Rent" selected>Monthly Rent</option>
-                  <option value="Security Deposit">Security Deposit</option>
-                  <option value="Utility / Electricity">Utility / Electricity</option>
-                  <option value="Parking Space Fee">Parking Space Fee (₱500)</option>
-                  <option value="Other">Other</option>
-                </select>
+            <!-- Payment & Future Schedule Calendar Card -->
+            <div class="payment-calendar-card" id="tenantPaymentCalendarCard">
+              <div class="cal-header">
+                <div>
+                  <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a">
+                    Payment &amp; Future Schedule Calendar
+                  </h3>
+                  <p style="margin: 2px 0 0; font-size: 12px; color: #64748b">
+                    Track past payments, current billing status, and future monthly due dates.
+                  </p>
+                </div>
+                <div class="cal-nav">
+                  <button
+                    type="button"
+                    class="cal-nav-btn"
+                    data-action="tenant-cal-prev"
+                    title="Previous Month"
+                  >
+                    &lsaquo;
+                  </button>
+                  <span class="cal-month-label" id="tenantCalendarMonthLabel">Month Year</span>
+                  <button
+                    type="button"
+                    class="cal-nav-btn"
+                    data-action="tenant-cal-next"
+                    title="Next Month"
+                  >
+                    &rsaquo;
+                  </button>
+                  <button type="button" class="cal-today-btn" data-action="tenant-cal-today">
+                    Today
+                  </button>
+                </div>
               </div>
 
-              <div class="payment-field">
-                <label for="paymentAmount">Amount (₱)</label>
-                <input type="number" id="paymentAmount" value="5000" min="1" step="0.01" required />
+              <div class="cal-legend">
+                <span class="cal-legend-item"><span class="cal-dot cal-dot-paid"></span> Paid</span>
+                <span class="cal-legend-item"
+                  ><span class="cal-dot cal-dot-pending"></span> Due This Month</span
+                >
+                <span class="cal-legend-item"
+                  ><span class="cal-dot cal-dot-scheduled"></span> Future Payment</span
+                >
+                <span class="cal-legend-item"
+                  ><span class="cal-dot cal-dot-overdue"></span> Overdue</span
+                >
               </div>
 
-              <div class="payment-field">
-                <label for="paymentNotes">Notes (Optional)</label>
-                <input type="text" id="paymentNotes" placeholder="e.g. Rent payment for May 2026" />
+              <div class="cal-weekdays">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
               </div>
+              <div class="cal-grid" id="tenantCalendarGrid"></div>
 
-              <button type="submit" class="submit-payment-btn" id="submitPaymentBtn" style="margin-top: 14px">
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                  </path>
-                </svg>
-                <span>Proceed to Pay</span>
-              </button>
-            </form>
+              <div
+                class="cal-selected-detail"
+                id="tenantCalendarDayDetail"
+                style="display: none"
+              ></div>
+
+              <div class="cal-upcoming-box">
+                <div class="cal-upcoming-title">Upcoming &amp; Future Rent Schedule</div>
+                <p style="margin: 2px 0 8px; font-size: 11px; color: #64748b">
+                  Click any upcoming month to pay early, or click again to wait for the next billing
+                  cycle.
+                </p>
+                <div class="cal-upcoming-list" id="tenantUpcomingScheduleList"></div>
+              </div>
+            </div>
           </div>
 
-          <!-- Payment & Future Schedule Calendar Card -->
-          <div class="payment-calendar-card" id="tenantPaymentCalendarCard">
-            <div class="cal-header">
+          <!-- Payment History Card (Full Width) -->
+          <div class="payment-history-card">
+            <h3>
+              <span>Payment History</span>
+              <span
+                id="historyCountBadge"
+                style="font-size: 12px; font-weight: normal; color: #6b7280"
+                >0 payments</span
+              >
+            </h3>
+            <div class="history-table-wrapper">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Reference</th>
+                    <th>Purpose</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentHistoryTableBody">
+                  <tr>
+                    <td colspan="7" style="text-align: center; color: #4b5563; padding: 24px">
+                      Loading your payment history...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="profile-tab" class="tab-content">
+        <div class="profile-container">
+          <div class="profile-section">
+            <h3>Personal Information</h3>
+            <div class="profile-field">
+              <label>Full Name</label>
+              <input type="text" id="fullName" value="Juan Dela Cruz" />
+            </div>
+            <div class="profile-field">
+              <label>Email Address</label>
+              <input type="email" id="email" value="juan.delacruz@email.com" disabled />
+            </div>
+            <div class="profile-field">
+              <label>Phone Number</label>
+              <input
+                type="tel"
+                id="phone"
+                value="0912 345 6789"
+                maxlength="13"
+                inputmode="tel"
+                placeholder="0912 345 6789"
+              />
+            </div>
+            <div class="profile-field">
+              <label>Emergency Contact</label>
+              <input
+                type="tel"
+                id="emergencyContact"
+                value="0923 456 7890"
+                maxlength="13"
+                inputmode="tel"
+                placeholder="0923 456 7890"
+              />
+            </div>
+          </div>
+
+          <div class="profile-section">
+            <h3>Current Residence</h3>
+            <div class="profile-field">
+              <label>Residence Type</label>
+              <input
+                type="text"
+                id="tenantProfileResidenceType"
+                value="Triple Occupancy Room"
+                disabled
+              />
+            </div>
+            <div class="profile-field">
+              <label>Room Number</label>
+              <input type="text" id="tenantProfileRoom" value="Room 201" disabled />
+            </div>
+            <div class="profile-field">
+              <label>Move-in Date</label>
+              <input type="text" id="tenantProfileMoveIn" value="January 10, 2026" disabled />
+            </div>
+          </div>
+
+          <button class="save-profile-btn" data-action="save-profile">Save Changes</button>
+        </div>
+      </div>
+
+      <div id="building-3d-tab" class="tab-content">
+        <div class="building-3d-layout">
+          <div class="building-3d-viewport-card">
+            <div class="building-3d-header">
               <div>
-                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a">
-                  Payment &amp; Future Schedule Calendar
-                </h3>
-                <p style="margin: 2px 0 0; font-size: 12px; color: #64748b">
-                  Track past payments, current billing status, and future monthly due dates.
+                <div class="building-3d-title-row">
+                  <h2 class="building-3d-heading">MJP Residences — Floor Plan</h2>
+                </div>
+                <p class="building-3d-sub">
+                  Drag to rotate 360° • Scroll to zoom • Auto-spin pauses on click and resumes after
+                  10s of inactivity
                 </p>
               </div>
-              <div class="cal-nav">
-                <button type="button" class="cal-nav-btn" data-action="tenant-cal-prev" title="Previous Month">
-                  &lsaquo;
+              <div class="building-3d-controls">
+                <button
+                  type="button"
+                  class="building-3d-btn active"
+                  id="tenant3DFireBtn"
+                  data-action="tenant-3d-fire"
+                >
+                  Fire Safety: ON
                 </button>
-                <span class="cal-month-label" id="tenantCalendarMonthLabel">Month Year</span>
-                <button type="button" class="cal-nav-btn" data-action="tenant-cal-next" title="Next Month">
-                  &rsaquo;
-                </button>
-                <button type="button" class="cal-today-btn" data-action="tenant-cal-today">
-                  Today
+                <button type="button" class="building-3d-btn" data-action="tenant-3d-my-unit">
+                  My Unit
                 </button>
               </div>
             </div>
 
-            <div class="cal-legend">
-              <span class="cal-legend-item"><span class="cal-dot cal-dot-paid"></span> Paid</span>
-              <span class="cal-legend-item"><span class="cal-dot cal-dot-pending"></span> Due This Month</span>
-              <span class="cal-legend-item"><span class="cal-dot cal-dot-scheduled"></span> Future Payment</span>
-              <span class="cal-legend-item"><span class="cal-dot cal-dot-overdue"></span> Overdue</span>
+            <div class="building-3d-floor-bar">
+              <label for="tenant3DFloorSelect" class="building-3d-floor-label"
+                >Isolate Floor:</label
+              >
+              <select
+                id="tenant3DFloorSelect"
+                style="
+                  padding: 6px 14px;
+                  border-radius: 8px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  background: #ffffff;
+                  color: #1e293b;
+                  border: 1px solid #cbd5e1;
+                  cursor: pointer;
+                  outline: none;
+                "
+              >
+                <option value="all">All Floors • 1F–5F</option>
+                <option value="1">1F • Commercial &amp; Water Station</option>
+                <option value="2">2F • Rooms 101–103</option>
+                <option value="3">3F • Rooms 201–203</option>
+                <option value="4">4F • Rooms &amp; Back Deck</option>
+                <option value="5">5F • Upper Rooms 401 &amp; 410</option>
+              </select>
             </div>
 
-            <div class="cal-weekdays">
-              <div>Sun</div>
-              <div>Mon</div>
-              <div>Tue</div>
-              <div>Wed</div>
-              <div>Thu</div>
-              <div>Fri</div>
-              <div>Sat</div>
-            </div>
-            <div class="cal-grid" id="tenantCalendarGrid"></div>
-
-            <div class="cal-selected-detail" id="tenantCalendarDayDetail" style="display: none"></div>
-
-            <div class="cal-upcoming-box">
-              <div class="cal-upcoming-title">Upcoming &amp; Future Rent Schedule</div>
-              <p style="margin: 2px 0 8px; font-size: 11px; color: #64748b">
-                Click any upcoming month to pay early, or click again to wait for the next billing cycle.
-              </p>
-              <div class="cal-upcoming-list" id="tenantUpcomingScheduleList"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Payment History Card (Full Width) -->
-        <div class="payment-history-card">
-          <h3>
-            <span>Payment History</span>
-            <span id="historyCountBadge" style="font-size: 12px; font-weight: normal; color: #6b7280">0 payments</span>
-          </h3>
-          <div class="history-table-wrapper">
-            <table class="history-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Reference</th>
-                  <th>Purpose</th>
-                  <th>Method</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="paymentHistoryTableBody">
-                <tr>
-                  <td colspan="7" style="text-align: center; color: #4b5563; padding: 24px">
-                    Loading your payment history...
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="profile-tab" class="tab-content">
-      <div class="profile-container">
-        <div class="profile-section">
-          <h3>Personal Information</h3>
-          <div class="profile-field">
-            <label>Full Name</label>
-            <input type="text" id="fullName" value="Juan Dela Cruz" />
-          </div>
-          <div class="profile-field">
-            <label>Email Address</label>
-            <input type="email" id="email" value="juan.delacruz@email.com" disabled />
-          </div>
-          <div class="profile-field">
-            <label>Phone Number</label>
-            <input type="tel" id="phone" value="0912 345 6789" maxlength="13" inputmode="tel"
-              placeholder="0912 345 6789" />
-          </div>
-          <div class="profile-field">
-            <label>Emergency Contact</label>
-            <input type="tel" id="emergencyContact" value="0923 456 7890" maxlength="13" inputmode="tel"
-              placeholder="0923 456 7890" />
-          </div>
-        </div>
-
-        <div class="profile-section">
-          <h3>Current Residence</h3>
-          <div class="profile-field">
-            <label>Residence Type</label>
-            <input type="text" id="tenantProfileDorm" value="Triple Occupancy Room" disabled />
-          </div>
-          <div class="profile-field">
-            <label>Room Number</label>
-            <input type="text" id="tenantProfileRoom" value="Room 201" disabled />
-          </div>
-          <div class="profile-field">
-            <label>Move-in Date</label>
-            <input type="text" id="tenantProfileMoveIn" value="January 10, 2026" disabled />
-          </div>
-        </div>
-
-        <button class="save-profile-btn" data-action="save-profile">Save Changes</button>
-      </div>
-    </div>
-
-    <div id="building-3d-tab" class="tab-content">
-      <div class="building-3d-layout">
-        <div class="building-3d-viewport-card">
-          <div class="building-3d-header">
-            <div>
-              <div class="building-3d-title-row">
-
-                <h2 class="building-3d-heading">MJP Residences — Floor Plan</h2>
+            <div class="building-3d-canvas-wrap">
+              <div id="tenantBuilding3DViewport" class="building-3d-canvas"></div>
+              <div class="building-3d-legend">
+                <span class="legend-item"
+                  ><span class="legend-dot legend-dot-own"></span> Your Assigned Unit</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot legend-dot-room"></span> Triple Room (2F–5F)</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot legend-dot-comm"></span> 1F Commercial Space</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot" style="background: #22d3ee"></span> 1F Owner Water
+                  Station</span
+                >
+                <span class="legend-item"
+                  ><span class="legend-dot legend-dot-corridor"></span> Side Hallway &amp; Rear
+                  Stairs</span
+                >
               </div>
-              <p class="building-3d-sub">
-                Drag to rotate 360° • Scroll to zoom • Auto-spin pauses on click and resumes after 10s of inactivity
+            </div>
+          </div>
+
+          <div class="building-3d-info-card">
+            <div class="building-3d-inspector-head">
+              <span id="tenant3DUnitBadge" class="building-3d-unit-badge">YOUR ASSIGNED UNIT</span>
+              <h3 id="tenant3DUnitTitle" class="building-3d-unit-title">Room 201</h3>
+              <p id="tenant3DUnitSubtitle" class="building-3d-unit-subtitle">
+                3rd Floor (Front Wing) • Triple Occupancy Room
               </p>
             </div>
-            <div class="building-3d-controls">
-              <button type="button" class="building-3d-btn active" id="tenant3DFireBtn" data-action="tenant-3d-fire">
-                Fire Safety: ON
-              </button>
-              <button type="button" class="building-3d-btn" data-action="tenant-3d-my-unit">
-                My Unit
-              </button>
-            </div>
-          </div>
 
-          <div class="building-3d-floor-bar">
-            <label for="tenant3DFloorSelect" class="building-3d-floor-label">Isolate Floor:</label>
-            <select id="tenant3DFloorSelect"
-              style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;background:#ffffff;color:#1e293b;border:1px solid #cbd5e1;cursor:pointer;outline:none;">
-              <option value="all">All Floors • 1F–5F</option>
-              <option value="1">1F • Commercial &amp; Water Station</option>
-              <option value="2">2F • Rooms 101–103</option>
-              <option value="3">3F • Rooms 201–203</option>
-              <option value="4">4F • Rooms &amp; Back Deck</option>
-              <option value="5">5F • Upper Rooms 401 &amp; 410</option>
-            </select>
-          </div>
-
-          <div class="building-3d-canvas-wrap">
-            <div id="tenantBuilding3DViewport" class="building-3d-canvas"></div>
-            <div class="building-3d-legend">
-              <span class="legend-item"><span class="legend-dot legend-dot-own"></span> Your Assigned Unit</span>
-              <span class="legend-item"><span class="legend-dot legend-dot-room"></span> Triple Room (2F–5F)</span>
-              <span class="legend-item"><span class="legend-dot legend-dot-comm"></span> 1F Commercial Space</span>
-              <span class="legend-item"><span class="legend-dot" style="background:#22d3ee"></span> 1F Owner Water
-                Station</span>
-              <span class="legend-item"><span class="legend-dot legend-dot-corridor"></span> Side Hallway &amp; Rear
-                Stairs</span>
+            <div class="building-3d-specs-grid">
+              <div class="building-3d-spec-box">
+                <span class="spec-label">Floor Level</span>
+                <strong id="tenant3DUnitFloor" class="spec-val">3rd Floor</strong>
+              </div>
+              <div class="building-3d-spec-box">
+                <span class="spec-label">Floor Area</span>
+                <strong id="tenant3DUnitSize" class="spec-val">30 sqm</strong>
+              </div>
+              <div class="building-3d-spec-box">
+                <span class="spec-label">User</span>
+                <strong id="tenant3DUnitCap" class="spec-val">1 User</strong>
+              </div>
+              <div class="building-3d-spec-box">
+                <span class="spec-label">Monthly Rate</span>
+                <strong id="tenant3DUnitPrice" class="spec-val">₱5,000/mo</strong>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="building-3d-info-card">
-          <div class="building-3d-inspector-head">
-            <span id="tenant3DUnitBadge" class="building-3d-unit-badge">YOUR ASSIGNED UNIT</span>
-            <h3 id="tenant3DUnitTitle" class="building-3d-unit-title">Room 201</h3>
-            <p id="tenant3DUnitSubtitle" class="building-3d-unit-subtitle">3rd Floor (Front Wing) • Triple Occupancy
-              Room</p>
-          </div>
+            <div class="building-3d-foundation-note">
+              <strong>Interior Foundation Layout</strong>
+              <div id="tenant3DUnitFeatures" class="building-3d-feature-chips"></div>
+            </div>
 
-          <div class="building-3d-specs-grid">
-            <div class="building-3d-spec-box">
-              <span class="spec-label">Floor Level</span>
-              <strong id="tenant3DUnitFloor" class="spec-val">3rd Floor</strong>
+            <div class="building-3d-directory">
+              <div class="building-3d-dir-title">Building Unit Directory (1F–5F)</div>
+              <div
+                id="tenant3DUnitList"
+                class="building-3d-dir-list"
+                style="max-height: 260px; overflow-y: auto; padding-right: 4px"
+              ></div>
             </div>
-            <div class="building-3d-spec-box">
-              <span class="spec-label">Floor Area</span>
-              <strong id="tenant3DUnitSize" class="spec-val">30 sqm</strong>
-            </div>
-            <div class="building-3d-spec-box">
-              <span class="spec-label">User</span>
-              <strong id="tenant3DUnitCap" class="spec-val">1 User</strong>
-            </div>
-            <div class="building-3d-spec-box">
-              <span class="spec-label">Monthly Rate</span>
-              <strong id="tenant3DUnitPrice" class="spec-val">₱5,000/mo</strong>
-            </div>
-          </div>
-
-          <div class="building-3d-foundation-note">
-            <strong>Interior Foundation Layout</strong>
-            <div id="tenant3DUnitFeatures" class="building-3d-feature-chips"></div>
-          </div>
-
-          <div class="building-3d-directory">
-            <div class="building-3d-dir-title">Building Unit Directory (1F–5F)</div>
-            <div id="tenant3DUnitList" class="building-3d-dir-list"
-              style="max-height: 260px; overflow-y: auto; padding-right: 4px"></div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- PayMongo QR Ph Payment Modal -->
-  <div id="paymongoQrModal" class="paymongo-modal-backdrop" style="display: none">
-    <div class="paymongo-modal-card">
-      <div class="paymongo-modal-header">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <span class="paymongo-tag">QR Ph</span>
-          <strong style="color: #1e293b; font-size: 15px">Scan to Pay</strong>
-        </div>
-        <button data-action="close-qr-modal" style="
+    <!-- PayMongo QR Ph Payment Modal -->
+    <div id="paymongoQrModal" class="paymongo-modal-backdrop" style="display: none">
+      <div class="paymongo-modal-card">
+        <div class="paymongo-modal-header">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span class="paymongo-tag">QR Ph</span>
+            <strong style="color: #1e293b; font-size: 15px">Scan to Pay</strong>
+          </div>
+          <button
+            data-action="close-qr-modal"
+            style="
               background: none;
               border: none;
               font-size: 20px;
               color: #64748b;
               cursor: pointer;
               padding: 4px 8px;
-            ">
-          &times;
-        </button>
-      </div>
-      <div class="paymongo-modal-body">
-        <div style="font-size: 13px; color: #64748b; margin-bottom: 4px">
-          Merchant: <strong>MJP Residences</strong>
+            "
+          >
+            &times;
+          </button>
         </div>
-        <div style="font-size: 24px; font-weight: 700; color: #065f46" id="qrModalAmount">
-          ₱5,000.00
-        </div>
-        <div style="font-size: 12px; color: #64748b; margin-top: 2px">
-          Ref:
-          <span id="qrModalRef" style="font-family: monospace; color: #475569">REF-123456</span>
-        </div>
+        <div class="paymongo-modal-body">
+          <div style="font-size: 13px; color: #64748b; margin-bottom: 4px">
+            Merchant: <strong>MJP Residences</strong>
+          </div>
+          <div style="font-size: 24px; font-weight: 700; color: #065f46" id="qrModalAmount">
+            ₱5,000.00
+          </div>
+          <div style="font-size: 12px; color: #64748b; margin-top: 2px">
+            Ref:
+            <span id="qrModalRef" style="font-family: monospace; color: #475569">REF-123456</span>
+          </div>
 
-        <div class="qr-wrapper">
-          <img id="qrModalImage"
-            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' fill='%23f1f5f9'/%3E%3C/svg%3E"
-            alt="PayMongo QR Ph Code" />
-        </div>
+          <div class="qr-wrapper">
+            <img
+              id="qrModalImage"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' fill='%23f1f5f9'/%3E%3C/svg%3E"
+              alt="PayMongo QR Ph Code"
+            />
+          </div>
 
-        <div style="
+          <div
+            style="
               font-size: 12px;
               color: #b45309;
               background: #fffbeb;
               padding: 6px 12px;
               border-radius: 6px;
               display: inline-block;
-            ">
-          ⏱ Valid for <span id="qrTimer" style="font-weight: 600">15:00</span>
-        </div>
+            "
+          >
+            ⏱ Valid for <span id="qrTimer" style="font-weight: 600">15:00</span>
+          </div>
 
-        <div class="qr-instructions">
-          <strong>How to pay:</strong>
-          <ol>
-            <li>Open your <strong>GCash</strong>, <strong>Maya</strong>, or banking app.</li>
-            <li>Select <strong>Scan QR</strong> and point camera at the code.</li>
-            <li>Confirm the amount and proceed with payment.</li>
-          </ol>
+          <div class="qr-instructions">
+            <strong>How to pay:</strong>
+            <ol>
+              <li>Open your <strong>GCash</strong>, <strong>Maya</strong>, or banking app.</li>
+              <li>Select <strong>Scan QR</strong> and point camera at the code.</li>
+              <li>Confirm the amount and proceed with payment.</li>
+            </ol>
+          </div>
         </div>
-      </div>
-      <div class="paymongo-modal-footer">
-        <button data-action="close-qr-modal" style="
+        <div class="paymongo-modal-footer">
+          <button
+            data-action="close-qr-modal"
+            style="
               padding: 10px 18px;
               background: white;
               border: 1px solid #cbd5e1;
@@ -462,10 +598,14 @@
               cursor: pointer;
               font-size: 13px;
               font-weight: 500;
-            ">
-          Cancel
-        </button>
-        <button id="confirmQrBtn" data-action="confirm-qr-payment" style="
+            "
+          >
+            Cancel
+          </button>
+          <button
+            id="confirmQrBtn"
+            data-action="confirm-qr-payment"
+            style="
               padding: 10px 20px;
               background: #047857;
               border: none;
@@ -474,126 +614,220 @@
               cursor: pointer;
               font-size: 13px;
               font-weight: 600;
-            ">
-          I Have Completed Payment
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PayMongo Payment in Progress Modal -->
-  <div id="paymongoProgressModal" class="paymongo-modal-backdrop" style="display: none">
-    <div class="paymongo-modal-card" style="max-width: 440px; text-align: center; padding: 24px;">
-      <div style="width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%; background: #ecfdf5; display: flex; align-items: center; justify-content: center;">
-        <div style="width: 28px; height: 28px; border: 3px solid #cbd5e1; border-top-color: #047857; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-      </div>
-      <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px;">Payment in Progress</h3>
-      <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 20px;">
-        A secure PayMongo window is open for authorization. Your receipt will appear here automatically once completed or cancelled.
-      </p>
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 20px; font-size: 12px; color: #475569; text-align: left;">
-        <div>Amount: <strong id="progressModalAmount" style="color: #047857;">₱0.00</strong></div>
-        <div style="margin-top: 4px;">Status: <span id="progressModalStatus" style="font-weight: 600; color: #0284c7;">Awaiting Payment Confirmation...</span></div>
-      </div>
-      <div style="display: flex; gap: 10px; justify-content: center;">
-        <button id="btnCheckPaymentStatus" data-action="check-progress-payment" style="background: #047857; color: white; padding: 10px 18px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; font-size: 13px;">
-          Check Status Now
-        </button>
-        <button id="btnCancelProgressPayment" data-action="cancel-progress-payment" style="background: white; border: 1px solid #cbd5e1; color: #64748b; padding: 10px 16px; font-weight: 600; border-radius: 6px; cursor: pointer; font-size: 13px;">
-          Cancel / Return
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PayMongo Official Receipt Modal (Success & Failed States) -->
-  <div id="paymongoReceiptModal" class="paymongo-modal-backdrop" style="display: none">
-    <div class="paymongo-modal-card" id="receiptPrintArea">
-      <div class="paymongo-modal-header" id="receiptModalHeader" style="background: #f0fdf4">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <span class="paymongo-live-dot" id="receiptModalDot"></span>
-          <strong id="receiptModalHeaderTitle" style="color: #166534; font-size: 14px">PayMongo Payment Receipt</strong>
+            "
+          >
+            I Have Completed Payment
+          </button>
         </div>
-        <button data-action="close-receipt-modal" style="
+      </div>
+    </div>
+
+    <!-- PayMongo Payment in Progress Modal -->
+    <div id="paymongoProgressModal" class="paymongo-modal-backdrop" style="display: none">
+      <div class="paymongo-modal-card" style="max-width: 440px; text-align: center; padding: 24px">
+        <div
+          style="
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 16px;
+            border-radius: 50%;
+            background: #ecfdf5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <div
+            style="
+              width: 28px;
+              height: 28px;
+              border: 3px solid #cbd5e1;
+              border-top-color: #047857;
+              border-radius: 50%;
+              animation: spin 0.8s linear infinite;
+            "
+          ></div>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0 0 8px">
+          Payment in Progress
+        </h3>
+        <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0 0 20px">
+          A secure PayMongo window is open for authorization. Your receipt will appear here
+          automatically once completed or cancelled.
+        </p>
+        <div
+          style="
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 20px;
+            font-size: 12px;
+            color: #475569;
+            text-align: left;
+          "
+        >
+          <div>Amount: <strong id="progressModalAmount" style="color: #047857">₱0.00</strong></div>
+          <div style="margin-top: 4px">
+            Status:
+            <span id="progressModalStatus" style="font-weight: 600; color: #0284c7"
+              >Awaiting Payment Confirmation...</span
+            >
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center">
+          <button
+            id="btnCheckPaymentStatus"
+            data-action="check-progress-payment"
+            style="
+              background: #047857;
+              color: white;
+              padding: 10px 18px;
+              font-weight: 600;
+              border-radius: 6px;
+              border: none;
+              cursor: pointer;
+              font-size: 13px;
+            "
+          >
+            Check Status Now
+          </button>
+          <button
+            id="btnCancelProgressPayment"
+            data-action="cancel-progress-payment"
+            style="
+              background: white;
+              border: 1px solid #cbd5e1;
+              color: #64748b;
+              padding: 10px 16px;
+              font-weight: 600;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 13px;
+            "
+          >
+            Cancel / Return
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PayMongo Official Receipt Modal (Success & Failed States) -->
+    <div id="paymongoReceiptModal" class="paymongo-modal-backdrop" style="display: none">
+      <div class="paymongo-modal-card" id="receiptPrintArea">
+        <div class="paymongo-modal-header" id="receiptModalHeader" style="background: #f0fdf4">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span class="paymongo-live-dot" id="receiptModalDot"></span>
+            <strong id="receiptModalHeaderTitle" style="color: #166534; font-size: 14px"
+              >PayMongo Payment Receipt</strong
+            >
+          </div>
+          <button
+            data-action="close-receipt-modal"
+            style="
               background: none;
               border: none;
               font-size: 20px;
               color: #64748b;
               cursor: pointer;
               padding: 4px 8px;
-            ">
-          &times;
-        </button>
-      </div>
-      <div class="paymongo-modal-body">
-        <div id="receiptIconContainer">
-          <div class="receipt-check-icon">✓</div>
+            "
+          >
+            &times;
+          </button>
         </div>
-        <h3 id="receiptModalTitle" style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px">
-          Payment Successful
-        </h3>
-        <p id="receiptModalSubtitle" style="font-size: 13px; color: #64748b; margin-bottom: 16px">
-          Your transaction has been processed and verified by PayMongo.
-        </p>
+        <div class="paymongo-modal-body">
+          <div id="receiptIconContainer">
+            <div class="receipt-check-icon">✓</div>
+          </div>
+          <h3
+            id="receiptModalTitle"
+            style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px"
+          >
+            Payment Successful
+          </h3>
+          <p id="receiptModalSubtitle" style="font-size: 13px; color: #64748b; margin-bottom: 16px">
+            Your transaction has been processed and verified by PayMongo.
+          </p>
 
-        <div class="receipt-details-list">
-          <div class="receipt-row">
-            <span class="receipt-row-label">Merchant</span>
-            <span class="receipt-row-value">MJP Residences</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Tenant Name</span>
-            <span class="receipt-row-value" id="receiptTenantName">Juan Dela Cruz</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Residence / Room</span>
-            <span class="receipt-row-value" id="receiptResidence">Triple Occupancy Room (Room 201)</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Purpose</span>
-            <span class="receipt-row-value" id="receiptPurpose">Monthly Rent</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Payment Method</span>
-            <span class="receipt-row-value" id="receiptMethod">PayMongo Checkout</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Status</span>
-            <span class="receipt-row-value" id="receiptStatusBadge">
-              <span class="status-badge-paid">✓ Paid</span>
-            </span>
-          </div>
-          <div class="receipt-row" id="receiptNotesRow" style="display: none">
-            <span class="receipt-row-label">Note</span>
-            <span class="receipt-row-value" id="receiptNotes" style="font-style: italic; color: #475569"></span>
-          </div>
-          <div class="receipt-row" id="receiptFailureRow" style="display: none">
-            <span class="receipt-row-label">Failure Reason</span>
-            <span class="receipt-row-value" id="receiptFailureReason"
-              style="color: #dc2626; font-size: 12px; text-align: right; max-width: 65%">3DS Authentication
-              Failed</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Reference Number</span>
-            <span class="receipt-row-value" id="receiptReference" style="font-family: monospace">PM-2026-001</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">PayMongo Token / ID</span>
-            <span class="receipt-row-value" id="receiptTokenId"
-              style="font-family: monospace; font-size: 12px">pm_live_...</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label">Date & Time</span>
-            <span class="receipt-row-value" id="receiptDateTime">May 5, 2026</span>
-          </div>
-          <div class="receipt-row">
-            <span class="receipt-row-label" id="receiptAmountLabel">Amount Paid</span>
-            <span class="receipt-row-value" id="receiptAmount" style="color: #065f46">₱5,000.00</span>
+          <div class="receipt-details-list">
+            <div class="receipt-row">
+              <span class="receipt-row-label">Merchant</span>
+              <span class="receipt-row-value">MJP Residences</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Tenant Name</span>
+              <span class="receipt-row-value" id="receiptTenantName">Juan Dela Cruz</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Residence / Room</span>
+              <span class="receipt-row-value" id="receiptResidence"
+                >Triple Occupancy Room (Room 201)</span
+              >
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Purpose</span>
+              <span class="receipt-row-value" id="receiptPurpose">Monthly Rent</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Payment Method</span>
+              <span class="receipt-row-value" id="receiptMethod">PayMongo Checkout</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Status</span>
+              <span class="receipt-row-value" id="receiptStatusBadge">
+                <span class="status-badge-paid">✓ Paid</span>
+              </span>
+            </div>
+            <div class="receipt-row" id="receiptNotesRow" style="display: none">
+              <span class="receipt-row-label">Note</span>
+              <span
+                class="receipt-row-value"
+                id="receiptNotes"
+                style="font-style: italic; color: #475569"
+              ></span>
+            </div>
+            <div class="receipt-row" id="receiptFailureRow" style="display: none">
+              <span class="receipt-row-label">Failure Reason</span>
+              <span
+                class="receipt-row-value"
+                id="receiptFailureReason"
+                style="color: #dc2626; font-size: 12px; text-align: right; max-width: 65%"
+                >3DS Authentication Failed</span
+              >
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Reference Number</span>
+              <span class="receipt-row-value" id="receiptReference" style="font-family: monospace"
+                >PM-2026-001</span
+              >
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">PayMongo Token / ID</span>
+              <span
+                class="receipt-row-value"
+                id="receiptTokenId"
+                style="font-family: monospace; font-size: 12px"
+                >pm_live_...</span
+              >
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label">Date & Time</span>
+              <span class="receipt-row-value" id="receiptDateTime">May 5, 2026</span>
+            </div>
+            <div class="receipt-row">
+              <span class="receipt-row-label" id="receiptAmountLabel">Amount Paid</span>
+              <span class="receipt-row-value" id="receiptAmount" style="color: #065f46"
+                >₱5,000.00</span
+              >
+            </div>
           </div>
         </div>
-      </div>
-      <div class="paymongo-modal-footer">
-        <button data-action="print-receipt" id="receiptPrintBtn" style="
+        <div class="paymongo-modal-footer">
+          <button
+            data-action="print-receipt"
+            id="receiptPrintBtn"
+            style="
               padding: 10px 18px;
               background: white;
               border: 1px solid #047857;
@@ -605,15 +839,22 @@
               display: flex;
               align-items: center;
               gap: 6px;
-            ">
-          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-            </path>
-          </svg>
-          <span>Print / Save Receipt</span>
-        </button>
-        <button data-action="close-receipt-modal" id="receiptCloseBtn" style="
+            "
+          >
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              ></path>
+            </svg>
+            <span>Print / Save Receipt</span>
+          </button>
+          <button
+            data-action="close-receipt-modal"
+            id="receiptCloseBtn"
+            style="
               padding: 10px 22px;
               background: #047857;
               border: none;
@@ -622,17 +863,17 @@
               cursor: pointer;
               font-size: 13px;
               font-weight: 600;
-            ">
-          Done
-        </button>
+            "
+          >
+            Done
+          </button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script type="module" src="./assets/js/supabase-service.js"></script>
-  <script type="module" src="./assets/js/lib/maintenance.js"></script>
-  <script type="module" src="./assets/js/paymongo-service.js"></script>
-  <script type="module" src="./assets/js/pages/tenant-portal.js"></script>
-</body>
-
+    <script type="module" src="./assets/js/supabase-service.js"></script>
+    <script type="module" src="./assets/js/lib/maintenance.js"></script>
+    <script type="module" src="./assets/js/paymongo-service.js"></script>
+    <script type="module" src="./assets/js/pages/tenant-portal.js"></script>
+  </body>
 </html>

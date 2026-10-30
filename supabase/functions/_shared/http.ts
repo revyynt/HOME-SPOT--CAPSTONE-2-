@@ -30,7 +30,8 @@ export function isOriginAllowed(origin: string | null): boolean {
       url.hostname === 'vercel.app' ||
       url.hostname.endsWith('.home-spot.online') ||
       url.hostname === 'home-spot.online'
-    ) return true;
+    )
+      return true;
     if (getSupabaseOrigin().includes(url.origin)) return true;
     const configured = (Deno.env.get('ALLOWED_ORIGINS') || '')
       .split(',')

@@ -235,10 +235,10 @@ Deno.serve(async (request: Request) => {
             const canonicalDocId = rawSessionId.startsWith('cs_') ? rawSessionId : paymentId;
             const lineItemsAmount = Array.isArray(sessionAttrs?.line_items)
               ? sessionAttrs.line_items.reduce(
-                (sum: number, item: { amount?: number; quantity?: number }) =>
-                  sum + Number(item.amount || 0) * Number(item.quantity || 1),
-                0
-              )
+                  (sum: number, item: { amount?: number; quantity?: number }) =>
+                    sum + Number(item.amount || 0) * Number(item.quantity || 1),
+                  0
+                )
               : 0;
             const amountInCentavos = Number(
               relatedPayment?.attributes?.amount || sessionAttrs?.amount || lineItemsAmount
@@ -256,20 +256,22 @@ Deno.serve(async (request: Request) => {
               sessionAttrs.line_items[0].name.trim();
             const cleanPurpose =
               lineItemName ||
-              (sessionAttrs?.description || 'Monthly Rent').replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+              (sessionAttrs?.description || 'Monthly Rent')
+                .replace(/\s*-\s*MJP Residences\s*$/i, '')
+                .trim();
             const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
             const paidUnix = Number(
               relatedPayment?.attributes?.paid_at ||
-              sessionAttrs?.paid_at ||
-              sessionAttrs?.created_at ||
-              0
+                sessionAttrs?.paid_at ||
+                sessionAttrs?.created_at ||
+                0
             );
             const now = paidUnix > 0 ? new Date(paidUnix * 1000) : new Date();
             const rawChannel = String(
               sessionAttrs?.payment_method_used ||
-              relatedPayment?.attributes?.payment_method_type ||
-              relatedPayment?.attributes?.source?.type ||
-              ''
+                relatedPayment?.attributes?.payment_method_type ||
+                relatedPayment?.attributes?.source?.type ||
+                ''
             )
               .trim()
               .toLowerCase();
@@ -342,7 +344,9 @@ Deno.serve(async (request: Request) => {
             const rawPi = sessionAttrs?.payment_intent;
             const piId = typeof rawPi === 'string' ? rawPi : rawPi?.id || null;
             if (piId && typeof piId === 'string' && piId.startsWith('pi_')) {
-              const piRes = await payMongoRequest(`/v1/payment_intents/${encodeURIComponent(piId)}`);
+              const piRes = await payMongoRequest(
+                `/v1/payment_intents/${encodeURIComponent(piId)}`
+              );
               const piAttrs = piRes.data?.attributes;
               if (piAttrs) {
                 sessionAttrs.payment_intent = {
@@ -350,7 +354,11 @@ Deno.serve(async (request: Request) => {
                   attributes: piAttrs
                 };
 
-                if (!sessionAttrs.payments?.length && Array.isArray(piAttrs.payments) && piAttrs.payments.length > 0) {
+                if (
+                  !sessionAttrs.payments?.length &&
+                  Array.isArray(piAttrs.payments) &&
+                  piAttrs.payments.length > 0
+                ) {
                   sessionAttrs.payments = piAttrs.payments;
                 }
                 if (piAttrs.last_payment_error) {
@@ -358,14 +366,15 @@ Deno.serve(async (request: Request) => {
                 }
 
                 const nextUrl =
-                  piAttrs?.next_action?.redirect?.url ||
-                  piAttrs?.next_action?.url ||
-                  '';
-                const matchSrc = typeof nextUrl === 'string' ? nextUrl.match(/[?&]id=(src_[a-zA-Z0-9]+)/) : null;
+                  piAttrs?.next_action?.redirect?.url || piAttrs?.next_action?.url || '';
+                const matchSrc =
+                  typeof nextUrl === 'string' ? nextUrl.match(/[?&]id=(src_[a-zA-Z0-9]+)/) : null;
                 const sourceId = matchSrc ? matchSrc[1] : null;
 
                 if (sourceId) {
-                  const srcRes = await payMongoRequest(`/v1/sources/${encodeURIComponent(sourceId)}`);
+                  const srcRes = await payMongoRequest(
+                    `/v1/sources/${encodeURIComponent(sourceId)}`
+                  );
                   const srcAttrs = srcRes.data?.attributes;
                   if (srcAttrs) {
                     sessionAttrs.source = {
@@ -374,7 +383,8 @@ Deno.serve(async (request: Request) => {
                       type: srcAttrs.type
                     };
                     if (srcAttrs.type) {
-                      sessionAttrs.payment_method_used = sessionAttrs.payment_method_used || srcAttrs.type;
+                      sessionAttrs.payment_method_used =
+                        sessionAttrs.payment_method_used || srcAttrs.type;
                     }
                   }
                 }

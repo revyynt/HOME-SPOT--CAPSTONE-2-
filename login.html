@@ -1,303 +1,474 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portal Login - MJP Residences</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="./assets/css/style.css" />
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portal Login - MJP Residences</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="./assets/css/style.css" />
-</head>
-
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased">
-  <div class="w-full max-w-md">
-    <!-- Portal Header -->
-    <div class="text-center mb-6">
-      <div class="w-10 h-1.5 bg-blue-100 rounded-full mx-auto mb-6"></div>
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
-        Welcome to Portal
-      </h1>
-    </div>
-
-    <!-- Alert Message -->
-    <div id="loginAlert" class="hidden mb-6 p-4 rounded-xl text-sm leading-relaxed border" role="alert"></div>
-
-    <!-- Login Card / Form -->
-    <form id="loginForm" class="space-y-5">
-      <!-- Email Address -->
-      <div>
-        <label for="email" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-          Email Address
-        </label>
-        <div class="relative flex items-center">
-          <span class="absolute left-4 text-gray-400 font-medium select-none text-base">@</span>
-          <input type="email" id="email" name="email" required autocomplete="email" placeholder="name@example.com"
-            class="w-full pl-10 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm" />
-        </div>
+  <body class="bg-slate-50 min-h-screen flex items-center justify-center p-4 antialiased">
+    <div class="w-full max-w-md">
+      <!-- Portal Header -->
+      <div class="text-center mb-6">
+        <div class="w-10 h-1.5 bg-blue-100 rounded-full mx-auto mb-6"></div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">
+          Welcome to Portal
+        </h1>
       </div>
 
-      <!-- Password -->
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <label for="password" class="block text-xs font-bold text-gray-500 uppercase tracking-wider">
-            Password
+      <!-- Alert Message -->
+      <div
+        id="loginAlert"
+        class="hidden mb-6 p-4 rounded-xl text-sm leading-relaxed border"
+        role="alert"
+      ></div>
+
+      <!-- Login Card / Form -->
+      <form id="loginForm" class="space-y-5">
+        <!-- Email Address -->
+        <div>
+          <label
+            for="email"
+            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2"
+          >
+            Email Address
           </label>
-          <button type="button" id="forgotPasswordBtn"
-            class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
-            Forgot password?
-          </button>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 text-gray-400 font-medium select-none text-base">@</span>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              autocomplete="email"
+              placeholder="name@example.com"
+              class="w-full pl-10 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
+            />
+          </div>
         </div>
-        <div class="relative flex items-center">
-          <span class="absolute left-4 text-gray-400 flex items-center pointer-events-none">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-              </path>
-            </svg>
-          </span>
-          <input type="password" id="password" name="password" required autocomplete="current-password"
-            placeholder="Enter your password"
-            class="w-full pl-11 pr-11 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm" />
-          <button type="button" id="togglePasswordBtn"
-            class="absolute right-3.5 text-gray-400 hover:text-gray-600 p-1 focus:outline-none"
-            aria-label="Toggle password visibility">
-            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-              </path>
-            </svg>
-          </button>
+
+        <!-- Password -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label
+              for="password"
+              class="block text-xs font-bold text-gray-500 uppercase tracking-wider"
+            >
+              Password
+            </label>
+            <button
+              type="button"
+              id="forgotPasswordBtn"
+              class="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+            >
+              Forgot password?
+            </button>
+          </div>
+          <div class="relative flex items-center">
+            <span class="absolute left-4 text-gray-400 flex items-center pointer-events-none">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                ></path>
+              </svg>
+            </span>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              class="w-full pl-11 pr-11 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all shadow-sm"
+            />
+            <button
+              type="button"
+              id="togglePasswordBtn"
+              class="absolute right-3.5 text-gray-400 hover:text-gray-600 p-1 focus:outline-none"
+              aria-label="Toggle password visibility"
+            >
+              <svg
+                id="eyeIcon"
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                ></path>
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Keep me signed in (hidden for security & persistent token maintenance) -->
+        <div class="hidden">
+          <input type="checkbox" id="rememberMe" checked class="hidden" />
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          id="loginSubmitBtn"
+          class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group"
+        >
+          <span>Sign In to Account</span>
+          <span class="transition-transform group-hover:translate-x-1">→</span>
+        </button>
+      </form>
+
+      <!-- Quick Access & Info Divider -->
+      <div class="relative my-8">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-200"></div>
+        </div>
+        <div
+          class="relative flex justify-center text-xs uppercase tracking-widest font-semibold text-gray-400"
+        >
+          <span class="bg-slate-50 px-3">QUICK ACCESS &amp; INFO</span>
         </div>
       </div>
 
-      <!-- Keep me signed in (hidden for security & persistent token maintenance) -->
-      <div class="hidden">
-        <input type="checkbox" id="rememberMe" checked class="hidden" />
-      </div>
-
-      <!-- Submit Button -->
-      <button type="submit" id="loginSubmitBtn"
-        class="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group">
-        <span>Sign In to Account</span>
-        <span class="transition-transform group-hover:translate-x-1">→</span>
-      </button>
-    </form>
-
-    <!-- Quick Access & Info Divider -->
-    <div class="relative my-8">
-      <div class="absolute inset-0 flex items-center">
-        <div class="w-full border-t border-gray-200"></div>
-      </div>
-      <div class="relative flex justify-center text-xs uppercase tracking-widest font-semibold text-gray-400">
-        <span class="bg-slate-50 px-3">QUICK ACCESS &amp; INFO</span>
-      </div>
-    </div>
-
-    <!-- Account Info Link -->
-    <div class="text-center text-sm text-gray-600">
-      <span>New tenant moving in?</span>
-      <button type="button" id="signupLink"
-        class="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline ml-1">
-        Account creation info
-      </button>
-    </div>
-
-    <!-- Back to Home -->
-    <div class="text-center mt-6">
-      <a href="./index.html" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
-        ← Back to Home
-      </a>
-    </div>
-  </div>
-
-  <!-- Tenant Account Notice Modal -->
-  <div id="signupModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    style="display: none">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h2 class="text-lg font-bold text-gray-900">Tenant Account Notice</h2>
-        <button type="button" id="closeModalBtn" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">
-          &times;
+      <!-- Account Info Link -->
+      <div class="text-center text-sm text-gray-600">
+        <span>New tenant moving in?</span>
+        <button
+          type="button"
+          id="signupLink"
+          class="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline ml-1"
+        >
+          Account creation info
         </button>
       </div>
-      <div class="p-6 text-gray-600 text-sm leading-relaxed">
-        <div class="flex items-center gap-3 mb-3">
+
+      <!-- Back to Home -->
+      <div class="text-center mt-6">
+        <a href="./index.html" class="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          ← Back to Home
+        </a>
+      </div>
+    </div>
+
+    <!-- Tenant Account Notice Modal -->
+    <div
+      id="signupModal"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      style="display: none"
+    >
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 class="text-lg font-bold text-gray-900">Tenant Account Notice</h2>
+          <button
+            type="button"
+            id="closeModalBtn"
+            class="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="p-6 text-gray-600 text-sm leading-relaxed">
+          <div class="flex items-center gap-3 mb-3">
+            <div
+              class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center flex-shrink-0"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="text-base font-bold text-gray-900">Moving into MJP Residences?</h3>
+          </div>
+          <p class="mb-3">
+            Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
+            to link your assigned room, lease term, and monthly rent schedule.
+          </p>
+          <p class="mb-4 text-xs text-gray-500">
+            If you have moved in or finalized your reservation, please ask the admin for your
+            official login credentials or visit the on-site office:
+          </p>
+          <a
+            href="https://www.google.com/maps?q=14.650403,120.977636"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mb-5 p-3 bg-blue-50/70 hover:bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold text-blue-700 transition-colors"
+          >
+            <span
+              >📍 MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila (Open in Google
+              Maps)</span
+            >
+            <span>↗</span>
+          </a>
+          <button
+            type="button"
+            id="understoodBtn"
+            class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
+          >
+            Understood
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./assets/js/supabase-service.js"></script>
+    <script type="module" src="./assets/js/lib/maintenance.js"></script>
+    <script type="module" src="./assets/js/pages/login.js"></script>
+
+    <!-- Forgot Password Modal -->
+    <div
+      id="forgotPasswordModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100"
+      >
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 class="text-lg font-bold text-gray-900">Reset Your Password</h2>
+          <button
+            type="button"
+            id="closeForgotModalBtn"
+            class="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+        <form id="forgotPasswordForm" class="p-6 space-y-4">
           <div
-            class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center flex-shrink-0">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
-              </path>
+            class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
             </svg>
           </div>
-          <h3 class="text-base font-bold text-gray-900">Moving into MJP Residences?</h3>
-        </div>
-        <p class="mb-3">
-          Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
-          to link your assigned room, lease term, and monthly rent schedule.
-        </p>
-        <p class="mb-4 text-xs text-gray-500">
-          If you have moved in or finalized your reservation, please ask the admin for your
-          official login credentials or visit the on-site office:
-        </p>
-        <a href="https://www.google.com/maps?q=14.650403,120.977636"
-          target="_blank" rel="noopener noreferrer"
-          class="mb-5 p-3 bg-blue-50/70 hover:bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold text-blue-700 transition-colors">
-          <span>📍 MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila (Open in Google Maps)</span>
-          <span>↗</span>
-        </a>
-        <button type="button" id="understoodBtn"
-          class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors">
-          Understood
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="./assets/js/supabase-service.js"></script>
-  <script type="module" src="./assets/js/lib/maintenance.js"></script>
-  <script type="module" src="./assets/js/pages/login.js"></script>
-
-  <!-- Forgot Password Modal -->
-  <div id="forgotPasswordModal"
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h2 class="text-lg font-bold text-gray-900">Reset Your Password</h2>
-        <button type="button" id="closeForgotModalBtn"
-          class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-      </div>
-      <form id="forgotPasswordForm" class="p-6 space-y-4">
-        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        </div>
-        <p class="text-sm text-gray-600 text-center">
-          Enter your registered email address and Supabase will email you a secure link to reset your password.
-        </p>
-        <div id="forgotAlert" class="hidden p-3 rounded-lg text-sm"></div>
-        <div>
-          <label for="forgotEmail" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Email
-            Address</label>
-          <input type="email" id="forgotEmail" required placeholder="e.g. tenant@example.com"
-            class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-        </div>
-        <div class="pt-2 flex gap-3">
-          <button type="button" id="cancelForgotBtn"
-            class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors">
-            Cancel
-          </button>
-          <button type="submit" id="submitForgotBtn"
-            class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors">
-            Send Reset Link
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Update Password Modal (Triggered after recovery link redirect) -->
-  <div id="updatePasswordModal"
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
-      <div class="px-6 py-4 border-b border-gray-100">
-        <h2 class="text-lg font-bold text-gray-900">Set New Password</h2>
-      </div>
-      <form id="updatePasswordForm" class="p-6 space-y-4">
-        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-        </div>
-        <p class="text-sm text-gray-600 text-center">
-          Enter a new secure password for your portal account.
-        </p>
-        <div id="updatePassAlert" class="hidden p-3 rounded-lg text-sm"></div>
-        <div>
-          <label for="newPassword" class="block text-xs font-semibold text-gray-700 uppercase mb-1">New Password</label>
-          <input type="password" id="newPassword" required minlength="6" placeholder="At least 6 characters"
-            class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-        </div>
-        <div>
-          <label for="confirmNewPassword" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Confirm New
-            Password</label>
-          <input type="password" id="confirmNewPassword" required minlength="6" placeholder="Re-enter your new password"
-            class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
-        </div>
-        <div class="pt-2">
-          <button type="submit" id="submitUpdatePassBtn"
-            class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors">
-            Update Password &amp; Continue
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-<div id="adminOtpModal"
-    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <h2 class="text-base font-bold text-gray-900">Security Verification</h2>
-        </div>
-        <button type="button" id="closeAdminOtpBtn"
-          class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-      </div>
-      <form id="adminOtpForm" class="p-6 space-y-4">
-        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-1">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-        </div>
-        <div class="text-center">
-          <h3 class="text-base font-bold text-gray-900">Enter Verification Code</h3>
-          <p class="text-xs text-gray-500 mt-1">
-            A verification code was sent to <strong id="adminOtpTargetEmail" class="text-gray-800 font-semibold"></strong> via Gmail.
+          <p class="text-sm text-gray-600 text-center">
+            Enter your registered email address and Supabase will email you a secure link to reset
+            your password.
           </p>
-        </div>
-
-        <div id="adminOtpAlert" class="hidden p-3 rounded-lg text-xs"></div>
-
-        <div>
-          <label for="adminOtpInput" class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 text-center">
-            Verification PIN
-          </label>
-          <input type="text" id="adminOtpInput" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="one-time-code" required placeholder="••••••••"
-            class="w-full text-center text-2xl tracking-[0.25em] font-mono font-bold py-3 px-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:tracking-widest" />
-        </div>
-
-        <div class="pt-1 flex gap-3">
-          <button type="button" id="cancelAdminOtpBtn"
-            class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors">
-            Cancel
-          </button>
-          <button type="submit" id="submitAdminOtpBtn"
-            class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors">
-            Verify &amp; Sign In
-          </button>
-        </div>
-
-        <div class="text-center pt-2 border-t border-gray-100">
-          <p class="text-xs text-gray-500">
-            Didn't receive the code?
-            <button type="button" id="resendAdminOtpBtn" class="text-emerald-600 font-semibold hover:underline cursor-pointer disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed">
-              Resend Code
+          <div id="forgotAlert" class="hidden p-3 rounded-lg text-sm"></div>
+          <div>
+            <label
+              for="forgotEmail"
+              class="block text-xs font-semibold text-gray-700 uppercase mb-1"
+              >Email Address</label
+            >
+            <input
+              type="email"
+              id="forgotEmail"
+              required
+              placeholder="e.g. tenant@example.com"
+              class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            />
+          </div>
+          <div class="pt-2 flex gap-3">
+            <button
+              type="button"
+              id="cancelForgotBtn"
+              class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Cancel
             </button>
-            <span id="resendAdminOtpCountdown" class="text-xs text-gray-400 ml-1"></span>
-          </p>
-        </div>
-      </form>
+            <button
+              type="submit"
+              id="submitForgotBtn"
+              class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+            >
+              Send Reset Link
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
 
-</body>
+    <!-- Update Password Modal (Triggered after recovery link redirect) -->
+    <div
+      id="updatePasswordModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100"
+      >
+        <div class="px-6 py-4 border-b border-gray-100">
+          <h2 class="text-lg font-bold text-gray-900">Set New Password</h2>
+        </div>
+        <form id="updatePasswordForm" class="p-6 space-y-4">
+          <div
+            class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <p class="text-sm text-gray-600 text-center">
+            Enter a new secure password for your portal account.
+          </p>
+          <div id="updatePassAlert" class="hidden p-3 rounded-lg text-sm"></div>
+          <div>
+            <label
+              for="newPassword"
+              class="block text-xs font-semibold text-gray-700 uppercase mb-1"
+              >New Password</label
+            >
+            <input
+              type="password"
+              id="newPassword"
+              required
+              minlength="6"
+              placeholder="At least 6 characters"
+              class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label
+              for="confirmNewPassword"
+              class="block text-xs font-semibold text-gray-700 uppercase mb-1"
+              >Confirm New Password</label
+            >
+            <input
+              type="password"
+              id="confirmNewPassword"
+              required
+              minlength="6"
+              placeholder="Re-enter your new password"
+              class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            />
+          </div>
+          <div class="pt-2">
+            <button
+              type="submit"
+              id="submitUpdatePassBtn"
+              class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+            >
+              Update Password &amp; Continue
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
 
+    <div
+      id="adminOtpModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100"
+      >
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h2 class="text-base font-bold text-gray-900">Security Verification</h2>
+          </div>
+          <button
+            type="button"
+            id="closeAdminOtpBtn"
+            class="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+          >
+            &times;
+          </button>
+        </div>
+        <form id="adminOtpForm" class="p-6 space-y-4">
+          <div
+            class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-1"
+          >
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+              />
+            </svg>
+          </div>
+          <div class="text-center">
+            <h3 class="text-base font-bold text-gray-900">Enter Verification Code</h3>
+            <p class="text-xs text-gray-500 mt-1">
+              A verification code was sent to
+              <strong id="adminOtpTargetEmail" class="text-gray-800 font-semibold"></strong> via
+              Gmail.
+            </p>
+          </div>
+
+          <div id="adminOtpAlert" class="hidden p-3 rounded-lg text-xs"></div>
+
+          <div>
+            <label
+              for="adminOtpInput"
+              class="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1 text-center"
+            >
+              Verification PIN
+            </label>
+            <input
+              type="text"
+              id="adminOtpInput"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="8"
+              autocomplete="one-time-code"
+              required
+              placeholder="••••••••"
+              class="w-full text-center text-2xl tracking-[0.25em] font-mono font-bold py-3 px-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all placeholder:tracking-widest"
+            />
+          </div>
+
+          <div class="pt-1 flex gap-3">
+            <button
+              type="button"
+              id="cancelAdminOtpBtn"
+              class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              id="submitAdminOtpBtn"
+              class="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
+            >
+              Verify &amp; Sign In
+            </button>
+          </div>
+
+          <div class="text-center pt-2 border-t border-gray-100">
+            <p class="text-xs text-gray-500">
+              Didn't receive the code?
+              <button
+                type="button"
+                id="resendAdminOtpBtn"
+                class="text-emerald-600 font-semibold hover:underline cursor-pointer disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+              >
+                Resend Code
+              </button>
+              <span id="resendAdminOtpCountdown" class="text-xs text-gray-400 ml-1"></span>
+            </p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
 </html>

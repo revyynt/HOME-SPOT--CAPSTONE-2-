@@ -1256,7 +1256,9 @@ html[data-auth-pending] body {
   flex-direction: column;
   gap: 3px;
   cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
 .cal-cell:hover {

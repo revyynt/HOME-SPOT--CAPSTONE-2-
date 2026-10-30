@@ -343,7 +343,6 @@ export function buildPaymentCalendar({
     }
   }
 
-
   // Place move-in day milestone markers on the calendar
   for (const tenant of activeTenants) {
     if (!tenant.moveInDate) continue;
@@ -397,8 +396,10 @@ export function buildPaymentCalendar({
       const dueDateObj = new Date(uYear, uMonth, dueDay);
       if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
 
-      const paidInTargetMonth = getPaymentsForMonth(filteredPayments, tenant, uYear, uMonth)
-        .reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      const paidInTargetMonth = getPaymentsForMonth(filteredPayments, tenant, uYear, uMonth).reduce(
+        (s, p) => s + (Number(p.amount) || 0),
+        0
+      );
 
       const isSettledByAmountDue =
         Boolean(tenant.settledDueDate && tenant.settledDueDate.includes(MONTH_NAMES[uMonth])) &&
@@ -412,7 +413,8 @@ export function buildPaymentCalendar({
         tenant.amountDue !== null &&
         Number(tenant.amountDue) <= 0;
 
-      const isPaid = isSettledByAmountDue || settledInCurrent || (rent > 0 && paidInTargetMonth >= rent);
+      const isPaid =
+        isSettledByAmountDue || settledInCurrent || (rent > 0 && paidInTargetMonth >= rent);
       if (offset === 0 && isPaid && !isSettledByAmountDue) continue;
 
       const status = isPaid
@@ -479,11 +481,7 @@ export function buildPaymentCalendar({
  * @param {Date} [options.today]
  * @returns {Object}
  */
-export function buildSalesForecast({
-  tenants = [],
-  monthsAhead = 6,
-  today = new Date()
-}) {
+export function buildSalesForecast({ tenants = [], monthsAhead = 6, today = new Date() }) {
   const activeTenants = tenants.filter((t) => (t.status || 'Active') !== 'Archived');
   const todayYear = today.getFullYear();
   const todayMonth = today.getMonth();

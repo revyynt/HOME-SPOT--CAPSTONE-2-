@@ -106,7 +106,7 @@ export function initPanoramaViewer(
       startY = e.clientY;
       try {
         renderer.domElement.setPointerCapture(e.pointerId);
-      } catch (_) { }
+      } catch (_) {}
       container.style.cursor = 'grabbing';
       clearTimeout(autoRotateTimer);
     });
@@ -126,7 +126,7 @@ export function initPanoramaViewer(
       if (e?.pointerId !== undefined) {
         try {
           renderer.domElement.releasePointerCapture(e.pointerId);
-        } catch (_) { }
+        } catch (_) {}
       }
       container.style.cursor = 'grab';
     };

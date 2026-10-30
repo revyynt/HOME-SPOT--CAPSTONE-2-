@@ -39,12 +39,12 @@ function installDom() {
       append: (...nodes) => {
         el.children.push(...nodes);
       },
-      remove: () => { },
+      remove: () => {},
       getAttribute: (name) => attrs[name] ?? null,
       setAttribute: (name, value) => {
         attrs[name] = value;
       },
-      addEventListener: () => { },
+      addEventListener: () => {},
       querySelector: () => null,
       querySelectorAll: () => [],
       closest: () => null
@@ -56,7 +56,7 @@ function installDom() {
 
   // `instanceof Element` is used by the delegation helpers, so the stub needs
   // a real constructor and instances must inherit from it.
-  class ElementStub { }
+  class ElementStub {}
   globalThis.Element = ElementStub;
 
   saved.document = globalThis.document;
@@ -70,7 +70,7 @@ function installDom() {
     getElementById: (id) => registry.get(id) ?? null,
     querySelector: () => null,
     querySelectorAll: () => [],
-    addEventListener: () => { },
+    addEventListener: () => {},
     dispatchEvent: () => true,
     __registry: registry
   };
@@ -82,8 +82,8 @@ function installDom() {
       origin: 'http://localhost:5050',
       pathname: '/'
     },
-    addEventListener: () => { },
-    removeEventListener: () => { },
+    addEventListener: () => {},
+    removeEventListener: () => {},
     dispatchEvent: () => true,
     localStorage: (() => {
       const s = new Map();
@@ -96,9 +96,9 @@ function installDom() {
     })(),
     sessionStorage: {
       getItem: () => null,
-      setItem: () => { },
-      removeItem: () => { },
-      clear: () => { }
+      setItem: () => {},
+      removeItem: () => {},
+      clear: () => {}
     },
     setTimeout,
     clearTimeout
@@ -253,7 +253,11 @@ test('buildTenantThreads merges tenants, orders messages chronologically, and co
   assert.equal(threads[0].unreadCount, 1);
   assert.equal(threads[0].items.length, 2);
   assert.equal(threads[0].lastMessage.text, 'Hi Juan!');
-  assert.equal(threads[1].email, 'maria@example.com', 'tenant without messages is still selectable');
+  assert.equal(
+    threads[1].email,
+    'maria@example.com',
+    'tenant without messages is still selectable'
+  );
 });
 
 test('buildPaymentCalendar tracks paid, overdue, and future scheduled tenant payments', async () => {
@@ -303,7 +307,10 @@ test('buildPaymentCalendar tracks paid, overdue, and future scheduled tenant pay
   // Future month (June 2026): both tenants are Scheduled as future payments
   const juneCal = buildPaymentCalendar({ tenants, payments, year: 2026, month: 5, today });
   assert.equal(juneCal.monthLabel, 'June 2026');
-  assert.equal(juneCal.monthSummary.rows.every((r) => r.status === 'Scheduled'), true);
+  assert.equal(
+    juneCal.monthSummary.rows.every((r) => r.status === 'Scheduled'),
+    true
+  );
   assert.ok(mayCal.upcomingSchedule.length >= 2, 'upcoming schedule includes future due dates');
 });
 
@@ -401,5 +408,9 @@ test('buildPaymentCalendar allocates advance notes and cycle payments to upcomin
   const decItem = cal.upcomingSchedule.find((item) => item.dueDate.includes('December'));
   assert.ok(decItem, 'December schedule exists');
   assert.equal(decItem.isSettled, false, 'December is not yet fully settled');
-  assert.equal(decItem.amount, 5000 - 1565 - 1223, 'December remaining amount lowers by paid sum (2212 remaining)');
+  assert.equal(
+    decItem.amount,
+    5000 - 1565 - 1223,
+    'December remaining amount lowers by paid sum (2212 remaining)'
+  );
 });
