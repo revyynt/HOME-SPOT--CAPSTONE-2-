@@ -123,7 +123,9 @@ async function handleInquirySubmit(event) {
 
   // Strictly constrained to the 8 keys whitelisted by the anonymous Supabase insert RLS policy:
   // ['name', 'email', 'phone', 'room', 'moveInDate', 'message', 'status', 'createdAt']
-  const isCustomerSupport = Boolean(form.querySelector('[name="subject"]')) || !window.location.pathname.includes('property-detail');
+  const isCustomerSupport =
+    Boolean(form.querySelector('[name="subject"]')) ||
+    !window.location.pathname.includes('property-detail');
   const room = isCustomerSupport ? 'Customer Support' : getRoomNameFromPage();
   const subjectVal = form.querySelector('[name="subject"]')?.value?.trim();
   const rawMsg = form.querySelector('[name="message"]')?.value?.trim() || '';
@@ -141,7 +143,7 @@ async function handleInquirySubmit(event) {
 
   try {
     await supabaseData.addDoc(messagesRef, inquiry);
-    Toast.success("Support inquiry sent successfully! Our team will contact you soon.");
+    Toast.success('Support inquiry sent successfully! Our team will contact you soon.');
   } catch (error) {
     console.error('Supabase inquiry submit failed:', error);
     Toast.error('Unable to submit inquiry. Please try again.');

@@ -258,10 +258,10 @@ function renderAdminsTable(admins = []) {
 
       const createdDate = admin.createdAt
         ? new Date(admin.createdAt).toLocaleDateString('en-PH', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        })
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })
         : 'Active';
 
       const actionButtons = admin.isCurrent
@@ -574,11 +574,7 @@ async function initBackupAndRestore() {
       URL.revokeObjectURL(url);
 
       try {
-        await supabaseData.setDoc(
-          SETTINGS_DOC_REF,
-          { lastBackupAt: exportedAt },
-          { merge: true }
-        );
+        await supabaseData.setDoc(SETTINGS_DOC_REF, { lastBackupAt: exportedAt }, { merge: true });
       } catch (err) {
         console.warn('Could not persist lastBackupAt to system_settings:', err);
       }
@@ -628,11 +624,9 @@ async function initBackupAndRestore() {
         if (Array.isArray(parsed[colName])) {
           for (const item of parsed[colName]) {
             if (item?.id) {
-              await supabaseData.setDoc(
-                supabaseData.doc(supabase, colName, item.id),
-                item,
-                { merge: true }
-              );
+              await supabaseData.setDoc(supabaseData.doc(supabase, colName, item.id), item, {
+                merge: true
+              });
             }
           }
         }

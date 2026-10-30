@@ -149,10 +149,11 @@ function renderTenantsTable(tenants) {
             <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap">
-            ${getTenantLifecycle(t) === 'Pending Move-In'
-          ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
-          : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
-        }
+            ${
+              getTenantLifecycle(t) === 'Pending Move-In'
+                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
+                : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
+            }
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
             <div class="flex items-center justify-end gap-1.5">
@@ -292,11 +293,13 @@ export async function deleteTenantAccount(tenantId, tenantName) {
         body: { tenantId }
       });
       if (retry.error || !retry.data?.success) {
-        await supabaseData
-          .deleteDoc(supabaseData.doc(db, 'tenants', tenantId))
-          .catch(() => null);
+        await supabaseData.deleteDoc(supabaseData.doc(db, 'tenants', tenantId)).catch(() => null);
       }
-      await supabase.from('tenants').delete().eq('id', tenantId).catch(() => null);
+      await supabase
+        .from('tenants')
+        .delete()
+        .eq('id', tenantId)
+        .catch(() => null);
     }
     loadedTenants = loadedTenants.filter((t) => t.id !== tenantId);
     renderFiltered();

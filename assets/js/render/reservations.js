@@ -74,7 +74,9 @@ function renderReservationCard(doc) {
   const status = data.status || 'Pending';
   const statusClass = STATUS_CLASS[status] ?? STATUS_CLASS.Pending;
   const requestDate = data.moveInDate || 'Not specified';
-  const isCommercial = String(data.room || '').toLowerCase().includes('commercial');
+  const isCommercial = String(data.room || '')
+    .toLowerCase()
+    .includes('commercial');
   const defaultRent = isCommercial ? 10000 : 5000;
   const amountVal = Number(data.amount) || defaultRent;
   const amount = `₱${amountVal.toLocaleString()}/mo`;

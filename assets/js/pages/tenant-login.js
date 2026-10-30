@@ -74,7 +74,8 @@ document.addEventListener('click', (event) => {
       event.preventDefault();
       Toast.alert({
         title: 'Reset Portal Password',
-        message: 'Please contact the building administrator or front desk to reset your tenant password.'
+        message:
+          'Please contact the building administrator or front desk to reset your tenant password.'
       });
       break;
     default:
@@ -133,7 +134,7 @@ document.getElementById('tenantLoginForm')?.addEventListener('submit', async (ev
   } catch (error) {
     showAlert(
       ERROR_MESSAGES[error.code] ??
-      'Login error: ' + (error.message || 'Please check your connection and try again.')
+        'Login error: ' + (error.message || 'Please check your connection and try again.')
     );
     submitBtn.disabled = false;
     submitBtn.textContent = 'Sign In';

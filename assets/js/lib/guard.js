@@ -29,7 +29,10 @@ export async function guardPage({ role, redirectTo, grantedEvent }) {
   if (!allowed) return false;
 
   // Enforce Two-Factor Reauthentication verification for administrative staff
-  if ((role === 'admin' || role === 'superadmin') && sessionStorage.getItem('admin_otp_verified') !== 'true') {
+  if (
+    (role === 'admin' || role === 'superadmin') &&
+    sessionStorage.getItem('admin_otp_verified') !== 'true'
+  ) {
     const { supabase } = await import('../supabase-service.js');
     await supabase.auth.signOut();
     window.location.replace(redirectTo || 'login.html');

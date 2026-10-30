@@ -28,7 +28,11 @@ function buildMediaSlides(room) {
     });
   }
 
-  const candidates = [room.mainImage, ...(Array.isArray(room.images) ? room.images : []), room.image];
+  const candidates = [
+    room.mainImage,
+    ...(Array.isArray(room.images) ? room.images : []),
+    room.image
+  ];
   let photoIndex = 1;
   for (const raw of candidates) {
     const url = String(raw || '').trim();
@@ -270,9 +274,10 @@ function renderLightboxSlide(index) {
           ? 'border-white ring-2 ring-white/60 scale-110 opacity-100 shadow-xl'
           : 'border-transparent opacity-60 hover:opacity-100';
 
-        const badgeHtml = s.type === 'panorama'
-          ? '<span class="absolute inset-0 bg-black/40 flex items-center justify-center text-[9px] font-black text-white">360°</span>'
-          : '';
+        const badgeHtml =
+          s.type === 'panorama'
+            ? '<span class="absolute inset-0 bg-black/40 flex items-center justify-center text-[9px] font-black text-white">360°</span>'
+            : '';
 
         return `
           <button type="button" data-lightbox-thumb="${idx}"
@@ -359,7 +364,6 @@ function initLightboxControls() {
     }
   });
 }
-
 
 function updateAvailabilityUI(room, availableCount) {
   const badge = document.getElementById('availabilityBadge');

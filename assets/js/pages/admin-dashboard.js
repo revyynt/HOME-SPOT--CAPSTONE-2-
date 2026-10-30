@@ -1,4 +1,3 @@
-
 let currentAdminRooms = [];
 
 function openRoomPreviewModal(room) {
@@ -26,15 +25,18 @@ function openRoomPreviewModal(room) {
 
   if (breadcrumbEl) breadcrumbEl.textContent = room.name || 'Apartment Unit';
   if (titleEl) titleEl.textContent = room.name || 'Apartment Unit';
-  if (subtitleEl) subtitleEl.textContent = `${room.type || 'Living Space'} • ${room.size || '30 sqm'}`;
+  if (subtitleEl)
+    subtitleEl.textContent = `${room.type || 'Living Space'} • ${room.size || '30 sqm'}`;
 
   const avail = Number(room.available) || 0;
   if (availBadgeEl) {
     if (avail > 0) {
-      availBadgeEl.className = 'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-green-500 to-green-600';
+      availBadgeEl.className =
+        'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-green-500 to-green-600';
       availBadgeEl.textContent = `${avail} Available`;
     } else {
-      availBadgeEl.className = 'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-red-500 to-red-600';
+      availBadgeEl.className =
+        'text-xs sm:text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg text-white bg-gradient-to-r from-red-500 to-red-600';
       availBadgeEl.textContent = 'Fully Booked';
     }
   }
@@ -62,9 +64,10 @@ function openRoomPreviewModal(room) {
   }
 
   if (detailFeaturesEl) {
-    const feats = Array.isArray(room.features) && room.features.length
-      ? room.features
-      : [`${room.capacity || 3} People`, 'Bathroom', 'Aircon Space'];
+    const feats =
+      Array.isArray(room.features) && room.features.length
+        ? room.features
+        : [`${room.capacity || 3} People`, 'Bathroom', 'Aircon Space'];
     detailFeaturesEl.innerHTML = feats
       .map(
         (f) => `
@@ -161,19 +164,21 @@ function openRoomPreviewModal(room) {
         <button
           type="button"
           data-preview-slide-idx="${i}"
-          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${i === 0
-            ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
-            : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
+          class="preview-thumb-card relative w-28 sm:w-full h-20 sm:h-24 rounded-xl overflow-hidden border-2 ${
+            i === 0
+              ? 'border-blue-600 ring-2 ring-blue-300 shadow-md'
+              : 'border-transparent hover:border-gray-300 shadow-sm opacity-80 hover:opacity-100'
           } flex-shrink-0 transition-all cursor-pointer group"
         >
           <img src="${escapeHtml(slide.src)}" alt="${escapeHtml(slide.label)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
           <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-          ${slide.is360
-            ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
+          ${
+            slide.is360
+              ? `<div class="absolute inset-0 bg-gradient-to-t from-blue-900/80 to-transparent flex flex-col items-center justify-end p-1.5">
                    <span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">360°</span>
                    <span class="text-[9px] font-semibold text-white tracking-tight mt-0.5">Virtual Tour</span>
                  </div>`
-            : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
+              : `<span class="absolute bottom-1 right-1.5 bg-black/70 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-md">${i + 1}</span>`
           }
         </button>`
       )
@@ -213,7 +218,10 @@ function closeRoomPreviewModal() {
 import { guardPage } from '../lib/guard.js';
 import { initBackButtonGuard, initLogoutButtons } from '../lib/session.js';
 import { initTenantTable, listenToTenants } from './admin-dashboard/tenants.js';
-import { initCreateTenant, openCreateTenantModalFromData } from './admin-dashboard/create-tenant.js';
+import {
+  initCreateTenant,
+  openCreateTenantModalFromData
+} from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
@@ -621,17 +629,15 @@ function initAdminListings() {
       const mainImg = document.getElementById('previewRoomMainImg');
       if (mainImg && src) mainImg.src = src;
       document.querySelectorAll('.preview-thumb-btn').forEach((b) => {
-        b.className = b === thumbBtn
-          ? 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-emerald-500 ring-2 ring-emerald-200 flex-shrink-0 transition-all cursor-pointer'
-          : 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 flex-shrink-0 transition-all cursor-pointer';
+        b.className =
+          b === thumbBtn
+            ? 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-emerald-500 ring-2 ring-emerald-200 flex-shrink-0 transition-all cursor-pointer'
+            : 'preview-thumb-btn relative w-16 h-12 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-400 flex-shrink-0 transition-all cursor-pointer';
       });
       return;
     }
 
-    if (
-      target.closest('#closePreviewRoomModalBtn') ||
-      target.id === 'previewRoomModal'
-    ) {
+    if (target.closest('#closePreviewRoomModalBtn') || target.id === 'previewRoomModal') {
       closeRoomPreviewModal();
       return;
     }
@@ -811,9 +817,9 @@ function initAdminListings() {
 
       try {
         Toast.success(`Uploading ${files.length} image(s) to Supabase...`);
-        const existingUrls = Array.from(
-          form.querySelectorAll('input[name="galleryImage"]')
-        ).map((el) => el.value);
+        const existingUrls = Array.from(form.querySelectorAll('input[name="galleryImage"]')).map(
+          (el) => el.value
+        );
         for (const file of files) {
           const url = await uploadRoomFile(roomId, file, 'gallery');
           existingUrls.push(url);
@@ -891,7 +897,8 @@ function initAdminPaymentCalendar() {
   let calPayments = [];
 
   const badgeStyle = (status) => {
-    if (status === 'Paid' || status === 'Settled') return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+    if (status === 'Paid' || status === 'Settled')
+      return 'bg-emerald-100 text-emerald-800 border-emerald-200';
     if (status === 'Overdue' || status === 'Failed')
       return 'bg-red-100 text-red-800 border-red-200';
     if (status === 'Scheduled') return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -1253,7 +1260,7 @@ function initAdminPaymentCalendar() {
     try {
       const snap = await supabaseData.getDocs(supabaseData.collection(supabase, 'payments'));
       appDocPayments = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    } catch { }
+    } catch {}
     try {
       const { data, error } = await supabase.from('payments').select('*');
       if (!error && Array.isArray(data)) {
@@ -1271,7 +1278,7 @@ function initAdminPaymentCalendar() {
           createdAt: p.created_at
         }));
       }
-    } catch { }
+    } catch {}
     calPayments = deduplicatePayments([...appDocPayments, ...relPayments]);
     renderCalendar();
   };
@@ -1397,7 +1404,9 @@ function initAdminPaymentCalendar() {
             updatedAt: supabaseData.serverTimestamp()
           });
           selectedDateKey = '';
-          Toast.success(`Marked ${tenant.name} as moved in. Move-in schedule cleared from calendar.`);
+          Toast.success(
+            `Marked ${tenant.name} as moved in. Move-in schedule cleared from calendar.`
+          );
         } catch (err) {
           console.error('Failed to mark moved in:', err);
           Toast.error('Could not update status: ' + (err.message || 'Unknown error'));
@@ -1669,9 +1678,7 @@ function initAdminDataAnalysis() {
     const selectedMonthVal = monthSelect?.value || 'all';
 
     const monthlyStats = Array.from({ length: 12 }, (_, mIdx) => {
-      const activeTenants = tenantsList.filter((t) =>
-        isTenantActiveInMonth(t, selectedYear, mIdx)
-      );
+      const activeTenants = tenantsList.filter((t) => isTenantActiveInMonth(t, selectedYear, mIdx));
       const occupiedUnitIds = new Set();
       activeTenants.forEach((t) => {
         if (!t.room && !t.dormName && !t.dorm) return;
@@ -1759,14 +1766,22 @@ function initAdminDataAnalysis() {
       const plotH = yBottom - yTop;
       const plotW = xEnd - xStart;
 
-      const getX = (idx) => xStart + (idx * (plotW / 11));
-      const getY = (val) => yBottom - ((val / maxScale) * plotH);
+      const getX = (idx) => xStart + idx * (plotW / 11);
+      const getY = (val) => yBottom - (val / maxScale) * plotH;
 
-      const occPoints = monthlyStats.map((s, i) => `${getX(i).toFixed(1)},${getY(s.occupiedRooms).toFixed(1)}`);
-      const availPoints = monthlyStats.map((s, i) => `${getX(i).toFixed(1)},${getY(s.availableRooms).toFixed(1)}`);
-      const tenantPoints = monthlyStats.map((s, i) => `${getX(i).toFixed(1)},${getY(s.tenants).toFixed(1)}`);
+      const occPoints = monthlyStats.map(
+        (s, i) => `${getX(i).toFixed(1)},${getY(s.occupiedRooms).toFixed(1)}`
+      );
+      const availPoints = monthlyStats.map(
+        (s, i) => `${getX(i).toFixed(1)},${getY(s.availableRooms).toFixed(1)}`
+      );
+      const tenantPoints = monthlyStats.map(
+        (s, i) => `${getX(i).toFixed(1)},${getY(s.tenants).toFixed(1)}`
+      );
 
-      const yTicks = [0, 2, 4, 6, 8, 10, totalRooms].filter((v, i, arr) => arr.indexOf(v) === i && v <= maxScale);
+      const yTicks = [0, 2, 4, 6, 8, 10, totalRooms].filter(
+        (v, i, arr) => arr.indexOf(v) === i && v <= maxScale
+      );
 
       const horizontalGridHtml = yTicks
         .map((val) => {
@@ -1949,9 +1964,7 @@ function initAdminBuilding3D() {
 
     const statusBadge = document.getElementById('admin3DUnitStatusBadge');
     if (statusBadge) {
-      statusBadge.textContent = isOccupied
-        ? '● Occupied'
-        : '○ Vacant Unit';
+      statusBadge.textContent = isOccupied ? '● Occupied' : '○ Vacant Unit';
       statusBadge.className = isOccupied
         ? 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800'
         : 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800';
@@ -2209,9 +2222,15 @@ function initAdminBuilding3D() {
       }
       case 'admin-3d-save-unit-info': {
         if (!unit) break;
-        const newPrice = Number(document.getElementById('admin3DEditPriceInput')?.value) || unit.price;
-        const newCap = Number(document.getElementById('admin3DEditCapInput')?.value) || unit.capacity;
-        const newSize = (document.getElementById('admin3DEditSizeInput')?.value || unit.size || '30 sqm').trim();
+        const newPrice =
+          Number(document.getElementById('admin3DEditPriceInput')?.value) || unit.price;
+        const newCap =
+          Number(document.getElementById('admin3DEditCapInput')?.value) || unit.capacity;
+        const newSize = (
+          document.getElementById('admin3DEditSizeInput')?.value ||
+          unit.size ||
+          '30 sqm'
+        ).trim();
         try {
           await persistUnitListingPatch(unit, {
             price: newPrice,

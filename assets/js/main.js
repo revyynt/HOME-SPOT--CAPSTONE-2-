@@ -1,15 +1,10 @@
 // If an auth recovery link or error lands on index.html, forward immediately to login.html
 if (typeof window !== 'undefined' && window.location.hash) {
   const hash = window.location.hash;
-  if (
-    hash.includes('type=recovery') ||
-    hash.includes('access_token') ||
-    hash.includes('error=')
-  ) {
+  if (hash.includes('type=recovery') || hash.includes('access_token') || hash.includes('error=')) {
     window.location.replace('./login.html' + hash);
   }
 }
-
 
 async function enforceStaffLockOnPublicPages() {
   const path = window.location.pathname.toLowerCase();
@@ -187,10 +182,7 @@ function renderLandingHero3DUnitInfo(unitOverride = null) {
 
   const specsEl = document.getElementById('landing3DUnitSpecs');
   if (specsEl) {
-    const capLabel =
-      unit.type === 'Commercial Space'
-        ? 'Commercial Utility'
-        : '1 User';
+    const capLabel = unit.type === 'Commercial Space' ? 'Commercial Utility' : '1 User';
     specsEl.textContent = `${unit.type} • ${unit.size} • ${capLabel}`;
   }
 
@@ -222,9 +214,7 @@ function renderLandingHero3DUnitInfo(unitOverride = null) {
 
   const featsEl = document.getElementById('landing3DUnitFeatures');
   if (featsEl) {
-    const feats = Array.isArray(unit.listingFeatures)
-      ? unit.listingFeatures
-      : unit.features || [];
+    const feats = Array.isArray(unit.listingFeatures) ? unit.listingFeatures : unit.features || [];
     featsEl.innerHTML = feats
       .map(
         (f) =>
@@ -374,8 +364,7 @@ async function initAdminActions() {
   const tenantModal = await import('./pages/admin-dashboard/create-tenant.js');
 
   document.addEventListener('click', (event) => {
-    const trigger =
-      event.target instanceof Element ? event.target.closest('[data-action]') : null;
+    const trigger = event.target instanceof Element ? event.target.closest('[data-action]') : null;
     if (!trigger) return;
 
     const { action, id, src, title } = trigger.dataset;
@@ -501,7 +490,11 @@ const updatePassAlert = document.getElementById('updatePassAlert');
 
 if (typeof window !== 'undefined') {
   // Check hash on landing
-  if (window.location.hash && (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token'))) {
+  if (
+    window.location.hash &&
+    (window.location.hash.includes('type=recovery') ||
+      window.location.hash.includes('access_token'))
+  ) {
     if (updatePassModal) updatePassModal.classList.remove('hidden');
   }
 
@@ -519,7 +512,8 @@ if (typeof window !== 'undefined') {
 
     if (newPass.length < 6) {
       if (updatePassAlert) {
-        updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+        updatePassAlert.className =
+          'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
         updatePassAlert.textContent = 'Password must be at least 6 characters.';
         updatePassAlert.classList.remove('hidden');
       }
@@ -528,7 +522,8 @@ if (typeof window !== 'undefined') {
 
     if (newPass !== confirmPass) {
       if (updatePassAlert) {
-        updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+        updatePassAlert.className =
+          'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
         updatePassAlert.textContent = 'Passwords do not match.';
         updatePassAlert.classList.remove('hidden');
       }
@@ -547,15 +542,17 @@ if (typeof window !== 'undefined') {
       if (updatePassModal) updatePassModal.classList.add('hidden');
       try {
         history.replaceState(null, '', window.location.pathname);
-      } catch { }
+      } catch {}
 
       alert('Password updated successfully! Redirecting to login...');
       window.location.href = './login.html';
     } catch (err) {
       console.error('Update password error on landing:', err);
       if (updatePassAlert) {
-        updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
-        updatePassAlert.textContent = err.message || 'Failed to update password. Link may be expired.';
+        updatePassAlert.className =
+          'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+        updatePassAlert.textContent =
+          err.message || 'Failed to update password. Link may be expired.';
         updatePassAlert.classList.remove('hidden');
       }
     } finally {

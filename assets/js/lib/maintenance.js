@@ -342,7 +342,8 @@ export function initMaintenanceGuard() {
       }
 
       if (isStaff) {
-        const hasBypassed = sessionStorage.getItem('homespot_staff_bypassed_maintenance') === 'true';
+        const hasBypassed =
+          sessionStorage.getItem('homespot_staff_bypassed_maintenance') === 'true';
         if (hasBypassed) {
           removeOverlay();
           renderStaffBanner();

@@ -16,11 +16,7 @@ import { initBackButtonGuard, logoutStaff } from '../lib/session.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
-import {
-  escapeHtml,
-  isValidPhilippinePhone,
-  normalizePhilippinePhone
-} from '../lib/format.js';
+import { escapeHtml, isValidPhilippinePhone, normalizePhilippinePhone } from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
 import { DEFAULT_ROOMS, mergeRoomData } from '../lib/rooms.js';
 import {
@@ -335,7 +331,9 @@ function renderTenant3DUnitInspector(unit) {
     const priceEl = document.getElementById('tenant3DUnitPrice');
     if (priceEl) priceEl.textContent = '—';
     const descEl = document.getElementById('tenant3DUnitDesc');
-    if (descEl) descEl.textContent = 'Click any unit on the 3D model or in the directory below to view room specs, safety features, and pricing.';
+    if (descEl)
+      descEl.textContent =
+        'Click any unit on the 3D model or in the directory below to view room specs, safety features, and pricing.';
     const featsEl = document.getElementById('tenant3DUnitFeatures');
     if (featsEl) featsEl.innerHTML = '';
     return;
@@ -343,7 +341,9 @@ function renderTenant3DUnitInspector(unit) {
 
   const badgeEl = document.getElementById('tenant3DUnitBadge');
   if (badgeEl) {
-    badgeEl.textContent = isOwnUnit ? '● YOUR ASSIGNED UNIT' : `${unit.floorLabel.toUpperCase()} UNIT`;
+    badgeEl.textContent = isOwnUnit
+      ? '● YOUR ASSIGNED UNIT'
+      : `${unit.floorLabel.toUpperCase()} UNIT`;
     badgeEl.style.background = isOwnUnit ? '#d1fae5' : '#e0f2fe';
     badgeEl.style.color = isOwnUnit ? '#065f46' : '#0369a1';
   }
@@ -587,8 +587,16 @@ function renderTenantPaymentCalendar() {
       upcomingEl.innerHTML = cal.upcomingSchedule
         .map((item) => {
           const isSelected = selectedUpcomingDueDate === item.dueDate;
-          const remaining = (item.amount !== undefined && item.amount !== null) ? Number(item.amount) : (item.originalAmount || tenantRent);
-          const isSettled = !isSelected && (item.isSettled || item.status === 'Settled' || item.status === 'Paid' || remaining <= 0);
+          const remaining =
+            item.amount !== undefined && item.amount !== null
+              ? Number(item.amount)
+              : item.originalAmount || tenantRent;
+          const isSettled =
+            !isSelected &&
+            (item.isSettled ||
+              item.status === 'Settled' ||
+              item.status === 'Paid' ||
+              remaining <= 0);
 
           if (isSettled) {
             return `
@@ -604,7 +612,7 @@ function renderTenantPaymentCalendar() {
           </div>`;
           }
 
-          const billAmount = remaining > 0 ? remaining : (item.originalAmount || tenantRent);
+          const billAmount = remaining > 0 ? remaining : item.originalAmount || tenantRent;
           return `
           <div class="cal-upcoming-item ${isSelected ? 'selected' : ''}"
                role="button"
@@ -711,7 +719,7 @@ fetchTenantSupabaseProfile();
 function switchTab(tabName, evt) {
   try {
     sessionStorage.setItem('tenant_portal_active_tab', tabName);
-  } catch { }
+  } catch {}
   const tabs = document.querySelectorAll('.tab-content');
   tabs.forEach((tab) => tab.classList.remove('active'));
   const tabButtons = document.querySelectorAll('.tab');
@@ -759,7 +767,7 @@ function hasPendingPaymentReturn() {
     ) {
       return true;
     }
-  } catch { }
+  } catch {}
   return false;
 }
 
@@ -831,9 +839,7 @@ async function saveProfile() {
   }
 
   const newPhone = normalizePhilippinePhone(rawPhone) || rawPhone;
-  const newEmergency = rawEmergency
-    ? normalizePhilippinePhone(rawEmergency) || rawEmergency
-    : '';
+  const newEmergency = rawEmergency ? normalizePhilippinePhone(rawEmergency) || rawEmergency : '';
 
   const originalText = saveBtn ? saveBtn.textContent : 'Save Changes';
   if (saveBtn) {
@@ -900,7 +906,8 @@ async function saveProfile() {
     console.error('Failed to update tenant profile:', err);
     Toast.alert({
       title: 'Unable to Save Changes',
-      message: 'We could not save your profile changes right now. Please check your connection and try again.'
+      message:
+        'We could not save your profile changes right now. Please check your connection and try again.'
     });
   } finally {
     if (saveBtn) {
@@ -1116,10 +1123,10 @@ function showQrModal(data) {
   // Always generate a proper QR Ph code using payment reference data
   const qrContent = PayMongo
     ? PayMongo.generateQrPhImageUrl({
-      amount: data.amount,
-      reference: data.referenceNumber,
-      merchant: 'MJP Residences'
-    })
+        amount: data.amount,
+        reference: data.referenceNumber,
+        merchant: 'MJP Residences'
+      })
     : `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=10&data=${encodeURIComponent('PAYMONGO-QRPH-' + data.referenceNumber + '-' + data.amount)}`;
   document.getElementById('qrModalImage').src = qrContent;
 
@@ -1225,7 +1232,9 @@ async function saveAndFinalizePayment(record) {
   }
   updateAmountDueUI();
 
-  const cleanPurpose = (record.purpose || 'Monthly Rent').replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+  const cleanPurpose = (record.purpose || 'Monthly Rent')
+    .replace(/\s*-\s*MJP Residences\s*$/i, '')
+    .trim();
   record.purpose = cleanPurpose;
   const canonicalDocId = record.paymentMethodId || record.referenceNumber;
   if (!record.referenceNumber || record.referenceNumber.startsWith('PM-RET-')) {
@@ -1235,8 +1244,16 @@ async function saveAndFinalizePayment(record) {
   // Render immediately in table if not already cached
   const alreadyInCache = cachedPayments.some((p) => {
     if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
-    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId) return true;
-    if (Number(p.amount) === Number(record.amount) && (p.purpose || '').replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase() === cleanPurpose.toLowerCase()) return true;
+    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId)
+      return true;
+    if (
+      Number(p.amount) === Number(record.amount) &&
+      (p.purpose || '')
+        .replace(/\s*-\s*MJP Residences\s*$/i, '')
+        .trim()
+        .toLowerCase() === cleanPurpose.toLowerCase()
+    )
+      return true;
     return false;
   });
 
@@ -1275,14 +1292,17 @@ async function saveAndFinalizePayment(record) {
         }
       });
       if (appDocErr) {
-        await supabase.from('app_documents').insert({
-          collection: 'payments',
-          id: canonicalDocId,
-          data: {
-            ...record,
-            tenantUid: session.user.id
-          }
-        }).catch(() => null);
+        await supabase
+          .from('app_documents')
+          .insert({
+            collection: 'payments',
+            id: canonicalDocId,
+            data: {
+              ...record,
+              tenantUid: session.user.id
+            }
+          })
+          .catch(() => null);
       }
     }
   } catch (err) {
@@ -1292,7 +1312,7 @@ async function saveAndFinalizePayment(record) {
   // Reload history in background
   try {
     await loadTenantPaymentHistory();
-  } catch (e) { }
+  } catch (e) {}
 
   updateAmountDueUI();
   showReceiptModal(record);
@@ -1302,7 +1322,8 @@ async function saveAndFinalizePayment(record) {
 async function saveFailedPayment(record) {
   const alreadyInCache = cachedPayments.some((p) => {
     if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
-    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId) return true;
+    if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId)
+      return true;
     return false;
   });
 
@@ -1317,29 +1338,35 @@ async function saveFailedPayment(record) {
     } = await supabase.auth.getSession();
     if (session) {
       const canonicalDocId = record.paymentMethodId || record.referenceNumber;
-      await supabase.from('payments').upsert({
-        id: record.referenceNumber,
-        session_id: canonicalDocId,
-        tenant_name: record.tenantName,
-        tenant_email: record.tenantEmail,
-        tenant_uid: session.user.id,
-        amount: record.amount,
-        status: record.status || 'Failed',
-        payment_method: record.method,
-        purpose: record.purpose,
-        notes: record.notes,
-        reference_number: record.referenceNumber,
-        created_at: record.createdAt || new Date().toISOString()
-      }).catch(() => null);
+      await supabase
+        .from('payments')
+        .upsert({
+          id: record.referenceNumber,
+          session_id: canonicalDocId,
+          tenant_name: record.tenantName,
+          tenant_email: record.tenantEmail,
+          tenant_uid: session.user.id,
+          amount: record.amount,
+          status: record.status || 'Failed',
+          payment_method: record.method,
+          purpose: record.purpose,
+          notes: record.notes,
+          reference_number: record.referenceNumber,
+          created_at: record.createdAt || new Date().toISOString()
+        })
+        .catch(() => null);
 
-      await supabase.from('app_documents').upsert({
-        collection: 'payments',
-        id: canonicalDocId,
-        data: {
-          ...record,
-          tenantUid: session.user.id
-        }
-      }).catch(() => null);
+      await supabase
+        .from('app_documents')
+        .upsert({
+          collection: 'payments',
+          id: canonicalDocId,
+          data: {
+            ...record,
+            tenantUid: session.user.id
+          }
+        })
+        .catch(() => null);
     }
   } catch (err) {
     console.warn('Failed payment persistence sync to Supabase:', err);
@@ -1398,7 +1425,8 @@ function showProgressModal(session, amount, checkoutWindow) {
   const statusEl = document.getElementById('progressModalStatus');
 
   if (amountEl) {
-    amountEl.textContent = '₱' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 });
+    amountEl.textContent =
+      '₱' + parseFloat(amount).toLocaleString(undefined, { minimumFractionDigits: 2 });
   }
   if (statusEl) {
     statusEl.textContent = 'Awaiting Payment Confirmation...';
@@ -1499,7 +1527,8 @@ function showReceiptModal(record) {
       headerTitleEl.style.color = '#9a3412';
     }
     if (iconContainer) {
-      iconContainer.innerHTML = '<div class="receipt-fail-icon" style="background: #ffedd5; color: #ea580c;">⏱</div>';
+      iconContainer.innerHTML =
+        '<div class="receipt-fail-icon" style="background: #ffedd5; color: #ea580c;">⏱</div>';
     }
     if (titleEl) {
       titleEl.textContent = 'Payment Expired';
@@ -1815,7 +1844,13 @@ function renderPaymentHistoryTable(payments) {
           : isPending
             ? `<span class="status-badge-pending">⏱ Pending</span>`
             : `<span class="status-badge-paid">✓ Paid</span>`;
-      const amountColor = isExpired ? '#ea580c' : isFailed ? '#dc2626' : isPending ? '#b45309' : '#059669';
+      const amountColor = isExpired
+        ? '#ea580c'
+        : isFailed
+          ? '#dc2626'
+          : isPending
+            ? '#b45309'
+            : '#059669';
 
       return `
         <tr>
@@ -1857,13 +1892,16 @@ async function checkUrlPaymentReturn() {
 
   // If returning to a child checkout window with an active opener, hand off to opener and close child
   if (
-    (paymentStatus === 'success' || paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'expired') &&
+    (paymentStatus === 'success' ||
+      paymentStatus === 'failed' ||
+      paymentStatus === 'cancelled' ||
+      paymentStatus === 'expired') &&
     window.opener &&
     !window.opener.closed
   ) {
     try {
       window.opener.focus();
-      
+
       window.close();
       return true;
     } catch (e) {}
@@ -1876,7 +1914,7 @@ async function checkUrlPaymentReturn() {
       sessionStorage.getItem('pending_paymongo_payment') ||
       localStorage.getItem('pending_paymongo_payment');
     if (saved) pending = JSON.parse(saved);
-  } catch (e) { }
+  } catch (e) {}
 
   console.log(
     '[PayReturn] URL params - paymentIntentId:',
@@ -1941,7 +1979,9 @@ async function checkUrlPaymentReturn() {
       const s = (p?.attributes?.status || p?.status || '').toLowerCase();
       return s === 'expired';
     });
-    const piStatus = (checkedSession?.attributes?.payment_intent?.attributes?.status || '').toLowerCase();
+    const piStatus = (
+      checkedSession?.attributes?.payment_intent?.attributes?.status || ''
+    ).toLowerCase();
     const hasExpiredPI = piStatus === 'expired';
     const isSessionExpired = sessionStatus === 'expired';
 
@@ -1955,18 +1995,25 @@ async function checkUrlPaymentReturn() {
 
     const isWindowClosed = Boolean(currentCheckoutWindow && currentCheckoutWindow.closed);
 
-    const isFailed = !isPaid && (
-      isSessionExpired ||
-      hasExpiredPayment ||
-      hasExpiredPI ||
-      isSourceExpired ||
-      hasFailedPayment ||
-      hasFailedPI ||
-      isSourceFailed ||
-      isWindowClosed
-    );
+    const isFailed =
+      !isPaid &&
+      (isSessionExpired ||
+        hasExpiredPayment ||
+        hasExpiredPI ||
+        isSourceExpired ||
+        hasFailedPayment ||
+        hasFailedPI ||
+        isSourceFailed ||
+        isWindowClosed);
 
-    console.log('[PayReturn] isPaid:', isPaid, '| isFailed:', isFailed, '| sessionStatus:', sessionStatus);
+    console.log(
+      '[PayReturn] isPaid:',
+      isPaid,
+      '| isFailed:',
+      isFailed,
+      '| sessionStatus:',
+      sessionStatus
+    );
 
     if (isPaid) {
       if (currentCheckoutWindow && !currentCheckoutWindow.closed) {
@@ -1995,7 +2042,11 @@ async function checkUrlPaymentReturn() {
       const tenantNameVal2 =
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
       const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, checkedSession);
-      const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
+      const refNumber2 =
+        pending?.referenceNumber ||
+        (sessionId
+          ? `PM-${sessionId.slice(-6).toUpperCase()}`
+          : 'PM-RET-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
@@ -2022,7 +2073,9 @@ async function checkUrlPaymentReturn() {
       localStorage.removeItem('pending_paymongo_payment');
 
       if (currentCheckoutWindow && !currentCheckoutWindow.closed) {
-        try { currentCheckoutWindow.close(); } catch (e) {}
+        try {
+          currentCheckoutWindow.close();
+        } catch (e) {}
         currentCheckoutWindow = null;
       }
 
@@ -2032,7 +2085,11 @@ async function checkUrlPaymentReturn() {
         pending?.tenantName || sessionStorage.getItem('tenantName') || 'Tenant';
       const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, checkedSession);
       const failureReason = PayMongo.getPaymentFailureReason(checkedSession, detectedMethod);
-      const refNumber2 = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6));
+      const refNumber2 =
+        pending?.referenceNumber ||
+        (sessionId
+          ? `PM-${sessionId.slice(-6).toUpperCase()}`
+          : 'PM-FAIL-' + Date.now().toString().slice(-6));
       const record2 = {
         referenceNumber: refNumber2,
         paymentMethodId: sessionId,
@@ -2162,7 +2219,11 @@ async function checkUrlPaymentReturn() {
       urlParams.get('method') || pending?.method,
       session
     );
-    const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-RET-' + Date.now().toString().slice(-6));
+    const refNumber =
+      pending?.referenceNumber ||
+      (sessionId
+        ? `PM-${sessionId.slice(-6).toUpperCase()}`
+        : 'PM-RET-' + Date.now().toString().slice(-6));
     const lineItemsAmount =
       (session?.attributes?.line_items || []).reduce(
         (sum, item) => sum + Number(item.amount || 0) * Number(item.quantity || 1),
@@ -2190,7 +2251,11 @@ async function checkUrlPaymentReturn() {
     await saveAndFinalizePayment(record);
   }
   // SCENARIO 3: RETURN FROM PAYMONGO HOSTED CHECKOUT (FAILED, EXPIRED OR CANCELLED)
-  else if (paymentStatus === 'failed' || paymentStatus === 'cancelled' || paymentStatus === 'expired') {
+  else if (
+    paymentStatus === 'failed' ||
+    paymentStatus === 'cancelled' ||
+    paymentStatus === 'expired'
+  ) {
     const sessionId = pending?.sessionId || urlParams.get('sessionId') || '';
     let sessionData = null;
 
@@ -2207,7 +2272,11 @@ async function checkUrlPaymentReturn() {
 
     const detectedMethod = PayMongo.formatPaymentMethod(pending?.method, sessionData);
     const failureReason = PayMongo.getPaymentFailureReason(sessionData, detectedMethod);
-    const refNumber = pending?.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6));
+    const refNumber =
+      pending?.referenceNumber ||
+      (sessionId
+        ? `PM-${sessionId.slice(-6).toUpperCase()}`
+        : 'PM-FAIL-' + Date.now().toString().slice(-6));
     const record = {
       referenceNumber: refNumber,
       paymentMethodId: sessionId || 'pm_failed_' + Date.now().toString(36),
@@ -2229,7 +2298,11 @@ async function checkUrlPaymentReturn() {
     window.history.replaceState({}, document.title, window.location.pathname);
     switchTab('payment');
     closeProgressModal();
-    if (sessionData?.attributes?.status !== 'expired' && PayMongo?.expireCheckoutSession && sessionId) {
+    if (
+      sessionData?.attributes?.status !== 'expired' &&
+      PayMongo?.expireCheckoutSession &&
+      sessionId
+    ) {
       PayMongo.expireCheckoutSession(sessionId).catch(() => {});
     }
     await saveFailedPayment(record);
@@ -2245,7 +2318,7 @@ async function initPortal() {
   updateSubmitButton();
   try {
     await authReady;
-  } catch (e) { }
+  } catch (e) {}
   await Promise.all([loadTenantPaymentHistory(), checkUrlPaymentReturn()]);
   const activeTab = sessionStorage.getItem('tenant_portal_active_tab');
   if (
@@ -2459,13 +2532,16 @@ document.addEventListener('click', async function (event) {
       if (isResolved) {
         closeProgressModal();
       } else if (statusEl) {
-        statusEl.textContent = 'Awaiting payment confirmation. If you cancelled or expired on PayMongo, click Cancel / Return below.';
+        statusEl.textContent =
+          'Awaiting payment confirmation. If you cancelled or expired on PayMongo, click Cancel / Return below.';
       }
       break;
     }
     case 'cancel-progress-payment': {
       closeProgressModal(true);
-      const pendingRaw = sessionStorage.getItem('pending_paymongo_payment') || localStorage.getItem('pending_paymongo_payment');
+      const pendingRaw =
+        sessionStorage.getItem('pending_paymongo_payment') ||
+        localStorage.getItem('pending_paymongo_payment');
       if (pendingRaw) {
         try {
           const pendingData = JSON.parse(pendingRaw);
@@ -2478,7 +2554,11 @@ document.addEventListener('click', async function (event) {
           const detectedMethod = PayMongo.formatPaymentMethod(pendingData.method);
           const failureReason = PayMongo.getPaymentFailureReason(null, detectedMethod);
           const record = {
-            referenceNumber: pendingData.referenceNumber || (sessionId ? `PM-${sessionId.slice(-6).toUpperCase()}` : 'PM-FAIL-' + Date.now().toString().slice(-6)),
+            referenceNumber:
+              pendingData.referenceNumber ||
+              (sessionId
+                ? `PM-${sessionId.slice(-6).toUpperCase()}`
+                : 'PM-FAIL-' + Date.now().toString().slice(-6)),
             paymentMethodId: sessionId || 'pm_cancel_' + Date.now().toString(36),
             method: detectedMethod,
             amount: parseFloat(pendingData.amount) || 5000,
@@ -2487,7 +2567,10 @@ document.addEventListener('click', async function (event) {
             failureReason: failureReason,
             tenantName: pendingData.tenantName || 'Tenant',
             tenantEmail: userEmail,
-            dateFormatted: new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }),
+            dateFormatted: new Date().toLocaleString('en-US', {
+              dateStyle: 'medium',
+              timeStyle: 'short'
+            }),
             createdAt: new Date().toISOString(),
             status: 'Failed'
           };
@@ -2589,11 +2672,16 @@ document.addEventListener('click', async function (event) {
         if (paymentAmountInput) {
           paymentAmountInput.value = amount.toString();
         }
-        if (paymentNotesInput && (!paymentNotesInput.value || paymentNotesInput.value.startsWith('Advance Rent for '))) {
+        if (
+          paymentNotesInput &&
+          (!paymentNotesInput.value || paymentNotesInput.value.startsWith('Advance Rent for '))
+        ) {
           paymentNotesInput.value = `Advance Rent for ${dueDate}`;
         }
         if (window.innerWidth < 1024) {
-          document.getElementById('paymentForm')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          document
+            .getElementById('paymentForm')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
       }
 

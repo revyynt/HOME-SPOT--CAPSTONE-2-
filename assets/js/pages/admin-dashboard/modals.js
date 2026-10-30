@@ -35,8 +35,14 @@ function resolveFullTenant(partial = {}) {
   const found = list.find(
     (t) =>
       (partial.id && t.id === partial.id) ||
-      (pEmail && String(t.email || '').trim().toLowerCase() === pEmail) ||
-      (pName && String(t.name || '').trim().toLowerCase() === pName)
+      (pEmail &&
+        String(t.email || '')
+          .trim()
+          .toLowerCase() === pEmail) ||
+      (pName &&
+        String(t.name || '')
+          .trim()
+          .toLowerCase() === pName)
   );
   return {
     ...(found || {}),

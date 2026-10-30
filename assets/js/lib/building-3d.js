@@ -32,7 +32,13 @@ export const BUILDING_UNITS = [
   {
     id: 'Commercial Space 1',
     name: 'Commercial Space 1',
-    aliases: ['commercial space 1', 'commercial space', 'commercial', 'unit-1f-commercial', 'hezekiah'],
+    aliases: [
+      'commercial space 1',
+      'commercial space',
+      'commercial',
+      'unit-1f-commercial',
+      'hezekiah'
+    ],
     listingId: 'commercial-space',
     floor: 1,
     floorLabel: '1st Floor',
@@ -329,11 +335,7 @@ export function syncBuildingUnitsWithRooms(rooms = []) {
       if (unit.listingId === 'commercial-space') {
         return rId.includes('commercial') || rName.includes('commercial');
       }
-      return (
-        rId === unit.listingId ||
-        rId.includes('triple') ||
-        rName.includes('triple')
-      );
+      return rId === unit.listingId || rId.includes('triple') || rName.includes('triple');
     });
   };
 
@@ -395,14 +397,16 @@ export function syncBuildingUnitsWithRooms(rooms = []) {
  * @param {string} [dormType]
  */
 export function resolveBuildingUnit(roomName, dormType = '') {
-  const norm = String(roomName || '').trim().toLowerCase();
-  const dormNorm = String(dormType || '').trim().toLowerCase();
+  const norm = String(roomName || '')
+    .trim()
+    .toLowerCase();
+  const dormNorm = String(dormType || '')
+    .trim()
+    .toLowerCase();
   if (norm) {
     const exact = BUILDING_UNITS.find(
       (u) =>
-        u.id.toLowerCase() === norm ||
-        u.name.toLowerCase() === norm ||
-        u.aliases.includes(norm)
+        u.id.toLowerCase() === norm || u.name.toLowerCase() === norm || u.aliases.includes(norm)
     );
     if (exact) return exact;
     const partial = BUILDING_UNITS.find((u) =>
@@ -837,18 +841,78 @@ export function initBuilding3DViewer(container, options = {}) {
         const fullCenterZ = (8.0 + REAR_Z) / 2; // -3.7
 
         // Full-depth slab (z = REAR_Z .. +8.0, depth = 23.4, center z = -3.7)
-        addArchBox(f, 11.0, 0.18, fullDepth, 0, y0 + 0.09, fullCenterZ, 0x64748b, 0.2, 0x38bdf8, 0.5);
+        addArchBox(
+          f,
+          11.0,
+          0.18,
+          fullDepth,
+          0,
+          y0 + 0.09,
+          fullCenterZ,
+          0x64748b,
+          0.2,
+          0x38bdf8,
+          0.5
+        );
         // Left, Rear, and Right full-depth exterior walls
-        addArchBox(f, 0.22, FLOOR_H, fullDepth, -5.39, yCenter, fullCenterZ, 0x78828c, 0.12, 0x38bdf8, 0.36);
-        addArchBox(f, 11.0, FLOOR_H, 0.22, 0, yCenter, REAR_Z + 0.11, 0x78828c, 0.12, 0x38bdf8, 0.36);
-        addArchBox(f, 0.22, FLOOR_H, fullDepth, 5.39, yCenter, fullCenterZ, 0x78828c, 0.12, 0x38bdf8, 0.36);
+        addArchBox(
+          f,
+          0.22,
+          FLOOR_H,
+          fullDepth,
+          -5.39,
+          yCenter,
+          fullCenterZ,
+          0x78828c,
+          0.12,
+          0x38bdf8,
+          0.36
+        );
+        addArchBox(
+          f,
+          11.0,
+          FLOOR_H,
+          0.22,
+          0,
+          yCenter,
+          REAR_Z + 0.11,
+          0x78828c,
+          0.12,
+          0x38bdf8,
+          0.36
+        );
+        addArchBox(
+          f,
+          0.22,
+          FLOOR_H,
+          fullDepth,
+          5.39,
+          yCenter,
+          fullCenterZ,
+          0x78828c,
+          0.12,
+          0x38bdf8,
+          0.36
+        );
 
         if (f === 3) {
           // 3F Right-wall tall vertical barred stairwell window (front-right bay)
           addArchBox(3, 0.28, 2.1, 2.0, 5.42, yCenter, 4.4, 0x0f172a, 0.45, 0x60a5fa, 0.8);
           // Two horizontal multi-pane corridor windows on 3F right wall (matching photo!)
           addArchBox(3, 0.28, 0.9, 2.8, 5.42, yCenter - 0.1, 0.2, 0x0f172a, 0.48, 0x60a5fa, 0.85);
-          addArchBox(3, 0.28, 0.85, 2.2, 5.42, yCenter - 0.15, -5.8, 0x0f172a, 0.48, 0x60a5fa, 0.85);
+          addArchBox(
+            3,
+            0.28,
+            0.85,
+            2.2,
+            5.42,
+            yCenter - 0.15,
+            -5.8,
+            0x0f172a,
+            0.48,
+            0x60a5fa,
+            0.85
+          );
         }
       } else {
         // 4F & 5F Front Block covering all 3 rooms (z = STEP_Z (-8.4) .. +8.0, depth = 16.4m)
@@ -856,15 +920,63 @@ export function initBuilding3DViewer(container, options = {}) {
         const frontCenterZ = (8.0 + STEP_Z) / 2;
 
         // Indoor slab for 4F & 5F front block
-        addArchBox(f, 11.0, 0.18, frontDepth, 0, y0 + 0.09, frontCenterZ, 0x64748b, 0.22, 0x38bdf8, 0.52);
+        addArchBox(
+          f,
+          11.0,
+          0.18,
+          frontDepth,
+          0,
+          y0 + 0.09,
+          frontCenterZ,
+          0x64748b,
+          0.22,
+          0x38bdf8,
+          0.52
+        );
 
         // Left wall of 4F & 5F block
         if (f === 4) {
-          addArchBox(4, 0.22, FLOOR_H, frontDepth - 2.5, -5.39, yCenter, frontCenterZ - 1.25, 0x78828c, 0.13, 0x38bdf8, 0.38);
+          addArchBox(
+            4,
+            0.22,
+            FLOOR_H,
+            frontDepth - 2.5,
+            -5.39,
+            yCenter,
+            frontCenterZ - 1.25,
+            0x78828c,
+            0.13,
+            0x38bdf8,
+            0.38
+          );
           addArchBox(4, 0.22, FLOOR_H, 1.9, -5.39, yCenter, 7.05, 0x78828c, 0.13, 0x38bdf8, 0.38);
-          addArchBox(4, 0.65, 1.45, 1.6, -5.08, yCenter + 0.15, 5.25, 0x1e293b, 0.38, 0x94a3b8, 0.75);
+          addArchBox(
+            4,
+            0.65,
+            1.45,
+            1.6,
+            -5.08,
+            yCenter + 0.15,
+            5.25,
+            0x1e293b,
+            0.38,
+            0x94a3b8,
+            0.75
+          );
         } else {
-          addArchBox(5, 0.22, FLOOR_H, frontDepth, -5.39, yCenter, frontCenterZ, 0x78828c, 0.13, 0x38bdf8, 0.38);
+          addArchBox(
+            5,
+            0.22,
+            FLOOR_H,
+            frontDepth,
+            -5.39,
+            yCenter,
+            frontCenterZ,
+            0x78828c,
+            0.13,
+            0x38bdf8,
+            0.38
+          );
         }
 
         // Stepped Rear Wall of the 4F/5F Front Block at z = STEP_Z (-8.4)
@@ -872,7 +984,19 @@ export function initBuilding3DViewer(container, options = {}) {
           // 4F Rear Wall behind Room 303 (x = -5.5 .. +2.15), leaving the right-side hallway open for the Entrance Gate!
           addArchBox(4, 7.65, FLOOR_H, 0.22, -1.65, yCenter, STEP_Z, 0x78828c, 0.16, 0x38bdf8, 0.5);
           // 4F Rear Hallway Entrance Frame & Security Grille Gate at z = STEP_Z (-8.4)
-          addArchBox(4, 3.25, 0.45, 0.24, 3.76, y0 + FLOOR_H - 0.23, STEP_Z, 0x78828c, 0.28, 0x38bdf8, 0.65);
+          addArchBox(
+            4,
+            3.25,
+            0.45,
+            0.24,
+            3.76,
+            y0 + FLOOR_H - 0.23,
+            STEP_Z,
+            0x78828c,
+            0.28,
+            0x38bdf8,
+            0.65
+          );
           addArchBox(4, 0.28, FLOOR_H, 0.26, 2.24, yCenter, STEP_Z, 0xe2e8f0, 0.55, 0xffffff, 0.88);
           addArchBox(4, 0.28, FLOOR_H, 0.26, 5.26, yCenter, STEP_Z, 0xe2e8f0, 0.55, 0xffffff, 0.88);
           // Double-leaf barred security gate leading from the Back Deck walkway into the 4F hallway
@@ -883,36 +1007,108 @@ export function initBuilding3DViewer(container, options = {}) {
         }
 
         // Right Exterior Wall of the 4F/5F Front Block
-        addArchBox(f, 0.22, FLOOR_H, frontDepth, 5.39, yCenter, frontCenterZ, 0x78828c, 0.13, 0x38bdf8, 0.38);
+        addArchBox(
+          f,
+          0.22,
+          FLOOR_H,
+          frontDepth,
+          5.39,
+          yCenter,
+          frontCenterZ,
+          0x78828c,
+          0.13,
+          0x38bdf8,
+          0.38
+        );
 
         if (f === 4) {
           addArchBox(4, 0.28, 2.1, 2.0, 5.42, yCenter, 4.4, 0x0f172a, 0.45, 0x60a5fa, 0.8);
           addArchBox(4, 0.28, 0.9, 2.8, 5.42, yCenter - 0.1, 0.2, 0x0f172a, 0.48, 0x60a5fa, 0.85);
-          addArchBox(4, 0.28, 0.85, 2.2, 5.42, yCenter - 0.15, -5.8, 0x0f172a, 0.48, 0x60a5fa, 0.85);
+          addArchBox(
+            4,
+            0.28,
+            0.85,
+            2.2,
+            5.42,
+            yCenter - 0.15,
+            -5.8,
+            0x0f172a,
+            0.48,
+            0x60a5fa,
+            0.85
+          );
         } else if (f === 5) {
           addArchBox(5, 0.28, 1.2, 1.3, 5.42, yCenter + 0.2, 4.6, 0x0f172a, 0.48, 0xf8fafc, 0.85);
           addArchBox(5, 0.28, 0.9, 2.4, 5.42, yCenter - 0.1, 0.2, 0x0f172a, 0.48, 0x60a5fa, 0.85);
-          addArchBox(5, 0.28, 0.85, 2.2, 5.42, yCenter - 0.15, -5.8, 0x0f172a, 0.48, 0x60a5fa, 0.85);
+          addArchBox(
+            5,
+            0.28,
+            0.85,
+            2.2,
+            5.42,
+            yCenter - 0.15,
+            -5.8,
+            0x0f172a,
+            0.48,
+            0x60a5fa,
+            0.85
+          );
         }
       }
 
       // -----------------------------------------------------------------------
       // RIGHT-SIDE CORRIDOR & STAIRCASE
       // -----------------------------------------------------------------------
-      const corrDepth = isFullDepth ? (8.0 - REAR_Z - 0.6) : (8.0 - STEP_Z - 0.3);
+      const corrDepth = isFullDepth ? 8.0 - REAR_Z - 0.6 : 8.0 - STEP_Z - 0.3;
       const corrCenterZ = isFullDepth ? (8.0 + REAR_Z) / 2 : (8.0 + STEP_Z) / 2;
 
       // Interior corridor partition wall
-      addArchBox(f, 0.16, FLOOR_H, corrDepth, 2.12, yCenter, corrCenterZ, 0x94a3b8, 0.17, 0x38bdf8, 0.48);
+      addArchBox(
+        f,
+        0.16,
+        FLOOR_H,
+        corrDepth,
+        2.12,
+        yCenter,
+        corrCenterZ,
+        0x94a3b8,
+        0.17,
+        0x38bdf8,
+        0.48
+      );
 
       // Chevron-tiled hallway floor runner
-      addArchBox(f, 2.95, 0.05, corrDepth, 3.72, y0 + 0.2, corrCenterZ, 0x334155, 0.28, 0x60a5fa, 0.45);
+      addArchBox(
+        f,
+        2.95,
+        0.05,
+        corrDepth,
+        3.72,
+        y0 + 0.2,
+        corrCenterZ,
+        0x334155,
+        0.28,
+        0x60a5fa,
+        0.45
+      );
 
       // Front security grille gate
       addArchBox(f, 3.0, 2.6, 0.08, 3.72, y0 + 1.5, 7.72, 0x1e293b, 0.32, 0x94a3b8, 0.75);
       if (isFullDepth) {
         // Rear security grille gate at back of 1F–3F hallway
-        addArchBox(f, 3.0, 2.6, 0.08, 3.72, y0 + 1.5, REAR_Z + 0.28, 0x1e293b, 0.32, 0x94a3b8, 0.75);
+        addArchBox(
+          f,
+          3.0,
+          2.6,
+          0.08,
+          3.72,
+          y0 + 1.5,
+          REAR_Z + 0.28,
+          0x1e293b,
+          0.32,
+          0x94a3b8,
+          0.75
+        );
       }
 
       // 1) REAR HALLWAY STAIRCASE (1F -> 2F -> 3F -> 4F Rear Shed)
@@ -981,9 +1177,45 @@ export function initBuilding3DViewer(container, options = {}) {
       // Consistent hallway doors & windows for all 3 rooms across floors 2 to 5
       if (f >= 2) {
         for (const roomZ of [5.0, -0.4, -5.8]) {
-          addArchBox(f, 0.2, 2.0, 0.82, 2.12, y0 + 1.2, roomZ + 0.9, 0x475569, 0.48, 0xe2e8f0, 0.85);
-          addArchBox(f, 0.2, 1.12, 1.35, 2.12, y0 + 1.55, roomZ - 0.35, 0x0ea5e9, 0.4, 0xbae6fd, 0.85);
-          addArchBox(f, 0.34, 0.42, 0.62, 2.12, y0 + 2.55, roomZ + 0.9, 0xcbd5e1, 0.52, 0xffffff, 0.85);
+          addArchBox(
+            f,
+            0.2,
+            2.0,
+            0.82,
+            2.12,
+            y0 + 1.2,
+            roomZ + 0.9,
+            0x475569,
+            0.48,
+            0xe2e8f0,
+            0.85
+          );
+          addArchBox(
+            f,
+            0.2,
+            1.12,
+            1.35,
+            2.12,
+            y0 + 1.55,
+            roomZ - 0.35,
+            0x0ea5e9,
+            0.4,
+            0xbae6fd,
+            0.85
+          );
+          addArchBox(
+            f,
+            0.34,
+            0.42,
+            0.62,
+            2.12,
+            y0 + 2.55,
+            roomZ + 0.9,
+            0xcbd5e1,
+            0.52,
+            0xffffff,
+            0.85
+          );
         }
       }
 
@@ -994,21 +1226,93 @@ export function initBuilding3DViewer(container, options = {}) {
         for (const px of [-5.25, -1.68, 2.12, 5.25]) {
           addArchBox(1, 0.38, FLOOR_H, 0.42, px, yCenter, 7.75, 0xf8fafc, 0.6, 0xffffff, 0.92);
         }
-        addArchBox(1, 4.2, 0.26, 1.15, 0.22, y0 + FLOOR_H - 0.12, 8.22, 0xf8fafc, 0.72, 0xffffff, 0.98);
-        addArchBox(1, 0.16, 0.75, 0.75, -1.62, y0 + FLOOR_H - 0.55, 8.05, 0xf8fafc, 0.7, 0xffffff, 0.95);
-        addArchBox(1, 0.16, 0.75, 0.75, 2.06, y0 + FLOOR_H - 0.55, 8.05, 0xf8fafc, 0.7, 0xffffff, 0.95);
+        addArchBox(
+          1,
+          4.2,
+          0.26,
+          1.15,
+          0.22,
+          y0 + FLOOR_H - 0.12,
+          8.22,
+          0xf8fafc,
+          0.72,
+          0xffffff,
+          0.98
+        );
+        addArchBox(
+          1,
+          0.16,
+          0.75,
+          0.75,
+          -1.62,
+          y0 + FLOOR_H - 0.55,
+          8.05,
+          0xf8fafc,
+          0.7,
+          0xffffff,
+          0.95
+        );
+        addArchBox(
+          1,
+          0.16,
+          0.75,
+          0.75,
+          2.06,
+          y0 + FLOOR_H - 0.55,
+          8.05,
+          0xf8fafc,
+          0.7,
+          0xffffff,
+          0.95
+        );
         addArchBox(1, 1.5, 0.42, 0.1, 0.25, y0 + 2.35, 7.62, 0x1e293b, 0.75, 0xfbbf24, 0.95);
         addArchBox(1, 0.75, 0.32, 0.1, -0.55, y0 + 2.8, 7.62, 0x0f172a, 0.7, 0x94a3b8, 0.9);
         addArchBox(1, 0.75, 0.32, 0.1, 1.05, y0 + 2.8, 7.62, 0x0f172a, 0.7, 0x94a3b8, 0.9);
       } else if (f === 2 || f === 3) {
         addArchBox(f, 7.65, FLOOR_H, 0.22, -1.65, yCenter, 7.89, 0x78828c, 0.18, 0x38bdf8, 0.52);
-        addArchBox(f, 7.8, 0.22, 0.38, -1.65, y0 + FLOOR_H - 0.12, 8.06, 0xf8fafc, 0.72, 0xffffff, 0.96);
+        addArchBox(
+          f,
+          7.8,
+          0.22,
+          0.38,
+          -1.65,
+          y0 + FLOOR_H - 0.12,
+          8.06,
+          0xf8fafc,
+          0.72,
+          0xffffff,
+          0.96
+        );
         addArchBox(f, 7.8, 0.22, 0.38, -1.65, y0 + 0.12, 8.06, 0xf8fafc, 0.72, 0xffffff, 0.96);
         addArchBox(f, 0.24, FLOOR_H, 0.38, 2.15, yCenter, 8.06, 0xf8fafc, 0.72, 0xffffff, 0.96);
 
         for (const winX of [-3.55, 0.25]) {
-          addArchBox(f, 1.6, 1.48, 0.42, winX, yCenter + 0.05, 8.12, 0xf8fafc, 0.75, 0xffffff, 0.98);
-          addArchBox(f, 1.24, 1.12, 0.46, winX, yCenter + 0.05, 8.14, 0x0f172a, 0.62, 0x38bdf8, 0.92);
+          addArchBox(
+            f,
+            1.6,
+            1.48,
+            0.42,
+            winX,
+            yCenter + 0.05,
+            8.12,
+            0xf8fafc,
+            0.75,
+            0xffffff,
+            0.98
+          );
+          addArchBox(
+            f,
+            1.24,
+            1.12,
+            0.46,
+            winX,
+            yCenter + 0.05,
+            8.14,
+            0x0f172a,
+            0.62,
+            0x38bdf8,
+            0.92
+          );
         }
 
         if (f === 2) {
@@ -1024,23 +1328,95 @@ export function initBuilding3DViewer(container, options = {}) {
         addArchBox(4, 0.42, FLOOR_H, 0.4, -1.65, yCenter, 7.96, 0xf8fafc, 0.72, 0xffffff, 0.96);
         addArchBox(4, 0.32, FLOOR_H, 0.4, -5.35, yCenter, 7.96, 0xf8fafc, 0.72, 0xffffff, 0.96);
         addArchBox(4, 0.32, FLOOR_H, 0.4, 2.15, yCenter, 7.96, 0xf8fafc, 0.72, 0xffffff, 0.96);
-        addArchBox(4, 7.8, 0.22, 0.4, -1.65, y0 + FLOOR_H - 0.12, 8.06, 0xf8fafc, 0.72, 0xffffff, 0.96);
+        addArchBox(
+          4,
+          7.8,
+          0.22,
+          0.4,
+          -1.65,
+          y0 + FLOOR_H - 0.12,
+          8.06,
+          0xf8fafc,
+          0.72,
+          0xffffff,
+          0.96
+        );
         for (let r = 0; r < 4; r++) {
-          addArchBox(4, 7.4, 0.06, 0.08, -1.65, y0 + 0.36 + r * 0.24, 7.95, 0x18181b, 0.75, 0x94a3b8, 0.9);
+          addArchBox(
+            4,
+            7.4,
+            0.06,
+            0.08,
+            -1.65,
+            y0 + 0.36 + r * 0.24,
+            7.95,
+            0x18181b,
+            0.75,
+            0x94a3b8,
+            0.9
+          );
         }
       } else if (f === 5) {
         const frontDepth = 8.0 - STEP_Z;
         const frontCenterZ = (8.0 + STEP_Z) / 2;
         addArchBox(5, 11.0, FLOOR_H, 0.22, 0, yCenter, 7.89, 0x78828c, 0.18, 0x38bdf8, 0.52);
         for (const winX of [-3.55, 0.15, 3.35]) {
-          addArchBox(5, 1.5, 1.35, 0.42, winX, yCenter + 0.08, 8.12, 0xf8fafc, 0.75, 0xffffff, 0.98);
-          addArchBox(5, 1.15, 1.0, 0.46, winX, yCenter + 0.08, 8.14, 0x0f172a, 0.62, 0x38bdf8, 0.92);
+          addArchBox(
+            5,
+            1.5,
+            1.35,
+            0.42,
+            winX,
+            yCenter + 0.08,
+            8.12,
+            0xf8fafc,
+            0.75,
+            0xffffff,
+            0.98
+          );
+          addArchBox(
+            5,
+            1.15,
+            1.0,
+            0.46,
+            winX,
+            yCenter + 0.08,
+            8.14,
+            0x0f172a,
+            0.62,
+            0x38bdf8,
+            0.92
+          );
         }
         addArchBox(5, 0.68, 0.52, 0.45, 1.75, yCenter + 0.42, 8.15, 0x334155, 0.7, 0xe2e8f0, 0.9);
 
         // 5th-Floor Upper Roof Slab & Cornice over front block
-        addArchBox(5, 11.35, 0.3, frontDepth + 0.4, 0, y0 + FLOOR_H, frontCenterZ, 0xe2e8f0, 0.45, 0xffffff, 0.9);
-        addArchBox(6, 11.0, 0.55, frontDepth, 0, y0 + FLOOR_H + 0.28, frontCenterZ, 0x64748b, 0.18, 0x38bdf8, 0.48);
+        addArchBox(
+          5,
+          11.35,
+          0.3,
+          frontDepth + 0.4,
+          0,
+          y0 + FLOOR_H,
+          frontCenterZ,
+          0xe2e8f0,
+          0.45,
+          0xffffff,
+          0.9
+        );
+        addArchBox(
+          6,
+          11.0,
+          0.55,
+          frontDepth,
+          0,
+          y0 + FLOOR_H + 0.28,
+          frontCenterZ,
+          0x64748b,
+          0.18,
+          0x38bdf8,
+          0.48
+        );
       }
 
       if (f >= 2 && f <= 4) {
@@ -1062,18 +1438,66 @@ export function initBuilding3DViewer(container, options = {}) {
       const deckCenterZ = (STEP_Z + REAR_Z) / 2; // -11.9
 
       // Open Back Deck Floor Slab & Waterproofed Terrace Surface
-      addArchBox(4, 11.0, 0.22, deckDepth, 0, deckY + 0.11, deckCenterZ, 0x475569, 0.35, 0x38bdf8, 0.75);
+      addArchBox(
+        4,
+        11.0,
+        0.22,
+        deckDepth,
+        0,
+        deckY + 0.11,
+        deckCenterZ,
+        0x475569,
+        0.35,
+        0x38bdf8,
+        0.75
+      );
       // Open Rear Terrace Tile Grid Accent (in open terrace z = -8.4 .. -11.4)
       addArchBox(4, 7.1, 0.05, 2.75, -1.65, deckY + 0.24, -9.9, 0x334155, 0.32, 0x60a5fa, 0.6);
 
       // Stepped-down Back Deck Concrete Parapet Walls (Left, Rear, and Right walls at 4F height)
       const parapetH = 1.35;
       // Right parapet wall
-      addArchBox(4, 0.22, parapetH, deckDepth, 5.39, deckY + parapetH / 2, deckCenterZ, 0x78828c, 0.24, 0x38bdf8, 0.65);
+      addArchBox(
+        4,
+        0.22,
+        parapetH,
+        deckDepth,
+        5.39,
+        deckY + parapetH / 2,
+        deckCenterZ,
+        0x78828c,
+        0.24,
+        0x38bdf8,
+        0.65
+      );
       // Left parapet wall
-      addArchBox(4, 0.22, parapetH, deckDepth, -5.39, deckY + parapetH / 2, deckCenterZ, 0x78828c, 0.24, 0x38bdf8, 0.65);
+      addArchBox(
+        4,
+        0.22,
+        parapetH,
+        deckDepth,
+        -5.39,
+        deckY + parapetH / 2,
+        deckCenterZ,
+        0x78828c,
+        0.24,
+        0x38bdf8,
+        0.65
+      );
       // Rear parapet wall
-      addArchBox(4, 11.0, parapetH, 0.22, 0, deckY + parapetH / 2, REAR_Z + 0.11, 0x78828c, 0.24, 0x38bdf8, 0.65);
+      addArchBox(
+        4,
+        11.0,
+        parapetH,
+        0.22,
+        0,
+        deckY + parapetH / 2,
+        REAR_Z + 0.11,
+        0x78828c,
+        0.24,
+        0x38bdf8,
+        0.65
+      );
 
       // Full-Width Rear Shed / Bulkhead Structure across the back edge of the Back Deck
       // Spans the full width (x = -5.38 .. +5.38, bulkW = 10.76) from z = -11.4 to z = -15.28
@@ -1083,7 +1507,19 @@ export function initBuilding3DViewer(container, options = {}) {
       const bulkD = 3.88;
       const bulkX = 0;
       const bulkZ = -13.34;
-      addArchBox(4, bulkW, bulkH, bulkD, bulkX, deckY + bulkH / 2, bulkZ, 0x94a3b8, 0.22, 0x38bdf8, 0.62);
+      addArchBox(
+        4,
+        bulkW,
+        bulkH,
+        bulkD,
+        bulkX,
+        deckY + bulkH / 2,
+        bulkZ,
+        0x94a3b8,
+        0.22,
+        0x38bdf8,
+        0.62
+      );
 
       // Connected walkway runner along the right side of the open middle terrace (z = -11.4 .. -8.4)
       addArchBox(4, 2.95, 0.06, 3.0, 3.72, deckY + 0.24, -9.9, 0x334155, 0.32, 0x60a5fa, 0.5);
@@ -1094,7 +1530,19 @@ export function initBuilding3DViewer(container, options = {}) {
       addArchBox(4, 0.85, 0.45, 0.14, 2.55, deckY + 2.0, -11.4, 0x1e293b, 0.28, 0x475569, 0.35);
 
       // Vertical Red Standpipe / Water Pipe on the front-right corner of the rear shed (z = -11.4)
-      addArchBox(4, 0.12, bulkH + 0.45, 0.12, 5.28, deckY + bulkH / 2 + 0.2, -11.4, 0xdc2626, 0.9, 0xfca5a5, 1.0);
+      addArchBox(
+        4,
+        0.12,
+        bulkH + 0.45,
+        0.12,
+        5.28,
+        deckY + bulkH / 2 + 0.2,
+        -11.4,
+        0xdc2626,
+        0.9,
+        0xfca5a5,
+        1.0
+      );
 
       // Cylindrical Stainless Steel Water Tank positioned right at the BACK-RIGHT EDGE on top of the shed bulkhead (matching photo!)
       const tankGeo = new THREE.CylinderGeometry(0.84, 0.84, 2.1, 22);
@@ -1192,8 +1640,7 @@ export function initBuilding3DViewer(container, options = {}) {
           ? resolveBuildingUnit(state.highlightRoom, state.highlightDorm)
           : null;
 
-      const selectedFloorNum =
-        state.activeFloor !== 'all' ? Number(state.activeFloor) : null;
+      const selectedFloorNum = state.activeFloor !== 'all' ? Number(state.activeFloor) : null;
 
       BUILDING_UNITS.forEach((unit) => {
         const entry = unitMeshMap.get(unit.id);
@@ -1205,18 +1652,14 @@ export function initBuilding3DViewer(container, options = {}) {
         });
 
         const occCount =
-          unitTenants.length > 0
-            ? unitTenants.length
-            : Number(unit.publicOccupiedCount) || 0;
+          unitTenants.length > 0 ? unitTenants.length : Number(unit.publicOccupiedCount) || 0;
 
         unit._occupants = unitTenants;
         unit._occupiedCount = occCount;
         unit._isTenantOwnUnit = Boolean(
           highlightedTenantUnit && highlightedTenantUnit.id === unit.id
         );
-        unit._isFloorHighlighted = Boolean(
-          selectedFloorNum && unit.floor === selectedFloorNum
-        );
+        unit._isFloorHighlighted = Boolean(selectedFloorNum && unit.floor === selectedFloorNum);
 
         const isSelected = state.selectedUnitId === unit.id;
         let fillHex;
@@ -1318,8 +1761,7 @@ export function initBuilding3DViewer(container, options = {}) {
     }
 
     function selectUnit(unitId, shouldNotify = true) {
-      const resolved =
-        BUILDING_UNITS.find((u) => u.id === unitId) || resolveBuildingUnit(unitId);
+      const resolved = BUILDING_UNITS.find((u) => u.id === unitId) || resolveBuildingUnit(unitId);
       if (!resolved) return;
       state.selectedUnitId = resolved.id;
       computeUnitStates();
@@ -1372,7 +1814,7 @@ export function initBuilding3DViewer(container, options = {}) {
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try {
         renderer.domElement.setPointerCapture(e.pointerId);
-      } catch (_) { }
+      } catch (_) {}
 
       if (activePointers.size === 2) {
         const pts = Array.from(activePointers.values());
@@ -1427,7 +1869,7 @@ export function initBuilding3DViewer(container, options = {}) {
       activePointers.delete(e.pointerId);
       try {
         renderer.domElement.releasePointerCapture(e.pointerId);
-      } catch (_) { }
+      } catch (_) {}
 
       if (activePointers.size < 2) {
         initialPinchDistance = null;
@@ -1657,8 +2099,7 @@ export function initBuilding3DViewer(container, options = {}) {
       if (internalApi) {
         internalApi.selectUnit(unitId, isUserAction);
       } else {
-        const resolved =
-          BUILDING_UNITS.find((u) => u.id === unitId) || resolveBuildingUnit(unitId);
+        const resolved = BUILDING_UNITS.find((u) => u.id === unitId) || resolveBuildingUnit(unitId);
         if (resolved) {
           state.selectedUnitId = resolved.id;
           options.onSelectUnit?.(resolved);

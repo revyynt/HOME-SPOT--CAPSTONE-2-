@@ -83,8 +83,7 @@ Deno.serve(async (request) => {
     return jsonResponse(request, { error: 'PayMongo event id is required.' }, 400);
   }
   const rawResourceId = typeof resource.id === 'string' ? resource.id : '';
-  const paymentId =
-    (typeof relatedPayment?.id === 'string' && relatedPayment.id) || rawResourceId;
+  const paymentId = (typeof relatedPayment?.id === 'string' && relatedPayment.id) || rawResourceId;
   if (typeof paymentId !== 'string' || !paymentId) {
     return jsonResponse(request, { error: 'PayMongo payment id is required.' }, 400);
   }
@@ -107,10 +106,10 @@ Deno.serve(async (request) => {
       : {};
   const lineItemsAmount = Array.isArray(attributes.line_items)
     ? attributes.line_items.reduce(
-      (sum: number, item: { amount?: number; quantity?: number }) =>
-        sum + Number(item.amount || 0) * Number(item.quantity || 1),
-      0
-    )
+        (sum: number, item: { amount?: number; quantity?: number }) =>
+          sum + Number(item.amount || 0) * Number(item.quantity || 1),
+        0
+      )
     : 0;
   const amountInCentavos = Number(paymentAttributes.amount || attributes.amount || lineItemsAmount);
   if (!Number.isFinite(amountInCentavos) || amountInCentavos <= 0) {
@@ -138,12 +137,13 @@ Deno.serve(async (request) => {
       : ''
   );
   const now = new Date();
-  const firstLineItem = Array.isArray(attributes.line_items) && isRecord(attributes.line_items[0]) ? attributes.line_items[0] : null;
+  const firstLineItem =
+    Array.isArray(attributes.line_items) && isRecord(attributes.line_items[0])
+      ? attributes.line_items[0]
+      : null;
   const lineItemName = typeof firstLineItem?.name === 'string' ? firstLineItem.name.trim() : '';
   const cleanPurpose =
-    lineItemName ||
-    description.replace(/\s*-\s*MJP Residences\s*$/i, '').trim() ||
-    'Monthly Rent';
+    lineItemName || description.replace(/\s*-\s*MJP Residences\s*$/i, '').trim() || 'Monthly Rent';
   const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
 
   const record = {

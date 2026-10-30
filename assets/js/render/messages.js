@@ -31,8 +31,7 @@ function renderTenantMessenger(tenantContainer, docList) {
     return;
   }
 
-  const activeThread =
-    threads.find((t) => t.email.toLowerCase() === activeChatEmail) || threads[0];
+  const activeThread = threads.find((t) => t.email.toLowerCase() === activeChatEmail) || threads[0];
   activeChatEmail = activeThread.email.toLowerCase();
 
   const sidebarItems = threads
@@ -48,29 +47,33 @@ function renderTenantMessenger(tenantContainer, docList) {
           type="button"
           data-action="select-chat"
           data-email="${attr(t.email)}"
-          class="w-full text-left px-4 py-3.5 hover:bg-gray-50 transition-colors flex items-center gap-3 ${isSelected ? 'bg-blue-50/80 border-l-4 border-blue-600' : ''
-        }"
+          class="w-full text-left px-4 py-3.5 hover:bg-gray-50 transition-colors flex items-center gap-3 ${
+            isSelected ? 'bg-blue-50/80 border-l-4 border-blue-600' : ''
+          }"
         >
           <div class="w-10 h-10 rounded-full bg-gradient-to-tr ${avatarGradient(
-          t.name
-        )} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
+            t.name
+          )} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
             ${escapeHtml(initials(t.name))}
           </div>
           <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between gap-2">
-              <span class="text-sm ${t.unreadCount ? 'font-bold text-gray-900' : 'font-semibold text-gray-800'
-        } truncate">${escapeHtml(t.name)}</span>
+              <span class="text-sm ${
+                t.unreadCount ? 'font-bold text-gray-900' : 'font-semibold text-gray-800'
+              } truncate">${escapeHtml(t.name)}</span>
               <span class="text-[11px] text-gray-400 flex-shrink-0">${escapeHtml(timeLabel)}</span>
             </div>
             <div class="flex items-center justify-between gap-2 mt-0.5">
-              <p class="text-xs ${t.unreadCount ? 'font-semibold text-gray-900' : 'text-gray-500'
-        } truncate">${escapeHtml(preview)}</p>
-              ${t.unreadCount
-          ? `<span class="bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">${t.unreadCount}</span>`
-          : t.room
-            ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap">${escapeHtml(t.room)}</span>`
-            : ''
-        }
+              <p class="text-xs ${
+                t.unreadCount ? 'font-semibold text-gray-900' : 'text-gray-500'
+              } truncate">${escapeHtml(preview)}</p>
+              ${
+                t.unreadCount
+                  ? `<span class="bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full flex-shrink-0">${t.unreadCount}</span>`
+                  : t.room
+                    ? `<span class="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded flex-shrink-0 whitespace-nowrap">${escapeHtml(t.room)}</span>`
+                    : ''
+              }
             </div>
           </div>
         </button>`;
@@ -79,31 +82,35 @@ function renderTenantMessenger(tenantContainer, docList) {
 
   const bubblesHtml = activeThread.items.length
     ? activeThread.items
-      .map((item) => {
-        const isAdmin = item.sender === 'admin';
-        const timeStr = formatChatTime(item.timeMs) || 'Just now';
-        return `
+        .map((item) => {
+          const isAdmin = item.sender === 'admin';
+          const timeStr = formatChatTime(item.timeMs) || 'Just now';
+          return `
             <div class="flex ${isAdmin ? 'justify-end' : 'justify-start'} group">
-              <div class="max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${isAdmin
-            ? 'bg-blue-600 text-white rounded-br-sm'
-            : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
-          }">
+              <div class="max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm ${
+                isAdmin
+                  ? 'bg-blue-600 text-white rounded-br-sm'
+                  : 'bg-white border border-gray-200 text-gray-800 rounded-bl-sm'
+              }">
                 <p class="text-sm whitespace-pre-wrap break-words">${escapeHtml(item.text)}</p>
-                <div class="flex items-center justify-end gap-2 mt-1 text-[11px] ${isAdmin ? 'text-blue-100' : 'text-gray-400'
-          }">
+                <div class="flex items-center justify-end gap-2 mt-1 text-[11px] ${
+                  isAdmin ? 'text-blue-100' : 'text-gray-400'
+                }">
                   <span>${escapeHtml(timeStr)}</span>
-                  ${!item.legacyReply
-            ? `<button type="button" data-action="delete-message" data-id="${attr(
-              item.id
-            )}" class="opacity-0 group-hover:opacity-100 hover:underline ${isAdmin ? 'text-white' : 'text-red-500'
-            }" title="Delete message">Delete</button>`
-            : ''
-          }
+                  ${
+                    !item.legacyReply
+                      ? `<button type="button" data-action="delete-message" data-id="${attr(
+                          item.id
+                        )}" class="opacity-0 group-hover:opacity-100 hover:underline ${
+                          isAdmin ? 'text-white' : 'text-red-500'
+                        }" title="Delete message">Delete</button>`
+                      : ''
+                  }
                 </div>
               </div>
             </div>`;
-      })
-      .join('')
+        })
+        .join('')
     : `<div class="h-full flex items-center justify-center text-sm text-gray-400">
          No messages with ${escapeHtml(activeThread.name)} yet. Send a message below to start chatting.
        </div>`;
@@ -124,25 +131,26 @@ function renderTenantMessenger(tenantContainer, docList) {
         <div class="px-3.5 py-3 md:p-4 bg-white border-b flex items-center justify-between gap-3">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr ${avatarGradient(
-    activeThread.name
-  )} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
+              activeThread.name
+            )} text-white flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-sm">
               ${escapeHtml(initials(activeThread.name))}
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <h4 class="font-bold text-gray-900 text-sm truncate">${escapeHtml(
-    activeThread.name
-  )}</h4>
-                ${activeThread.room
-      ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">${escapeHtml(
-        activeThread.room
-      )}</span>`
-      : ''
-    }
+                  activeThread.name
+                )}</h4>
+                ${
+                  activeThread.room
+                    ? `<span class="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap shrink-0">${escapeHtml(
+                        activeThread.room
+                      )}</span>`
+                    : ''
+                }
               </div>
               <p class="text-xs text-gray-500 font-mono truncate">${escapeHtml(
-      activeThread.email
-    )}</p>
+                activeThread.email
+              )}</p>
             </div>
           </div>
         </div>
@@ -152,8 +160,8 @@ function renderTenantMessenger(tenantContainer, docList) {
         </div>
 
         <form id="adminChatForm" data-email="${attr(
-      activeThread.email
-    )}" data-name="${attr(activeThread.name)}" class="p-2.5 sm:p-3 bg-white border-t flex items-center gap-2">
+          activeThread.email
+        )}" data-name="${attr(activeThread.name)}" class="p-2.5 sm:p-3 bg-white border-t flex items-center gap-2">
           <input
             type="text"
             name="message"
@@ -283,10 +291,10 @@ export function renderMessages(docs) {
 
     const createdAt = data.createdAt
       ? escapeHtml(
-        new Date(
-          data.createdAt.seconds ? data.createdAt.seconds * 1000 : data.createdAt
-        ).toLocaleString()
-      )
+          new Date(
+            data.createdAt.seconds ? data.createdAt.seconds * 1000 : data.createdAt
+          ).toLocaleString()
+        )
       : 'Just now';
 
     const avatarInitial = escapeHtml(
@@ -323,11 +331,11 @@ export function renderMessages(docs) {
         : data.property || '';
     const moveInLabel = data.moveInDate
       ? (() => {
-        const dt = new Date(data.moveInDate);
-        return Number.isNaN(dt.getTime())
-          ? String(data.moveInDate)
-          : dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
-      })()
+          const dt = new Date(data.moveInDate);
+          return Number.isNaN(dt.getTime())
+            ? String(data.moveInDate)
+            : dt.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+        })()
       : '';
 
     const metaHtml =
@@ -344,8 +352,8 @@ export function renderMessages(docs) {
           : '';
 
     const targetSubject = isSupport
-      ? (subject || 'Customer Support Inquiry')
-      : (subject || (data.room ? `Inquiry regarding ${data.room}` : 'Property Inquiry'));
+      ? subject || 'Customer Support Inquiry'
+      : subject || (data.room ? `Inquiry regarding ${data.room}` : 'Property Inquiry');
 
     const actionButtons = `
         <button
@@ -429,9 +437,7 @@ export function renderMessages(docs) {
 export function formatRecipientName(rawName) {
   if (!rawName) return 'there';
   const clean = rawName.includes(',') ? rawName.split(',')[1].trim() : rawName.trim();
-  return clean
-    .toLowerCase()
-    .replace(/(?:^|[\s-])\S/g, (char) => char.toUpperCase());
+  return clean.toLowerCase().replace(/(?:^|[\s-])\S/g, (char) => char.toUpperCase());
 }
 
 /**
@@ -449,7 +455,8 @@ export function openGCompose({ email, name, subject, message, id, room }) {
   const formattedName = formatRecipientName(name);
   const cleanSubject = subject || (room ? `Inquiry regarding ${room}` : 'Public Inquiry');
   const su = encodeURIComponent(`Re: [HomeSpot] ${cleanSubject}`);
-  const bodyText = `Hi ${formattedName},\n\n` +
+  const bodyText =
+    `Hi ${formattedName},\n\n` +
     'Thank you for reaching out to MJP Residences.\n\n' +
     'Regarding your inquiry:\n' +
     `"${message || ''}"\n\n\n\n` +
@@ -462,10 +469,12 @@ export function openGCompose({ email, name, subject, message, id, room }) {
 
   if (id && isDataReady()) {
     const ref = supabaseData.doc(db, 'messages', id);
-    supabaseData.updateDoc(ref, {
-      status: 'Read',
-      updatedAt: supabaseData.serverTimestamp()
-    }).catch((err) => console.warn('Could not mark message as read on gcompose:', err));
+    supabaseData
+      .updateDoc(ref, {
+        status: 'Read',
+        updatedAt: supabaseData.serverTimestamp()
+      })
+      .catch((err) => console.warn('Could not mark message as read on gcompose:', err));
   }
 }
 

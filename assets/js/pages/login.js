@@ -1,4 +1,11 @@
-import { authReady, db, getCurrentUser, setPersistence, supabase, supabaseData } from '../supabase-service.js';
+import {
+  authReady,
+  db,
+  getCurrentUser,
+  setPersistence,
+  supabase,
+  supabaseData
+} from '../supabase-service.js';
 import { Toast } from '../render/toast.js';
 
 const ROLE_DESTINATIONS = {
@@ -154,7 +161,12 @@ function startResendCooldown(seconds = 60) {
 
 async function triggerAdminOtp(user, destination) {
   if (isSendingAdminOtp) return;
-  if (adminOtpModal && !adminOtpModal.classList.contains('hidden') && pendingAdminUser?.id === user?.id) return;
+  if (
+    adminOtpModal &&
+    !adminOtpModal.classList.contains('hidden') &&
+    pendingAdminUser?.id === user?.id
+  )
+    return;
   isSendingAdminOtp = true;
   pendingAdminUser = user;
   pendingAdminDestination = destination;
@@ -183,7 +195,9 @@ async function triggerAdminOtp(user, destination) {
     });
     if (error) {
       console.warn('OTP send notice:', error);
-      showAdminOtpAlert(error.message || 'Error sending verification code. Click Resend to try again.');
+      showAdminOtpAlert(
+        error.message || 'Error sending verification code. Click Resend to try again.'
+      );
     }
   } catch (err) {
     console.warn('OTP error:', err);
@@ -261,7 +275,9 @@ resendAdminOtpBtn?.addEventListener('click', async () => {
     showAdminOtpAlert('A fresh verification code has been sent to your Gmail.', true);
     startResendCooldown(60);
   } catch (err) {
-    showAdminOtpAlert(err.message || 'Unable to resend verification code right now. Try again shortly.');
+    showAdminOtpAlert(
+      err.message || 'Unable to resend verification code right now. Try again shortly.'
+    );
   }
 });
 
@@ -387,7 +403,6 @@ forgotForm?.addEventListener('submit', async (e) => {
   }
 });
 
-
 let isRecoveringPassword = false;
 
 // Check URL hash for errors or recovery tokens on page load
@@ -402,7 +417,8 @@ function checkAuthHashState() {
   if (error || errorCode) {
     let msg = 'The password reset link is invalid or has expired.';
     if (errorCode === 'otp_expired' || (errorDesc && errorDesc.toLowerCase().includes('expired'))) {
-      msg = 'This password reset link has expired or was already used. Please click "Forgot password?" to send a fresh reset link.';
+      msg =
+        'This password reset link has expired or was already used. Please click "Forgot password?" to send a fresh reset link.';
     } else if (errorDesc) {
       msg = decodeURIComponent(errorDesc.replace(/\+/g, ' '));
     }
@@ -449,7 +465,8 @@ updatePassForm?.addEventListener('submit', async (e) => {
 
   if (newPass.length < 6) {
     if (updatePassAlert) {
-      updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      updatePassAlert.className =
+        'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
       updatePassAlert.textContent = 'Password must be at least 6 characters.';
       updatePassAlert.classList.remove('hidden');
     }
@@ -458,7 +475,8 @@ updatePassForm?.addEventListener('submit', async (e) => {
 
   if (newPass !== confirmPass) {
     if (updatePassAlert) {
-      updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      updatePassAlert.className =
+        'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
       updatePassAlert.textContent = 'Passwords do not match.';
       updatePassAlert.classList.remove('hidden');
     }
@@ -476,7 +494,9 @@ updatePassForm?.addEventListener('submit', async (e) => {
 
     if (updatePassModal) updatePassModal.classList.add('hidden');
     isRecoveringPassword = false;
-    try { history.replaceState(null, '', window.location.pathname); } catch { }
+    try {
+      history.replaceState(null, '', window.location.pathname);
+    } catch {}
     Toast.alert({
       title: 'Password Updated',
       message: 'Your new password is set! Redirecting to your portal...'
@@ -491,8 +511,10 @@ updatePassForm?.addEventListener('submit', async (e) => {
   } catch (err) {
     console.error('Update password error:', err);
     if (updatePassAlert) {
-      updatePassAlert.className = 'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
-      updatePassAlert.textContent = err.message || 'Failed to update password. Link may be expired.';
+      updatePassAlert.className =
+        'p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200';
+      updatePassAlert.textContent =
+        err.message || 'Failed to update password. Link may be expired.';
       updatePassAlert.classList.remove('hidden');
     }
   } finally {
@@ -551,9 +573,9 @@ loginForm?.addEventListener('submit', async (event) => {
     console.error('Portal sign in error:', error);
     showAlert(
       ERROR_MESSAGES[error.code] ||
-      (error.message
-        ? error.message
-        : 'Login failed. Please check your connection and try again.')
+        (error.message
+          ? error.message
+          : 'Login failed. Please check your connection and try again.')
     );
     isSubmitting = false;
     loginSubmitBtn.disabled = false;
@@ -568,7 +590,8 @@ async function checkExistingSession() {
     isRecoveringPassword ||
     (typeof window !== 'undefined' &&
       window.location.hash &&
-      (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token')))
+      (window.location.hash.includes('type=recovery') ||
+        window.location.hash.includes('access_token')))
   ) {
     console.log('[auth] In password recovery, preventing auto-redirect to portal');
     return;
@@ -579,7 +602,8 @@ async function checkExistingSession() {
       isRecoveringPassword ||
       (typeof window !== 'undefined' &&
         window.location.hash &&
-        (window.location.hash.includes('type=recovery') || window.location.hash.includes('access_token')))
+        (window.location.hash.includes('type=recovery') ||
+          window.location.hash.includes('access_token')))
     ) {
       return;
     }
@@ -589,7 +613,10 @@ async function checkExistingSession() {
       user.app_metadata?.role || (user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
     const destination = ROLE_DESTINATIONS[role];
     if (destination) {
-      if ((role === 'admin' || role === 'superadmin') && sessionStorage.getItem('admin_otp_verified') !== 'true') {
+      if (
+        (role === 'admin' || role === 'superadmin') &&
+        sessionStorage.getItem('admin_otp_verified') !== 'true'
+      ) {
         if (adminOtpModal && !adminOtpModal.classList.contains('hidden')) return;
         if (isSubmitting || isSendingAdminOtp) return;
         await triggerAdminOtp(user, destination);

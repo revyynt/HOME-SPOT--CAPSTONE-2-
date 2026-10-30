@@ -124,15 +124,13 @@ Deno.serve(async (request) => {
     createdAt: now
   };
 
-  const { error: insertError } = await admin
-    .from('app_documents')
-    .upsert(
-      [
-        { collection: 'tenants', id: tenantId, data: tenant },
-        { collection: 'users', id: userId, data: profile }
-      ],
-      { onConflict: 'collection,id' }
-    );
+  const { error: insertError } = await admin.from('app_documents').upsert(
+    [
+      { collection: 'tenants', id: tenantId, data: tenant },
+      { collection: 'users', id: userId, data: profile }
+    ],
+    { onConflict: 'collection,id' }
+  );
   if (insertError) {
     if (!wasExistingUser) {
       const { error: cleanupError } = await admin.auth.admin.deleteUser(userId);

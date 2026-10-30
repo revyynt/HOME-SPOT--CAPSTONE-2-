@@ -201,7 +201,8 @@ export async function createCheckoutSession({
   return {
     checkoutUrl: session.attributes.checkout_url,
     sessionId: session.id,
-    referenceNumber: session.attributes.reference_number || `PM-${session.id.slice(-6).toUpperCase()}`
+    referenceNumber:
+      session.attributes.reference_number || `PM-${session.id.slice(-6).toUpperCase()}`
   };
 }
 

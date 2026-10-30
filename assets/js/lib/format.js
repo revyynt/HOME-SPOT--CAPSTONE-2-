@@ -234,7 +234,8 @@ export function formatPaymentMethod(rawMethod, sessionOrPayment = null) {
         : Array.isArray(attrs?.payment_intent?.payments)
           ? attrs.payment_intent.payments
           : [];
-    const lastPayment = payments[payments.length - 1]?.attributes || payments[payments.length - 1] || null;
+    const lastPayment =
+      payments[payments.length - 1]?.attributes || payments[payments.length - 1] || null;
     const firstPayment = payments[0]?.attributes || payments[0] || null;
     const lastErr = piAttrs?.last_payment_error || attrs?.last_payment_error || null;
 
@@ -271,7 +272,12 @@ export function formatPaymentMethod(rawMethod, sessionOrPayment = null) {
   if (lower.includes('maya')) return 'PayMongo Checkout (Maya)';
   if (lower.includes('qrph') || lower.includes('qr ph')) return 'PayMongo Checkout (QR Ph)';
   if (lower.includes('grab')) return 'PayMongo Checkout (GrabPay)';
-  if (lower.includes('card') || lower.includes('3ds') || lower.includes('visa') || lower.includes('mastercard')) {
+  if (
+    lower.includes('card') ||
+    lower.includes('3ds') ||
+    lower.includes('visa') ||
+    lower.includes('mastercard')
+  ) {
     return 'PayMongo Checkout (Card)';
   }
   if (lower === 'paymongo' || lower === 'paymongo checkout') {
@@ -298,7 +304,8 @@ export function getPaymentFailureReason(sessionOrPayment = null, method = '') {
       : Array.isArray(piAttrs?.payments)
         ? piAttrs.payments
         : [];
-    const lastPayment = payments[payments.length - 1]?.attributes || payments[payments.length - 1] || null;
+    const lastPayment =
+      payments[payments.length - 1]?.attributes || payments[payments.length - 1] || null;
 
     detail =
       lastErr?.failed_message ||
@@ -326,7 +333,12 @@ export function getPaymentFailureReason(sessionOrPayment = null, method = '') {
   if (lowerMethod.includes('grab')) {
     return 'GrabPay authorization failed, was declined, or expired on PayMongo.';
   }
-  if (lowerMethod.includes('card') || lowerMethod.includes('3ds') || lowerMethod.includes('visa') || lowerMethod.includes('mastercard')) {
+  if (
+    lowerMethod.includes('card') ||
+    lowerMethod.includes('3ds') ||
+    lowerMethod.includes('visa') ||
+    lowerMethod.includes('mastercard')
+  ) {
     return 'Card was declined or 3DS verification failed on PayMongo.';
   }
 
@@ -351,27 +363,54 @@ export function deduplicatePayments(payments) {
     const pId = p.id || p.payMongoResourceId || p.paymentMethodId || p.sessionId;
     const ref = p.referenceNumber || p.reference_number;
     const rawPurpose = p.purpose || p.description || 'Monthly Rent';
-    const cleanPurpose = rawPurpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase();
+    const cleanPurpose = rawPurpose
+      .replace(/\s*-\s*MJP Residences\s*$/i, '')
+      .trim()
+      .toLowerCase();
     const amount = Number(p.amount) || 0;
-    const tenant = (p.tenantEmail || p.tenantName || p.tenant_email || p.tenant_name || '').toLowerCase().trim();
+    const tenant = (p.tenantEmail || p.tenantName || p.tenant_email || p.tenant_name || '')
+      .toLowerCase()
+      .trim();
     const rawTime = p.createdAt || p.created_at || p.timestamp || p.dateFormatted;
     const timeMs = rawTime ? new Date(rawTime).getTime() : 0;
     const normalizedMethod = formatPaymentMethod(p.method || p.payment_method, p);
 
     const matchedExisting = results.find((existing) => {
-      const exId = existing.id || existing.payMongoResourceId || existing.paymentMethodId || existing.sessionId;
+      const exId =
+        existing.id ||
+        existing.payMongoResourceId ||
+        existing.paymentMethodId ||
+        existing.sessionId;
       const exRef = existing.referenceNumber || existing.reference_number;
       if (pId && exId && pId === exId) return true;
       if (ref && exRef && ref === exRef) return true;
 
-      const exTenant = (existing.tenantEmail || existing.tenantName || existing.tenant_email || existing.tenant_name || '').toLowerCase().trim();
+      const exTenant = (
+        existing.tenantEmail ||
+        existing.tenantName ||
+        existing.tenant_email ||
+        existing.tenant_name ||
+        ''
+      )
+        .toLowerCase()
+        .trim();
       const exAmount = Number(existing.amount) || 0;
       const exRawPurpose = existing.purpose || existing.description || 'Monthly Rent';
-      const exCleanPurpose = exRawPurpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim().toLowerCase();
-      const exRawTime = existing.createdAt || existing.created_at || existing.timestamp || existing.dateFormatted;
+      const exCleanPurpose = exRawPurpose
+        .replace(/\s*-\s*MJP Residences\s*$/i, '')
+        .trim()
+        .toLowerCase();
+      const exRawTime =
+        existing.createdAt || existing.created_at || existing.timestamp || existing.dateFormatted;
       const exTimeMs = exRawTime ? new Date(exRawTime).getTime() : 0;
 
-      if (tenant && exTenant && tenant === exTenant && amount === exAmount && cleanPurpose === exCleanPurpose) {
+      if (
+        tenant &&
+        exTenant &&
+        tenant === exTenant &&
+        amount === exAmount &&
+        cleanPurpose === exCleanPurpose
+      ) {
         if (timeMs && exTimeMs) {
           if (Math.abs(timeMs - exTimeMs) <= 15 * 60 * 1000) return true;
         } else {
@@ -388,7 +427,10 @@ export function deduplicatePayments(payments) {
       ) {
         matchedExisting.method = normalizedMethod;
       }
-      if (!matchedExisting.sessionId && (p.sessionId || (typeof pId === 'string' && pId.startsWith('cs_')))) {
+      if (
+        !matchedExisting.sessionId &&
+        (p.sessionId || (typeof pId === 'string' && pId.startsWith('cs_')))
+      ) {
         matchedExisting.sessionId = p.sessionId || pId;
       }
       continue;

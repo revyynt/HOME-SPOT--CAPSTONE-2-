@@ -323,6 +323,6 @@ test('inline event handlers are not growing', () => {
   assert.ok(
     total <= BASELINE,
     `Inline handler count rose to ${total} (baseline ${BASELINE}). ` +
-    'Convert them to data-* attributes with event delegation.'
+      'Convert them to data-* attributes with event delegation.'
   );
 });

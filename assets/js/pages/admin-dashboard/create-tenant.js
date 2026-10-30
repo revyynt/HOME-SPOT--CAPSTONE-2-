@@ -85,9 +85,7 @@ export function refreshTenantRoomOptions(preferredRoom = '') {
     const occ = getUnitOccupants(unit.id).length;
     const isFull = occ >= cap;
     const baseLabel = UNIT_SHORT_LABELS[unit.id] || `${unit.floor}F • ${unit.name}`;
-    const statusText = isFull
-      ? `FULL • ${occ}/1 User`
-      : 'Available • 0/1 User';
+    const statusText = isFull ? `FULL • ${occ}/1 User` : 'Available • 0/1 User';
 
     const opt = document.createElement('option');
     opt.value = unit.id;
