@@ -1664,7 +1664,7 @@ function initAdminDataAnalysis() {
   };
 
   const renderAnalysis = () => {
-    const totalRooms = BUILDING_UNITS.length;
+    const totalRooms = BUILDING_UNITS.filter((u) => u.type !== 'Commercial Space').length || 12;
     const selectedYear = Number(yearSelect?.value) || now.getFullYear();
     const selectedMonthVal = monthSelect?.value || 'all';
 
@@ -1676,7 +1676,7 @@ function initAdminDataAnalysis() {
       activeTenants.forEach((t) => {
         if (!t.room && !t.dormName && !t.dorm) return;
         const unit = resolveBuildingUnit(t.room || '', t.dormName || t.dorm || '');
-        if (unit) occupiedUnitIds.add(unit.id);
+        if (unit && unit.type !== 'Commercial Space') occupiedUnitIds.add(unit.id);
       });
       const occupiedRooms = Math.min(totalRooms, occupiedUnitIds.size);
       const availableRooms = Math.max(0, totalRooms - occupiedRooms);
@@ -1750,54 +1750,112 @@ function initAdminDataAnalysis() {
     const chartGrid = document.getElementById('adminAnalysisChartGrid');
     if (chartGrid) {
       const maxScale = Math.max(totalRooms, ...monthlyStats.map((s) => s.tenants), 1);
-      chartGrid.innerHTML = monthlyStats
-        .map((stat) => {
-          const isSelectedMonth =
-            selectedMonthVal !== 'all' && Number(selectedMonthVal) === stat.monthIdx;
-          const isCurrentFocus = stat.monthIdx === focusMonthIdx;
-          const occPct =
-            stat.occupiedRooms > 0
-              ? Math.max(10, Math.round((stat.occupiedRooms / totalRooms) * 100))
-              : 4;
-          const availPct =
-            stat.availableRooms > 0
-              ? Math.max(10, Math.round((stat.availableRooms / totalRooms) * 100))
-              : 4;
-          const tenPct =
-            stat.tenants > 0
-              ? Math.max(10, Math.round((stat.tenants / maxScale) * 100))
-              : 4;
+      const svgW = 960;
+      const svgH = 290;
+      const xStart = 70;
+      const xEnd = 920;
+      const yBottom = 225;
+      const yTop = 25;
+      const plotH = yBottom - yTop;
+      const plotW = xEnd - xStart;
 
+      const getX = (idx) => xStart + (idx * (plotW / 11));
+      const getY = (val) => yBottom - ((val / maxScale) * plotH);
+
+      const occPoints = monthlyStats.map((s, i) => `${getX(i).toFixed(1)},${getY(s.occupiedRooms).toFixed(1)}`);
+      const availPoints = monthlyStats.map((s, i) => `${getX(i).toFixed(1)},${getY(s.availableRooms).toFixed(1)}`);
+      const tenantPoints = monthlyStats.map((s, i) => `${getX(i).toFixed(1)},${getY(s.tenants).toFixed(1)}`);
+
+      const yTicks = [0, 2, 4, 6, 8, 10, totalRooms].filter((v, i, arr) => arr.indexOf(v) === i && v <= maxScale);
+
+      const horizontalGridHtml = yTicks
+        .map((val) => {
+          const y = getY(val).toFixed(1);
           return `
-            <button type="button" data-action="admin-analysis-pick-month" data-month="${stat.monthIdx}"
-              class="flex flex-col justify-between p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                isSelectedMonth
-                  ? 'bg-blue-50/80 border-blue-500 ring-2 ring-blue-200 shadow-xs'
-                  : isCurrentFocus && selectedMonthVal === 'all'
-                    ? 'bg-slate-50 border-blue-300 ring-1 ring-blue-100'
-                    : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-gray-50/60'
-              }">
-              <div class="flex items-center justify-between gap-1 mb-2">
-                <span class="text-xs font-extrabold text-gray-900">${escapeHtml(stat.shortLabel)}</span>
-                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                  stat.occupiedRooms > 0
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-slate-100 text-slate-600'
-                }">${stat.occupiedRooms}/${totalRooms}</span>
-              </div>
-              <div class="h-24 flex items-end justify-center gap-1.5 px-1 py-1 bg-slate-50 rounded-lg border border-slate-100">
-                <div class="w-3 bg-emerald-500 rounded-t transition-all" style="height:${occPct}%" title="Occupied Rooms: ${stat.occupiedRooms} / ${totalRooms}"></div>
-                <div class="w-3 bg-sky-400 rounded-t transition-all" style="height:${availPct}%" title="Available Rooms: ${stat.availableRooms} / ${totalRooms}"></div>
-                <div class="w-3 bg-blue-600 rounded-t transition-all" style="height:${tenPct}%" title="Active Tenants: ${stat.tenants}"></div>
-              </div>
-              <div class="mt-2 space-y-0.5 text-[10px] leading-tight text-gray-600">
-                <div class="flex justify-between"><span>Occ:</span><strong class="text-emerald-700">${stat.occupiedRooms} rm</strong></div>
-                <div class="flex justify-between"><span>Avail:</span><strong class="text-sky-700">${stat.availableRooms} rm</strong></div>
-                <div class="flex justify-between"><span>Tenants:</span><strong class="text-blue-700">${stat.tenants}</strong></div>
-              </div>
-            </button>`;
+            <line x1="${xStart}" y1="${y}" x2="${xEnd}" y2="${y}" stroke="#cbd5e1" stroke-width="1" />
+            <line x1="${xStart - 6}" y1="${y}" x2="${xStart}" y2="${y}" stroke="#334155" stroke-width="1.5" />
+            <text x="${xStart - 10}" y="${Number(y) + 4}" text-anchor="end" font-size="11" font-weight="600" fill="#475569">${val}</text>`;
         })
         .join('');
+
+      const verticalGridHtml = monthlyStats
+        .map((s, i) => {
+          const x = getX(i).toFixed(1);
+          const isSelected = selectedMonthVal !== 'all' && Number(selectedMonthVal) === s.monthIdx;
+          const isFocus = s.monthIdx === focusMonthIdx;
+          return `
+            <line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke="#e2e8f0" stroke-width="1" />
+            <line x1="${x}" y1="${yBottom}" x2="${x}" y2="${yBottom + 6}" stroke="#334155" stroke-width="1.5" />
+            <text x="${x}" y="${yBottom + 20}" text-anchor="middle" font-size="11" font-weight="${isFocus || isSelected ? '700' : '600'}" fill="${isFocus || isSelected ? '#0f172a' : '#64748b'}">${s.shortLabel}</text>`;
+        })
+        .join('');
+
+      const focusX = getX(focusMonthIdx).toFixed(1);
+      const focusColumnHtml = `
+        <rect x="${Number(focusX) - 20}" y="${yTop}" width="40" height="${plotH}" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.8" />`;
+
+      const pointsHtml = monthlyStats
+        .map((s, i) => {
+          const x = getX(i).toFixed(1);
+          const yOcc = getY(s.occupiedRooms).toFixed(1);
+          const yAvail = getY(s.availableRooms).toFixed(1);
+          const yTen = getY(s.tenants).toFixed(1);
+          const isSelected = selectedMonthVal !== 'all' && Number(selectedMonthVal) === s.monthIdx;
+          const isFocus = s.monthIdx === focusMonthIdx;
+
+          return `
+            <g data-action="admin-analysis-pick-month" data-month="${s.monthIdx}" class="cursor-pointer">
+              <title>${s.label} ${selectedYear}:&#10;• Occupied Rooms: ${s.occupiedRooms} / ${totalRooms}&#10;• Available Rooms: ${s.availableRooms} / ${totalRooms}&#10;• Active Tenants: ${s.tenants}</title>
+              
+              <rect x="${Number(x) - 30}" y="${yTop}" width="60" height="${plotH + 30}" fill="transparent" />
+
+              <!-- Available marker (Dashed line series) -->
+              <circle cx="${x}" cy="${yAvail}" r="3" fill="#38bdf8" />
+
+              <!-- Tenant marker (Blue series) -->
+              <circle cx="${x}" cy="${yTen}" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" />
+
+              <!-- Occupied marker with direct value label on top (Matching reference image) -->
+              <circle cx="${x}" cy="${yOcc}" r="${isFocus || isSelected ? '6' : '5'}" fill="#16a34a" stroke="#ffffff" stroke-width="1.5" />
+              <text x="${x}" y="${Number(yOcc) - 8}" text-anchor="middle" font-size="11" font-weight="800" fill="#15803d">${s.occupiedRooms}</text>
+            </g>`;
+        })
+        .join('');
+
+      chartGrid.innerHTML = `
+        <div class="w-full overflow-x-auto bg-white rounded-lg p-2 sm:p-4 border border-gray-200">
+          <div class="min-w-[640px]">
+            <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-56 sm:h-72 select-none" style="overflow: visible;">
+              <!-- Outer frame border -->
+              <rect x="${xStart}" y="${yTop}" width="${plotW}" height="${plotH}" fill="#ffffff" stroke="#334155" stroke-width="1.5" />
+
+              <!-- Vertical grid lines -->
+              ${verticalGridHtml}
+
+              <!-- Horizontal grid lines -->
+              ${horizontalGridHtml}
+
+              <!-- Focus column -->
+              ${focusColumnHtml}
+
+              <!-- Series 1: Available Rooms (Dashed) -->
+              <polyline fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="4 4" points="${availPoints.join(' ')}" />
+
+              <!-- Series 2: Active Tenants (Solid Blue) -->
+              <polyline fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${tenantPoints.join(' ')}" />
+
+              <!-- Series 3: Occupied Rooms (Solid Green, Primary line with data values) -->
+              <polyline fill="none" stroke="#16a34a" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" points="${occPoints.join(' ')}" />
+
+              <!-- Data Points with explicit values -->
+              ${pointsHtml}
+
+              <!-- Axis Titles -->
+              <text x="-125" y="24" transform="rotate(-90)" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Rooms / Units</text>
+              <text x="${xStart + plotW / 2}" y="272" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Month (${selectedYear})</text>
+            </svg>
+          </div>
+        </div>`;
     }
   };
 

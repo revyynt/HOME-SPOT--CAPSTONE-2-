@@ -197,12 +197,12 @@ export const BUILDING_UNITS = [
       'Private Bathroom',
       'Aircon & Veranda Downlights'
     ],
-    bounds: { x: -1.65, y: 11.1, z: 4.0, w: 7.2, h: 2.6, d: 4.5 }
+    bounds: { x: -1.65, y: 11.1, z: 5.0, w: 7.2, h: 2.6, d: 4.5 }
   },
   {
     id: 'Room 302',
     name: 'Room 302',
-    aliases: ['room 302', '302', 'room 303', '303', 'unit-4f-2', '4f middle'],
+    aliases: ['room 302', '302', 'unit-4f-2', '4f middle'],
     listingId: 'triple-occupancy-room',
     floor: 4,
     floorLabel: '4th Floor',
@@ -215,10 +215,31 @@ export const BUILDING_UNITS = [
     features: [
       '3 Beds (Triple Occupancy)',
       'Private Bathroom',
+      'Aircon Provision',
+      'Hallway Sliding Window'
+    ],
+    bounds: { x: -1.65, y: 11.1, z: -0.4, w: 7.2, h: 2.6, d: 4.5 }
+  },
+  {
+    id: 'Room 303',
+    name: 'Room 303',
+    aliases: ['room 303', '303', 'unit-4f-3', '4f rear'],
+    listingId: 'triple-occupancy-room',
+    floor: 4,
+    floorLabel: '4th Floor',
+    wing: 'Rear Wing',
+    positionLabel: '4th Floor • Rear Unit',
+    type: 'Triple Occupancy Room',
+    size: '30 sqm',
+    capacity: 1,
+    price: 10000,
+    features: [
+      '3 Beds (Triple Occupancy)',
+      'Private Bathroom',
       'Adjacent to 4F Open Back Deck',
       'Hallway Sliding Window'
     ],
-    bounds: { x: -1.65, y: 11.1, z: -0.65, w: 7.2, h: 2.6, d: 4.5 }
+    bounds: { x: -1.65, y: 11.1, z: -5.8, w: 7.2, h: 2.6, d: 4.5 }
   },
   {
     id: 'Room 401',
@@ -239,17 +260,38 @@ export const BUILDING_UNITS = [
       'Private Bathroom',
       'Top-Floor Street View'
     ],
-    bounds: { x: -1.65, y: 14.3, z: 4.6, w: 7.2, h: 2.6, d: 4.5 }
+    bounds: { x: -1.65, y: 14.3, z: 5.0, w: 7.2, h: 2.6, d: 4.5 }
+  },
+  {
+    id: 'Room 402',
+    name: 'Room 402',
+    aliases: ['room 402', '402', 'unit-5f-2', '5f middle'],
+    listingId: 'triple-occupancy-room',
+    floor: 5,
+    floorLabel: '5th Floor',
+    wing: 'Middle Wing',
+    positionLabel: '5th Floor • Middle Unit',
+    type: 'Triple Occupancy Room',
+    size: '30 sqm',
+    capacity: 1,
+    price: 10000,
+    features: [
+      '3 Beds (Triple Occupancy)',
+      'Private Bathroom',
+      'Aircon Provision',
+      'Hallway Sliding Window'
+    ],
+    bounds: { x: -1.65, y: 14.3, z: -0.4, w: 7.2, h: 2.6, d: 4.5 }
   },
   {
     id: 'Room 410',
     name: 'Room 410',
-    aliases: ['room 410', '410', 'room 402', '402', 'room 403', '403', 'unit-5f-2', '5f middle'],
+    aliases: ['room 410', '410', 'room 403', '403', 'unit-5f-3', '5f rear'],
     listingId: 'triple-occupancy-room',
     floor: 5,
     floorLabel: '5th Floor',
-    wing: 'Upper Middle Wing',
-    positionLabel: '5th Floor • Upper Middle Unit',
+    wing: 'Upper Rear Wing',
+    positionLabel: '5th Floor • Upper Rear Unit',
     type: 'Triple Occupancy Room',
     size: '30 sqm',
     capacity: 1,
@@ -258,9 +300,9 @@ export const BUILDING_UNITS = [
       '3 Beds (Triple Occupancy)',
       'Private Bathroom',
       'Overlooks 4F Open Back Deck',
-      'Hallway Sliding Window'
+      'Top-Floor Privacy'
     ],
-    bounds: { x: -1.65, y: 14.3, z: -0.4, w: 7.2, h: 2.6, d: 4.5 }
+    bounds: { x: -1.65, y: 14.3, z: -5.8, w: 7.2, h: 2.6, d: 4.5 }
   }
 ];
 
@@ -618,8 +660,6 @@ export function initBuilding3DViewer(container, options = {}) {
     };
 
     const FLOOR_H = 3.2;
-    // Where the 5-story front block steps down to the 3-story rear Back Deck (right behind Middle rooms)
-    const STEP_Z = -3.0;
 
     /**
      * Builds a continuous, structurally connected dog-leg staircase from a floor's
@@ -780,56 +820,62 @@ export function initBuilding3DViewer(container, options = {}) {
     }
 
     // =========================================================================
-    // 2. FLOORS 1 TO 3 (FULL DEPTH z = +8.0 .. -10.0, depth = 18.0m) +
-    //    FLOORS 4 TO 5 (FRONT BLOCK z = +8.0 .. STEP_Z) +
-    //    4F REAR STEPPED-DOWN BACK DECK (z = STEP_Z .. -10.0)
+    // 2. FLOORS 1 TO 3 (FULL DEPTH z = +8.0 .. -15.4, depth = 23.4m) +
+    //    FLOORS 4 TO 5 FRONT BLOCK (z = +8.0 .. STEP_Z (-8.4), depth = 16.4m) +
+    //    4F REAR STEPPED-DOWN BACK DECK & SHED ENTRANCE (z = STEP_Z .. -15.4)
     // =========================================================================
+    const STEP_Z = -8.4;
+    const REAR_Z = -15.4;
+
     for (let f = 1; f <= 5; f++) {
       const y0 = (f - 1) * FLOOR_H;
       const yCenter = y0 + FLOOR_H / 2;
       const isFullDepth = f <= 3;
 
       if (isFullDepth) {
-        // Full-depth slab (z = -10.0 .. +8.0, depth = 18.0, center z = -1.0)
-        addArchBox(f, 11.0, 0.18, 18.0, 0, y0 + 0.09, -1.0, 0x64748b, 0.2, 0x38bdf8, 0.5);
+        const fullDepth = 8.0 - REAR_Z; // 23.4
+        const fullCenterZ = (8.0 + REAR_Z) / 2; // -3.7
+
+        // Full-depth slab (z = REAR_Z .. +8.0, depth = 23.4, center z = -3.7)
+        addArchBox(f, 11.0, 0.18, fullDepth, 0, y0 + 0.09, fullCenterZ, 0x64748b, 0.2, 0x38bdf8, 0.5);
         // Left, Rear, and Right full-depth exterior walls
-        addArchBox(f, 0.22, FLOOR_H, 18.0, -5.39, yCenter, -1.0, 0x78828c, 0.12, 0x38bdf8, 0.36);
-        addArchBox(f, 11.0, FLOOR_H, 0.22, 0, yCenter, -9.89, 0x78828c, 0.12, 0x38bdf8, 0.36);
-        addArchBox(f, 0.22, FLOOR_H, 18.0, 5.39, yCenter, -1.0, 0x78828c, 0.12, 0x38bdf8, 0.36);
+        addArchBox(f, 0.22, FLOOR_H, fullDepth, -5.39, yCenter, fullCenterZ, 0x78828c, 0.12, 0x38bdf8, 0.36);
+        addArchBox(f, 11.0, FLOOR_H, 0.22, 0, yCenter, REAR_Z + 0.11, 0x78828c, 0.12, 0x38bdf8, 0.36);
+        addArchBox(f, 0.22, FLOOR_H, fullDepth, 5.39, yCenter, fullCenterZ, 0x78828c, 0.12, 0x38bdf8, 0.36);
 
         if (f === 3) {
           // 3F Right-wall tall vertical barred stairwell window (front-right bay)
           addArchBox(3, 0.28, 2.1, 2.0, 5.42, yCenter, 4.4, 0x0f172a, 0.45, 0x60a5fa, 0.8);
-          // Two horizontal multi-pane corridor windows on 3F right wall (inside red circle of Photo 1!)
+          // Two horizontal multi-pane corridor windows on 3F right wall (matching photo!)
           addArchBox(3, 0.28, 0.9, 2.8, 5.42, yCenter - 0.1, 0.2, 0x0f172a, 0.48, 0x60a5fa, 0.85);
           addArchBox(3, 0.28, 0.85, 2.2, 5.42, yCenter - 0.15, -5.8, 0x0f172a, 0.48, 0x60a5fa, 0.85);
         }
       } else {
-        // 4F & 5F Front Indoor Block (z = STEP_Z .. +8.0)
+        // 4F & 5F Front Block covering all 3 rooms (z = STEP_Z (-8.4) .. +8.0, depth = 16.4m)
         const frontDepth = 8.0 - STEP_Z;
         const frontCenterZ = (8.0 + STEP_Z) / 2;
 
-        // Indoor slab for front block
+        // Indoor slab for 4F & 5F front block
         addArchBox(f, 11.0, 0.18, frontDepth, 0, y0 + 0.09, frontCenterZ, 0x64748b, 0.22, 0x38bdf8, 0.52);
 
-        // Left wall of front block (with 4F recessed AC niche)
+        // Left wall of 4F & 5F block
         if (f === 4) {
-          addArchBox(4, 0.22, FLOOR_H, 7.5, -5.39, yCenter, 0.75, 0x78828c, 0.13, 0x38bdf8, 0.38);
+          addArchBox(4, 0.22, FLOOR_H, frontDepth - 2.5, -5.39, yCenter, frontCenterZ - 1.25, 0x78828c, 0.13, 0x38bdf8, 0.38);
           addArchBox(4, 0.22, FLOOR_H, 1.9, -5.39, yCenter, 7.05, 0x78828c, 0.13, 0x38bdf8, 0.38);
           addArchBox(4, 0.65, 1.45, 1.6, -5.08, yCenter + 0.15, 5.25, 0x1e293b, 0.38, 0x94a3b8, 0.75);
         } else {
           addArchBox(5, 0.22, FLOOR_H, frontDepth, -5.39, yCenter, frontCenterZ, 0x78828c, 0.13, 0x38bdf8, 0.38);
         }
 
-        // Stepped Rear Wall of the 4F/5F Front Block at z = STEP_Z
+        // Stepped Rear Wall of the 4F/5F Front Block at z = STEP_Z (-8.4)
         if (f === 4) {
-          // 4F Rear Wall behind Room 302 (x = -5.5 .. +2.15), leaving the right-side hallway open for the Entrance Gate!
+          // 4F Rear Wall behind Room 303 (x = -5.5 .. +2.15), leaving the right-side hallway open for the Entrance Gate!
           addArchBox(4, 7.65, FLOOR_H, 0.22, -1.65, yCenter, STEP_Z, 0x78828c, 0.16, 0x38bdf8, 0.5);
-          // 4F Rear Hallway Entrance Frame & Security Grille Gate at z = STEP_Z (-3.0)
+          // 4F Rear Hallway Entrance Frame & Security Grille Gate at z = STEP_Z (-8.4)
           addArchBox(4, 3.25, 0.45, 0.24, 3.76, y0 + FLOOR_H - 0.23, STEP_Z, 0x78828c, 0.28, 0x38bdf8, 0.65);
           addArchBox(4, 0.28, FLOOR_H, 0.26, 2.24, yCenter, STEP_Z, 0xe2e8f0, 0.55, 0xffffff, 0.88);
           addArchBox(4, 0.28, FLOOR_H, 0.26, 5.26, yCenter, STEP_Z, 0xe2e8f0, 0.55, 0xffffff, 0.88);
-          // Double-leaf barred security gate leading from the Back Deck walkway into the 4F/5F hallway
+          // Double-leaf barred security gate leading from the Back Deck walkway into the 4F hallway
           addArchBox(4, 2.72, 2.52, 0.1, 3.75, y0 + 1.42, STEP_Z, 0x1e293b, 0.42, 0x38bdf8, 0.9);
           addArchBox(4, 0.08, 2.52, 0.14, 3.75, y0 + 1.42, STEP_Z, 0x94a3b8, 0.7, 0xffffff, 0.95);
         } else {
@@ -840,19 +886,21 @@ export function initBuilding3DViewer(container, options = {}) {
         addArchBox(f, 0.22, FLOOR_H, frontDepth, 5.39, yCenter, frontCenterZ, 0x78828c, 0.13, 0x38bdf8, 0.38);
 
         if (f === 4) {
-          // 4F Right-wall tall vertical barred window opening
           addArchBox(4, 0.28, 2.1, 2.0, 5.42, yCenter, 4.4, 0x0f172a, 0.45, 0x60a5fa, 0.8);
+          addArchBox(4, 0.28, 0.9, 2.8, 5.42, yCenter - 0.1, 0.2, 0x0f172a, 0.48, 0x60a5fa, 0.85);
+          addArchBox(4, 0.28, 0.85, 2.2, 5.42, yCenter - 0.15, -5.8, 0x0f172a, 0.48, 0x60a5fa, 0.85);
         } else if (f === 5) {
-          // 5F Right-wall upper square window near front corner
           addArchBox(5, 0.28, 1.2, 1.3, 5.42, yCenter + 0.2, 4.6, 0x0f172a, 0.48, 0xf8fafc, 0.85);
+          addArchBox(5, 0.28, 0.9, 2.4, 5.42, yCenter - 0.1, 0.2, 0x0f172a, 0.48, 0x60a5fa, 0.85);
+          addArchBox(5, 0.28, 0.85, 2.2, 5.42, yCenter - 0.15, -5.8, 0x0f172a, 0.48, 0x60a5fa, 0.85);
         }
       }
 
       // -----------------------------------------------------------------------
-      // RIGHT-SIDE CORRIDOR & STAIRCASE AT THE END OF THE MAIN HALLWAY
+      // RIGHT-SIDE CORRIDOR & STAIRCASE
       // -----------------------------------------------------------------------
-      const corrDepth = isFullDepth ? 17.4 : 8.0 - STEP_Z - 0.3;
-      const corrCenterZ = isFullDepth ? -1.0 : (8.0 + STEP_Z) / 2;
+      const corrDepth = isFullDepth ? (8.0 - REAR_Z - 0.6) : (8.0 - STEP_Z - 0.3);
+      const corrCenterZ = isFullDepth ? (8.0 + REAR_Z) / 2 : (8.0 + STEP_Z) / 2;
 
       // Interior corridor partition wall
       addArchBox(f, 0.16, FLOOR_H, corrDepth, 2.12, yCenter, corrCenterZ, 0x94a3b8, 0.17, 0x38bdf8, 0.48);
@@ -864,94 +912,78 @@ export function initBuilding3DViewer(container, options = {}) {
       addArchBox(f, 3.0, 2.6, 0.08, 3.72, y0 + 1.5, 7.72, 0x1e293b, 0.32, 0x94a3b8, 0.75);
       if (isFullDepth) {
         // Rear security grille gate at back of 1F–3F hallway
-        addArchBox(f, 3.0, 2.6, 0.08, 3.72, y0 + 1.5, -9.72, 0x1e293b, 0.32, 0x94a3b8, 0.75);
+        addArchBox(f, 3.0, 2.6, 0.08, 3.72, y0 + 1.5, REAR_Z + 0.28, 0x1e293b, 0.32, 0x94a3b8, 0.75);
       }
 
       // 1) REAR HALLWAY STAIRCASE (1F -> 2F -> 3F -> 4F Rear Shed)
-      //    Placed at z = -6.35 .. -8.55 so the 3rd-floor stairs rise 100% inside the Rear Shed (z = -6.0 .. -9.88)!
+      //    Rises 100% inside the Rear Shed (z = -11.4 .. -15.28)!
       if (f <= 3) {
-        buildConnectedStaircase(f, y0, -6.35, -8.55, 0x3b82f6, 0x93c5fd);
+        buildConnectedStaircase(f, y0, -11.75, -13.95, 0x3b82f6, 0x93c5fd);
       }
 
       // 2) 4TH-TO-5TH FLOOR STAIRCASE (4F -> 5F)
-      //    Placed at z = +0.55 .. +1.85 (between the Middle Room door at z = -0.45 and Front Room window at z = +3.75)
-      //    so tenants walk out of the Rear Shed (z = -6.0), through the 4F Entrance Gate (z = -3.0),
-      //    past Room 302, and straight up to the 5th floor without blocking any gate, door, or window!
+      //    Placed at z = 1.6 .. 3.2 in the 4F hallway (between Room 302 door at z = 0.5 and Room 301 window at z = 4.65)
+      //    leaving all room doors and windows 100% unobstructed!
       if (f === 4) {
-        buildConnectedStaircase(4, y0, 0.55, 1.85, 0x0284c7, 0x7dd3fc);
+        buildConnectedStaircase(4, y0, 1.6, 3.2, 0x0284c7, 0x7dd3fc);
       } else if (f === 5) {
-        // 5th-Floor Stairwell Arrival Landing & Wrap-Around Guardrail (where 4F->5F stairs arrive)
-        addArchBox(5, 2.9, 0.85, 0.08, 3.74, y0 + 0.55, 0.3, 0x1e293b, 0.6, 0x7dd3fc, 0.85);
-        addArchBox(5, 0.08, 0.85, 2.2, 3.74, y0 + 0.55, 1.4, 0x1e293b, 0.6, 0x7dd3fc, 0.85);
+        // 5th-Floor Stairwell Arrival Landing & Wrap-Around Guardrail
+        addArchBox(5, 2.9, 0.85, 0.08, 3.74, y0 + 0.55, 1.4, 0x1e293b, 0.6, 0x7dd3fc, 0.85);
+        addArchBox(5, 0.08, 0.85, 1.8, 3.74, y0 + 0.55, 2.4, 0x1e293b, 0.6, 0x7dd3fc, 0.85);
       }
 
-      // Red Fire Hose Cabinet + Fire Extinguisher + Fire Exit Pathing + Room Doors along the hallway
-      const fireCabinetZ = f <= 3 ? 2.25 : 6.1;
+      // Red Fire Hose Cabinet + Fire Extinguisher + Fire Exit Pathing
+      const fireCabinetZ = 2.25;
       addArchBox(f, 0.18, 0.92, 0.72, 5.22, y0 + 1.55, fireCabinetZ, 0xdc2626, 0.8, 0xfca5a5, 0.95);
       addFireExtinguisherStation(f, y0, fireCabinetZ - 0.62);
 
-      // Fire Exit Evacuation Path along each floor's hallway & stairs
+      // Fire Exit Evacuation Path along hallway & stairs
       if (f === 1) {
-        // 1F Evacuation Path: from Rear Staircase base (z = -6.35) to Front Street Exit (z = +7.8) and Rear Exit (z = -9.6)
-        addFireExitPathStrip(1, 0.44, 17.2, 3.72, y0 + 0.25, -0.9);
-        addFireExitPathStrip(1, 1.5, 0.36, 2.85, y0 + 0.25, 1.2); // Spur from Commercial Space
-        for (const az of [-4.5, -1.5, 1.8, 5.0]) {
-          addFireExitChevron(1, 3.72, y0 + 0.34, az, 1); // Toward Front Street Exit
+        addFireExitPathStrip(1, 0.44, 22.4, 3.72, y0 + 0.25, -3.7);
+        addFireExitPathStrip(1, 1.5, 0.36, 2.85, y0 + 0.25, 1.2);
+        for (const az of [-10.5, -6.5, -2.5, 1.8, 5.0]) {
+          addFireExitChevron(1, 3.72, y0 + 0.34, az, 1);
         }
-        addFireExitChevron(1, 3.72, y0 + 0.34, -8.2, -1); // Toward Secondary Rear Exit
-        // Glowing Green Street EXIT Portal Beacon at 1F Front Gate (z = 7.72) & Rear Gate (z = -9.72)
+        addFireExitChevron(1, 3.72, y0 + 0.34, -13.5, -1);
         addFireExitPathStrip(1, 2.6, 0.35, 3.72, y0 + 2.68, 7.72);
-        addFireExitPathStrip(1, 2.6, 0.35, 3.72, y0 + 2.68, -9.72);
+        addFireExitPathStrip(1, 2.6, 0.35, 3.72, y0 + 2.68, REAR_Z + 0.28);
       } else if (f === 2 || f === 3) {
-        // 2F & 3F Evacuation Path: from Front Room (z = 5.9) straight back to Rear Staircase (z = -6.35)
-        addFireExitPathStrip(f, 0.42, 12.6, 3.72, y0 + 0.25, -0.2);
+        addFireExitPathStrip(f, 0.42, 18.0, 3.72, y0 + 0.25, -3.7);
         for (const doorZ of [5.9, 0.5, -4.9]) {
           addFireExitPathStrip(f, 1.45, 0.34, 2.92, y0 + 0.25, doorZ);
         }
-        for (const az of [4.2, 1.2, -2.0, -5.0]) {
+        for (const az of [4.2, 1.2, -2.0, -5.0, -8.0]) {
           addFireExitChevron(f, 3.72, y0 + 0.34, az, -1); // Toward Rear Staircase
         }
-        // Stairwell descent indicator strips on the 1F-3F dog-leg stairs
-        addFireExitPathStrip(f, 0.34, 2.1, 3.02, y0 + FLOOR_H * 0.26, -7.45);
-        addFireExitPathStrip(f, 0.34, 2.1, 4.46, y0 + FLOOR_H * 0.74, -7.45);
+        addFireExitPathStrip(f, 0.34, 2.1, 3.02, y0 + FLOOR_H * 0.26, -12.85);
+        addFireExitPathStrip(f, 0.34, 2.1, 4.46, y0 + FLOOR_H * 0.74, -12.85);
       } else if (f === 4) {
-        // 4F Evacuation Path: from Room 301 (z = 5.05) & Room 302 (z = -0.45) through 4F Gate (z = -3.0)
-        // across Back Deck walkway (z = -3.0 .. -6.0) into Rear Shed stairs (z = -6.35)
-        addFireExitPathStrip(4, 0.42, 11.6, 3.72, y0 + 0.26, -0.65);
-        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, 5.05);
-        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, -0.45);
-        for (const az of [3.5, -1.6, -4.5]) {
+        // 4F Evacuation Path: from Room 301, 302, 303 through 4F Gate (z = -8.4)
+        // across Back Deck walkway (z = -8.4 .. -11.4) into Rear Shed stairs (z = -11.75)
+        addFireExitPathStrip(4, 0.42, 17.0, 3.72, y0 + 0.26, -3.0);
+        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, 5.9);
+        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, 0.5);
+        addFireExitPathStrip(4, 1.45, 0.34, 2.92, y0 + 0.26, -4.9);
+        for (const az of [4.2, 1.2, -2.0, -5.0, -7.5, -9.9]) {
           addFireExitChevron(4, 3.72, y0 + 0.35, az, -1); // Toward 4F Gate & Rear Shed Stairs
         }
-        // 4F->5F staircase descent indicator
-        addFireExitPathStrip(4, 0.32, 1.25, 3.02, y0 + FLOOR_H * 0.28, 1.2);
-        addFireExitPathStrip(4, 0.32, 1.25, 4.46, y0 + FLOOR_H * 0.75, 1.2);
       } else if (f === 5) {
-        // 5F Evacuation Path: from Room 401 (z = 5.05) & Room 410 (z = -0.45) to 4F-5F Stair Head (z = 0.55)
-        addFireExitPathStrip(5, 0.42, 6.0, 3.72, y0 + 0.25, 2.3);
-        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, 5.05);
-        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, -0.45);
-        addFireExitChevron(5, 3.72, y0 + 0.34, 3.6, -1);
-        addFireExitChevron(5, 3.72, y0 + 0.34, -0.1, 1);
+        // 5F Evacuation Path: from Room 401, 402, 410 to 4F-5F Stair Head (z = 1.6 .. 3.2)
+        addFireExitPathStrip(5, 0.42, 12.0, 3.72, y0 + 0.25, 0.0);
+        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, 5.9);
+        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, 0.5);
+        addFireExitPathStrip(5, 1.45, 0.34, 2.92, y0 + 0.25, -4.9);
+        addFireExitChevron(5, 3.72, y0 + 0.34, 4.2, -1);
+        addFireExitChevron(5, 3.72, y0 + 0.34, -2.0, 1);
+        addFireExitChevron(5, 3.72, y0 + 0.34, -4.2, 1);
       }
 
+      // Consistent hallway doors & windows for all 3 rooms across floors 2 to 5
       if (f >= 2) {
-        if (f <= 3) {
-          for (const roomZ of [5.0, -0.4, -5.8]) {
-            addArchBox(f, 0.2, 2.0, 0.82, 2.12, y0 + 1.2, roomZ + 0.9, 0x475569, 0.48, 0xe2e8f0, 0.85);
-            addArchBox(f, 0.2, 1.12, 1.35, 2.12, y0 + 1.55, roomZ - 0.35, 0x0ea5e9, 0.4, 0xbae6fd, 0.85);
-            addArchBox(f, 0.34, 0.42, 0.62, 2.12, y0 + 2.55, roomZ + 0.9, 0xcbd5e1, 0.52, 0xffffff, 0.85);
-          }
-        } else {
-          // 4F & 5F Front Room (Room 301 / 401): door at z = +5.05, window at z = +3.75 (ahead of 4F->5F stairs)
-          addArchBox(f, 0.2, 2.0, 0.82, 2.12, y0 + 1.2, 5.05, 0x475569, 0.48, 0xe2e8f0, 0.85);
-          addArchBox(f, 0.2, 1.12, 1.35, 2.12, y0 + 1.55, 3.75, 0x0ea5e9, 0.4, 0xbae6fd, 0.85);
-          addArchBox(f, 0.34, 0.42, 0.62, 2.12, y0 + 2.55, 5.05, 0xcbd5e1, 0.52, 0xffffff, 0.85);
-
-          // 4F & 5F Middle Room (Room 302 / 410): door at z = -0.45, window at z = -1.75 (between 4F Gate and 4F->5F stairs)
-          addArchBox(f, 0.2, 2.0, 0.82, 2.12, y0 + 1.2, -0.45, 0x475569, 0.48, 0xe2e8f0, 0.85);
-          addArchBox(f, 0.2, 1.12, 1.35, 2.12, y0 + 1.55, -1.75, 0x0ea5e9, 0.4, 0xbae6fd, 0.85);
-          addArchBox(f, 0.34, 0.42, 0.62, 2.12, y0 + 2.55, -0.45, 0xcbd5e1, 0.52, 0xffffff, 0.85);
+        for (const roomZ of [5.0, -0.4, -5.8]) {
+          addArchBox(f, 0.2, 2.0, 0.82, 2.12, y0 + 1.2, roomZ + 0.9, 0x475569, 0.48, 0xe2e8f0, 0.85);
+          addArchBox(f, 0.2, 1.12, 1.35, 2.12, y0 + 1.55, roomZ - 0.35, 0x0ea5e9, 0.4, 0xbae6fd, 0.85);
+          addArchBox(f, 0.34, 0.42, 0.62, 2.12, y0 + 2.55, roomZ + 0.9, 0xcbd5e1, 0.52, 0xffffff, 0.85);
         }
       }
 
@@ -985,18 +1017,14 @@ export function initBuilding3DViewer(container, options = {}) {
       } else if (f === 4) {
         // 4F Front Recessed Double-Bay Balcony Terrace (z = +6.32 .. +8.0, depth = 1.68m)
         addArchBox(4, 7.65, FLOOR_H, 0.2, -1.65, yCenter, 6.32, 0x78828c, 0.18, 0x38bdf8, 0.48);
-        // Balcony Terrace Floor Slab & Tiled Decking
         addArchBox(4, 7.65, 0.2, 1.68, -1.65, y0 + 0.12, 7.16, 0x475569, 0.35, 0x94a3b8, 0.7);
         addArchBox(4, 7.35, 0.05, 1.45, -1.65, y0 + 0.24, 7.18, 0x334155, 0.32, 0x60a5fa, 0.55);
-        // Balcony sliding glass door & window on recessed wall (z = 6.32)
         addArchBox(4, 1.45, 2.05, 0.24, -3.45, y0 + 1.22, 6.34, 0x0f172a, 0.5, 0xbae6fd, 0.88);
         addArchBox(4, 1.45, 1.35, 0.24, 0.15, y0 + 1.55, 6.34, 0x0f172a, 0.5, 0xbae6fd, 0.88);
-        // Central white balcony divider column & outer frame pilasters
         addArchBox(4, 0.42, FLOOR_H, 0.4, -1.65, yCenter, 7.96, 0xf8fafc, 0.72, 0xffffff, 0.96);
         addArchBox(4, 0.32, FLOOR_H, 0.4, -5.35, yCenter, 7.96, 0xf8fafc, 0.72, 0xffffff, 0.96);
         addArchBox(4, 0.32, FLOOR_H, 0.4, 2.15, yCenter, 7.96, 0xf8fafc, 0.72, 0xffffff, 0.96);
         addArchBox(4, 7.8, 0.22, 0.4, -1.65, y0 + FLOOR_H - 0.12, 8.06, 0xf8fafc, 0.72, 0xffffff, 0.96);
-        // 4 horizontal black metal railing bars across the double-bay terrace
         for (let r = 0; r < 4; r++) {
           addArchBox(4, 7.4, 0.06, 0.08, -1.65, y0 + 0.36 + r * 0.24, 7.95, 0x18181b, 0.75, 0x94a3b8, 0.9);
         }
@@ -1009,7 +1037,8 @@ export function initBuilding3DViewer(container, options = {}) {
           addArchBox(5, 1.15, 1.0, 0.46, winX, yCenter + 0.08, 8.14, 0x0f172a, 0.62, 0x38bdf8, 0.92);
         }
         addArchBox(5, 0.68, 0.52, 0.45, 1.75, yCenter + 0.42, 8.15, 0x334155, 0.7, 0xe2e8f0, 0.9);
-        // 5th-Floor Upper Roof Slab & Cornice (strictly over the front block, matching satellite view!)
+
+        // 5th-Floor Upper Roof Slab & Cornice over front block
         addArchBox(5, 11.35, 0.3, frontDepth + 0.4, 0, y0 + FLOOR_H, frontCenterZ, 0xe2e8f0, 0.45, 0xffffff, 0.9);
         addArchBox(6, 11.0, 0.55, frontDepth, 0, y0 + FLOOR_H + 0.28, frontCenterZ, 0x64748b, 0.18, 0x38bdf8, 0.48);
       }
@@ -1029,13 +1058,13 @@ export function initBuilding3DViewer(container, options = {}) {
     // =========================================================================
     {
       const deckY = 3 * FLOOR_H; // Top of 3rd floor = 9.6
-      const deckDepth = STEP_Z - -10.0; // 7.0m rear deck depth (z = -3.0 .. -10.0)
-      const deckCenterZ = (STEP_Z + -10.0) / 2; // -6.5
+      const deckDepth = STEP_Z - REAR_Z; // 7.0m rear deck depth (z = -8.4 .. -15.4)
+      const deckCenterZ = (STEP_Z + REAR_Z) / 2; // -11.9
 
       // Open Back Deck Floor Slab & Waterproofed Terrace Surface
       addArchBox(4, 11.0, 0.22, deckDepth, 0, deckY + 0.11, deckCenterZ, 0x475569, 0.35, 0x38bdf8, 0.75);
-      // Open Rear Terrace Tile Grid Accent (strictly in the 3.0m open middle terrace z = -3.0 .. -6.0)
-      addArchBox(4, 7.1, 0.05, 2.75, -1.65, deckY + 0.24, -4.5, 0x334155, 0.32, 0x60a5fa, 0.6);
+      // Open Rear Terrace Tile Grid Accent (in open terrace z = -8.4 .. -11.4)
+      addArchBox(4, 7.1, 0.05, 2.75, -1.65, deckY + 0.24, -9.9, 0x334155, 0.32, 0x60a5fa, 0.6);
 
       // Stepped-down Back Deck Concrete Parapet Walls (Left, Rear, and Right walls at 4F height)
       const parapetH = 1.35;
@@ -1044,34 +1073,34 @@ export function initBuilding3DViewer(container, options = {}) {
       // Left parapet wall
       addArchBox(4, 0.22, parapetH, deckDepth, -5.39, deckY + parapetH / 2, deckCenterZ, 0x78828c, 0.24, 0x38bdf8, 0.65);
       // Rear parapet wall
-      addArchBox(4, 11.0, parapetH, 0.22, 0, deckY + parapetH / 2, -9.89, 0x78828c, 0.24, 0x38bdf8, 0.65);
+      addArchBox(4, 11.0, parapetH, 0.22, 0, deckY + parapetH / 2, REAR_Z + 0.11, 0x78828c, 0.24, 0x38bdf8, 0.65);
 
       // Full-Width Rear Shed / Bulkhead Structure across the back edge of the Back Deck
-      // Spans the full width (`x = -5.38 .. +5.38`, `bulkW = 10.76`) from `z = -6.0` to `z = -9.88`
-      // completely enclosing the 1F–3F rear stairs (`z = -6.07 .. -9.61`) while leaving `z = -3.0 .. -6.0` open!
+      // Spans the full width (x = -5.38 .. +5.38, bulkW = 10.76) from z = -11.4 to z = -15.28
+      // completely enclosing the 1F–3F rear stairs (z = -11.75 .. -13.95) while leaving z = -8.4 .. -11.4 open!
       const bulkW = 10.76;
       const bulkH = 2.65;
       const bulkD = 3.88;
       const bulkX = 0;
-      const bulkZ = -7.94;
+      const bulkZ = -13.34;
       addArchBox(4, bulkW, bulkH, bulkD, bulkX, deckY + bulkH / 2, bulkZ, 0x94a3b8, 0.22, 0x38bdf8, 0.62);
 
-      // Connected walkway runner along the right side of the open middle terrace (`z = -6.0 .. -3.0`)
-      addArchBox(4, 2.95, 0.06, 3.0, 3.72, deckY + 0.24, -4.5, 0x334155, 0.32, 0x60a5fa, 0.5);
+      // Connected walkway runner along the right side of the open middle terrace (z = -11.4 .. -8.4)
+      addArchBox(4, 2.95, 0.06, 3.0, 3.72, deckY + 0.24, -9.9, 0x334155, 0.32, 0x60a5fa, 0.5);
 
-      // Discreet, low-profile shed exit doorway & small louver vent on the front face of the rear shed (`z = -6.0`)
-      // Aligned at x = 3.72 so tenants exit the shed straight onto the walkway (`x = 3.72`) and through the 4F Gate (`z = -3.0`)!
-      addArchBox(4, 1.05, 2.0, 0.14, 3.72, deckY + 1.1, -6.0, 0x334155, 0.32, 0x60a5fa, 0.55);
-      addArchBox(4, 0.85, 0.45, 0.14, 2.55, deckY + 2.0, -6.0, 0x1e293b, 0.28, 0x475569, 0.35);
+      // Discreet, low-profile shed exit doorway & small louver vent on the front face of the rear shed (z = -11.4)
+      // Aligned at x = 3.72 so tenants exit the shed straight onto the walkway (x = 3.72) and through the 4F Gate (z = -8.4)!
+      addArchBox(4, 1.05, 2.0, 0.14, 3.72, deckY + 1.1, -11.4, 0x334155, 0.32, 0x60a5fa, 0.55);
+      addArchBox(4, 0.85, 0.45, 0.14, 2.55, deckY + 2.0, -11.4, 0x1e293b, 0.28, 0x475569, 0.35);
 
-      // Vertical Red Standpipe / Water Pipe on the front-right corner of the rear shed (`z = -6.0`)
-      addArchBox(4, 0.12, bulkH + 0.45, 0.12, 5.28, deckY + bulkH / 2 + 0.2, -6.0, 0xdc2626, 0.9, 0xfca5a5, 1.0);
+      // Vertical Red Standpipe / Water Pipe on the front-right corner of the rear shed (z = -11.4)
+      addArchBox(4, 0.12, bulkH + 0.45, 0.12, 5.28, deckY + bulkH / 2 + 0.2, -11.4, 0xdc2626, 0.9, 0xfca5a5, 1.0);
 
-      // Cylindrical Stainless Steel Water Tank positioned right at the BACK-RIGHT EDGE on top of the shed bulkhead
+      // Cylindrical Stainless Steel Water Tank positioned right at the BACK-RIGHT EDGE on top of the shed bulkhead (matching photo!)
       const tankGeo = new THREE.CylinderGeometry(0.84, 0.84, 2.1, 22);
       const tankMat = createShellMat(0xcbd5e1, 0.68, 0.98);
       const tankMesh = new THREE.Mesh(tankGeo, tankMat);
-      tankMesh.position.set(4.32, deckY + bulkH + 1.05, -8.75);
+      tankMesh.position.set(4.32, deckY + bulkH + 1.05, -14.15);
       floorGroups[4].add(tankMesh);
 
       const tankEdges = new THREE.LineSegments(
@@ -1083,7 +1112,7 @@ export function initBuilding3DViewer(container, options = {}) {
     }
 
     // =========================================================================
-    // 4. BUILD ALL 11 INTERACTIVE RENTABLE UNITS (1F COMMERCIAL + 2F–5F ROOMS)
+    // 4. BUILD ALL 13 INTERACTIVE RENTABLE UNITS (1F COMMERCIAL + 12 ROOMS ACROSS 2F–5F)
     // =========================================================================
     BUILDING_UNITS.forEach((unit) => {
       const { x, y, z, w, h, d } = unit.bounds;

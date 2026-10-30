@@ -26,7 +26,9 @@ const UNIT_SHORT_LABELS = {
   'Room 203': '3F • Room 203',
   'Room 301': '4F • Room 301',
   'Room 302': '4F • Room 302',
+  'Room 303': '4F • Room 303',
   'Room 401': '5F • Room 401',
+  'Room 402': '5F • Room 402',
   'Room 410': '5F • Room 410'
 };
 
