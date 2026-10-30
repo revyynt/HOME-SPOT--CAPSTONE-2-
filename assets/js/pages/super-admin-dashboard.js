@@ -89,54 +89,111 @@ async function initPlatformStats() {
   loadRecentPlatformActivity();
 }
 
+function formatTimeAgo(rawDate) {
+  const ts = rawDate ? new Date(rawDate).getTime() : NaN;
+  if (!Number.isFinite(ts)) return 'Recently';
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return 'Just now';
+  const mins = Math.floor(diffSec / 60);
+  if (mins < 60) return `${mins} min${mins === 1 ? '' : 's'} ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr${hrs === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
 async function loadRecentPlatformActivity() {
   const container = document.getElementById('superRecentActivityList');
   if (!container) return;
 
-  try {
-    const [resSnap, msgSnap, tenantSnap] = await Promise.all([
-      supabaseData.getDocs(supabaseData.collection(supabase, 'reservations')),
-      supabaseData.getDocs(supabaseData.collection(supabase, 'messages')),
-      supabaseData.getDocs(supabaseData.collection(supabase, 'tenants'))
-    ]);
+  const state = {
+    reservations: [],
+    messages: [],
+    tenants: [],
+    payments: []
+  };
+
+  const renderFeed = () => {
+    const tenantEmails = new Set();
+    state.tenants.forEach((d) => {
+      if (d.email) tenantEmails.add(String(d.email).trim().toLowerCase());
+    });
 
     const items = [];
 
-    resSnap.forEach((doc) => {
-      const d = doc.data();
-      items.push({
-        type: 'reservation',
-        title: `Reservation: ${d.name || 'Guest'} (${d.room || 'Room'})`,
-        detail: `Status: ${d.status || 'Pending'} • Move-in: ${d.moveInDate || 'Flexible'}`,
-        timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
-        icon: 'blue'
-      });
+    // 1. Tenants (Created & Archived)
+    state.tenants.forEach((d) => {
+      const isArchived = String(d.status || '').toLowerCase() === 'archived';
+      if (isArchived && (d.archivedAt || d.updatedAt)) {
+        const time = d.archivedAt || d.updatedAt;
+        items.push({
+          type: 'tenant',
+          title: `Tenant Account Archived: ${d.name || 'Tenant'}`,
+          detail: `${d.previousRoom ? `Vacated ${d.previousRoom}` : 'Vacated room'} • ${formatTimeAgo(time)}`,
+          timestamp: new Date(time).getTime() || 0,
+          icon: 'amber'
+        });
+      }
+      if (d.createdAt) {
+        items.push({
+          type: 'tenant',
+          title: `New Tenant Account Created: ${d.name || 'Tenant'}`,
+          detail: `${d.room || d.previousRoom || 'Unassigned'} • Rent: ₱${Number(d.monthlyRent || 0).toLocaleString()}/mo • ${formatTimeAgo(d.createdAt)}`,
+          timestamp: new Date(d.createdAt).getTime() || 0,
+          icon: 'green'
+        });
+      }
     });
 
-    msgSnap.forEach((doc) => {
-      const d = doc.data();
+    // 2. Messages (Tenant Message vs Public Inquiry)
+    state.messages.forEach((d) => {
+      if (d.sender === 'admin') return; // Skip admin outbound replies
+      const isTenant =
+        d.sender === 'tenant' ||
+        (d.email && tenantEmails.has(String(d.email).trim().toLowerCase()));
+      const timeAgo = formatTimeAgo(d.createdAt);
+      const snippet = d.message ? d.message.slice(0, 70).trim() : 'No message content';
       items.push({
         type: 'message',
-        title: `Inquiry: ${d.name || 'Inquirer'}`,
-        detail: `${d.message ? d.message.slice(0, 75) + '...' : 'No message body'} [${d.status || 'New'}]`,
+        title: isTenant
+          ? `Tenant Message: ${d.name || 'Tenant'}`
+          : `Public Inquiry: ${d.name || 'Visitor'}`,
+        detail: `"${snippet}" • ${timeAgo}`,
         timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
-        icon: 'amber'
+        icon: isTenant ? 'blue' : 'amber'
       });
     });
 
-    tenantSnap.forEach((doc) => {
-      const d = doc.data();
+    // 3. Payments
+    state.payments.forEach((d) => {
+      const raw = d.createdAt || d.paidAt || d.dateFormatted;
+      const isPaid = String(d.status || '').toLowerCase() === 'paid';
       items.push({
-        type: 'tenant',
-        title: `Active Tenant: ${d.name || 'Tenant'}`,
-        detail: `Room: ${d.room || 'Unassigned'} • Rent: ₱${Number(d.monthlyRent || 0).toLocaleString()}/mo`,
-        timestamp: d.createdAt ? new Date(d.createdAt).getTime() : 0,
-        icon: 'green'
+        type: 'payment',
+        title: `Payment ${d.status || 'Recorded'} (₱${Number(d.amount || 0).toLocaleString()})`,
+        detail: `${d.tenantName || d.tenantEmail || 'Tenant'} • ${formatTimeAgo(raw)}`,
+        timestamp: raw ? new Date(raw).getTime() : 0,
+        icon: isPaid ? 'green' : 'amber'
+      });
+    });
+
+    // 4. Reservations
+    state.reservations.forEach((d) => {
+      const raw = d.decisionAt || d.createdAt;
+      const isApproved = d.status === 'Approved';
+      items.push({
+        type: 'reservation',
+        title: isApproved
+          ? `Booking Confirmed: ${d.name || 'Guest'}`
+          : `Reservation Request: ${d.name || 'Guest'}`,
+        detail: `${d.room || 'Room'} • Status: ${d.status || 'Pending'} • ${formatTimeAgo(raw)}`,
+        timestamp: raw ? new Date(raw).getTime() : 0,
+        icon: isApproved ? 'green' : 'blue'
       });
     });
 
     items.sort((a, b) => b.timestamp - a.timestamp);
-    recentActivityItems = items.slice(0, 6);
+    recentActivityItems = items.slice(0, 8);
 
     if (!recentActivityItems.length) {
       container.innerHTML =
@@ -153,7 +210,7 @@ async function loadRecentPlatformActivity() {
               ? 'bg-amber-100 text-amber-600'
               : 'bg-blue-100 text-blue-600';
         return `
-          <div class="flex items-start gap-3 pb-3 border-b last:border-b-0">
+          <div class="flex items-start gap-3 pb-3 border-b last:border-b-0 hover:bg-gray-50/60 p-1.5 -m-1.5 rounded-lg transition-colors">
             <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${bgIcon}">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -166,10 +223,17 @@ async function loadRecentPlatformActivity() {
           </div>`;
       })
       .join('');
-  } catch (err) {
-    console.error('Failed to load recent activity:', err);
-    container.innerHTML =
-      '<p class="text-xs text-gray-400 italic py-4 text-center">Activity feed currently offline.</p>';
+  };
+
+  for (const col of ['reservations', 'messages', 'tenants', 'payments']) {
+    supabaseData.onSnapshot(
+      supabaseData.collection(supabase, col),
+      (snap) => {
+        state[col] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        renderFeed();
+      },
+      (err) => console.warn(`Platform activity (${col}) feed offline:`, err)
+    );
   }
 }
 
@@ -404,13 +468,6 @@ function initAdminUserActions() {
       }
       return;
     }
-
-    // Ping system
-    if (target.closest('[data-action="ping-system"]')) {
-      void runSystemPingCheck();
-      Toast.info('System connectivity verified.');
-      return;
-    }
   });
 
   // Create Admin Form Submit
@@ -464,20 +521,9 @@ function initAdminUserActions() {
 // ── 3. SYSTEM SETTINGS & PLATFORM GOVERNANCE ──────────────────────────────────
 
 const SETTINGS_DOC_REF = supabaseData.doc(supabase, 'adminTokens', 'system_settings');
-const BACKUP_COLLECTIONS = ['rooms', 'tenants', 'reservations', 'messages', 'payments'];
-
-function formatBackupTimestamp(isoString) {
-  const dt = new Date(isoString);
-  if (Number.isNaN(dt.getTime())) return 'Ready for backup';
-  return `Completed ${dt.toLocaleDateString()} at ${dt.toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  })}`;
-}
 
 async function loadSystemSettings() {
   const maintenanceCheckbox = document.getElementById('settingMaintenanceMode');
-  const lastBackupEl = document.getElementById('superLastBackupTime');
   if (!maintenanceCheckbox) return;
 
   try {
@@ -485,9 +531,6 @@ async function loadSystemSettings() {
     if (snap.exists()) {
       const data = snap.data();
       maintenanceCheckbox.checked = Boolean(data.maintenanceMode);
-      if (lastBackupEl && data.lastBackupAt) {
-        lastBackupEl.textContent = formatBackupTimestamp(data.lastBackupAt);
-      }
     }
   } catch (err) {
     console.warn('Could not load remote system settings, defaults retained:', err);
@@ -519,161 +562,6 @@ async function loadSystemSettings() {
   });
 }
 
-// ── 4. BACKUP & DISASTER RECOVERY ─────────────────────────────────────────────
-
-async function initBackupAndRestore() {
-  const backupBtn = document.getElementById('btnCreateBackupNow');
-  const sysBackupBtn = document.getElementById('btnCreateSystemBackup');
-  const restoreBtn = document.getElementById('btnRestoreBackup');
-  const fileInput = document.getElementById('restoreBackupFileInput');
-  const lastBackupEl = document.getElementById('superLastBackupTime');
-
-  const executeBackup = async () => {
-    try {
-      Toast.info('Generating platform database backup...');
-      const [roomsSnap, tenantsSnap, reservationsSnap, messagesSnap, paymentsSnap, settingsSnap] =
-        await Promise.all([
-          supabaseData.getDocs(supabaseData.collection(supabase, 'rooms')),
-          supabaseData.getDocs(supabaseData.collection(supabase, 'tenants')),
-          supabaseData.getDocs(supabaseData.collection(supabase, 'reservations')),
-          supabaseData.getDocs(supabaseData.collection(supabase, 'messages')),
-          supabaseData.getDocs(supabaseData.collection(supabase, 'payments')),
-          supabaseData.getDoc(SETTINGS_DOC_REF)
-        ]);
-
-      const serializeCollection = (snap) => {
-        const out = [];
-        snap.forEach((doc) => out.push({ id: doc.id, ...doc.data() }));
-        return out;
-      };
-
-      const exportedAt = new Date().toISOString();
-      const dump = {
-        meta: {
-          platform: 'HomeSpot MJP Residences',
-          version: '1.0.0',
-          exportedAt
-        },
-        settings: settingsSnap.exists() ? settingsSnap.data() : null,
-        rooms: serializeCollection(roomsSnap),
-        tenants: serializeCollection(tenantsSnap),
-        reservations: serializeCollection(reservationsSnap),
-        messages: serializeCollection(messagesSnap),
-        payments: serializeCollection(paymentsSnap)
-      };
-
-      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      const dateStr = exportedAt.replace(/[:.]/g, '-').slice(0, 19);
-      a.href = url;
-      a.download = `homespot-platform-backup-${dateStr}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-
-      try {
-        await supabaseData.setDoc(SETTINGS_DOC_REF, { lastBackupAt: exportedAt }, { merge: true });
-      } catch (err) {
-        console.warn('Could not persist lastBackupAt to system_settings:', err);
-      }
-      if (lastBackupEl) {
-        lastBackupEl.textContent = formatBackupTimestamp(exportedAt);
-      }
-      Toast.success('Full database backup downloaded.');
-    } catch (err) {
-      Toast.error(`Backup export failed: ${err.message || 'Unknown error'}`);
-    }
-  };
-
-  backupBtn?.addEventListener('click', executeBackup);
-  sysBackupBtn?.addEventListener('click', executeBackup);
-
-  restoreBtn?.addEventListener('click', () => {
-    fileInput?.click();
-  });
-
-  fileInput?.addEventListener('change', async () => {
-    const file = fileInput.files?.[0];
-    if (!file) return;
-
-    const confirmed = await Toast.confirm(
-      `Restore platform data from "${file.name}"? Existing data will be merged and updated.`
-    );
-    if (!confirmed) {
-      fileInput.value = '';
-      return;
-    }
-
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text);
-
-      if (!parsed.meta?.platform?.includes('HomeSpot')) {
-        throw new Error('Invalid backup file: HomeSpot platform signature not recognized.');
-      }
-
-      Toast.info('Restoring records into Supabase...');
-
-      if (parsed.settings) {
-        await supabaseData.setDoc(SETTINGS_DOC_REF, parsed.settings, { merge: true });
-      }
-
-      for (const colName of BACKUP_COLLECTIONS) {
-        if (Array.isArray(parsed[colName])) {
-          for (const item of parsed[colName]) {
-            if (item?.id) {
-              await supabaseData.setDoc(supabaseData.doc(supabase, colName, item.id), item, {
-                merge: true
-              });
-            }
-          }
-        }
-      }
-
-      Toast.success('Platform data successfully restored from backup.');
-      setTimeout(() => window.location.reload(), 1200);
-    } catch (err) {
-      Toast.error(`Restore failed: ${err.message || 'Invalid JSON format'}`);
-    } finally {
-      fileInput.value = '';
-    }
-  });
-}
-
-// ── 5. SYSTEM STATUS HEALTH CHECK ────────────────────────────────────────────
-
-async function runSystemPingCheck() {
-  const dbText = document.getElementById('statusTextDatabase');
-  const apiText = document.getElementById('statusTextApiServer');
-  const payText = document.getElementById('statusTextPaymentGateway');
-  const authText = document.getElementById('statusTextEmailService');
-
-  // Supabase Database Ping
-  try {
-    const start = performance.now();
-    await supabase.from('app_documents').select('collection').limit(1);
-    const ms = Math.round(performance.now() - start);
-    if (dbText) dbText.textContent = `Online (${ms}ms)`;
-  } catch {
-    if (dbText) dbText.textContent = 'Degraded';
-  }
-
-  // Edge Functions Ping
-  try {
-    if (apiText) apiText.textContent = 'Online (Deno Edge)';
-  } catch {
-    if (apiText) apiText.textContent = 'Unreachable';
-  }
-
-  // PayMongo Gateway
-  if (payText) payText.textContent = 'Online (Live Ready)';
-
-  // Auth & Token Service
-  if (authText) authText.textContent = 'Online (JWT Secure)';
-}
-
 // ── BOOTSTRAP ────────────────────────────────────────────────────────────────
 
 function bootstrapSuperAdmin() {
@@ -682,8 +570,7 @@ function bootstrapSuperAdmin() {
   initAdminSearch();
   initAdminUserActions();
   void loadSystemSettings();
-  void initBackupAndRestore();
-  void runSystemPingCheck();
+  void loadRecentPlatformActivity();
 }
 
 if (document.readyState === 'loading') {

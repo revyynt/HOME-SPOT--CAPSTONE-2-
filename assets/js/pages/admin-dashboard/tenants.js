@@ -26,10 +26,11 @@ import { db, supabase, supabaseData } from '../../supabase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
 import { refreshTenantMessenger } from '../../render/messages.js';
-import { refreshTenantRoomOptions } from './create-tenant.js';
+import { refreshTenantRoomOptions, openCreateTenantModalFromData } from './create-tenant.js';
 import { Toast } from '../../render/toast.js';
 
 /** @type {Array<Object & {id: string}>} */
+let allTenants = [];
 let loadedTenants = [];
 let currentViewingTenant = null;
 
@@ -54,9 +55,10 @@ export function listenToTenants() {
   const statusEl = document.getElementById('tenantsSupabaseStatus');
 
   const apply = (snapshot) => {
-    loadedTenants = snapshot.docs
-      .map((doc) => ({ ...doc.data(), id: doc.id }))
-      .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
+    allTenants = snapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+    loadedTenants = allTenants.filter(
+      (t) => String(t.status || 'Active').toLowerCase() !== 'archived'
+    );
     if (statusEl) {
       statusEl.textContent = `Synced with Supabase (${loadedTenants.length} tenants)`;
       statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
@@ -83,14 +85,23 @@ export function listenToTenants() {
 /** Applies the search + room filters and re-renders. */
 export function renderFiltered() {
   const search = (document.getElementById('tenantSearchInput')?.value || '').toLowerCase().trim();
-  const roomFilter = (document.getElementById('tenantRoomFilter')?.value || '')
-    .toLowerCase()
-    .trim();
+  const roomFilter = (document.getElementById('tenantRoomFilter')?.value || '').trim();
 
-  const filtered = loadedTenants.filter((t) => {
-    const haystack = [t.name, t.email, t.room, t.phone].filter(Boolean).join(' ').toLowerCase();
+  const isArchivedFilter = roomFilter === '__archived__';
+  const sourceList = isArchivedFilter
+    ? allTenants.filter((t) => String(t.status || '').toLowerCase() === 'archived')
+    : loadedTenants;
+
+  const filtered = sourceList.filter((t) => {
+    const haystack = [t.name, t.email, t.room, t.previousRoom, t.phone]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
     const matchesSearch = !search || haystack.includes(search);
-    const matchesRoom = !roomFilter || (t.room || '').toLowerCase().includes(roomFilter);
+    const matchesRoom =
+      isArchivedFilter ||
+      !roomFilter ||
+      (t.room || '').toLowerCase().includes(roomFilter.toLowerCase());
     return matchesSearch && matchesRoom;
   });
 
@@ -131,10 +142,15 @@ function renderTenantsTable(tenants) {
             </div>
           </td>
           <td class="px-4 py-3.5">
-            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
-              ${escapeHtml(t.room || 'Unassigned')}
-            </span>
-            <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>
+            ${
+              String(t.status || '').toLowerCase() === 'archived'
+                ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
+                   ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
+                : `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                    ${escapeHtml(t.room || 'Unassigned')}
+                  </span>
+                  <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
+            }
           </td>
           <td class="px-4 py-3.5">
             <div class="text-sm text-gray-800">${escapeHtml(t.phone || '—')}</div>
@@ -150,16 +166,22 @@ function renderTenantsTable(tenants) {
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap">
             ${
-              getTenantLifecycle(t) === 'Pending Move-In'
-                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
-                : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
+              String(t.status || '').toLowerCase() === 'archived'
+                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">● Archived</span>'
+                : getTenantLifecycle(t) === 'Pending Move-In'
+                  ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
+                  : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
             }
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
             <div class="flex items-center justify-end gap-1.5">
               <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
-              <button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
-              <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">x</button>
+              ${
+                String(t.status || '').toLowerCase() === 'archived'
+                  ? `<button data-action="reactivate" data-id="${attr(t.id)}" title="Reactivate / Re-assign Room" class="px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200">Reactivate</button>`
+                  : `<button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
+                     <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove & Archive Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">x</button>`
+              }
             </div>
           </td>
         </tr>`;
@@ -185,7 +207,7 @@ function updateTenantStats(tenants) {
 
 /** Populates and reveals the read-only tenant profile modal. */
 export function viewTenantDetails(tenantId) {
-  const tenant = loadedTenants.find((t) => t.id === tenantId);
+  const tenant = (allTenants.length ? allTenants : loadedTenants).find((t) => t.id === tenantId);
   if (!tenant) return;
   currentViewingTenant = tenant;
 
@@ -196,7 +218,10 @@ export function viewTenantDetails(tenantId) {
 
   set('viewTenantName', tenant.name || 'Tenant');
   set('viewTenantEmail', tenant.email || '—');
-  set('viewTenantRoom', tenant.room || '—');
+  set(
+    'viewTenantRoom',
+    tenant.room || (tenant.previousRoom ? `Archived (Prev: ${tenant.previousRoom})` : 'Unassigned')
+  );
   set('viewTenantResidenceType', tenant.dormName || 'Residence Unit');
   set('viewTenantRent', formatPHP(Number(tenant.monthlyRent) || 0));
   set('viewTenantDue', `Due every ${tenant.dueDay || 5}th`);
@@ -269,51 +294,78 @@ export function copyCurrentTenantCredentials() {
  */
 export async function deleteTenantAccount(tenantId, tenantName) {
   const confirmed = await Toast.confirm({
-    title: 'Remove Tenant Account',
-    message: `Remove the tenant account for "${tenantName}"? They will no longer be able to sign in.`,
-    confirmText: 'Remove Tenant',
+    title: 'Remove & Archive Tenant',
+    message: `Archive tenant account for "${tenantName}"? Their room assignment will be cleared and the account archived so their past records are preserved if they return.`,
+    confirmText: 'Archive Tenant',
     cancelText: 'Cancel',
     danger: true
   });
   if (!confirmed) return;
 
   try {
-    const { data, error } = await supabase.functions.invoke('delete-tenant', {
-      body: { tenantId }
-    });
-    if (error || !data?.success) {
-      await supabaseData
-        .updateDoc(supabaseData.doc(db, 'tenants', tenantId), {
-          uid: null,
-          status: 'Archived',
-          room: ''
-        })
-        .catch(() => null);
-      const retry = await supabase.functions.invoke('delete-tenant', {
+    const target =
+      allTenants.find((t) => t.id === tenantId) || loadedTenants.find((t) => t.id === tenantId);
+    const prevRoom = target?.room || '';
+
+    // Archive tenant document: vacate room and set status to Archived
+    await supabaseData
+      .updateDoc(supabaseData.doc(db, 'tenants', tenantId), {
+        status: 'Archived',
+        room: '',
+        previousRoom: prevRoom,
+        archivedAt: new Date().toISOString()
+      })
+      .catch(() => null);
+
+    await supabase
+      .from('tenants')
+      .update({
+        status: 'Archived',
+        room_id: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', tenantId)
+      .catch(() => null);
+
+    // Invoke delete-tenant function (which now safely archives without deleting Auth user)
+    await supabase.functions
+      .invoke('delete-tenant', {
         body: { tenantId }
-      });
-      if (retry.error || !retry.data?.success) {
-        await supabaseData.deleteDoc(supabaseData.doc(db, 'tenants', tenantId)).catch(() => null);
-      }
-      await supabase
-        .from('tenants')
-        .delete()
-        .eq('id', tenantId)
-        .catch(() => null);
+      })
+      .catch(() => null);
+
+    if (target) {
+      target.status = 'Archived';
+      target.previousRoom = prevRoom;
+      target.room = '';
+      target.archivedAt = new Date().toISOString();
     }
     loadedTenants = loadedTenants.filter((t) => t.id !== tenantId);
     renderFiltered();
     updateTenantStats(loadedTenants);
     refreshTenantMessenger();
     refreshTenantRoomOptions();
-    Toast.success(`Tenant ${tenantName} removed successfully.`);
+    Toast.success(`Tenant "${tenantName}" has been archived. Room is now available.`);
   } catch (error) {
-    console.error('Failed to remove tenant:', error);
+    console.error('Failed to archive tenant:', error);
     Toast.alert({
-      title: 'Could Not Remove Tenant',
-      message: error.message || 'Unable to remove tenant account.'
+      title: 'Could Not Archive Tenant',
+      message: error.message || 'Unable to archive tenant account.'
     });
   }
+}
+
+export function reactivateTenantAccount(tenantId) {
+  const target = allTenants.find((t) => t.id === tenantId);
+  if (!target) return;
+  openCreateTenantModalFromData({
+    name: target.name,
+    email: target.email,
+    phone: target.phone,
+    emergencyContact: target.emergencyContact,
+    room: target.previousRoom || '',
+    amount: target.monthlyRent
+  });
 }
 
 /**
@@ -331,10 +383,13 @@ export function initTenantTable() {
       const tenant = loadedTenants.find((t) => t.id === id);
       if (tenant) copyTenantLoginInfo(tenant.email, tenant.name, tenant.room);
     } else if (action === 'delete') deleteTenantAccount(id, name);
+    else if (action === 'reactivate') reactivateTenantAccount(id);
   });
 
   for (const id of ['tenantSearchInput', 'tenantRoomFilter']) {
-    document.getElementById(id)?.addEventListener('input', renderFiltered);
+    const el = document.getElementById(id);
+    el?.addEventListener('input', renderFiltered);
+    el?.addEventListener('change', renderFiltered);
   }
 
   document.addEventListener('click', async (event) => {

@@ -287,6 +287,16 @@ function initLandingRooms() {
       });
       const activeRooms = rooms.length > 0 ? rooms : DEFAULT_ROOMS;
       syncBuildingUnitsWithRooms(activeRooms);
+      activeRooms.forEach((r) => {
+        const matchingUnits = BUILDING_UNITS.filter(
+          (u) => (u.listingDocId || u.listingId) === r.id
+        );
+        if (matchingUnits.length > 0) {
+          r.available = matchingUnits.filter(
+            (u) => (Number(u.publicOccupiedCount) || 0) < u.capacity
+          ).length;
+        }
+      });
       if (landingHero3DViewer) {
         landingHero3DViewer.refreshStates();
       }
@@ -295,7 +305,8 @@ function initLandingRooms() {
       const countBadge = document.getElementById('landingUnitsCountBadge');
       grid.innerHTML = activeRooms.map(renderLandingRoomCard).join('');
       if (countBadge) {
-        countBadge.textContent = `${activeRooms.length} ${activeRooms.length === 1 ? 'Unit' : 'Units'} Available`;
+        const totalAvailable = activeRooms.reduce((sum, r) => sum + (Number(r.available) || 0), 0);
+        countBadge.textContent = `${totalAvailable} ${totalAvailable === 1 ? 'Unit' : 'Units'} Available`;
         countBadge.classList.remove('hidden');
       }
     },

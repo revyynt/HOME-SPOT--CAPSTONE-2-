@@ -487,7 +487,7 @@ function renderListings(rooms) {
                 <span>Upload Card Image</span>
                 <input type="file" accept="image/*" class="hidden" data-upload-field="image" data-room-id="${escapeHtml(room.id)}" />
               </label>
-              <p data-status-for="image" class="text-[11px] text-gray-500">Stored in Supabase Storage (room-media)</p>
+              <p data-status-for="image" class="text-[11px] text-gray-500">Stored in media storage (room-media)</p>
             </div>
           </div>
         </div>
@@ -554,7 +554,7 @@ function renderListings(rooms) {
         </div>
         <div class="md:col-span-2 flex justify-end gap-2">
           <button type="button" data-action="toggle-edit-room" data-room-id="${escapeHtml(room.id)}" class="px-4 py-2 border rounded-lg text-sm">Cancel</button>
-          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save to Supabase</button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">Save</button>
         </div>
       </form>
     </div>
@@ -797,7 +797,7 @@ function initAdminListings() {
           mountAdminPanoramaPreview(panoBox, publicUrl);
         }
         if (statusEl) statusEl.textContent = `Uploaded: ${file.name} (click Save to publish)`;
-        Toast.success('Uploaded to Supabase Storage! Click "Save to Supabase" to publish.');
+        Toast.success('Uploaded successfully! Click "Save" to publish.');
       } catch (err) {
         console.error('Supabase Storage upload failed:', err);
         if (statusEl) statusEl.textContent = 'Upload failed.';
@@ -816,7 +816,7 @@ function initAdminListings() {
       if (!form || !galleryList) return;
 
       try {
-        Toast.success(`Uploading ${files.length} image(s) to Supabase...`);
+        Toast.success(`Uploading ${files.length} image(s)...`);
         const existingUrls = Array.from(form.querySelectorAll('input[name="galleryImage"]')).map(
           (el) => el.value
         );
@@ -825,7 +825,7 @@ function initAdminListings() {
           existingUrls.push(url);
         }
         galleryList.innerHTML = renderGalleryItemsHtml(existingUrls);
-        Toast.success('Gallery images uploaded! Click "Save to Supabase" to publish.');
+        Toast.success('Gallery images uploaded! Click "Save" to publish.');
       } catch (err) {
         console.error('Gallery upload failed:', err);
         Toast.error(`Gallery upload failed: ${err.message || 'Unknown error'}`);
@@ -871,7 +871,7 @@ function initAdminListings() {
       await supabaseData.setDoc(supabaseData.doc(supabase, 'rooms', roomId), updated, {
         merge: true
       });
-      Toast.success(`Saved "${updated.name}" to Supabase`);
+      Toast.success(`Saved "${updated.name}" successfully`);
     } catch (error) {
       console.error('Failed to save listing:', error);
       Toast.error(`Failed to save listing: ${error.message || 'Unknown error'}`);
@@ -1052,16 +1052,9 @@ function initAdminPaymentCalendar() {
           .slice(0, 3)
           .map((ev) => {
             if (ev.isMoveInMarker) {
-              return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate bg-amber-50 text-amber-900 border-amber-200" title="Scheduled Move-in: ${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)})">📦 ${escapeHtml(ev.tenantName)}: Move-In</div>`;
+              return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate bg-amber-50 text-amber-900 border-amber-200" title="Scheduled Move-in: ${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)})">${escapeHtml(ev.tenantName)}: Move-In</div>`;
             }
-            const prefix =
-              ev.status === 'Paid'
-                ? '✓'
-                : ev.status === 'Overdue'
-                  ? '!'
-                  : ev.status === 'Scheduled'
-                    ? '📅'
-                    : '•';
+            const prefix = ev.status === 'Paid' ? '✓' : ev.status === 'Overdue' ? '!' : '•';
             return `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(ev.status)}" title="${escapeHtml(ev.tenantName)} (${escapeHtml(ev.room)}) - ${escapeHtml(formatPHP(ev.amount))} [${escapeHtml(ev.status)}]">${prefix} ${escapeHtml(ev.tenantName)}: ${escapeHtml(formatPHP(ev.amount))}</div>`;
           })
           .join('');
@@ -1070,7 +1063,7 @@ function initAdminPaymentCalendar() {
           .slice(0, 2)
           .map(
             (p) =>
-              `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(p.status)}" title="Payment by ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))} (${escapeHtml(p.status)})">💳 ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))}</div>`
+              `<div class="text-[10px] font-semibold px-1.5 py-0.5 rounded border truncate ${badgeStyle(p.status)}" title="Payment by ${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))} (${escapeHtml(p.status)})">${escapeHtml(p.tenantName)}: ${escapeHtml(formatPHP(p.amount))}</div>`
           )
           .join('');
 
@@ -1100,7 +1093,6 @@ function initAdminPaymentCalendar() {
               return `
                 <div class="flex items-center justify-between py-2 border-b last:border-b-0 gap-2 flex-wrap sm:flex-nowrap">
                   <div class="flex items-center gap-2 min-w-0">
-                    <span class="text-base flex-shrink-0">📦</span>
                     <div class="min-w-0">
                       <div class="text-sm font-bold text-gray-900 truncate">${escapeHtml(ev.tenantName)}</div>
                       <div class="text-xs text-amber-800 font-medium">${escapeHtml(ev.room)} • Scheduled Move-In</div>
@@ -1134,7 +1126,7 @@ function initAdminPaymentCalendar() {
                   <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(formatPaymentMethod(p.method, p))}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''})</span>
                   <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
                 </div>
-                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1 font-normal">📝 Note: ${escapeHtml(p.notes)}</div>` : ''}
+                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1 font-normal">Note: ${escapeHtml(p.notes)}</div>` : ''}
               </div>`
           )
         ].join('');
@@ -1478,15 +1470,32 @@ function initAdminOverviewActivity() {
     const events = [];
 
     for (const t of state.tenants) {
-      const time = new Date(t.createdAt || t.moveInDate || 0).getTime() || 0;
-      events.push({
-        time,
-        rawDate: t.createdAt || t.moveInDate,
-        type: 'tenant',
-        tab: 'tenants',
-        title: `Tenant account enrolled: ${t.name || 'Tenant'}`,
-        subtitle: `${t.room || 'Unassigned'} • ${formatTimeAgo(t.createdAt || t.moveInDate)}`
-      });
+      const isArchived = String(t.status || '').toLowerCase() === 'archived';
+
+      if (isArchived && (t.archivedAt || t.updatedAt)) {
+        const time = new Date(t.archivedAt || t.updatedAt).getTime() || 0;
+        events.push({
+          time,
+          rawDate: t.archivedAt || t.updatedAt,
+          type: 'tenant-archived',
+          tab: 'tenants',
+          title: `Tenant account archived: ${t.name || 'Tenant'}`,
+          subtitle: `${t.previousRoom ? `Vacated ${t.previousRoom}` : 'Vacated room'} • ${formatTimeAgo(t.archivedAt || t.updatedAt)}`
+        });
+      }
+
+      const createdTime = t.createdAt || t.moveInDate;
+      if (createdTime) {
+        const time = new Date(createdTime).getTime() || 0;
+        events.push({
+          time,
+          rawDate: createdTime,
+          type: 'tenant',
+          tab: 'tenants',
+          title: `New tenant account created: ${t.name || 'Tenant'}`,
+          subtitle: `${t.room || t.previousRoom || 'Unassigned'} • ${formatTimeAgo(createdTime)}`
+        });
+      }
     }
 
     for (const p of state.payments) {
@@ -1547,7 +1556,14 @@ function initAdminOverviewActivity() {
       .map((ev, idx) => {
         const borderCls = idx < topEvents.length - 1 ? 'pb-4 border-b' : '';
         let iconHtml;
-        if (ev.type === 'tenant') {
+        if (ev.type === 'tenant-archived') {
+          iconHtml = `
+            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+              </svg>
+            </div>`;
+        } else if (ev.type === 'tenant') {
           iconHtml = `
             <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
               <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -1587,12 +1603,7 @@ function initAdminOverviewActivity() {
       supabaseData.collection(supabase, col),
       (snap) => {
         const rawItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        state[col] =
-          col === 'payments'
-            ? deduplicatePayments(rawItems)
-            : col === 'tenants'
-              ? rawItems.filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived')
-              : rawItems;
+        state[col] = col === 'payments' ? deduplicatePayments(rawItems) : rawItems;
         renderActivity();
       },
       (err) => console.warn(`Overview activity listener (${col}) failed:`, err)
@@ -1635,8 +1646,10 @@ function initAdminDataAnalysis() {
   if (!section) return;
 
   const yearSelect = document.getElementById('adminAnalysisYearSelect');
-  const monthSelect = document.getElementById('adminAnalysisMonthSelect');
+  const monthFromSelect = document.getElementById('adminAnalysisMonthFrom');
+  const monthToSelect = document.getElementById('adminAnalysisMonthTo');
   let tenantsList = [];
+  let userFocusedMonthIdx = null;
 
   const now = new Date();
   if (yearSelect) {
@@ -1675,9 +1688,12 @@ function initAdminDataAnalysis() {
   const renderAnalysis = () => {
     const totalRooms = BUILDING_UNITS.filter((u) => u.type !== 'Commercial Space').length || 12;
     const selectedYear = Number(yearSelect?.value) || now.getFullYear();
-    const selectedMonthVal = monthSelect?.value || 'all';
+    const rawFrom = Number(monthFromSelect?.value ?? 0);
+    const rawTo = Number(monthToSelect?.value ?? 11);
+    const startMonth = Math.max(0, Math.min(rawFrom, rawTo));
+    const endMonth = Math.min(11, Math.max(rawFrom, rawTo));
 
-    const monthlyStats = Array.from({ length: 12 }, (_, mIdx) => {
+    const allMonthlyStats = Array.from({ length: 12 }, (_, mIdx) => {
       const activeTenants = tenantsList.filter((t) => isTenantActiveInMonth(t, selectedYear, mIdx));
       const occupiedUnitIds = new Set();
       activeTenants.forEach((t) => {
@@ -1697,22 +1713,32 @@ function initAdminDataAnalysis() {
       };
     });
 
-    const focusMonthIdx =
-      selectedMonthVal === 'all'
-        ? selectedYear === now.getFullYear()
-          ? now.getMonth()
-          : 11
-        : Number(selectedMonthVal) || 0;
-    const focusStat = monthlyStats[focusMonthIdx] || monthlyStats[0];
+    const monthlyStats = allMonthlyStats.slice(startMonth, endMonth + 1);
 
-    // Calculate accurate Yearly Room Summary:
-    // Use active months in the year (or current live room count) rather than diluting with 0s from pre-launch months
-    const activeMonthsInYear = monthlyStats.filter((s) => s.occupiedRooms > 0 || s.tenants > 0);
-    const yearOccupiedRooms = activeMonthsInYear.length
-      ? Math.max(...activeMonthsInYear.map((s) => s.occupiedRooms))
+    const curMonth = now.getMonth();
+    let focusMonthIdx = userFocusedMonthIdx;
+    if (focusMonthIdx === null || focusMonthIdx < startMonth || focusMonthIdx > endMonth) {
+      if (selectedYear === now.getFullYear() && curMonth >= startMonth && curMonth <= endMonth) {
+        focusMonthIdx = curMonth;
+      } else {
+        focusMonthIdx = endMonth;
+      }
+    }
+    const focusStat = allMonthlyStats[focusMonthIdx] || monthlyStats[0];
+
+    const activeStatsInRange = monthlyStats.filter((s) => s.occupiedRooms > 0 || s.tenants > 0);
+    const rangeOccupiedRooms = activeStatsInRange.length
+      ? Math.max(...activeStatsInRange.map((s) => s.occupiedRooms))
       : 0;
-    const yearAvailableRooms = Math.max(0, totalRooms - yearOccupiedRooms);
-    const yearOccupancyPct = Math.round((yearOccupiedRooms / totalRooms) * 100);
+    const rangeAvailableRooms = Math.max(0, totalRooms - rangeOccupiedRooms);
+    const rangeOccupancyPct = Math.round((rangeOccupiedRooms / totalRooms) * 100);
+
+    const isFullYear = startMonth === 0 && endMonth === 11;
+    const rangeLabel = isFullYear
+      ? `${selectedYear}`
+      : startMonth === endMonth
+        ? `${ANALYSIS_MONTH_NAMES[startMonth]} ${selectedYear}`
+        : `${ANALYSIS_MONTH_SHORT[startMonth]} – ${ANALYSIS_MONTH_SHORT[endMonth]} ${selectedYear}`;
 
     const tenantsCountEl = document.getElementById('adminAnalysisTenantsCount');
     const tenantsSubEl = document.getElementById('adminAnalysisTenantsSub');
@@ -1727,10 +1753,7 @@ function initAdminDataAnalysis() {
       tenantsCountEl.textContent = `${focusStat.tenants} ${focusStat.tenants === 1 ? 'Tenant' : 'Tenants'}`;
     }
     if (tenantsSubEl) {
-      tenantsSubEl.textContent =
-        selectedMonthVal === 'all'
-          ? `Active in ${focusStat.label} ${selectedYear} (Current)`
-          : `Active in ${focusStat.label} ${selectedYear}`;
+      tenantsSubEl.textContent = `Active in ${focusStat.label} ${selectedYear}`;
     }
 
     if (occMonthEl) {
@@ -1748,15 +1771,15 @@ function initAdminDataAnalysis() {
     }
 
     if (yearSummaryEl) {
-      yearSummaryEl.textContent = `${yearOccupiedRooms} Occ • ${yearAvailableRooms} Avail`;
+      yearSummaryEl.textContent = `${rangeOccupiedRooms} Occ • ${rangeAvailableRooms} Avail`;
     }
     if (yearSubEl) {
-      yearSubEl.textContent = `${selectedYear} Room Occupancy (${yearOccupancyPct}% of ${totalRooms} rooms)`;
+      yearSubEl.textContent = `${rangeLabel} Occupancy (${rangeOccupancyPct}% of ${totalRooms} rooms)`;
     }
 
     const chartGrid = document.getElementById('adminAnalysisChartGrid');
     if (chartGrid) {
-      const maxScale = Math.max(totalRooms, ...monthlyStats.map((s) => s.tenants), 1);
+      const maxScale = Math.max(totalRooms, ...allMonthlyStats.map((s) => s.tenants), 1);
       const svgW = 960;
       const svgH = 290;
       const xStart = 70;
@@ -1766,7 +1789,9 @@ function initAdminDataAnalysis() {
       const plotH = yBottom - yTop;
       const plotW = xEnd - xStart;
 
-      const getX = (idx) => xStart + idx * (plotW / 11);
+      const numPoints = monthlyStats.length;
+      const getX = (idx) =>
+        numPoints === 1 ? xStart + plotW / 2 : xStart + idx * (plotW / (numPoints - 1));
       const getY = (val) => yBottom - (val / maxScale) * plotH;
 
       const occPoints = monthlyStats.map(
@@ -1796,18 +1821,21 @@ function initAdminDataAnalysis() {
       const verticalGridHtml = monthlyStats
         .map((s, i) => {
           const x = getX(i).toFixed(1);
-          const isSelected = selectedMonthVal !== 'all' && Number(selectedMonthVal) === s.monthIdx;
           const isFocus = s.monthIdx === focusMonthIdx;
           return `
             <line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke="#e2e8f0" stroke-width="1" />
             <line x1="${x}" y1="${yBottom}" x2="${x}" y2="${yBottom + 6}" stroke="#334155" stroke-width="1.5" />
-            <text x="${x}" y="${yBottom + 20}" text-anchor="middle" font-size="11" font-weight="${isFocus || isSelected ? '700' : '600'}" fill="${isFocus || isSelected ? '#0f172a' : '#64748b'}">${s.shortLabel}</text>`;
+            <text x="${x}" y="${yBottom + 20}" text-anchor="middle" font-size="11" font-weight="${isFocus ? '700' : '600'}" fill="${isFocus ? '#0f172a' : '#64748b'}">${s.shortLabel}</text>`;
         })
         .join('');
 
-      const focusX = getX(focusMonthIdx).toFixed(1);
-      const focusColumnHtml = `
-        <rect x="${Number(focusX) - 20}" y="${yTop}" width="40" height="${plotH}" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.8" />`;
+      const focusX =
+        focusMonthIdx >= startMonth && focusMonthIdx <= endMonth
+          ? getX(focusMonthIdx - startMonth).toFixed(1)
+          : null;
+      const focusColumnHtml = focusX
+        ? `<rect x="${Number(focusX) - 20}" y="${yTop}" width="40" height="${plotH}" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.8" />`
+        : '';
 
       const pointsHtml = monthlyStats
         .map((s, i) => {
@@ -1815,7 +1843,6 @@ function initAdminDataAnalysis() {
           const yOcc = getY(s.occupiedRooms).toFixed(1);
           const yAvail = getY(s.availableRooms).toFixed(1);
           const yTen = getY(s.tenants).toFixed(1);
-          const isSelected = selectedMonthVal !== 'all' && Number(selectedMonthVal) === s.monthIdx;
           const isFocus = s.monthIdx === focusMonthIdx;
 
           return `
@@ -1831,7 +1858,7 @@ function initAdminDataAnalysis() {
               <circle cx="${x}" cy="${yTen}" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="1.5" />
 
               <!-- Occupied marker with direct value label on top (Matching reference image) -->
-              <circle cx="${x}" cy="${yOcc}" r="${isFocus || isSelected ? '6' : '5'}" fill="#16a34a" stroke="#ffffff" stroke-width="1.5" />
+              <circle cx="${x}" cy="${yOcc}" r="${isFocus ? '6' : '5'}" fill="#16a34a" stroke="#ffffff" stroke-width="1.5" />
               <text x="${x}" y="${Number(yOcc) - 8}" text-anchor="middle" font-size="11" font-weight="800" fill="#15803d">${s.occupiedRooms}</text>
             </g>`;
         })
@@ -1867,23 +1894,45 @@ function initAdminDataAnalysis() {
 
               <!-- Axis Titles -->
               <text x="-125" y="24" transform="rotate(-90)" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Rooms / Units</text>
-              <text x="${xStart + plotW / 2}" y="272" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Month (${selectedYear})</text>
+              <text x="${xStart + plotW / 2}" y="272" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Month (${rangeLabel})</text>
             </svg>
           </div>
         </div>`;
     }
   };
 
-  yearSelect?.addEventListener('change', renderAnalysis);
-  monthSelect?.addEventListener('change', renderAnalysis);
+  yearSelect?.addEventListener('change', () => {
+    userFocusedMonthIdx = null;
+    renderAnalysis();
+  });
+
+  monthFromSelect?.addEventListener('change', () => {
+    const fromVal = Number(monthFromSelect.value);
+    const toVal = Number(monthToSelect?.value ?? 11);
+    if (monthToSelect && fromVal > toVal) {
+      monthToSelect.value = String(fromVal);
+    }
+    userFocusedMonthIdx = null;
+    renderAnalysis();
+  });
+
+  monthToSelect?.addEventListener('change', () => {
+    const fromVal = Number(monthFromSelect?.value ?? 0);
+    const toVal = Number(monthToSelect.value);
+    if (monthFromSelect && toVal < fromVal) {
+      monthFromSelect.value = String(toVal);
+    }
+    userFocusedMonthIdx = null;
+    renderAnalysis();
+  });
 
   section.addEventListener('click', (event) => {
     const target = event.target instanceof Element ? event.target : null;
     const btn = target?.closest('[data-action="admin-analysis-pick-month"]');
-    if (!btn || !monthSelect) return;
-    const m = btn.dataset.month;
-    if (m !== undefined) {
-      monthSelect.value = monthSelect.value === m ? 'all' : m;
+    if (!btn) return;
+    const m = Number(btn.dataset.month);
+    if (!Number.isNaN(m)) {
+      userFocusedMonthIdx = userFocusedMonthIdx === m ? null : m;
       renderAnalysis();
     }
   });

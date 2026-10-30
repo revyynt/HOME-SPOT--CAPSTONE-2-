@@ -242,7 +242,7 @@ function populateTenantUI() {
   if (summaryRent) summaryRent.textContent = '₱' + tenantRent.toLocaleString() + '.00';
 
   const welcomeTenantName = document.getElementById('welcomeTenantName');
-  if (welcomeTenantName) welcomeTenantName.textContent = `Welcome back, ${tenantName}! 👋`;
+  if (welcomeTenantName) welcomeTenantName.textContent = `Welcome back, ${tenantName}!`;
 
   const welcomeTenantSub = document.getElementById('welcomeTenantSub');
   if (welcomeTenantSub) welcomeTenantSub.textContent = `${tenantRoom} • ${tenantDorm}`;
@@ -528,7 +528,7 @@ function renderTenantPaymentCalendar() {
       const dueChips = cell.dueEvents
         .map((ev) => {
           if (ev.isMoveInMarker) {
-            return `<div class="cal-chip" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Scheduled Move-in Date: ${escapeHtml(ev.dueDate)}">🔑 Move-In Day</div>`;
+            return `<div class="cal-chip" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Scheduled Move-in Date: ${escapeHtml(ev.dueDate)}">Move-In Day</div>`;
           }
           const label =
             ev.status === 'Paid'
@@ -544,7 +544,7 @@ function renderTenantPaymentCalendar() {
 
       const payChips = cell.paymentEvents
         .map((p) => {
-          const pLabel = `${p.status === 'Paid' ? '✓' : p.status === 'Failed' ? '✕' : '⏱'} ₱${p.amount.toLocaleString()}`;
+          const pLabel = `${p.status === 'Paid' ? '✓' : p.status === 'Failed' ? '✕' : '•'} ₱${p.amount.toLocaleString()}`;
           return `<div class="cal-chip ${chipClass(p.status)}" title="${escapeHtml(p.purpose)}">${escapeHtml(pLabel)}</div>`;
         })
         .join('');
@@ -1528,7 +1528,7 @@ function showReceiptModal(record) {
     }
     if (iconContainer) {
       iconContainer.innerHTML =
-        '<div class="receipt-fail-icon" style="background: #ffedd5; color: #ea580c;">⏱</div>';
+        '<div class="receipt-fail-icon" style="background: #ffedd5; color: #ea580c;">✕</div>';
     }
     if (titleEl) {
       titleEl.textContent = 'Payment Expired';
@@ -1539,7 +1539,7 @@ function showReceiptModal(record) {
         'The QR Ph payment code or checkout session expired before completion.';
     }
     if (statusBadgeEl) {
-      statusBadgeEl.innerHTML = '<span class="status-badge-expired">⏱ Expired</span>';
+      statusBadgeEl.innerHTML = '<span class="status-badge-expired">Expired</span>';
     }
     if (failureRow) {
       failureRow.style.display = 'flex';
@@ -1838,12 +1838,12 @@ function renderPaymentHistoryTable(payments) {
           (p.status || '').toLowerCase().includes('cancel'));
       const isPending = (p.status || '').toLowerCase() === 'pending';
       const statusBadge = isExpired
-        ? `<span class="status-badge-expired">⏱ Expired</span>`
+        ? `<span class="status-badge-expired">Expired</span>`
         : isFailed
-          ? `<span class="status-badge-failed">✗ Failed</span>`
+          ? `<span class="status-badge-failed">Failed</span>`
           : isPending
-            ? `<span class="status-badge-pending">⏱ Pending</span>`
-            : `<span class="status-badge-paid">✓ Paid</span>`;
+            ? `<span class="status-badge-pending">Pending</span>`
+            : `<span class="status-badge-paid">Paid</span>`;
       const amountColor = isExpired
         ? '#ea580c'
         : isFailed

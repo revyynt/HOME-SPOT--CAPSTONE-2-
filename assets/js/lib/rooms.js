@@ -63,7 +63,7 @@ export const DEFAULT_ROOMS = [
     price: 5000,
     beds: 1,
     capacity: 3,
-    available: 3,
+    available: 10,
     size: '30 sqm',
     image: 'assets/img/triple-occupancy-panorama.png',
     mainImage: 'assets/img/triple-occupancy.jpg',
