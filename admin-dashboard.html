@@ -398,16 +398,15 @@
                   </div>
                   <div class="flex items-center gap-1.5">
                     <label
-                      for="adminAnalysisMonthSelect"
+                      for="adminAnalysisMonthFrom"
                       class="text-xs font-bold uppercase text-gray-500"
-                      >Month:</label
+                      >Month From:</label
                     >
                     <select
-                      id="adminAnalysisMonthSelect"
-                      class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      id="adminAnalysisMonthFrom"
+                      class="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="all">All Months (Full Year)</option>
-                      <option value="0">January</option>
+                      <option value="0" selected>January</option>
                       <option value="1">February</option>
                       <option value="2">March</option>
                       <option value="3">April</option>
@@ -419,6 +418,30 @@
                       <option value="9">October</option>
                       <option value="10">November</option>
                       <option value="11">December</option>
+                    </select>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <label
+                      for="adminAnalysisMonthTo"
+                      class="text-xs font-bold uppercase text-gray-500"
+                      >Month To:</label
+                    >
+                    <select
+                      id="adminAnalysisMonthTo"
+                      class="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="0">January</option>
+                      <option value="1">February</option>
+                      <option value="2">March</option>
+                      <option value="3">April</option>
+                      <option value="4">May</option>
+                      <option value="5">June</option>
+                      <option value="6">July</option>
+                      <option value="7">August</option>
+                      <option value="8">September</option>
+                      <option value="9">October</option>
+                      <option value="10">November</option>
+                      <option value="11" selected>December</option>
                     </select>
                   </div>
                 </div>
