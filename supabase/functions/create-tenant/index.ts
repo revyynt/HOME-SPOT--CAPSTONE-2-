@@ -95,8 +95,17 @@ Deno.serve(async (request) => {
   }
 
   const now = new Date().toISOString();
-  const tenantId = crypto.randomUUID();
+  const { data: existingTenantDoc } = await admin
+    .from('app_documents')
+    .select('id, data')
+    .eq('collection', 'tenants')
+    .eq('data->>email', email)
+    .maybeSingle();
+
+  const tenantId = existingTenantDoc?.id || crypto.randomUUID();
+  const existingData = (existingTenantDoc?.data as Record<string, unknown>) || {};
   const tenant = {
+    ...existingData,
     name,
     email,
     phone,
@@ -111,9 +120,11 @@ Deno.serve(async (request) => {
     status: 'Active',
     role: 'tenant',
     uid: userId,
-    createdAt: now,
     updatedAt: now
   };
+  if (!existingTenantDoc) {
+    tenant.createdAt = now;
+  }
   const profile = {
     name,
     email,

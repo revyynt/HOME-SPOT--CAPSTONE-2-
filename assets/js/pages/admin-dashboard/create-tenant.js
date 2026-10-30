@@ -279,12 +279,26 @@ async function createTenantClientFallback(form) {
   }
 
   const now = new Date().toISOString();
+
+  // Check if an existing (e.g. archived) tenant record already exists with this email
+  const existingDocs = await supabaseData
+    .getDocs(
+      supabaseData.query(
+        supabaseData.collection(db, 'tenants'),
+        supabaseData.where('email', '==', form.email)
+      )
+    )
+    .catch(() => null);
+
+  const existingDoc = existingDocs && !existingDocs.empty ? existingDocs.docs[0] : null;
   const tenantId =
-    typeof crypto !== 'undefined' && crypto.randomUUID
+    existingDoc?.id ||
+    (typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
-      : `tenant-${Date.now()}`;
+      : `tenant-${Date.now()}`);
 
   const tenantRecord = {
+    ...(existingDoc?.data() || {}),
     name: form.name,
     email: form.email,
     phone: form.phone,
@@ -298,10 +312,12 @@ async function createTenantClientFallback(form) {
     notes: form.notes || '',
     status: 'Active',
     role: 'tenant',
-    uid: userId || '',
-    createdAt: now,
+    uid: userId || existingDoc?.data()?.uid || '',
     updatedAt: now
   };
+  if (!existingDoc) {
+    tenantRecord.createdAt = now;
+  }
 
   await supabaseData.setDoc(supabaseData.doc(db, 'tenants', tenantId), tenantRecord);
   return { userId: userId || tenantId };
