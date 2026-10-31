@@ -142,8 +142,14 @@ Deno.serve(async (request) => {
       ? attributes.line_items[0]
       : null;
   const lineItemName = typeof firstLineItem?.name === 'string' ? firstLineItem.name.trim() : '';
-  const cleanPurpose =
+  let cleanPurpose =
     lineItemName || description.replace(/\s*-\s*MJP Residences\s*$/i, '').trim() || 'Monthly Rent';
+  let extractedNotes = '';
+  const noteMatch = cleanPurpose.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (noteMatch) {
+    cleanPurpose = noteMatch[1].trim();
+    extractedNotes = noteMatch[2].trim();
+  }
   const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
 
   const record = {
@@ -203,7 +209,7 @@ Deno.serve(async (request) => {
           status: 'Paid',
           payment_method: record.method,
           purpose: record.purpose,
-          notes: description || null,
+          notes: extractedNotes || description || null,
           reference_number: referenceNumber,
           created_at: record.createdAt
         },
