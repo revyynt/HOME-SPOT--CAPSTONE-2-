@@ -33,6 +33,7 @@ import { Toast } from '../../render/toast.js';
 let allTenants = [];
 let loadedTenants = [];
 let currentViewingTenant = null;
+let currentTenantTab = 'active'; // 'active' | 'archived'
 
 export function getTenants() {
   return loadedTenants;
@@ -60,11 +61,11 @@ export function listenToTenants() {
       (t) => String(t.status || 'Active').toLowerCase() !== 'archived'
     );
     if (statusEl) {
-      statusEl.textContent = `Synced with Supabase (${loadedTenants.length} tenants)`;
+      statusEl.textContent = `Synced with Supabase (${loadedTenants.length} active)`;
       statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
     }
     renderFiltered();
-    updateTenantStats(loadedTenants);
+    updateTenantStats();
     refreshTenantMessenger();
     refreshTenantRoomOptions();
   };
@@ -82,13 +83,54 @@ export function listenToTenants() {
   );
 }
 
+/**
+ * Toggles the tenant list between 'active' and 'archived' tabs.
+ * @param {'active' | 'archived'} tab
+ */
+export function setTenantTab(tab) {
+  currentTenantTab = tab === 'archived' ? 'archived' : 'active';
+  const activeBtn = document.getElementById('tabActiveTenants');
+  const archivedBtn = document.getElementById('tabArchivedTenants');
+  const activeBadge = document.getElementById('badgeActiveTenantsCount');
+  const archivedBadge = document.getElementById('badgeArchivedTenantsCount');
+  const label = document.getElementById('tenantTableContextLabel');
+
+  if (currentTenantTab === 'active') {
+    activeBtn?.classList.remove('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    activeBtn?.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+    activeBadge?.classList.remove('bg-gray-200', 'text-gray-700');
+    activeBadge?.classList.add('bg-blue-700', 'text-white');
+
+    archivedBtn?.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+    archivedBtn?.classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    archivedBadge?.classList.remove('bg-slate-600', 'text-white');
+    archivedBadge?.classList.add('bg-gray-200', 'text-gray-700');
+
+    if (label) label.textContent = 'Showing currently enrolled active tenants';
+  } else {
+    archivedBtn?.classList.remove('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    archivedBtn?.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+    archivedBadge?.classList.remove('bg-gray-200', 'text-gray-700');
+    archivedBadge?.classList.add('bg-slate-600', 'text-white');
+
+    activeBtn?.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+    activeBtn?.classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    activeBadge?.classList.remove('bg-blue-700', 'text-white');
+    activeBadge?.classList.add('bg-gray-200', 'text-gray-700');
+
+    if (label) label.textContent = 'Showing former and archived inactive tenant records';
+  }
+
+  renderFiltered();
+}
+
 /** Applies the search + room filters and re-renders. */
 export function renderFiltered() {
   const search = (document.getElementById('tenantSearchInput')?.value || '').toLowerCase().trim();
   const roomFilter = (document.getElementById('tenantRoomFilter')?.value || '').trim();
 
-  const isArchivedFilter = roomFilter === '__archived__';
-  const sourceList = isArchivedFilter
+  const isArchived = currentTenantTab === 'archived' || roomFilter === '__archived__';
+  const sourceList = isArchived
     ? allTenants.filter((t) => String(t.status || '').toLowerCase() === 'archived')
     : loadedTenants;
 
@@ -99,16 +141,14 @@ export function renderFiltered() {
       .toLowerCase();
     const matchesSearch = !search || haystack.includes(search);
     const matchesRoom =
-      isArchivedFilter ||
-      !roomFilter ||
-      (t.room || '').toLowerCase().includes(roomFilter.toLowerCase());
+      isArchived || !roomFilter || (t.room || '').toLowerCase().includes(roomFilter.toLowerCase());
     return matchesSearch && matchesRoom;
   });
 
-  renderTenantsTable(filtered);
+  renderTenantsTable(filtered, isArchived);
 }
 
-function renderTenantsTable(tenants) {
+function renderTenantsTable(tenants, isArchived = false) {
   const tbody = document.getElementById('tenantsTableBody');
   if (!tbody) return;
 
@@ -116,8 +156,12 @@ function renderTenantsTable(tenants) {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-          <p class="font-medium">No tenants found</p>
-          <p class="text-sm mt-1">Adjust the filters, or create a tenant account.</p>
+          <p class="font-medium">${isArchived ? 'No archived or inactive tenants found' : 'No active tenants found'}</p>
+          <p class="text-sm mt-1">${
+            isArchived
+              ? 'When tenants move out or accounts are archived, their records appear here for historical tracking and reactivation.'
+              : 'Adjust the filters, or create a tenant account.'
+          }</p>
         </td>
       </tr>`;
     return;
@@ -172,6 +216,15 @@ function renderTenantsTable(tenants) {
                   ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
                   : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
             }
+            ${
+              String(t.status || '').toLowerCase() !== 'archived'
+                ? `<div class="text-[11px] mt-1 font-medium ${
+                    t.rulesAgreedByTenant === true ? 'text-blue-600' : 'text-amber-600'
+                  }">
+                    ${t.rulesAgreedByTenant === true ? '✓ Rules Accepted' : '⏳ Rules Pending'}
+                  </div>`
+                : ''
+            }
           </td>
           <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
             <div class="flex items-center justify-end gap-1.5">
@@ -189,20 +242,27 @@ function renderTenantsTable(tenants) {
     .join('');
 }
 
-function updateTenantStats(tenants) {
-  const active = tenants.filter((t) => getTenantLifecycle(t) === 'Active').length;
-  const totalRent = tenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
+function updateTenantStats(source = allTenants) {
+  const activeTenants = source.filter(
+    (t) => String(t.status || 'Active').toLowerCase() !== 'archived'
+  );
+  const archivedTenants = source.filter((t) => String(t.status || '').toLowerCase() === 'archived');
+  const activeMovedIn = activeTenants.filter((t) => getTenantLifecycle(t) === 'Active');
+  const totalRent = activeTenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
 
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
 
-  set('activeBookingsCount', active);
-  set('tenantsCountBadge', tenants.length);
-  set('tenantsStatTotal', tenants.length);
-  set('tenantsStatActive', active);
+  set('activeBookingsCount', activeMovedIn.length);
+  set('tenantsCountBadge', activeTenants.length);
+  set('tenantsStatTotal', activeTenants.length);
+  set('tenantsStatArchived', archivedTenants.length);
+  set('tenantsStatActive', activeMovedIn.length);
   set('tenantsStatRent', formatPHP(totalRent));
+  set('badgeActiveTenantsCount', activeTenants.length);
+  set('badgeArchivedTenantsCount', archivedTenants.length);
 }
 
 /** Populates and reveals the read-only tenant profile modal. */
@@ -227,6 +287,26 @@ export function viewTenantDetails(tenantId) {
   set('viewTenantDue', `Due every ${tenant.dueDay || 5}th`);
   set('viewTenantMoveIn', tenant.moveInDate || '—');
   set('viewTenantPhone', tenant.phone || '—');
+  const rentNum = Number(tenant.monthlyRent) || 10000;
+  const advanceRentNum = Number(tenant.advanceRent) || Number(tenant.advanceDeposit) || rentNum;
+  const secDepNum = Number(tenant.securityDeposit) || rentNum * 2;
+  set('viewTenantAdvanceRent', formatPHP(advanceRentNum));
+  set('viewTenantSecurityDeposit', formatPHP(secDepNum));
+  set('viewTenantLeaseTerm', tenant.leaseTerm || '6 Months');
+  set(
+    'viewTenantAdminVerified',
+    tenant.contractSigned !== false ? '✓ Contract & Fees Verified' : 'Pending Verification'
+  );
+  const compEl = document.getElementById('viewTenantCompliance');
+  if (compEl) {
+    if (tenant.rulesAgreedByTenant === true) {
+      compEl.textContent = '✓ Accepted in Tenant Portal';
+      compEl.className = 'text-blue-700 font-semibold';
+    } else {
+      compEl.textContent = '⏳ Pending Tenant Portal Acceptance';
+      compEl.className = 'text-amber-600 font-semibold';
+    }
+  }
   set('viewTenantLoginEmail', tenant.email || '—');
   // Never stored client-side; Supabase Auth owns the credential.
   set('viewTenantLoginPassword', 'Managed by Supabase Auth');
@@ -346,13 +426,16 @@ export async function deleteTenantAccount(tenantId, tenantName) {
       target.previousRoom = prevRoom;
       target.room = '';
       target.archivedAt = new Date().toISOString();
+      if (!allTenants.some((t) => t.id === target.id)) {
+        allTenants.push(target);
+      }
     }
     loadedTenants = loadedTenants.filter((t) => t.id !== tenantId);
-    renderFiltered();
-    updateTenantStats(loadedTenants);
+    updateTenantStats(allTenants);
     refreshTenantMessenger();
     refreshTenantRoomOptions();
-    Toast.success(`Tenant "${tenantName}" has been archived. Room is now available.`);
+    setTenantTab('archived');
+    Toast.success(`Tenant "${tenantName}" has been moved to Inactive records.`);
   } catch (error) {
     console.error('Failed to archive tenant:', error);
     Toast.alert({
@@ -399,8 +482,29 @@ export function initTenantTable() {
     el?.addEventListener('change', renderFiltered);
   }
 
+  document
+    .getElementById('tabActiveTenants')
+    ?.addEventListener('click', () => setTenantTab('active'));
+  document
+    .getElementById('tabArchivedTenants')
+    ?.addEventListener('click', () => setTenantTab('archived'));
+  document
+    .getElementById('cardActiveTenantsStat')
+    ?.addEventListener('click', () => setTenantTab('active'));
+  document
+    .getElementById('cardArchivedTenantsStat')
+    ?.addEventListener('click', () => setTenantTab('archived'));
+
   document.addEventListener('click', async (event) => {
     const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('#tabActiveTenants') || target?.closest('#cardActiveTenantsStat')) {
+      setTenantTab('active');
+      return;
+    }
+    if (target?.closest('#tabArchivedTenants') || target?.closest('#cardArchivedTenantsStat')) {
+      setTenantTab('archived');
+      return;
+    }
     if (target?.closest('[data-action="copy-credentials"]')) {
       copyCurrentTenantCredentials();
       return;

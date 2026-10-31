@@ -871,6 +871,240 @@
       </div>
     </div>
 
+    <!-- Tenant First-Time House Rules & Lease Agreement Modal -->
+    <div
+      id="tenantTermsAgreementModal"
+      class="paymongo-modal-backdrop"
+      style="display: none; z-index: 99999"
+    >
+      <div
+        class="paymongo-modal-card"
+        style="
+          max-width: 520px;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        "
+      >
+        <div
+          style="
+            background: linear-gradient(135deg, #1e40af, #3730a3);
+            padding: 20px 24px;
+            color: white;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 12px">
+            <div
+              style="
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.15);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: white">
+                Welcome to MJP Residences!
+              </h3>
+              <p style="margin: 4px 0 0; font-size: 12px; color: #c7d2fe">
+                Please review and accept your building policies &amp; lease terms
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            padding: 24px;
+            max-height: 65vh;
+            overflow-y: auto;
+            font-size: 13px;
+            color: #374151;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+          "
+        >
+          <p style="margin: 0; font-size: 13px; color: #4b5563; line-height: 1.5">
+            Before proceeding to your Tenant Portal, please confirm that you understand and agree to
+            adhere to MJP Residences rules and contract terms:
+          </p>
+
+          <div
+            style="
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 12px;
+              padding: 14px 16px;
+            "
+          >
+            <h4
+              style="
+                margin: 0 0 8px;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #1e3a8a;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <span
+                style="
+                  width: 8px;
+                  height: 8px;
+                  border-radius: 50%;
+                  background: #2563eb;
+                  display: inline-block;
+                "
+              ></span>
+              1. Lease Contract Duration &amp; Move-in Fees
+            </h4>
+            <ul
+              style="
+                margin: 0;
+                padding-left: 18px;
+                font-size: 12px;
+                color: #475569;
+                line-height: 1.6;
+              "
+            >
+              <li><strong>6 Months Contract:</strong> Minimum lease duration of six (6) months.</li>
+              <li>
+                <strong>Move-in Fees:</strong> 1 Month Advance Rent (₱10,000) &amp; 2 Months
+                Security Deposit (₱20,000).
+              </li>
+              <li><strong>Monthly Due Date:</strong> Payable every 5th of each month.</li>
+            </ul>
+          </div>
+
+          <div
+            style="
+              background: #fef2f2;
+              border: 1px solid #fecaca;
+              border-radius: 12px;
+              padding: 14px 16px;
+            "
+          >
+            <h4
+              style="
+                margin: 0 0 8px;
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #991b1b;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+              "
+            >
+              <span
+                style="
+                  width: 8px;
+                  height: 8px;
+                  border-radius: 50%;
+                  background: #dc2626;
+                  display: inline-block;
+                "
+              ></span>
+              2. Mandatory Building House Rules
+            </h4>
+            <ul
+              style="
+                margin: 0;
+                padding-left: 18px;
+                font-size: 12px;
+                color: #991b1b;
+                line-height: 1.6;
+              "
+            >
+              <li>
+                <strong>Strictly No Pets:</strong> Pets of any kind are strictly prohibited within
+                the apartment building.
+              </li>
+              <li>
+                <strong>No Car Parking:</strong> There is strictly no car parking on-site (commute
+                or motorcycle only).
+              </li>
+              <li>
+                <strong>Occupancy Limit:</strong> Maximum of three (3) occupants allowed per unit (3
+                pax maximum).
+              </li>
+            </ul>
+          </div>
+
+          <label
+            style="
+              display: flex;
+              align-items: flex-start;
+              gap: 10px;
+              padding: 12px 14px;
+              background: #eff6ff;
+              border: 1px solid #bfdbfe;
+              border-radius: 10px;
+              cursor: pointer;
+              margin-top: 4px;
+            "
+          >
+            <input
+              type="checkbox"
+              id="tenantAcceptRulesCheckbox"
+              style="margin-top: 2px; width: 16px; height: 16px; cursor: pointer"
+            />
+            <span style="font-size: 12px; color: #1e3a8a; font-weight: 600; line-height: 1.4">
+              I have read, understood, and agree to abide by all MJP Residences Building Policies,
+              House Rules, and the 6-Month Lease terms.
+            </span>
+          </label>
+        </div>
+
+        <div
+          style="
+            padding: 16px 24px;
+            border-top: 1px solid #e2e8f0;
+            background: #f8fafc;
+            display: flex;
+            justify-content: flex-end;
+          "
+        >
+          <button
+            type="button"
+            id="tenantConfirmAgreementBtn"
+            disabled
+            style="
+              padding: 10px 20px;
+              background: #2563eb;
+              color: white;
+              border: none;
+              border-radius: 8px;
+              font-size: 13px;
+              font-weight: 600;
+              cursor: not-allowed;
+              opacity: 0.5;
+              transition: all 0.2s;
+            "
+          >
+            I Agree &amp; Continue to Portal
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="./assets/js/supabase-service.js"></script>
     <script type="module" src="./assets/js/lib/maintenance.js"></script>
     <script type="module" src="./assets/js/paymongo-service.js"></script>

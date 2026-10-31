@@ -60,7 +60,7 @@ export const DEFAULT_ROOMS = [
     name: 'Triple Occupancy Room',
     type: 'Living Space',
     badge: 'Most Popular',
-    price: 5000,
+    price: 10000,
     beds: 1,
     capacity: 3,
     available: 10,

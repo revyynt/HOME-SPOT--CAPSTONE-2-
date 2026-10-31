@@ -54,6 +54,11 @@ const authReady = guardPage({
     populateTenantUI();
   }
   subscribeTenantMessages();
+  await fetchTenantSupabaseProfile();
+});
+
+document.addEventListener('tenant-access-granted', () => {
+  void fetchTenantSupabaseProfile();
 });
 
 // Content stays hidden until the Supabase auth guard resolves.
@@ -643,75 +648,138 @@ async function fetchTenantSupabaseProfile() {
   try {
     const user = await getCurrentUser();
     if (!user) return;
+    const normalizedEmail = (user.email || userEmail || '').toLowerCase().trim();
     const meta = user.user_metadata || {};
     const tenantsRef = supabaseData.collection(supabase, 'tenants');
-    const q = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
 
-    supabaseData.onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const tenantDoc = snapshot.docs[0];
-          currentTenantDocId = tenantDoc.id;
-          sessionStorage.setItem('tenantDocId', currentTenantDocId);
-          const docData = tenantDoc.data();
-          const useMetaOverride =
-            meta.profileUpdatedAt &&
-            (!docData.updatedAt || String(meta.profileUpdatedAt) >= String(docData.updatedAt));
-          const resolvedName = (useMetaOverride && meta.name) || docData.name;
-          const resolvedPhone = (useMetaOverride && meta.phone) || docData.phone;
-          const resolvedEmergency =
-            (useMetaOverride && meta.emergencyContact) || docData.emergencyContact;
-          if (resolvedName) {
-            tenantName = resolvedName;
-            sessionStorage.setItem('tenantName', resolvedName);
-          }
-          if (resolvedPhone) {
-            tenantPhone = resolvedPhone;
-            sessionStorage.setItem('tenantPhone', resolvedPhone);
-          }
-          if (docData.room) {
-            tenantRoom = docData.room;
-            sessionStorage.setItem('tenantRoom', docData.room);
-          }
-          if (docData.dormName) {
-            tenantDorm = docData.dormName;
-            sessionStorage.setItem('tenantDorm', docData.dormName);
-          }
-          if (docData.moveInDate) {
-            tenantMoveIn = docData.moveInDate;
-            sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
-          }
-          if (docData.dueDay) {
-            tenantDueDay = parseInt(docData.dueDay);
-            sessionStorage.setItem('tenantDueDay', tenantDueDay);
-          }
-          if (docData.movedIn !== undefined) {
-            tenantMovedIn = Boolean(docData.movedIn);
-            sessionStorage.setItem('tenantMovedIn', tenantMovedIn ? 'true' : 'false');
-          }
-          if (docData.monthlyRent) {
-            tenantRent = parseFloat(docData.monthlyRent);
-            sessionStorage.setItem('tenantMonthlyRent', tenantRent);
-          }
-          if (docData.amountDue !== undefined && docData.amountDue !== null) {
-            currentRemainingDue = parseFloat(docData.amountDue);
-            tenantExplicitAmountDueSet = true;
-            sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-            localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
-          }
-          if (resolvedEmergency) {
-            tenantEmergency = resolvedEmergency;
-            sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
-          }
-          populateTenantUI();
+    const onTenantSnapshot = (snapshot) => {
+      if (!snapshot.empty) {
+        const tenantDoc = snapshot.docs[0];
+        currentTenantDocId = tenantDoc.id;
+        sessionStorage.setItem('tenantDocId', currentTenantDocId);
+        const docData = tenantDoc.data();
+
+        // If doc is missing auth user uid, sync it now
+        if (docData && (!docData.uid || docData.uid !== user.id)) {
+          try {
+            const docRef = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
+            supabaseData
+              .updateDoc(docRef, { uid: user.id, updatedAt: new Date().toISOString() })
+              .catch(() => {});
+          } catch {}
         }
-      },
-      (error) => console.error('Tenant profile subscription failed:', error)
+
+        const useMetaOverride =
+          meta.profileUpdatedAt &&
+          (!docData.updatedAt || String(meta.profileUpdatedAt) >= String(docData.updatedAt));
+        const resolvedName = (useMetaOverride && meta.name) || docData.name;
+        const resolvedPhone = (useMetaOverride && meta.phone) || docData.phone;
+        const resolvedEmergency =
+          (useMetaOverride && meta.emergencyContact) || docData.emergencyContact;
+        if (resolvedName) {
+          tenantName = resolvedName;
+          sessionStorage.setItem('tenantName', resolvedName);
+        }
+        if (resolvedPhone) {
+          tenantPhone = resolvedPhone;
+          sessionStorage.setItem('tenantPhone', resolvedPhone);
+        }
+        if (docData.room) {
+          tenantRoom = docData.room;
+          sessionStorage.setItem('tenantRoom', docData.room);
+        }
+        if (docData.dormName) {
+          tenantDorm = docData.dormName;
+          sessionStorage.setItem('tenantDorm', docData.dormName);
+        }
+        if (docData.moveInDate) {
+          tenantMoveIn = docData.moveInDate;
+          sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
+        }
+        if (docData.dueDay) {
+          tenantDueDay = parseInt(docData.dueDay);
+          sessionStorage.setItem('tenantDueDay', tenantDueDay);
+        }
+        if (docData.movedIn !== undefined) {
+          tenantMovedIn = Boolean(docData.movedIn);
+          sessionStorage.setItem('tenantMovedIn', tenantMovedIn ? 'true' : 'false');
+        }
+        if (docData.monthlyRent) {
+          tenantRent = parseFloat(docData.monthlyRent);
+          sessionStorage.setItem('tenantMonthlyRent', tenantRent);
+        }
+        if (docData.amountDue !== undefined && docData.amountDue !== null) {
+          currentRemainingDue = parseFloat(docData.amountDue);
+          tenantExplicitAmountDueSet = true;
+          sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+          localStorage.setItem('tenant_amount_due_' + normalizedEmail, currentRemainingDue);
+        }
+        if (resolvedEmergency) {
+          tenantEmergency = resolvedEmergency;
+          sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
+        }
+        populateTenantUI();
+
+        if (docData.rulesAgreedByTenant === true) {
+          const m = document.getElementById('tenantTermsAgreementModal');
+          if (m) m.style.display = 'none';
+        } else {
+          checkAndShowTenantTermsModal(currentTenantDocId);
+        }
+      }
+    };
+
+    // First try querying by uid
+    let queryRef = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
+    const initialCheck = await supabaseData.getDocs(queryRef).catch(() => null);
+
+    // If no document matches by uid, fall back to email query
+    if ((!initialCheck || initialCheck.empty) && normalizedEmail) {
+      queryRef = supabaseData.query(tenantsRef, supabaseData.where('email', '==', normalizedEmail));
+    }
+
+    supabaseData.onSnapshot(queryRef, onTenantSnapshot, (error) =>
+      console.error('Tenant profile subscription failed:', error)
     );
   } catch (err) {
     console.warn('Could not sync tenant profile from Supabase:', err);
   }
+}
+
+function checkAndShowTenantTermsModal(tenantDocId) {
+  const modal = document.getElementById('tenantTermsAgreementModal');
+  const checkbox = document.getElementById('tenantAcceptRulesCheckbox');
+  const confirmBtn = document.getElementById('tenantConfirmAgreementBtn');
+  if (!modal || !confirmBtn || !checkbox) return;
+
+  modal.style.display = 'flex';
+
+  checkbox.onchange = () => {
+    confirmBtn.disabled = !checkbox.checked;
+    confirmBtn.style.opacity = checkbox.checked ? '1' : '0.5';
+    confirmBtn.style.cursor = checkbox.checked ? 'pointer' : 'not-allowed';
+  };
+
+  confirmBtn.onclick = async () => {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving...';
+    try {
+      const docIdToUpdate =
+        tenantDocId || currentTenantDocId || sessionStorage.getItem('tenantDocId');
+      if (docIdToUpdate) {
+        const ref = supabaseData.doc(supabase, 'tenants', docIdToUpdate);
+        await supabaseData.updateDoc(ref, {
+          rulesAgreedByTenant: true,
+          rulesAgreedAt: new Date().toISOString()
+        });
+      }
+      modal.style.display = 'none';
+      Toast.success('Building house rules and lease terms accepted.');
+    } catch (err) {
+      console.warn('Failed to update tenant terms agreement:', err);
+      modal.style.display = 'none';
+    }
+  };
 }
 
 fetchTenantSupabaseProfile();

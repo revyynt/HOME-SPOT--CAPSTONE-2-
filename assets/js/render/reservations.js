@@ -9,6 +9,8 @@ import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
 import { Toast } from './toast.js';
 import { decrementRoomAvailability } from '../room-availability.js';
+import { BUILDING_UNITS } from '../lib/building-3d.js';
+import { getUnitOccupants, UNIT_SHORT_LABELS } from '../pages/admin-dashboard/create-tenant.js';
 
 const STATUS_CLASS = {
   Approved: 'px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800',
@@ -77,7 +79,7 @@ function renderReservationCard(doc) {
   const isCommercial = String(data.room || '')
     .toLowerCase()
     .includes('commercial');
-  const defaultRent = isCommercial ? 10000 : 5000;
+  const defaultRent = isCommercial ? 12000 : 10000;
   const amountVal = Number(data.amount) || defaultRent;
   const amount = `₱${amountVal.toLocaleString()}/mo`;
   const receivedAtLabel = formatTimestampLog(data.createdAt);
@@ -105,15 +107,21 @@ function renderReservationCard(doc) {
     }
   }
 
+  const assignedRoom = data.assignedRoom || data.room || '';
+  const dormName = isCommercial ? 'Commercial Space' : 'Triple Occupancy Room';
   const prefill = escapeHtml(
     JSON.stringify({
       name: data.name || '',
       email: data.email || '',
       phone: data.phone || '',
-      room: data.room || '',
-      dormName: isCommercial ? 'Commercial Space' : 'Triple Occupancy Room',
+      room: assignedRoom,
+      dormName,
       moveInDate: data.moveInDate || '',
-      amount: amountVal
+      amount: amountVal,
+      advanceRent: amountVal,
+      securityDeposit: amountVal * 2,
+      advanceDeposit: amountVal,
+      leaseTerm: '6 Months'
     })
   );
 
@@ -123,7 +131,7 @@ function renderReservationCard(doc) {
       <button type="button" data-action="create-tenant" data-payload="${prefill}" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2 text-sm font-semibold shadow-sm cursor-pointer">
         Create Tenant Account
       </button>
-      <button type="button" data-action="email-reservation" data-email="${attr(data.email || '')}" data-name="${attr(data.name || '')}" data-room="${attr(data.room || '')}" data-status="Approved" data-move-in-date="${attr(requestDate)}" class="px-3 py-2 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1.5" title="Send Approval Email to applicant">
+      <button type="button" data-action="email-reservation" data-email="${attr(data.email || '')}" data-name="${attr(data.name || '')}" data-room="${attr(assignedRoom)}" data-status="Approved" data-move-in-date="${attr(requestDate)}" class="px-3 py-2 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-semibold cursor-pointer flex items-center gap-1.5" title="Send Approval Email to applicant">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         Send Approval Email
       </button>
@@ -132,7 +140,10 @@ function renderReservationCard(doc) {
       </button>`;
   } else if (status === 'Pending') {
     actions = `
-      <button type="button" data-action="approve" data-id="${attr(doc.id)}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold cursor-pointer">Approve</button>
+      <button type="button" data-action="approve" data-id="${attr(doc.id)}" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold cursor-pointer shadow-sm flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Review &amp; Approve
+      </button>
       <button type="button" data-action="decline" data-id="${attr(doc.id)}" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold cursor-pointer">Decline</button>`;
   } else {
     actions = `
@@ -183,7 +194,7 @@ function renderReservationCard(doc) {
             ${decisionAtLabel ? `<span class="text-xs text-gray-500 bg-gray-50 border border-gray-200 px-2.5 py-0.5 rounded-full">${escapeHtml(status)} on ${escapeHtml(decisionAtLabel)}</span>` : ''}
           </div>
           <div class="text-sm text-gray-600 space-y-1">
-            <div><span class="font-medium text-gray-700">Property:</span> ${escapeHtml(data.room || 'Unknown')}</div>
+            <div><span class="font-medium text-gray-700">Property / Unit:</span> ${escapeHtml(data.assignedRoom && data.assignedRoom !== data.room ? `${data.assignedRoom} (${data.room})` : data.assignedRoom || data.room || 'Unknown')}</div>
             <div><span class="font-medium text-gray-700">Email:</span> ${escapeHtml(data.email || 'N/A')} &bull; <span class="font-medium text-gray-700">Phone:</span> ${escapeHtml(data.phone || 'N/A')}</div>
             <div><span class="font-medium text-gray-700">Preferred Move-in Date:</span> ${escapeHtml(requestDate)}</div>
             ${data.message ? `<div class="bg-blue-50/50 p-2.5 rounded-lg border border-blue-100 text-gray-700 mt-2"><span class="font-semibold text-blue-900 block text-xs uppercase tracking-wide mb-0.5">Message from Applicant:</span>${escapeHtml(data.message)}</div>` : ''}
@@ -268,10 +279,20 @@ export function sendReservationNotificationEmail({
     ? `Hi ${cleanName},\n\n` +
       `Great news! Your reservation request for ${cleanRoom} at MJP Residences (HomeSpot) has been APPROVED.\n\n` +
       (moveInDate ? `Target Move-in Date: ${moveInDate}\n\n` : '') +
-      `Next Steps:\n` +
-      `1. Please prepare 1 valid government ID and your advance/security deposit payment.\n` +
-      `2. Visit the property owner to sign your lease agreement..\n` +
-      `3. Once deposit has been received, your Tenant Portal account will be activated.\n\n` +
+      `Move-in Financial Requirements (6 Months Contract):\n` +
+      `1. 1 Month Advance Rent: ₱10,000\n` +
+      `2. 2 Months Security Deposit: ₱20,000\n` +
+      `Total Move-in Payment Due: ₱30,000\n\n` +
+      `Building Guidelines & House Rules:\n` +
+      `• Maximum Occupancy: 3 Persons (3 pax maximum)\n` +
+      `• Pet Policy: Strictly NO pets allowed\n` +
+      `• Parking Policy: NO car parking available (commute / motorcycle only)\n` +
+      `• Lease Duration: 6 months minimum contract\n\n` +
+      `Next Steps for Move-in Day:\n` +
+      `1. Bring 1 valid government / student ID and 2x2 ID photo.\n` +
+      `2. Settle the 1 mo. advance + 2 mos. security deposit.\n` +
+      `3. Sign the formal lease agreement and house rules acknowledgement.\n` +
+      `4. Tenant Portal credentials will be activated upon contract signing.\n\n` +
       `If you have any questions or schedule adjustments, please reply directly to this email.\n\n` +
       `Best regards,\n` +
       `HomeSpot Management Team\n` +
@@ -304,16 +325,171 @@ export function sendReservationNotificationEmail({
   }
 }
 
-/**
- * Approves a reservation, decrements the room's availability, and offers to email applicant.
- * @param {string} reservationId
- */
-export async function approveReservation(reservationId) {
+let currentReviewReservation = null;
+
+export function closeApproveReservationModal() {
+  document.getElementById('approveReservationModal')?.classList.add('hidden');
+  currentReviewReservation = null;
+}
+
+export async function openApproveReservationModal(reservationId) {
   if (!isDataReady()) {
     Toast.error('Supabase is not available.');
     return;
   }
+  const modal = document.getElementById('approveReservationModal');
+  if (!modal) {
+    return directApproveReservation(reservationId);
+  }
 
+  try {
+    const ref = supabaseData.doc(db, 'reservations', reservationId);
+    const snap = await supabaseData.getDoc(ref);
+    if (!snap.exists()) {
+      Toast.error('Reservation record not found.');
+      return;
+    }
+    const data = snap.data();
+    currentReviewReservation = { id: reservationId, ...data };
+
+    const setText = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    };
+
+    setText('approveApplicantName', data.name || 'Applicant');
+    setText('approveApplicantEmail', data.email || 'N/A');
+    setText('approveApplicantPhone', data.phone || 'N/A');
+    setText('approveApplicantRoom', data.room || 'Triple Occupancy Room');
+    setVal('approveReservationId', reservationId);
+
+    // Populate room options
+    const roomSelect = document.getElementById('approveAssignedRoom');
+    if (roomSelect) {
+      roomSelect.innerHTML = '<option value="" disabled>Select Room / Unit</option>';
+      const isComm = String(data.room || '')
+        .toLowerCase()
+        .includes('commercial');
+
+      BUILDING_UNITS.forEach((unit) => {
+        const occ = getUnitOccupants(unit.id).length;
+        const cap = Number(unit.capacity) || (unit.floor === 1 ? 4 : 3);
+        const isFull = occ >= cap;
+        const label = UNIT_SHORT_LABELS[unit.id] || `${unit.floor}F • ${unit.name}`;
+        const opt = document.createElement('option');
+        opt.value = unit.id;
+        opt.textContent = `${label} — ${isFull ? 'FULL' : `${cap - occ} Available`}`;
+        opt.disabled = isFull;
+        roomSelect.appendChild(opt);
+      });
+
+      // Default select
+      const match = BUILDING_UNITS.find((u) => {
+        const occ = getUnitOccupants(u.id).length;
+        const cap = Number(u.capacity) || (u.floor === 1 ? 4 : 3);
+        if (occ >= cap) return false;
+        return isComm ? u.floor === 1 : u.floor > 1;
+      });
+      if (match) roomSelect.value = match.id;
+    }
+
+    // Move-in Date: applicant's requested date, editable
+    const today = new Date().toISOString().split('T')[0];
+    let reqDate = data.moveInDate || today;
+    if (reqDate < today) reqDate = today;
+    setVal('approveMoveInDate', reqDate);
+
+    // Monthly Rent
+    const isComm = String(data.room || '')
+      .toLowerCase()
+      .includes('commercial');
+    const defaultRent = isComm ? 12000 : 10000;
+    const rent = Number(data.amount) || defaultRent;
+    setVal('approveRent', rent);
+
+    // Bind form submit listener if not yet bound
+    const form = document.getElementById('approveReservationForm');
+    if (form && !form.dataset.bound) {
+      form.dataset.bound = 'true';
+      form.addEventListener('submit', submitApproveReservation);
+    }
+
+    modal.classList.remove('hidden');
+  } catch (err) {
+    console.error('Failed to open approve review modal:', err);
+    Toast.error('Unable to load reservation details.');
+  }
+}
+
+export async function submitApproveReservation(event) {
+  if (event) event.preventDefault();
+  const reservationId = document.getElementById('approveReservationId')?.value;
+  if (!reservationId || !isDataReady()) return;
+
+  const assignedRoom = document.getElementById('approveAssignedRoom')?.value || 'Room 101';
+  const moveInDate = document.getElementById('approveMoveInDate')?.value || '';
+  const monthlyRent = parseFloat(document.getElementById('approveRent')?.value) || 10000;
+
+  let reservationData = currentReviewReservation;
+  try {
+    const ref = supabaseData.doc(db, 'reservations', reservationId);
+    if (!reservationData) {
+      const snap = await supabaseData.getDoc(ref);
+      if (snap.exists()) reservationData = snap.data();
+    }
+
+    await supabaseData.updateDoc(ref, {
+      status: 'Approved',
+      assignedRoom: assignedRoom,
+      room: assignedRoom,
+      moveInDate: moveInDate,
+      amount: monthlyRent,
+      decisionAt: supabaseData.serverTimestamp()
+    });
+
+    closeApproveReservationModal();
+    Toast.success(`Reservation approved for ${assignedRoom}. Move-in set to ${moveInDate}.`);
+  } catch (error) {
+    console.error('Supabase approve failed:', error);
+    Toast.error('Unable to approve reservation.');
+    return;
+  }
+
+  try {
+    if (assignedRoom) {
+      await decrementRoomAvailability(assignedRoom);
+    }
+  } catch (error) {
+    console.error('Failed to decrement room availability:', error);
+  }
+
+  if (reservationData?.email) {
+    const sendMail = await Toast.confirm({
+      title: 'Send Approval Email?',
+      message: `Send an approval notification email to ${reservationData.name || 'the applicant'} (${reservationData.email})?`,
+      confirmText: 'Send Email',
+      cancelText: 'Skip'
+    });
+    if (sendMail) {
+      sendReservationNotificationEmail({
+        email: reservationData.email,
+        name: reservationData.name,
+        room: assignedRoom,
+        moveInDate: moveInDate,
+        status: 'Approved'
+      });
+    }
+  }
+}
+
+/**
+ * Direct approval fallback if modal is not present.
+ */
+async function directApproveReservation(reservationId) {
   let reservationData = null;
   try {
     const ref = supabaseData.doc(db, 'reservations', reservationId);
@@ -357,6 +533,14 @@ export async function approveReservation(reservationId) {
       });
     }
   }
+}
+
+/**
+ * Approves a reservation, decrements the room's availability, and offers to email applicant.
+ * @param {string} reservationId
+ */
+export async function approveReservation(reservationId) {
+  return openApproveReservationModal(reservationId);
 }
 
 /**

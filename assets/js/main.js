@@ -387,6 +387,9 @@ async function initAdminActions() {
       case 'approve':
         reservations.approveReservation(id);
         break;
+      case 'close-approve-modal':
+        reservations.closeApproveReservationModal();
+        break;
       case 'decline':
         reservations.declineReservation(id);
         break;
