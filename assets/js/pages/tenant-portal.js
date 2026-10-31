@@ -16,7 +16,12 @@ import { initBackButtonGuard, logoutStaff } from '../lib/session.js';
 import { getCurrentUser, supabaseData, supabase } from '../supabase-service.js';
 import { interpretPaymentIntent } from '../lib/payment-return.js';
 import * as PayMongo from '../paymongo-service.js';
-import { escapeHtml, isValidPhilippinePhone, normalizePhilippinePhone } from '../lib/format.js';
+import {
+  escapeHtml,
+  isValidPhilippinePhone,
+  normalizePhilippinePhone,
+  isRentPurpose
+} from '../lib/format.js';
 import { buildPaymentCalendar } from '../lib/payment-calendar.js';
 import { DEFAULT_ROOMS, mergeRoomData } from '../lib/rooms.js';
 import {
@@ -1223,14 +1228,16 @@ async function confirmQrPayment() {
 async function saveAndFinalizePayment(record) {
   if (record?.status !== 'Paid') throw new Error('Payment has not been verified by PayMongo.');
 
-  // Deduct remaining rent due immediately and persist so UI reflects payment instantly
-  const paidAmount = parseFloat(record.amount) || 0;
-  currentRemainingDue = Math.max(0, currentRemainingDue - paidAmount);
-  sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-  if (userEmail) {
-    localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+  // Deduct remaining rent due immediately and persist so UI reflects payment instantly (rent only)
+  if (isRentPurpose(record?.purpose)) {
+    const paidAmount = parseFloat(record.amount) || 0;
+    currentRemainingDue = Math.max(0, currentRemainingDue - paidAmount);
+    sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+    if (userEmail) {
+      localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
+    }
+    updateAmountDueUI();
   }
-  updateAmountDueUI();
 
   const cleanPurpose = (record.purpose || 'Monthly Rent')
     .replace(/\s*-\s*MJP Residences\s*$/i, '')
@@ -1246,14 +1253,16 @@ async function saveAndFinalizePayment(record) {
     if (p.referenceNumber && p.referenceNumber === record.referenceNumber) return true;
     if (p.paymentMethodId && record.paymentMethodId && p.paymentMethodId === record.paymentMethodId)
       return true;
-    if (
-      Number(p.amount) === Number(record.amount) &&
-      (p.purpose || '')
-        .replace(/\s*-\s*MJP Residences\s*$/i, '')
-        .trim()
-        .toLowerCase() === cleanPurpose.toLowerCase()
-    )
-      return true;
+    const pPurp = (p.purpose || '')
+      .replace(/\s*-\s*MJP Residences\s*$/i, '')
+      .replace(/\s*\([^)]*\)\s*$/g, '')
+      .trim()
+      .toLowerCase();
+    const recPurp = cleanPurpose
+      .replace(/\s*\([^)]*\)\s*$/g, '')
+      .trim()
+      .toLowerCase();
+    if (Number(p.amount) === Number(record.amount) && pPurp === recPurp) return true;
     return false;
   });
 
@@ -1754,10 +1763,10 @@ async function loadTenantPaymentHistory() {
   }
 
   // If tenant document did not have an explicit amountDue set in Supabase,
-  // calculate remaining amount due from existing payment records
+  // calculate remaining amount due from existing payment records (rent only)
   if (!tenantExplicitAmountDueSet && payments && payments.length > 0) {
     const totalPaid = payments
-      .filter((p) => p.status === 'Paid')
+      .filter((p) => p.status === 'Paid' && isRentPurpose(p.purpose))
       .reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     if (totalPaid >= tenantRent) {
       currentRemainingDue = 0;

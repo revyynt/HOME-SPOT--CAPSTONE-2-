@@ -10,7 +10,8 @@ import {
   getUrlParam,
   deduplicatePayments,
   formatPaymentMethod,
-  getPaymentFailureReason
+  getPaymentFailureReason,
+  isRentPurpose
 } from '../assets/js/lib/format.js';
 
 test('escapeHtml neutralises every HTML-significant character', () => {
@@ -199,4 +200,50 @@ test('getPaymentFailureReason resolves failure reasons tailored to the payment c
     ),
     'Insufficient balance in e-wallet'
   );
+});
+
+test('isRentPurpose identifies rent payments and rejects non-rent purposes', () => {
+  assert.equal(isRentPurpose('Monthly Rent'), true);
+  assert.equal(isRentPurpose('Monthly Rent - MJP Residences'), true);
+  assert.equal(isRentPurpose('Advance Rent'), true);
+  assert.equal(isRentPurpose('Rent'), true);
+  assert.equal(isRentPurpose(''), true);
+  assert.equal(isRentPurpose(null), true);
+  assert.equal(isRentPurpose(undefined), true);
+
+  assert.equal(isRentPurpose('Security Deposit'), false);
+  assert.equal(isRentPurpose('Utility / Electricity'), false);
+  assert.equal(isRentPurpose('Parking Space Fee'), false);
+  assert.equal(isRentPurpose('Other'), false);
+});
+
+test('deduplicatePayments collapses webhook payments containing parenthesized notes in purpose', () => {
+  const records = [
+    {
+      id: 'PM-7EEE53',
+      referenceNumber: 'PM-7EEE53',
+      purpose: 'Utility / Electricity',
+      method: 'PayMongo (GCash)',
+      amount: 2000,
+      status: 'Paid',
+      createdAt: '2026-10-31T05:50:00Z',
+      tenantEmail: 'sygacosymon@gmail.com'
+    },
+    {
+      id: 'PM-L5YBKD',
+      referenceNumber: 'PM-L5YBKD',
+      purpose: 'Utility / Electricity (bills for meralco)',
+      method: 'PayMongo (GCash)',
+      amount: 2000,
+      status: 'Paid',
+      createdAt: '2026-10-31T05:50:05Z',
+      tenantEmail: 'sygacosymon@gmail.com'
+    }
+  ];
+
+  const result = deduplicatePayments(records);
+  assert.equal(result.length, 1);
+  assert.equal(result[0].purpose, 'Utility / Electricity');
+  assert.equal(result[0].notes, 'bills for meralco');
+  assert.equal(result[0].amount, 2000);
 });

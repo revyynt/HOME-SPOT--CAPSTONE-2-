@@ -365,12 +365,13 @@ export function deduplicatePayments(payments) {
     const rawPurpose = p.purpose || p.description || 'Monthly Rent';
     const cleanPurpose = rawPurpose
       .replace(/\s*-\s*MJP Residences\s*$/i, '')
+      .replace(/\s*\([^)]*\)\s*$/g, '')
       .trim()
       .toLowerCase();
     const amount = Number(p.amount) || 0;
-    const tenant = (p.tenantEmail || p.tenantName || p.tenant_email || p.tenant_name || '')
-      .toLowerCase()
-      .trim();
+    const pEmail = (p.tenantEmail || p.tenant_email || '').toLowerCase().trim();
+    const pName = (p.tenantName || p.tenant_name || '').toLowerCase().trim();
+    const tenant = pEmail || pName || '';
     const rawTime = p.createdAt || p.created_at || p.timestamp || p.dateFormatted;
     const timeMs = rawTime ? new Date(rawTime).getTime() : 0;
     const normalizedMethod = formatPaymentMethod(p.method || p.payment_method, p);
@@ -385,32 +386,26 @@ export function deduplicatePayments(payments) {
       if (pId && exId && pId === exId) return true;
       if (ref && exRef && ref === exRef) return true;
 
-      const exTenant = (
-        existing.tenantEmail ||
-        existing.tenantName ||
-        existing.tenant_email ||
-        existing.tenant_name ||
-        ''
-      )
-        .toLowerCase()
-        .trim();
+      const exEmail = (existing.tenantEmail || existing.tenant_email || '').toLowerCase().trim();
+      const exName = (existing.tenantName || existing.tenant_name || '').toLowerCase().trim();
+      const exTenant = exEmail || exName || '';
+      const tenantMatches =
+        (pEmail && exEmail && pEmail === exEmail) ||
+        (pName && exName && pName === exName) ||
+        (tenant && exTenant && tenant === exTenant);
+
       const exAmount = Number(existing.amount) || 0;
       const exRawPurpose = existing.purpose || existing.description || 'Monthly Rent';
       const exCleanPurpose = exRawPurpose
         .replace(/\s*-\s*MJP Residences\s*$/i, '')
+        .replace(/\s*\([^)]*\)\s*$/g, '')
         .trim()
         .toLowerCase();
       const exRawTime =
         existing.createdAt || existing.created_at || existing.timestamp || existing.dateFormatted;
       const exTimeMs = exRawTime ? new Date(exRawTime).getTime() : 0;
 
-      if (
-        tenant &&
-        exTenant &&
-        tenant === exTenant &&
-        amount === exAmount &&
-        cleanPurpose === exCleanPurpose
-      ) {
+      if (tenantMatches && amount === exAmount && cleanPurpose === exCleanPurpose) {
         if (timeMs && exTimeMs) {
           if (Math.abs(timeMs - exTimeMs) <= 15 * 60 * 1000) return true;
         } else {
@@ -433,6 +428,20 @@ export function deduplicatePayments(payments) {
       ) {
         matchedExisting.sessionId = p.sessionId || pId;
       }
+      if (
+        !matchedExisting.payMongoResourceId &&
+        (p.payMongoResourceId || (typeof pId === 'string' && pId.startsWith('pay_')))
+      ) {
+        matchedExisting.payMongoResourceId = p.payMongoResourceId || pId;
+      }
+      if (!matchedExisting.notes) {
+        if (p.notes) {
+          matchedExisting.notes = p.notes;
+        } else {
+          const m = String(p.purpose || p.description || '').match(/\(([^)]+)\)/);
+          if (m) matchedExisting.notes = m[1].trim();
+        }
+      }
       continue;
     }
 
@@ -440,8 +449,15 @@ export function deduplicatePayments(payments) {
     if (!clone.sessionId && typeof pId === 'string' && pId.startsWith('cs_')) {
       clone.sessionId = pId;
     }
-    if (typeof clone.purpose === 'string' && clone.purpose.includes(' - MJP Residences')) {
+    if (typeof clone.purpose === 'string') {
       clone.purpose = clone.purpose.replace(/\s*-\s*MJP Residences\s*$/i, '').trim();
+      const noteMatch = clone.purpose.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+      if (noteMatch) {
+        clone.purpose = noteMatch[1].trim();
+        if (!clone.notes) {
+          clone.notes = noteMatch[2].trim();
+        }
+      }
     }
     results.push(clone);
   }
@@ -507,4 +523,19 @@ export function isPastDate(dateStr, now = new Date()) {
   const clean = String(dateStr || '').trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(clean)) return false;
   return clean < todayIsoLocal(now);
+}
+
+/**
+ * Returns true if a payment purpose applies to monthly rent due.
+ * Default fallback (empty/null) is treated as Monthly Rent.
+ * Non-rent purposes (utilities, deposits, fees, etc.) return false.
+ * @param {string} [purpose]
+ * @returns {boolean}
+ */
+export function isRentPurpose(purpose) {
+  if (!purpose) return true;
+  const clean = String(purpose)
+    .replace(/\s*-\s*MJP Residences\s*$/i, '')
+    .trim();
+  return /\brent\b/i.test(clean);
 }
