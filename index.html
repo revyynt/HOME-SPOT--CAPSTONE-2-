@@ -1,1213 +1,846 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MJP Residences - Home-Spot Apartment Realty</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="./assets/css/style.css" />
-  </head>
 
-  <body class="bg-white overflow-x-hidden">
-    <!-- Header -->
-    <header class="border-b bg-white sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/95">
-      <div class="max-w-7xl mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-8">
-            <div class="flex items-center gap-3">
-              <img
-                src="assets/img/logo.png"
-                alt="Homespot AR Logo"
-                class="h-12 w-auto object-contain"
-              />
-              <div>
-                <span class="text-2xl font-bold text-blue-600">MJP Residences</span>
-                <p class="text-xs text-green-600 font-medium">Home-Spot Apartment Realty</p>
-              </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MJP Residences - Home-Spot Apartment Realty</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./assets/css/style.css" />
+</head>
+
+<body class="bg-white overflow-x-hidden">
+  <!-- Header -->
+  <header class="border-b bg-white sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/95">
+    <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-8">
+          <div class="flex items-center gap-3">
+            <img src="assets/img/logo.png" alt="Homespot AR Logo" class="h-12 w-auto object-contain" />
+            <div>
+              <span class="text-2xl font-bold text-blue-600">MJP Residences</span>
+              <p class="text-xs text-green-600 font-medium">Home-Spot Apartment Realty</p>
             </div>
-            <nav class="hidden md:flex items-center gap-6">
-              <a href="#rooms" class="text-gray-700 hover:text-blue-600 transition-colors"
-                >Apartment Units</a
-              >
-              <a href="#floor-plan" class="text-gray-700 hover:text-blue-600 transition-colors"
-                >Floor Plan</a
-              >
-              <a href="#about" class="text-gray-700 hover:text-blue-600 transition-colors">About</a>
-              <a href="#support" class="text-gray-700 hover:text-blue-600 transition-colors"
-                >Customer Support</a
-              >
-            </nav>
           </div>
-          <div class="flex items-center gap-4">
-            <a
-              href="./login.html"
-              class="px-5 py-2 text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg transition-all hover:shadow-lg hover:-translate-y-0.5"
-            >
-              Portal Login
+          <nav class="hidden md:flex items-center gap-6">
+            <a href="#rooms" class="text-gray-700 hover:text-blue-600 transition-colors">Apartment Units</a>
+            <a href="#floor-plan" class="text-gray-700 hover:text-blue-600 transition-colors">Floor Plan</a>
+            <a href="#about" class="text-gray-700 hover:text-blue-600 transition-colors">About</a>
+            <a href="#support" class="text-gray-700 hover:text-blue-600 transition-colors">Customer Support</a>
+          </nav>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="./login.html"
+            class="px-5 py-2 text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg transition-all hover:shadow-lg hover:-translate-y-0.5">
+            Portal Login
+          </a>
+        </div>
+      </div>
+    </div>
+    <nav
+      class="flex md:hidden max-w-7xl mx-auto px-4 pb-3 pt-2 border-t border-gray-100 items-center justify-around gap-2 text-xs font-semibold"
+      aria-label="Mobile navigation">
+      <a href="#rooms"
+        class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Apartment
+        Units</a>
+      <a href="#floor-plan"
+        class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Floor Plan</a>
+      <a href="#about"
+        class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">About</a>
+      <a href="#support"
+        class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors">Support</a>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-16 overflow-hidden">
+    <div class="max-w-7xl mx-auto px-4 relative z-10">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="flex items-center gap-2 mb-3 text-yellow-300">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z">
+              </path>
+            </svg>
+            <span class="text-sm font-medium">Your Home Away From Home</span>
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight tracking-tight">
+            MJP Residences
+          </h1>
+
+          <div class="flex items-center gap-2 mb-5 text-blue-100">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span class="text-sm">9th Avenue West, Caloocan City</span>
+          </div>
+
+          <p class="text-blue-50 mb-8 text-base leading-relaxed max-w-md">
+            MJP Residences offers modern and secure apartment units designed for students and
+            families.
+          </p>
+
+          <div class="flex flex-wrap gap-3">
+            <a href="#rooms"
+              class="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all hover:shadow-xl hover:-translate-y-0.5 text-sm">
+              View Available Rooms
+            </a>
+            <a href="#about"
+              class="bg-blue-800/40 backdrop-blur-sm text-white border border-white/20 hover:bg-blue-800/60 px-6 py-3 rounded-lg font-semibold transition-all text-sm">
+              Learn More
             </a>
           </div>
         </div>
-      </div>
-      <nav
-        class="flex md:hidden max-w-7xl mx-auto px-4 pb-3 pt-2 border-t border-gray-100 items-center justify-around gap-2 text-xs font-semibold"
-        aria-label="Mobile navigation"
-      >
-        <a
-          href="#rooms"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Apartment Units</a
-        >
-        <a
-          href="#floor-plan"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Floor Plan</a
-        >
-        <a
-          href="#about"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >About</a
-        >
-        <a
-          href="#support"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Support</a
-        >
-      </nav>
-    </header>
 
-    <!-- Hero Section -->
-    <section
-      class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-16 overflow-hidden"
-    >
-      <div class="max-w-7xl mx-auto px-4 relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <div class="flex items-center gap-2 mb-3 text-yellow-300">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                ></path>
-              </svg>
-              <span class="text-sm font-medium">Your Home Away From Home</span>
-            </div>
-
-            <h1
-              class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight tracking-tight"
-            >
-              MJP Residences
-            </h1>
-
-            <div class="flex items-center gap-2 mb-5 text-blue-100">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                ></path>
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                ></path>
-              </svg>
-              <span class="text-sm">9th Avenue West, Caloocan City</span>
-            </div>
-
-            <p class="text-blue-50 mb-8 text-base leading-relaxed max-w-md">
-              MJP Residences offers modern and secure apartment units designed for students and
-              families.
-            </p>
-
-            <div class="flex flex-wrap gap-3">
-              <a
-                href="#rooms"
-                class="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all hover:shadow-xl hover:-translate-y-0.5 text-sm"
-              >
-                View Available Rooms
-              </a>
-              <a
-                href="#about"
-                class="bg-blue-800/40 backdrop-blur-sm text-white border border-white/20 hover:bg-blue-800/60 px-6 py-3 rounded-lg font-semibold transition-all text-sm"
-              >
-                Learn More
-              </a>
-            </div>
-          </div>
-
-          <div class="relative">
-            <div class="relative rounded-2xl overflow-hidden shadow-2xl">
-              <img
-                src="assets/img/building-exterior.jpg"
-                alt="MJP Residences"
-                class="w-full h-80 object-cover"
-              />
-            </div>
+        <div class="relative">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl">
+            <img src="assets/img/building-exterior.jpg" alt="MJP Residences" class="w-full h-80 object-cover" />
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Available Apartment Units Section -->
-    <section id="rooms" class="max-w-7xl mx-auto px-4 py-12">
-      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-        <div>
-          <div class="flex items-center gap-3 mb-2">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Available Apartment Units</h2>
-            <span
-              id="landingUnitsCountBadge"
-              class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-200 hidden"
-            >
-              0 Units Available
+  <!-- Available Apartment Units Section -->
+  <section id="rooms" class="max-w-7xl mx-auto px-4 py-12">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Available Apartment Units</h2>
+          <span id="landingUnitsCountBadge"
+            class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-200 hidden">
+            0 Units Available
+          </span>
+        </div>
+        <p class="text-gray-600">
+          Choose from our variety of unit types to match your needs and budget
+        </p>
+      </div>
+    </div>
+
+    <!-- Unit Grid -->
+    <div data-rooms-grid class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+      <!-- Triple Occupancy Room -->
+      <div data-room-card="triple-occupancy-room"
+        class="bg-gradient-to-br from-blue-50/40 via-white to-green-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2 border-2 border-transparent hover:border-blue-200"
+        onclick="window.location.href = 'property-detail.html?id=1'">
+        <div class="relative overflow-hidden">
+          <img data-room-image src="assets/img/triple-occupancy-panorama.png" alt="Triple Occupancy Room"
+            class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-blue-900/20 to-transparent"></div>
+
+          <!-- Most Popular badge (top-left) -->
+          <div class="absolute top-3 left-3">
+            <span data-room-badge
+              class="bg-gradient-to-r from-blue-100 to-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-green-200">
+              Most Popular
             </span>
           </div>
-          <p class="text-gray-600">
-            Choose from our variety of unit types to match your needs and budget
-          </p>
-        </div>
-      </div>
 
-      <!-- Unit Grid -->
-      <div data-rooms-grid class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-        <!-- Triple Occupancy Room -->
-        <div
-          data-room-card="triple-occupancy-room"
-          class="bg-gradient-to-br from-blue-50/40 via-white to-green-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2 border-2 border-transparent hover:border-blue-200"
-          onclick="window.location.href = 'property-detail.html?id=1'"
-        >
-          <div class="relative overflow-hidden">
-            <img
-              data-room-image
-              src="assets/img/triple-occupancy-panorama.png"
-              alt="Triple Occupancy Room"
-              class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            <div
-              class="absolute inset-0 bg-gradient-to-t from-black/70 via-blue-900/20 to-transparent"
-            ></div>
-
-            <!-- Most Popular badge (top-left) -->
-            <div class="absolute top-3 left-3">
-              <span
-                data-room-badge
-                class="bg-gradient-to-r from-blue-100 to-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-green-200"
-              >
-                Most Popular
-              </span>
-            </div>
-
-            <!-- Available badge (top-right) -->
-            <div
-              class="absolute top-3 right-3"
-              data-availability-room="Triple Occupancy Room"
-              data-default-available="10"
-            >
-              <span
-                class="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5"
-              >
-                <span class="w-2 h-2 bg-white rounded-full"></span>
-                10 Available
-              </span>
-            </div>
-
-            <div class="absolute bottom-4 left-4 right-4">
-              <h3 data-room-name class="text-2xl font-bold text-white mb-1 drop-shadow-lg">
-                Triple Occupancy Room
-              </h3>
-              <p data-room-type class="text-sm text-green-200 font-medium">Living Space</p>
-            </div>
+          <!-- Available badge (top-right) -->
+          <div class="absolute top-3 right-3" data-availability-room="Triple Occupancy Room"
+            data-default-available="10">
+            <span
+              class="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5">
+              <span class="w-2 h-2 bg-white rounded-full"></span>
+              10 Available
+            </span>
           </div>
 
-          <div class="p-5">
-            <div data-room-features class="flex flex-wrap gap-2 mb-4">
-              <span
-                class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  ></path>
-                </svg>
-                3 People
-              </span>
-              <span
-                class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                  ></path>
-                </svg>
-                Bathroom
-              </span>
-              <span
-                class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-                  ></path>
-                </svg>
-                Aircon Space
-              </span>
-            </div>
+          <div class="absolute bottom-4 left-4 right-4">
+            <h3 data-room-name class="text-2xl font-bold text-white mb-1 drop-shadow-lg">
+              Triple Occupancy Room
+            </h3>
+            <p data-room-type class="text-sm text-green-200 font-medium">Living Space</p>
+          </div>
+        </div>
 
-            <div class="flex items-end justify-between pt-3 border-t border-slate-100">
-              <div>
-                <div class="text-xs text-gray-500">Starting at</div>
-                <div class="flex items-baseline gap-1">
-                  <span data-room-price class="text-2xl font-bold text-slate-900 tabular-nums"
-                    >&#8369;10,000</span
-                  >
-                  <span class="text-gray-500 text-sm">/month</span>
-                </div>
+        <div class="p-5">
+          <div data-room-features class="flex flex-wrap gap-2 mb-4">
+            <span
+              class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                </path>
+              </svg>
+              3 People
+            </span>
+            <span
+              class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+              </svg>
+              Bathroom
+            </span>
+            <span
+              class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+              </svg>
+              Aircon Space
+            </span>
+          </div>
+
+          <div class="flex items-end justify-between pt-3 border-t border-slate-100">
+            <div>
+              <div class="text-xs text-gray-500">Starting at</div>
+              <div class="flex items-baseline gap-1">
+                <span data-room-price class="text-2xl font-bold text-slate-900 tabular-nums">&#8369;10,000</span>
+                <span class="text-gray-500 text-sm">/month</span>
               </div>
-              <button
-                onclick="
+            </div>
+            <button onclick="
                   event.stopPropagation();
                   window.location.href = 'property-detail.html?id=1';
                 "
-                class="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
-              >
-                View Details
-              </button>
-            </div>
+              class="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
+              View Details
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commercial Space -->
+      <div data-room-card="commercial-space"
+        class="bg-gradient-to-br from-green-50/40 via-white to-blue-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2 border-2 border-transparent hover:border-green-200"
+        onclick="window.location.href = 'property-detail.html?id=4'">
+        <div class="relative overflow-hidden">
+          <img data-room-image src="assets/img/commercial-space.jpg" alt="Commercial Space"
+            class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-blue-900/20 to-transparent"></div>
+
+          <!-- Premium badge (top-left) -->
+          <div class="absolute top-3 left-3">
+            <span data-room-badge
+              class="bg-gradient-to-r from-blue-100 to-green-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-blue-200">
+              Premium
+            </span>
+          </div>
+
+          <!-- Available badge (top-right) -->
+          <div class="absolute top-3 right-3" data-availability-room="Commercial Space" data-default-available="1">
+            <span
+              class="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5">
+              <span class="w-2 h-2 bg-white rounded-full"></span>
+              1 Available
+            </span>
+          </div>
+
+          <div class="absolute bottom-4 left-4 right-4">
+            <h3 data-room-name class="text-2xl font-bold text-white mb-1 drop-shadow-lg">
+              Commercial Space
+            </h3>
+            <p data-room-type class="text-sm text-blue-200 font-medium">
+              Space for Business Operations
+            </p>
           </div>
         </div>
 
-        <!-- Commercial Space -->
-        <div
-          data-room-card="commercial-space"
-          class="bg-gradient-to-br from-green-50/40 via-white to-blue-50/40 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 cursor-pointer group transform hover:-translate-y-2 border-2 border-transparent hover:border-green-200"
-          onclick="window.location.href = 'property-detail.html?id=4'"
-        >
-          <div class="relative overflow-hidden">
-            <img
-              data-room-image
-              src="assets/img/commercial-space.jpg"
-              alt="Commercial Space"
-              class="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            <div
-              class="absolute inset-0 bg-gradient-to-t from-black/70 via-blue-900/20 to-transparent"
-            ></div>
-
-            <!-- Premium badge (top-left) -->
-            <div class="absolute top-3 left-3">
-              <span
-                data-room-badge
-                class="bg-gradient-to-r from-blue-100 to-green-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold shadow-sm border border-blue-200"
-              >
-                Premium
-              </span>
-            </div>
-
-            <!-- Available badge (top-right) -->
-            <div
-              class="absolute top-3 right-3"
-              data-availability-room="Commercial Space"
-              data-default-available="1"
-            >
-              <span
-                class="pulse-badge bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center gap-1.5"
-              >
-                <span class="w-2 h-2 bg-white rounded-full"></span>
-                1 Available
-              </span>
-            </div>
-
-            <div class="absolute bottom-4 left-4 right-4">
-              <h3 data-room-name class="text-2xl font-bold text-white mb-1 drop-shadow-lg">
-                Commercial Space
-              </h3>
-              <p data-room-type class="text-sm text-blue-200 font-medium">
-                Space for Business Operations
-              </p>
-            </div>
+        <div class="p-5">
+          <div data-room-features class="flex flex-wrap gap-2 mb-4">
+            <span
+              class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                </path>
+              </svg>
+              4 People
+            </span>
+            <span
+              class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+              </svg>
+              Bathroom
+            </span>
           </div>
 
-          <div class="p-5">
-            <div data-room-features class="flex flex-wrap gap-2 mb-4">
-              <span
-                class="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-medium border border-green-200"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                  ></path>
-                </svg>
-                4 People
-              </span>
-              <span
-                class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-medium border border-blue-200"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                  ></path>
-                </svg>
-                Bathroom
-              </span>
-            </div>
-
-            <div class="flex items-end justify-between pt-3 border-t border-slate-100">
-              <div>
-                <div class="text-xs text-gray-500">Starting at</div>
-                <div class="flex items-baseline gap-1">
-                  <span data-room-price class="text-2xl font-bold text-slate-900 tabular-nums"
-                    >&#8369;12,000</span
-                  >
-                  <span class="text-gray-500 text-sm">/month</span>
-                </div>
+          <div class="flex items-end justify-between pt-3 border-t border-slate-100">
+            <div>
+              <div class="text-xs text-gray-500">Starting at</div>
+              <div class="flex items-baseline gap-1">
+                <span data-room-price class="text-2xl font-bold text-slate-900 tabular-nums">&#8369;12,000</span>
+                <span class="text-gray-500 text-sm">/month</span>
               </div>
-              <button
-                onclick="
+            </div>
+            <button onclick="
                   event.stopPropagation();
                   window.location.href = 'property-detail.html?id=4';
                 "
-                class="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
-              >
-                View Details
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Floor Plan Section -->
-    <section id="floor-plan" class="max-w-7xl mx-auto px-4 pb-16">
-      <div class="mb-6">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">MJP Residences — Floor Plan</h2>
-      </div>
-
-      <div
-        class="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-white text-gray-900"
-      >
-        <!-- Top Floor Plan Bar -->
-        <div
-          class="px-4 py-2.5 bg-white border-b border-gray-200 flex flex-wrap items-center justify-between gap-2"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-gray-900">MJP Residences — Floor Plan</span>
-            <span class="text-[11px] text-gray-500 hidden sm:inline"
-              >• Click any room to check vacancy</span
-            >
-          </div>
-          <div class="flex items-center gap-2">
-            <select
-              id="landing3DFloorSelect"
-              aria-label="Isolate Floor"
-              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-gray-800 border border-gray-300 focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Floors • 1F–5F</option>
-              <option value="1">1F • Commercial &amp; Water Station</option>
-              <option value="2">2F • Rooms 101–103</option>
-              <option value="3">3F • Rooms 201–203</option>
-              <option value="4">4F • Rooms &amp; Back Deck</option>
-              <option value="5">5F • Upper Rooms 401 &amp; 410</option>
-            </select>
-            <button
-              type="button"
-              id="landing3DFireBtn"
-              data-action="landing-3d-fire"
-              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-500 hover:bg-red-700 transition-colors cursor-pointer"
-            >
-              Fire Safety: ON
+              class="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5">
+              View Details
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <!-- Interactive 3D Floor Plan Canvas -->
-        <div id="landingHero3DViewport" class="w-full h-80 sm:h-96 lg:h-[480px] bg-slate-950"></div>
+  <!-- Floor Plan Section -->
+  <section id="floor-plan" class="max-w-7xl mx-auto px-4 pb-16">
+    <div class="mb-6">
+      <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">MJP Residences — Floor Plan</h2>
+    </div>
 
-        <!-- Occupancy Legend Bar -->
-        <div
-          class="px-4 py-2 bg-white border-t border-gray-200 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-600"
-        >
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-              <span class="font-medium text-gray-700">Occupied Room</span>
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
-              <span class="font-medium text-gray-700">Vacant / Available</span>
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
-              <span class="font-medium text-gray-700">1F Commercial</span>
-            </span>
-          </div>
-          <span class="text-gray-400">Drag to rotate</span>
+    <div class="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-white text-gray-900">
+      <!-- Top Floor Plan Bar -->
+      <div class="px-4 py-2.5 bg-white border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-gray-900">MJP Residences — Floor Plan</span>
+          <span class="text-[11px] text-gray-500 hidden sm:inline">• Click any room to check vacancy</span>
         </div>
-
-        <!-- Selected Room Apartment Information Panel (Public Inquiry View - No Tenant PII) -->
-        <div id="landingHero3DUnitPanel" class="p-4 bg-white border-t border-gray-200">
-          <div class="mb-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span
-                id="landing3DUnitStatusBadge"
-                class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-300"
-              >
-                Vacant — Available
-              </span>
-              <span
-                id="landing3DUnitFloor"
-                class="px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200"
-              >
-                3rd Floor • Front Wing
-              </span>
-              <h3 id="landing3DUnitTitle" class="text-base font-extrabold text-gray-900">
-                Room 201
-              </h3>
-            </div>
-            <p id="landing3DUnitSpecs" class="text-xs text-gray-500 mt-1">
-              Triple Occupancy Room • 30 sqm • 1 User
-            </p>
-          </div>
-          <div class="mb-3">
-            <div id="landing3DUnitPrice" class="text-lg font-extrabold text-emerald-600">
-              ₱5,000.00/mo
-            </div>
-            <a
-              id="landing3DUnitLink"
-              href="property-detail.html?id=triple-occupancy-room"
-              class="inline-flex items-center gap-1 mt-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
-            >
-              View Unit &amp; Inquire
-            </a>
-          </div>
-          <div
-            id="landing3DUnitFeatures"
-            class="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100"
-          ></div>
+        <div class="flex items-center gap-2">
+          <select id="landing3DFloorSelect" aria-label="Isolate Floor"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-gray-800 border border-gray-300 focus:outline-none cursor-pointer">
+            <option value="all">All Floors • 1F–5F</option>
+            <option value="1">1F • Commercial &amp; Water Station</option>
+            <option value="2">2F • Rooms 101–103</option>
+            <option value="3">3F • Rooms 201–203</option>
+            <option value="4">4F • Rooms &amp; Back Deck</option>
+            <option value="5">5F • Upper Rooms 401 &amp; 410</option>
+          </select>
+          <button type="button" id="landing3DFireBtn" data-action="landing-3d-fire"
+            class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-500 hover:bg-red-700 transition-colors cursor-pointer">
+            Fire Safety: ON
+          </button>
         </div>
       </div>
-    </section>
 
-    <!-- About Section -->
-    <section id="about" class="bg-gradient-to-br from-gray-50 to-blue-50/30 py-16">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
+      <!-- Interactive 3D Floor Plan Canvas -->
+      <div id="landingHero3DViewport" class="w-full h-80 sm:h-96 lg:h-[480px] bg-slate-950"></div>
+
+      <!-- Occupancy Legend Bar -->
+      <div
+        class="px-4 py-2 bg-white border-t border-gray-200 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-600">
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+            <span class="font-medium text-gray-700">Occupied Room</span>
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+            <span class="font-medium text-gray-700">Vacant / Available</span>
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+            <span class="font-medium text-gray-700">1F Commercial</span>
+          </span>
+        </div>
+        <span class="text-gray-400">Drag to rotate</span>
+      </div>
+
+      <!-- Selected Room Apartment Information Panel (Public Inquiry View - No Tenant PII) -->
+      <div id="landingHero3DUnitPanel" class="p-4 bg-white border-t border-gray-200">
+        <div class="mb-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="landing3DUnitStatusBadge"
+              class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-300">
+              Vacant — Available
+            </span>
+            <span id="landing3DUnitFloor"
+              class="px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+              3rd Floor • Front Wing
+            </span>
+            <h3 id="landing3DUnitTitle" class="text-base font-extrabold text-gray-900">
+              Room 201
+            </h3>
+          </div>
+          <p id="landing3DUnitSpecs" class="text-xs text-gray-500 mt-1">
+            Triple Occupancy Room • 30 sqm • 1 User
+          </p>
+        </div>
+        <div class="mb-3">
+          <div id="landing3DUnitPrice" class="text-lg font-extrabold text-emerald-600">
+            ₱5,000.00/mo
+          </div>
+          <a id="landing3DUnitLink" href="property-detail.html?id=triple-occupancy-room"
+            class="inline-flex items-center gap-1 mt-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors">
+            View Unit &amp; Inquire
+          </a>
+        </div>
+        <div id="landing3DUnitFeatures" class="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="bg-gradient-to-br from-gray-50 to-blue-50/30 py-16">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">
+            About Us
+          </div>
+          <h2 class="text-4xl font-bold mb-6 text-gray-900">
+            About <span class="text-blue-600">MJP Residences</span>
+          </h2>
+          <p class="text-gray-700 mb-4 leading-relaxed text-lg">
+            MJP Residences, powered by
+            <span class="text-green-600 font-semibold">Home-Spot Apartment Realty</span>, is a
+            premier apartment unit facility serving both students and families. Located near major
+            universities in Caloocan City, we provide a safe, comfortable, and welcoming
+            environment for everyday living.
+          </p>
+          <p class="text-gray-700 mb-6 leading-relaxed text-lg">
+            Our facility features modern apartment units with 24/7 security and a supportive
+            community atmosphere. We understand the needs of students and families alike and
+            strive to provide the best possible living experience.
+          </p>
+          <div class="grid grid-cols-2 gap-4 mt-8">
+            <div class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-t-4 border-blue-600">
+              <div class="text-4xl font-bold text-blue-600 mb-2">35+</div>
+              <div class="text-gray-600 font-medium">Unit Capacity</div>
+            </div>
             <div
-              class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4"
-            >
-              About Us
+              class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-t-4 border-green-600">
+              <div class="text-4xl font-bold text-green-600 mb-2">24/7</div>
+              <div class="text-gray-600 font-medium">Security</div>
             </div>
-            <h2 class="text-4xl font-bold mb-6 text-gray-900">
-              About <span class="text-blue-600">MJP Residences</span>
-            </h2>
-            <p class="text-gray-700 mb-4 leading-relaxed text-lg">
-              MJP Residences, powered by
-              <span class="text-green-600 font-semibold">Home-Spot Apartment Realty</span>, is a
-              premier apartment unit facility serving both students and families. Located near major
-              universities in Caloocan City, we provide a safe, comfortable, and welcoming
-              environment for everyday living.
-            </p>
-            <p class="text-gray-700 mb-6 leading-relaxed text-lg">
-              Our facility features modern apartment units with 24/7 security and a supportive
-              community atmosphere. We understand the needs of students and families alike and
-              strive to provide the best possible living experience.
-            </p>
-            <div class="grid grid-cols-2 gap-4 mt-8">
-              <div
-                class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-t-4 border-blue-600"
-              >
-                <div class="text-4xl font-bold text-blue-600 mb-2">24+</div>
-                <div class="text-gray-600 font-medium">Unit Capacity</div>
-              </div>
-              <div
-                class="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border-t-4 border-green-600"
-              >
-                <div class="text-4xl font-bold text-green-600 mb-2">24/7</div>
-                <div class="text-gray-600 font-medium">Security</div>
-              </div>
-            </div>
+          </div>
 
-            <!-- Client Address & Apartment Google Minimap -->
-            <div class="mt-6 bg-white p-4 rounded-2xl shadow-lg border border-gray-100">
-              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fill-rule="evenodd"
-                        d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                        clip-rule="evenodd"
-                      ></path>
-                    </svg>
+          <!-- Client Address & Apartment Google Minimap -->
+          <div class="mt-6 bg-white p-4 rounded-2xl shadow-lg border border-gray-100">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd"
+                      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                      clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs font-bold text-gray-900">
+                    MJP Residences • MJ Parungao Water Station
                   </div>
-                  <div>
-                    <div class="text-xs font-bold text-gray-900">
-                      MJP Residences • MJ Parungao Water Station
-                    </div>
-                    <div class="text-[11px] text-gray-500 font-medium">
-                      MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila
-                    </div>
+                  <div class="text-[11px] text-gray-500 font-medium">
+                    MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila
                   </div>
                 </div>
-                <a
-                  href="https://www.google.com/maps?q=14.650403,120.977636"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors"
-                >
-                  <span>Open in Google Maps</span>
-                  <span>↗</span>
-                </a>
               </div>
-              <div
-                class="w-full h-56 rounded-xl overflow-hidden border border-gray-200 shadow-inner relative"
-              >
-                <iframe
-                  id="minimapIframe"
-                  title="Google Minimap - MJ Parungao Water Station & MJP Residences"
-                  src="https://maps.google.com/maps?q=14.650403,120.977636&amp;t=m&amp;z=18&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
-                  class="w-full h-full border-0"
-                  loading="lazy"
-                  allowfullscreen
-                  referrerpolicy="no-referrer-when-downgrade"
-                >
-                </iframe>
-              </div>
+              <a href="https://www.google.com/maps?q=14.650403,120.977636" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 transition-colors">
+                <span>Open in Google Maps</span>
+                <span>↗</span>
+              </a>
+            </div>
+            <div class="w-full h-56 rounded-xl overflow-hidden border border-gray-200 shadow-inner relative">
+              <iframe id="minimapIframe" title="Google Minimap - MJ Parungao Water Station & MJP Residences"
+                src="https://maps.google.com/maps?q=14.650403,120.977636&amp;t=m&amp;z=18&amp;ie=UTF8&amp;iwloc=&amp;output=embed"
+                class="w-full h-full border-0" loading="lazy" allowfullscreen
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
             </div>
           </div>
-          <div class="relative">
-            <div
-              class="absolute -inset-4 bg-gradient-to-r from-blue-400 to-green-400 rounded-3xl blur-2xl opacity-20"
-            ></div>
-            <div
-              class="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500"
-            >
-              <img
-                src="assets/img/building-exterior.jpg"
-                alt="About MJP Residences"
-                class="w-full h-full object-cover"
-              />
-            </div>
+        </div>
+        <div class="relative">
+          <div class="absolute -inset-4 bg-gradient-to-r from-blue-400 to-green-400 rounded-3xl blur-2xl opacity-20">
+          </div>
+          <div
+            class="relative rounded-2xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-500">
+            <img src="assets/img/building-exterior.jpg" alt="About MJP Residences" class="w-full h-full object-cover" />
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Customer Support Section -->
-    <section id="support" class="py-16 bg-white border-t border-gray-100">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center max-w-2xl mx-auto mb-12">
-          <div
-            class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4"
-          >
-            Customer Support
+  <!-- Customer Support Section -->
+  <section id="support" class="py-16 bg-white border-t border-gray-100">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <div class="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold mb-4">
+          Customer Support
+        </div>
+        <h2 class="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
+          Need Help? <span class="text-blue-600">We're Here For You</span>
+        </h2>
+        <p class="text-gray-600 text-base">
+          Have questions about unit availability, leasing inquiries, or tenant assistance? Reach
+          out to our dedicated support channels.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto items-stretch">
+        <!-- Phone Support -->
+        <div
+          class="bg-gradient-to-br from-blue-50/50 via-white to-gray-50 rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md transition-all text-center">
+          <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+              </path>
+            </svg>
           </div>
-          <h2 class="text-3xl lg:text-4xl font-bold mb-4 text-gray-900">
-            Need Help? <span class="text-blue-600">We're Here For You</span>
-          </h2>
-          <p class="text-gray-600 text-base">
-            Have questions about unit availability, leasing inquiries, or tenant assistance? Reach
-            out to our dedicated support channels.
+          <h3 class="font-bold text-gray-900 text-lg mb-1">Phone Inquiries</h3>
+          <p class="text-xs text-gray-500 mb-3">Mon – Sat, 8:00 AM – 6:00 PM</p>
+          <p class="text-blue-600 font-semibold text-base select-text cursor-default">
+            (63+) 933-810-0819
           </p>
         </div>
 
-        <div
-          class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto items-stretch"
-        >
-          <!-- Phone Support -->
+        <!-- Email Support -->
+        <div id="emailSupportBtn"
+          class="bg-gradient-to-br from-green-50/50 via-white to-gray-50 rounded-2xl p-6 border border-green-100 shadow-sm hover:shadow-md transition-all text-center cursor-pointer group hover:border-green-300">
           <div
-            class="bg-gradient-to-br from-blue-50/50 via-white to-gray-50 rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md transition-all text-center"
-          >
+            class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+              </path>
+            </svg>
+          </div>
+          <h3 class="font-bold text-gray-900 text-lg mb-1">Email Support</h3>
+          <p class="text-xs text-gray-500 mb-3">Direct helpdesk replies</p>
+          <span
+            class="text-green-600 group-hover:text-green-700 font-semibold text-base transition-colors inline-block">
+            homespotapartment@gmail.com
+          </span>
+        </div>
+
+        <!-- On-Site Office -->
+        <a href="https://www.google.com/maps?q=14.650403,120.977636" target="_blank" rel="noopener noreferrer"
+          class="bg-gradient-to-br from-blue-50/50 via-white to-gray-50 rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-center flex flex-col justify-between group cursor-pointer">
+          <div>
             <div
-              class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4"
-            >
+              class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                ></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
             </div>
-            <h3 class="font-bold text-gray-900 text-lg mb-1">Phone Inquiries</h3>
-            <p class="text-xs text-gray-500 mb-3">Mon – Sat, 8:00 AM – 6:00 PM</p>
-            <p class="text-blue-600 font-semibold text-base select-text cursor-default">
-              (63+) 933-810-0819
+            <h3 class="font-bold text-gray-900 text-lg mb-1">Visit Admin Office</h3>
+            <p class="text-xs text-gray-500 mb-2">On-site assistance</p>
+            <p class="text-gray-700 text-xs font-medium mb-3">
+              MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila
             </p>
           </div>
+          <span
+            class="text-blue-600 group-hover:text-blue-700 font-semibold text-sm transition-colors flex items-center justify-center gap-1 mx-auto">
+            <span>Open in Google Maps</span>
+            <span class="group-hover:translate-x-0.5 transition-transform">↗</span>
+          </span>
+        </a>
 
-          <!-- Email Support -->
-          <div
-            id="emailSupportBtn"
-            class="bg-gradient-to-br from-green-50/50 via-white to-gray-50 rounded-2xl p-6 border border-green-100 shadow-sm hover:shadow-md transition-all text-center cursor-pointer group hover:border-green-300"
-          >
+        <!-- Message Inquiries -->
+        <div id="inquireBtn"
+          class="bg-gradient-to-br from-indigo-50/50 via-white to-gray-50 rounded-2xl p-6 border border-indigo-100 shadow-sm hover:shadow-md transition-all text-center flex flex-col justify-between cursor-pointer group hover:border-indigo-300">
+          <div>
             <div
-              class="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform"
-            >
+              class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                ></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z">
+                </path>
               </svg>
             </div>
-            <h3 class="font-bold text-gray-900 text-lg mb-1">Email Support</h3>
-            <p class="text-xs text-gray-500 mb-3">Direct helpdesk replies</p>
-            <span
-              class="text-green-600 group-hover:text-green-700 font-semibold text-base transition-colors inline-block"
-            >
-              homespotapartment@gmail.com
-            </span>
+            <h3 class="font-bold text-gray-900 text-lg mb-1">Message Inquiries</h3>
+            <p class="text-xs text-gray-500 mb-3">Online leasing questions</p>
           </div>
-
-          <!-- On-Site Office -->
-          <a
-            href="https://www.google.com/maps?q=14.650403,120.977636"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="bg-gradient-to-br from-blue-50/50 via-white to-gray-50 rounded-2xl p-6 border border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300 transition-all text-center flex flex-col justify-between group cursor-pointer"
-          >
-            <div>
-              <div
-                class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  ></path>
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  ></path>
-                </svg>
-              </div>
-              <h3 class="font-bold text-gray-900 text-lg mb-1">Visit Admin Office</h3>
-              <p class="text-xs text-gray-500 mb-2">On-site assistance</p>
-              <p class="text-gray-700 text-xs font-medium mb-3">
-                MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila
-              </p>
-            </div>
-            <span
-              class="text-blue-600 group-hover:text-blue-700 font-semibold text-sm transition-colors flex items-center justify-center gap-1 mx-auto"
-            >
-              <span>Open in Google Maps</span>
-              <span class="group-hover:translate-x-0.5 transition-transform">↗</span>
-            </span>
-          </a>
-
-          <!-- Message Inquiries -->
-          <div
-            id="inquireBtn"
-            class="bg-gradient-to-br from-indigo-50/50 via-white to-gray-50 rounded-2xl p-6 border border-indigo-100 shadow-sm hover:shadow-md transition-all text-center flex flex-col justify-between cursor-pointer group hover:border-indigo-300"
-          >
-            <div>
-              <div
-                class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                  ></path>
-                </svg>
-              </div>
-              <h3 class="font-bold text-gray-900 text-lg mb-1">Message Inquiries</h3>
-              <p class="text-xs text-gray-500 mb-3">Online leasing questions</p>
-            </div>
-            <span
-              class="text-indigo-600 hover:text-indigo-700 font-semibold text-base transition-colors flex items-center justify-center gap-1.5 mx-auto"
-            >
-              <span>Inquire Now</span>
-              <svg
-                class="w-4 h-4 mt-0.5 group-hover:translate-x-0.5 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </span>
-          </div>
+          <span
+            class="text-indigo-600 hover:text-indigo-700 font-semibold text-base transition-colors flex items-center justify-center gap-1.5 mx-auto">
+            <span>Inquire Now</span>
+            <svg class="w-4 h-4 mt-0.5 group-hover:translate-x-0.5 transition-transform" fill="none"
+              stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Email Support Modal (Pop-up on screen) -->
+  <!-- Email Support Modal (Pop-up on screen) -->
+  <div id="emailSupportModal"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/65 flex items-center justify-center p-4">
     <div
-      id="emailSupportModal"
-      class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/65 flex items-center justify-center p-4"
-    >
-      <div
-        class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 md:p-8 animate-slide-in"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="emailSupportModalTitle"
-      >
-        <!-- Close Button -->
-        <button
-          type="button"
-          data-close="emailSupportModal"
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-full shadow-xs border border-gray-100 transition-all cursor-pointer"
-          aria-label="Close modal"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
-          </svg>
-        </button>
+      class="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 md:p-8 animate-slide-in"
+      role="dialog" aria-modal="true" aria-labelledby="emailSupportModalTitle">
+      <!-- Close Button -->
+      <button type="button" data-close="emailSupportModal"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 p-2 rounded-full shadow-xs border border-gray-100 transition-all cursor-pointer"
+        aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
 
-        <div class="text-center mb-6">
-          <div
-            class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs"
-          >
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              ></path>
-            </svg>
-          </div>
-          <h3 id="emailSupportModalTitle" class="text-xl font-bold text-gray-900">
-            Email Helpdesk
-          </h3>
-          <p class="text-xs text-gray-500 mt-1">Official support &amp; inquiries for HomeSpot</p>
-        </div>
-
+      <div class="text-center mb-6">
         <div
-          class="bg-gray-50 border border-gray-200/80 rounded-xl p-4 mb-5 flex items-center justify-between gap-3"
-        >
-          <div class="min-w-0">
-            <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider block"
-              >Official Email</span
-            >
-            <span
-              id="supportEmailText"
-              class="text-sm font-semibold text-gray-900 truncate block select-all"
-              >homespotapartment@gmail.com</span
-            >
-          </div>
-          <button
-            type="button"
-            id="copySupportEmailBtn"
-            class="flex-shrink-0 px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-xs font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <svg
-              class="w-4 h-4 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-              ></path>
-            </svg>
-            <span id="copySupportEmailLabel">Copy</span>
-          </button>
-        </div>
-
-        <div class="space-y-3 mb-6">
-          <a
-            href="https://mail.google.com/mail/?view=cm&fs=1&to=homespotapartment@gmail.com&su=Customer+Support+-+Home-Spot+Apartments"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all text-center"
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.49l8.073-5.997c1.618-1.214 3.927-.059 3.927 1.964z"
-              />
-            </svg>
-            Compose in Gmail
-          </a>
-
-          <a
-            href="mailto:homespotapartment@gmail.com"
-            class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-all text-center"
-          >
-            <svg
-              class="w-4 h-4 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              ></path>
-            </svg>
-            Open Default Mail App
-          </a>
-        </div>
-
-        <div class="text-xs text-gray-400 text-center">
-          Typical response time is within 1 business day.
-        </div>
-      </div>
-    </div>
-
-    <!-- Inquiry Modal (Pop-up on screen) -->
-    <div
-      id="inquiryForm"
-      class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/65 flex items-center justify-center p-4"
-    >
-      <div
-        class="relative w-full max-w-lg bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-2xl shadow-2xl border-2 border-green-200 p-6 md:p-8 max-h-[90vh] overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="inquiryModalTitle"
-      >
-        <!-- Close Button -->
-        <button
-          type="button"
-          data-close="inquiryForm"
-          class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-white/90 hover:bg-white p-2 rounded-full shadow-sm border border-gray-100 transition-all hover:scale-110 cursor-pointer"
-          aria-label="Close modal"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
+          class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-xs">
+          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
           </svg>
+        </div>
+        <h3 id="emailSupportModalTitle" class="text-xl font-bold text-gray-900">
+          Email Helpdesk
+        </h3>
+        <p class="text-xs text-gray-500 mt-1">Official support &amp; inquiries for HomeSpot</p>
+      </div>
+
+      <div class="bg-gray-50 border border-gray-200/80 rounded-xl p-4 mb-5 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <span class="text-xs font-semibold uppercase text-gray-400 tracking-wider block">Official Email</span>
+          <span id="supportEmailText"
+            class="text-sm font-semibold text-gray-900 truncate block select-all">homespotapartment@gmail.com</span>
+        </div>
+        <button type="button" id="copySupportEmailBtn"
+          class="flex-shrink-0 px-3 py-1.5 bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 rounded-lg text-xs font-semibold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+            </path>
+          </svg>
+          <span id="copySupportEmailLabel">Copy</span>
         </button>
+      </div>
 
-        <div class="flex items-center gap-2 mb-3">
-          <div class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
-          <h3 id="inquiryModalTitle" class="text-2xl font-bold text-slate-900 tracking-tight">
-            Customer Support Inquiry
-          </h3>
-        </div>
-        <p class="text-sm text-slate-600 mb-5">
-          Have questions or need assistance? Fill out the form below and our support team will get
-          back to you promptly.
-        </p>
+      <div class="space-y-3 mb-6">
+        <a href="https://mail.google.com/mail/?view=cm&fs=1&to=homespotapartment@gmail.com&su=Customer+Support+-+Home-Spot+Apartments"
+          target="_blank" rel="noopener noreferrer"
+          class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2 shadow-sm transition-all text-center">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.49l8.073-5.997c1.618-1.214 3.927-.059 3.927 1.964z" />
+          </svg>
+          Compose in Gmail
+        </a>
 
-        <form id="inquiryFormElement" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1"
-              >Full Name <span class="text-red-500">*</span></label
-            >
-            <input
-              type="text"
-              name="name"
-              placeholder="Full Name"
-              class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all"
-              required
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1"
-              >Email Address <span class="text-red-500">*</span></label
-            >
-            <input
-              type="email"
-              name="email"
-              placeholder="Email Address"
-              class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all"
-              required
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1"
-              >Mobile Number <span class="text-red-500">*</span></label
-            >
-            <input
-              type="tel"
-              name="phone"
-              placeholder="e.g. 0912 345 6789"
-              maxlength="13"
-              inputmode="tel"
-              class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all"
-              required
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1">Inquiry Topic</label>
-            <select
-              name="subject"
-              class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all text-gray-700 bg-white"
-            >
-              <option value="General Inquiry">General Inquiry</option>
-              <option value="Unit Availability & Pricing">Unit Availability & Pricing</option>
-              <option value="Leasing & Contract Information">Leasing & Contract Information</option>
-              <option value="Billing & Payment Help">Billing & Payment Help</option>
-              <option value="Facility & Maintenance Question">
-                Facility & Maintenance Question
-              </option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 mb-1"
-              >Message <span class="text-red-500">*</span></label
-            >
-            <textarea
-              name="message"
-              placeholder="Describe how we can assist you..."
-              rows="3"
-              class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all resize-none"
-              required
-            ></textarea>
-          </div>
-          <button
-            type="submit"
-            class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold h-12 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              ></path>
-            </svg>
-            Send Support Message
-          </button>
-          <p
-            class="text-xs text-gray-500 text-center bg-white p-2 rounded-lg border border-gray-100"
-          >
-            Your contact information will only be used to respond to your support inquiry.
-          </p>
-        </form>
+        <a href="mailto:homespotapartment@gmail.com"
+          class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 transition-all text-center">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+            </path>
+          </svg>
+          Open Default Mail App
+        </a>
+      </div>
+
+      <div class="text-xs text-gray-400 text-center">
+        Typical response time is within 1 business day.
       </div>
     </div>
+  </div>
 
-    <!-- Footer -->
-    <footer class="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white py-12 mt-16">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-          <div>
-            <h4 class="text-2xl font-bold mb-2 text-blue-400">MJP Residences</h4>
-            <p class="text-green-400 font-medium text-sm mb-3">Home-Spot Apartment Realty</p>
-            <p class="text-gray-400 text-sm">Your Home Away From Home</p>
-          </div>
-          <div>
-            <h3 class="font-bold mb-4 text-lg">Contact</h3>
-            <div class="space-y-3">
-              <a
-                href="https://www.google.com/maps?q=14.650403,120.977636"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-gray-300 hover:text-blue-400 transition-colors text-sm flex items-start gap-2"
-              >
-                <svg
-                  class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                  ></path>
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  ></path>
-                </svg>
-                <span>MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila ↗</span>
-              </a>
-              <p class="text-gray-300 text-sm flex items-center gap-2">
-                <svg
-                  class="w-5 h-5 text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                  ></path>
-                </svg>
-                Phone: (63+) 933-810-0819
-              </p>
-              <p class="text-gray-300 text-sm flex items-center gap-2">
-                <svg
-                  class="w-5 h-5 text-blue-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                  ></path>
-                </svg>
-                Email: homespotapartment@gmail.com
-              </p>
-            </div>
-          </div>
-          <div>
-            <h3 class="font-bold mb-4 text-lg">Quick Links</h3>
-            <div class="space-y-3">
-              <a
-                href="#rooms"
-                class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2"
-              >
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                Apartment Units
-              </a>
-              <a
-                href="#floor-plan"
-                class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2"
-              >
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                Floor Plan
-              </a>
-              <a
-                href="#about"
-                class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2"
-              >
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                About Us
-              </a>
-              <a
-                href="#support"
-                class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2"
-              >
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                Customer Support
-              </a>
-            </div>
-          </div>
-        </div>
-        <div class="border-t border-gray-700 pt-6 text-center">
-          <p class="text-gray-400 text-sm">&copy; 2026 MJP Residences. All rights reserved.</p>
-          <p class="text-gray-500 text-xs mt-2">
-            Capstone Project - Apartment Booking & Management System | Home-Spot Apartment Realty
-            Platform
-          </p>
-        </div>
-      </div>
-    </footer>
-
-    <script type="module" src="./assets/js/supabase-service.js"></script>
-    <script type="module" src="./assets/js/lib/maintenance.js"></script>
-    <script type="module" src="./assets/js/main.js"></script>
-    <script type="module" src="./assets/js/pages/availability-badges.jsx"></script>
-
-    <!-- Update Password Modal (Triggered on password recovery) -->
+  <!-- Inquiry Modal (Pop-up on screen) -->
+  <div id="inquiryForm"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/65 flex items-center justify-center p-4">
     <div
-      id="updatePasswordModal"
-      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
-    >
-      <div
-        class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100"
-      >
-        <div class="px-6 py-4 border-b border-gray-100">
-          <h2 class="text-lg font-bold text-gray-900">Set New Password</h2>
+      class="relative w-full max-w-lg bg-gradient-to-br from-green-50 via-white to-blue-50 rounded-2xl shadow-2xl border-2 border-green-200 p-6 md:p-8 max-h-[90vh] overflow-y-auto"
+      role="dialog" aria-modal="true" aria-labelledby="inquiryModalTitle">
+      <!-- Close Button -->
+      <button type="button" data-close="inquiryForm"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 bg-white/90 hover:bg-white p-2 rounded-full shadow-sm border border-gray-100 transition-all hover:scale-110 cursor-pointer"
+        aria-label="Close modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></div>
+        <h3 id="inquiryModalTitle" class="text-2xl font-bold text-slate-900 tracking-tight">
+          Customer Support Inquiry
+        </h3>
+      </div>
+      <p class="text-sm text-slate-600 mb-5">
+        Have questions or need assistance? Fill out the form below and our support team will get
+        back to you promptly.
+      </p>
+
+      <form id="inquiryFormElement" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Full Name <span
+              class="text-red-500">*</span></label>
+          <input type="text" name="name" placeholder="Full Name"
+            class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all"
+            required />
         </div>
-        <form id="updatePasswordForm" class="p-6 space-y-4">
-          <div
-            class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2"
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              />
-            </svg>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Email Address <span
+              class="text-red-500">*</span></label>
+          <input type="email" name="email" placeholder="Email Address"
+            class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all"
+            required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Mobile Number <span
+              class="text-red-500">*</span></label>
+          <input type="tel" name="phone" placeholder="e.g. 0912 345 6789" maxlength="13" inputmode="tel"
+            class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all"
+            required />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Inquiry Topic</label>
+          <select name="subject"
+            class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all text-gray-700 bg-white">
+            <option value="General Inquiry">General Inquiry</option>
+            <option value="Unit Availability & Pricing">Unit Availability & Pricing</option>
+            <option value="Leasing & Contract Information">Leasing & Contract Information</option>
+            <option value="Billing & Payment Help">Billing & Payment Help</option>
+            <option value="Facility & Maintenance Question">
+              Facility & Maintenance Question
+            </option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Message <span
+              class="text-red-500">*</span></label>
+          <textarea name="message" placeholder="Describe how we can assist you..." rows="3"
+            class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all resize-none"
+            required></textarea>
+        </div>
+        <button type="submit"
+          class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold h-12 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8">
+            </path>
+          </svg>
+          Send Support Message
+        </button>
+        <p class="text-xs text-gray-500 text-center bg-white p-2 rounded-lg border border-gray-100">
+          Your contact information will only be used to respond to your support inquiry.
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white py-12 mt-16">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <div>
+          <h4 class="text-2xl font-bold mb-2 text-blue-400">MJP Residences</h4>
+          <p class="text-green-400 font-medium text-sm mb-3">Home-Spot Apartment Realty</p>
+          <p class="text-gray-400 text-sm">Your Home Away From Home</p>
+        </div>
+        <div>
+          <h3 class="font-bold mb-4 text-lg">Contact</h3>
+          <div class="space-y-3">
+            <a href="https://www.google.com/maps?q=14.650403,120.977636" target="_blank" rel="noopener noreferrer"
+              class="text-gray-300 hover:text-blue-400 transition-colors text-sm flex items-start gap-2">
+              <svg class="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <span>MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila ↗</span>
+            </a>
+            <p class="text-gray-300 text-sm flex items-center gap-2">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z">
+                </path>
+              </svg>
+              Phone: (63+) 933-810-0819
+            </p>
+            <p class="text-gray-300 text-sm flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                </path>
+              </svg>
+              Email: homespotapartment@gmail.com
+            </p>
           </div>
-          <p class="text-sm text-gray-600 text-center">
-            Enter a new secure password for your portal account.
-          </p>
-          <div id="updatePassAlert" class="hidden p-3 rounded-lg text-sm"></div>
-          <div>
-            <label
-              for="newPassword"
-              class="block text-xs font-semibold text-gray-700 uppercase mb-1"
-              >New Password</label
-            >
-            <input
-              type="password"
-              id="newPassword"
-              required
-              minlength="6"
-              placeholder="At least 6 characters"
-              class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-            />
+        </div>
+        <div>
+          <h3 class="font-bold mb-4 text-lg">Quick Links</h3>
+          <div class="space-y-3">
+            <a href="#rooms"
+              class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2">
+              <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+              Apartment Units
+            </a>
+            <a href="#floor-plan"
+              class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2">
+              <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+              Floor Plan
+            </a>
+            <a href="#about"
+              class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2">
+              <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+              About Us
+            </a>
+            <a href="#support"
+              class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2">
+              <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
+              Customer Support
+            </a>
           </div>
-          <div>
-            <label
-              for="confirmNewPassword"
-              class="block text-xs font-semibold text-gray-700 uppercase mb-1"
-              >Confirm New Password</label
-            >
-            <input
-              type="password"
-              id="confirmNewPassword"
-              required
-              minlength="6"
-              placeholder="Re-enter your new password"
-              class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm"
-            />
-          </div>
-          <div class="pt-2">
-            <button
-              type="submit"
-              id="submitUpdatePassBtn"
-              class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors"
-            >
-              Update Password &amp; Sign In
-            </button>
-          </div>
-        </form>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 pt-6 text-center">
+        <p class="text-gray-400 text-sm">&copy; 2026 MJP Residences. All rights reserved.</p>
+        <p class="text-gray-500 text-xs mt-2">
+          Capstone Project - Apartment Booking & Management System | Home-Spot Apartment Realty
+          Platform
+        </p>
       </div>
     </div>
-  </body>
+  </footer>
+
+  <script type="module" src="./assets/js/supabase-service.js"></script>
+  <script type="module" src="./assets/js/lib/maintenance.js"></script>
+  <script type="module" src="./assets/js/main.js"></script>
+  <script type="module" src="./assets/js/pages/availability-badges.jsx"></script>
+
+  <!-- Update Password Modal (Triggered on password recovery) -->
+  <div id="updatePasswordModal"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900">Set New Password</h2>
+      </div>
+      <form id="updatePasswordForm" class="p-6 space-y-4">
+        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center mx-auto mb-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+        <p class="text-sm text-gray-600 text-center">
+          Enter a new secure password for your portal account.
+        </p>
+        <div id="updatePassAlert" class="hidden p-3 rounded-lg text-sm"></div>
+        <div>
+          <label for="newPassword" class="block text-xs font-semibold text-gray-700 uppercase mb-1">New Password</label>
+          <input type="password" id="newPassword" required minlength="6" placeholder="At least 6 characters"
+            class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+        </div>
+        <div>
+          <label for="confirmNewPassword" class="block text-xs font-semibold text-gray-700 uppercase mb-1">Confirm New
+            Password</label>
+          <input type="password" id="confirmNewPassword" required minlength="6" placeholder="Re-enter your new password"
+            class="w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" />
+        </div>
+        <div class="pt-2">
+          <button type="submit" id="submitUpdatePassBtn"
+            class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition-colors">
+            Update Password &amp; Sign In
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+
 </html>
