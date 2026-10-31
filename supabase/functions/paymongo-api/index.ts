@@ -254,11 +254,17 @@ Deno.serve(async (request: Request) => {
               Array.isArray(sessionAttrs?.line_items) &&
               typeof sessionAttrs.line_items[0]?.name === 'string' &&
               sessionAttrs.line_items[0].name.trim();
-            const cleanPurpose =
+            let cleanPurpose =
               lineItemName ||
               (sessionAttrs?.description || 'Monthly Rent')
                 .replace(/\s*-\s*MJP Residences\s*$/i, '')
                 .trim();
+            let extractedNotes = '';
+            const noteMatch = cleanPurpose.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+            if (noteMatch) {
+              cleanPurpose = noteMatch[1].trim();
+              extractedNotes = noteMatch[2].trim();
+            }
             const referenceNumber = `PM-${canonicalDocId.slice(-6).toUpperCase()}`;
             const paidUnix = Number(
               relatedPayment?.attributes?.paid_at ||
@@ -296,7 +302,10 @@ Deno.serve(async (request: Request) => {
               currency: 'PHP',
               status: 'Paid',
               purpose: cleanPurpose,
-              notes: sessionAttrs?.metadata?.notes || 'Completed via PayMongo Checkout',
+              notes:
+                extractedNotes ||
+                sessionAttrs?.metadata?.notes ||
+                'Completed via PayMongo Checkout',
               method: formattedMethod,
               tenantEmail,
               tenantUid: auth.user.id,

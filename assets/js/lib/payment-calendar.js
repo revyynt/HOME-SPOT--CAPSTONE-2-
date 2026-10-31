@@ -2,6 +2,8 @@
  * Pure calendar & future-payment schedule builder shared by Tenant Portal and Admin Dashboard.
  */
 
+import { isRentPurpose } from './format.js';
+
 const MONTH_NAMES = [
   'January',
   'February',
@@ -88,6 +90,7 @@ function getPaymentsForMonth(payments, tenant, year, month) {
   return payments.filter((p) => {
     if (normalizeStatus(p.status) !== 'Paid') return false;
     if (!matchesTenant(p, tenant)) return false;
+    if (!isRentPurpose(p.purpose)) return false;
 
     const notesText = String(p.notes || '').toLowerCase();
 
