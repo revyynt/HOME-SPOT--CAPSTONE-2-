@@ -283,9 +283,55 @@ function populateTenantUI() {
   updateAmountDueUI();
   renderTenantPaymentCalendar();
   syncTenant3DBuildingState();
+  renderDueDateAlert();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+function renderDueDateAlert() {
+  const banner = document.getElementById('tenantDueDateAlertBanner');
+  if (!banner) return;
+
+  const now = new Date();
+  const day = now.getDate();
+  const dueDay = tenantDueDay || 5;
+  const moveInInfo = getMoveInInfo();
+
+  if (moveInInfo.isPending || currentRemainingDue <= 0) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  const monthName = now.toLocaleString('en-US', { month: 'long' });
+  const isOverdue = day > dueDay;
+  const isUpcoming = day <= dueDay;
+
+  const titleEl = document.getElementById('dueAlertTitle');
+  const descEl = document.getElementById('dueAlertDesc');
+  const badgeEl = document.getElementById('dueAlertBadge');
+
+  if (isOverdue) {
+    banner.style.display = 'flex';
+    banner.className = 'tenant-due-alert-banner overdue';
+    if (badgeEl) badgeEl.textContent = 'OVERDUE';
+    if (titleEl) titleEl.textContent = `Rent Overdue Notice (${monthName} ${dueDay})`;
+    if (descEl) {
+      descEl.textContent = `Your rent of ₱${currentRemainingDue.toLocaleString()} was due on ${monthName} ${dueDay}. Please settle immediately to keep your account current.`;
+    }
+  } else if (isUpcoming) {
+    banner.style.display = 'flex';
+    banner.className = 'tenant-due-alert-banner upcoming';
+    if (badgeEl) badgeEl.textContent = 'PAYMENT DUE';
+    const daysLeft = dueDay - day;
+    const dueTiming = daysLeft === 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `in ${daysLeft} days`;
+    if (titleEl) titleEl.textContent = `Monthly Rent Due ${dueTiming} (${monthName} ${dueDay})`;
+    if (descEl) {
+      descEl.textContent = `Your rent of ₱${currentRemainingDue.toLocaleString()} is due on ${monthName} ${dueDay}. Settle conveniently online below.`;
+    }
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 let tenantBuilding3D = null;
@@ -2456,7 +2502,9 @@ function subscribeTenantMessages() {
 
         const docs = (snapshot.docs || [])
           .map((doc) => doc.data())
-          .filter((item) => item.sender === 'tenant' || item.sender === 'admin');
+          .filter((item) =>
+            ['tenant', 'admin', 'system'].includes(String(item.sender || '').toLowerCase())
+          );
         docs.sort((a, b) => resolveMessageTimeMs(a) - resolveMessageTimeMs(b));
 
         latestTenantChatMs = docs.reduce(
@@ -2474,9 +2522,9 @@ function subscribeTenantMessages() {
 
         chatMessages.innerHTML = '';
         docs.forEach((item) => {
+          const isFromTenant = String(item.sender || '').toLowerCase() === 'tenant';
           const msgBubble = document.createElement('div');
-          msgBubble.className =
-            item.sender === 'tenant' ? 'message-bubble sent' : 'message-bubble received';
+          msgBubble.className = isFromTenant ? 'message-bubble sent' : 'message-bubble received';
           const timeMs = resolveMessageTimeMs(item);
           const dateObj = timeMs ? new Date(timeMs) : new Date();
           const timeStr = dateObj.toLocaleTimeString('en-US', {
@@ -2485,8 +2533,18 @@ function subscribeTenantMessages() {
             hour12: true
           });
 
+          if (item.subject) {
+            const subjectDiv = document.createElement('div');
+            subjectDiv.style.fontWeight = '700';
+            subjectDiv.style.fontSize = '12px';
+            subjectDiv.style.marginBottom = '4px';
+            subjectDiv.style.color = isFromTenant ? '#ffffff' : '#047857';
+            subjectDiv.textContent = item.subject;
+            msgBubble.appendChild(subjectDiv);
+          }
+
           const textDiv = document.createElement('div');
-          textDiv.textContent = item.message || '';
+          textDiv.textContent = item.message || item.text || '';
           const timeDiv = document.createElement('div');
           timeDiv.className = 'message-time-stamp';
           timeDiv.textContent = timeStr;

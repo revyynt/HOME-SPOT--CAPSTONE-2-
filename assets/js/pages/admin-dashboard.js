@@ -1168,16 +1168,33 @@ function initAdminPaymentCalendar() {
           '<p class="text-xs text-gray-400 italic">No upcoming unpaid tenant schedules found.</p>';
       } else {
         upcomingEl.innerHTML = cal.upcomingSchedule
-          .map(
-            (item) => `
+          .map((item) => {
+            const itemPayload = encodeURIComponent(
+              JSON.stringify({
+                id: item.tenantId,
+                name: item.tenantName,
+                email: item.tenantEmail,
+                room: item.room,
+                amount: item.amount,
+                dueDay: item.dueDay,
+                dueDate: item.dueDate,
+                status: item.status
+              })
+            );
+            return `
             <div class="p-3 rounded-lg border bg-gray-50 flex items-center justify-between gap-2">
               <div>
                 <div class="text-xs font-bold text-gray-900">${escapeHtml(item.tenantName)} • ${escapeHtml(item.room)}</div>
                 <div class="text-xs text-gray-600">${escapeHtml(item.dueDate)} — <strong>${escapeHtml(formatPHP(item.amount))}</strong></div>
               </div>
-              <span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeStyle(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
-            </div>`
-          )
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                <span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeStyle(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
+                <button type="button" data-action="send-due-alert" data-tenant="${itemPayload}" class="px-2 py-0.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded transition-colors" title="Send Rent Due Reminder Email">
+                  Remind
+                </button>
+              </div>
+            </div>`;
+          })
           .join('');
       }
     }
@@ -1229,12 +1246,15 @@ function initAdminPaymentCalendar() {
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${pillCls}">${escapeHtml(row.status)}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <button data-open-modal="payment" data-tenant="${payload}" class="text-blue-600 hover:text-blue-800 mr-3">
+                <td class="px-6 py-4 whitespace-nowrap text-sm flex items-center gap-2">
+                  <button type="button" data-action="open-payment-modal" data-tenant="${payload}" class="text-blue-600 hover:text-blue-800 font-medium">
                     View Payment
                   </button>
-                  <button data-open-modal="dueDate" data-tenant="${payload}" class="text-green-600 hover:text-green-800">
+                  <button type="button" data-action="open-due-modal" data-tenant="${payload}" class="text-emerald-600 hover:text-emerald-800 font-medium">
                     View Due Date
+                  </button>
+                  <button type="button" data-action="send-due-alert" data-tenant="${payload}" class="px-2 py-0.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded transition-colors flex items-center gap-1" title="Send Rent Due Reminder">
+                    ✉ Remind
                   </button>
                 </td>
               </tr>`;
@@ -1455,6 +1475,224 @@ function initAdminPaymentCalendar() {
         } catch (err) {
           console.error('Failed to remove move-in schedule:', err);
           Toast.error('Could not remove schedule: ' + (err.message || 'Unknown error'));
+        }
+        break;
+      }
+      case 'open-payment-modal': {
+        const payload = btn.dataset.tenant;
+        if (payload) {
+          try {
+            openPaymentModal(JSON.parse(decodeURIComponent(payload)));
+          } catch {}
+        }
+        break;
+      }
+      case 'open-due-modal': {
+        const payload = btn.dataset.tenant;
+        if (payload) {
+          try {
+            openDueDateModal(JSON.parse(decodeURIComponent(payload)));
+          } catch {}
+        }
+        break;
+      }
+      case 'send-due-alert': {
+        const payload = btn.dataset.tenant;
+        if (payload) {
+          try {
+            await sendDueAlert(JSON.parse(decodeURIComponent(payload)));
+          } catch {}
+        }
+        break;
+      }
+      case 'send-all-due-alerts': {
+        await sendAllDueAlerts();
+        break;
+      }
+      default:
+        break;
+    }
+  });
+
+  let activeModalTenant = null;
+
+  const openPaymentModal = (tenant) => {
+    activeModalTenant = tenant;
+    const modal = document.getElementById('paymentModal');
+    if (!modal || !tenant) return;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('modalTenantName', tenant.name || 'Tenant');
+    set('modalRoom', tenant.room || 'Assigned Room');
+    set('modalAmount', formatPHP(tenant.amount || 10000));
+    set('modalDueDate', tenant.dueDate || '5th of each month');
+    set('modalAvatar', initials(tenant.name || 'Tenant'));
+
+    const statusEl = document.getElementById('modalStatus');
+    if (statusEl) {
+      statusEl.textContent = tenant.status || 'Pending';
+      statusEl.className = `px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${badgeStyle(tenant.status)}`;
+    }
+    modal.classList.remove('hidden');
+  };
+
+  const closePaymentModal = () => {
+    document.getElementById('paymentModal')?.classList.add('hidden');
+  };
+
+  const openDueDateModal = (tenant) => {
+    activeModalTenant = tenant;
+    const modal = document.getElementById('dueDateModal');
+    if (!modal || !tenant) return;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('dueDateModalTenantName', tenant.name || 'Tenant');
+    set('dueDateModalRoom', tenant.room || 'Assigned Room');
+    set('dueDateModalDate', `${tenant.dueDay || 5}th of each month`);
+    set('dueDateModalRent', formatPHP(tenant.amount || 10000));
+    set('dueDateModalCycle', `Monthly (${tenant.dueDay || 5}th of each month)`);
+    set('dueDateModalNextDate', tenant.dueDate || `${tenant.dueDay || 5}th of next month`);
+    set('dueDateModalAvatar', initials(tenant.name || 'Tenant'));
+
+    const input = document.getElementById('dueDateModalDayInput');
+    if (input) input.value = tenant.dueDay || 5;
+
+    modal.classList.remove('hidden');
+  };
+
+  const closeDueDateModal = () => {
+    document.getElementById('dueDateModal')?.classList.add('hidden');
+  };
+
+  const sendDueAlert = async (tenant) => {
+    if (!tenant || !tenant.email) {
+      Toast.error('Tenant email is not available.');
+      return;
+    }
+    const ok = await Toast.confirm({
+      title: 'Send Rent Due Alert?',
+      message: `Send an automated rent due reminder email to ${tenant.name} (${tenant.email}) for ${tenant.room}?`,
+      confirmText: 'Send Alert',
+      cancelText: 'Cancel'
+    });
+    if (!ok) return;
+
+    try {
+      const currentOrigin =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : 'https://homespot-mjp.web.app';
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'due_date_alert',
+          to: tenant.email,
+          name: tenant.name,
+          room: tenant.room,
+          amount: tenant.amount,
+          dueDate: tenant.dueDate,
+          dueDay: tenant.dueDay || 5,
+          portalUrl: `${currentOrigin}/login.html`
+        }
+      });
+      if (error) throw error;
+      Toast.success(`Rent due reminder sent to ${tenant.name} (${tenant.email}).`);
+    } catch (err) {
+      console.error('Failed to send due reminder:', err);
+      Toast.error('Failed to dispatch alert: ' + (err.message || 'Check connection'));
+    }
+  };
+
+  const sendAllDueAlerts = async () => {
+    const pendingRows = calTenants.filter(
+      (t) => String(t.status || 'Active').toLowerCase() !== 'archived' && t.email
+    );
+    if (!pendingRows.length) {
+      Toast.error('No active tenants found with email addresses.');
+      return;
+    }
+    const ok = await Toast.confirm({
+      title: 'Dispatch Due Alerts to All Active Tenants?',
+      message: `Send automated rent due date reminder emails to all ${pendingRows.length} active tenant(s)?`,
+      confirmText: 'Send to All',
+      cancelText: 'Cancel'
+    });
+    if (!ok) return;
+
+    let sentCount = 0;
+    const currentOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://homespot-mjp.web.app';
+    for (const t of pendingRows) {
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'due_date_alert',
+            to: t.email,
+            name: t.name || 'Tenant',
+            room: t.room || 'Unit',
+            amount: t.monthlyRent || 10000,
+            dueDay: t.dueDay || 5,
+            dueDate: `Day ${t.dueDay || 5} of each month`,
+            portalUrl: `${currentOrigin}/login.html`
+          }
+        });
+        sentCount += 1;
+      } catch (err) {
+        console.warn('Batch due alert dispatch note:', err);
+      }
+    }
+    Toast.success(`Dispatched automated due date reminders to ${sentCount} tenant(s).`);
+  };
+
+  // Delegated modal button actions (inside or outside section)
+  document.addEventListener('click', async (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const btn = target?.closest('[data-action]');
+    if (!btn) return;
+
+    switch (btn.dataset.action) {
+      case 'close-payment-modal':
+        closePaymentModal();
+        break;
+      case 'close-due-date-modal':
+        closeDueDateModal();
+        break;
+      case 'send-modal-due-alert': {
+        if (activeModalTenant) {
+          await sendDueAlert(activeModalTenant);
+        }
+        break;
+      }
+      case 'save-due-date': {
+        if (!activeModalTenant) return;
+        const input = document.getElementById('dueDateModalDayInput');
+        const newDueDay = parseInt(input?.value, 10);
+        if (!newDueDay || newDueDay < 1 || newDueDay > 31) {
+          Toast.error('Please enter a valid day between 1 and 31.');
+          return;
+        }
+        try {
+          const tenantId = activeModalTenant.id;
+          if (tenantId) {
+            await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenantId), {
+              dueDay: newDueDay,
+              updatedAt: supabaseData.serverTimestamp()
+            });
+            Toast.success(
+              `Updated monthly due day to the ${newDueDay}th for ${activeModalTenant.name}.`
+            );
+            activeModalTenant.dueDay = newDueDay;
+            closeDueDateModal();
+            renderCalendar();
+          }
+        } catch (err) {
+          console.error('Failed to update due date:', err);
+          Toast.error('Could not update due date: ' + (err.message || 'Error'));
         }
         break;
       }

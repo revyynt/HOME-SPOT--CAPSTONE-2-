@@ -4,7 +4,7 @@
  * All data access goes through supabase-service.js.
  */
 
-import { db, supabaseData, getReservationsRef, isDataReady } from '../supabase-service.js';
+import { db, supabase, supabaseData, getReservationsRef, isDataReady } from '../supabase-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
 import { Toast } from './toast.js';
@@ -468,20 +468,25 @@ export async function submitApproveReservation(event) {
   }
 
   if (reservationData?.email) {
-    const sendMail = await Toast.confirm({
-      title: 'Send Approval Email?',
-      message: `Send an approval notification email to ${reservationData.name || 'the applicant'} (${reservationData.email})?`,
-      confirmText: 'Send Email',
-      cancelText: 'Skip'
-    });
-    if (sendMail) {
-      sendReservationNotificationEmail({
-        email: reservationData.email,
-        name: reservationData.name,
-        room: assignedRoom,
-        moveInDate: moveInDate,
-        status: 'Approved'
+    try {
+      const currentOrigin =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : 'https://homespot-mjp.web.app';
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'reservation_approved',
+          to: reservationData.email,
+          name: reservationData.name,
+          room: assignedRoom,
+          moveInDate: moveInDate,
+          amount: monthlyRent,
+          portalUrl: `${currentOrigin}/login.html`
+        }
       });
+      Toast.success(`Automated approval notification email dispatched to ${reservationData.email}.`);
+    } catch (mailErr) {
+      console.warn('send-email reservation approval dispatch error:', mailErr);
     }
   }
 }
@@ -517,20 +522,25 @@ async function directApproveReservation(reservationId) {
   }
 
   if (reservationData?.email) {
-    const sendMail = await Toast.confirm({
-      title: 'Send Approval Email?',
-      message: `Send an approval notification email to ${reservationData.name || 'the applicant'} (${reservationData.email})?`,
-      confirmText: 'Send Email',
-      cancelText: 'Skip'
-    });
-    if (sendMail) {
-      sendReservationNotificationEmail({
-        email: reservationData.email,
-        name: reservationData.name,
-        room: reservationData.room,
-        moveInDate: reservationData.moveInDate,
-        status: 'Approved'
+    try {
+      const currentOrigin =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : 'https://homespot-mjp.web.app';
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'reservation_approved',
+          to: reservationData.email,
+          name: reservationData.name,
+          room: reservationData.room,
+          moveInDate: reservationData.moveInDate,
+          amount: reservationData.amount || 10000,
+          portalUrl: `${currentOrigin}/login.html`
+        }
       });
+      Toast.success(`Automated approval notification email dispatched to ${reservationData.email}.`);
+    } catch (mailErr) {
+      console.warn('send-email reservation approval dispatch error:', mailErr);
     }
   }
 }

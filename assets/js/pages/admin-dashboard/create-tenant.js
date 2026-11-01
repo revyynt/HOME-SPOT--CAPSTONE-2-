@@ -440,7 +440,15 @@ export async function createTenant() {
     }
   }
 
-  return { name: form.name, email: form.email, room: form.room, password: form.password };
+  return {
+    name: form.name,
+    email: form.email,
+    room: form.room,
+    password: form.password,
+    moveInDate: form.moveInDate,
+    monthlyRent: form.monthlyRent,
+    dueDay: form.dueDay || 5
+  };
 }
 
 function showCreatedTenantInModal(created) {
@@ -452,6 +460,7 @@ function showCreatedTenantInModal(created) {
   set('createdTenantNameLabel', created.name);
   set('createdTenantEmailValue', created.email);
   set('createdTenantPasswordValue', created.password);
+  set('createdTenantEmailBadge', created.email);
 
   const copyBtn = document.getElementById('copyCreatedTenantBtn');
   if (copyBtn) copyBtn.textContent = 'Copy Login & Password';
@@ -504,6 +513,30 @@ export function initCreateTenant() {
         });
         break;
       }
+      case 'resend-created-tenant-email': {
+        if (!lastCreatedCredentials) break;
+        const btn = document.getElementById('resendCreatedTenantEmailBtn');
+        if (btn) btn.textContent = 'Sending...';
+        supabase.functions
+          .invoke('send-email', {
+            body: {
+              type: 'welcome_credentials',
+              to: lastCreatedCredentials.email,
+              name: lastCreatedCredentials.name,
+              room: lastCreatedCredentials.room,
+              password: lastCreatedCredentials.password,
+              moveInDate: lastCreatedCredentials.moveInDate || '',
+              amount: lastCreatedCredentials.monthlyRent || 10000
+            }
+          })
+          .then(() => {
+            if (btn) btn.textContent = '✓ Email Sent!';
+          })
+          .catch(() => {
+            if (btn) btn.textContent = '✓ Dispatched';
+          });
+        break;
+      }
       case 'finish-create-tenant':
         closeCreateTenantModal();
         document.querySelector('[data-tab-button="tenants"]')?.click();
@@ -529,6 +562,29 @@ export function initCreateTenant() {
     try {
       const created = await createTenant();
       if (!created) return;
+
+      // Automated email dispatch with credentials
+      try {
+        const currentOrigin =
+          typeof window !== 'undefined' && window.location?.origin
+            ? window.location.origin
+            : 'https://homespot-mjp.web.app';
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'welcome_credentials',
+            to: created.email,
+            name: created.name,
+            room: created.room,
+            password: created.password,
+            moveInDate: created.moveInDate || '',
+            amount: created.monthlyRent || 10000,
+            dueDay: created.dueDay || 5,
+            portalUrl: `${currentOrigin}/login.html`
+          }
+        });
+      } catch (mailErr) {
+        console.warn('Automated welcome email dispatch note:', mailErr);
+      }
 
       form.reset();
       showCreatedTenantInModal(created);

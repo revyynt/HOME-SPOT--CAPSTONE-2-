@@ -870,7 +870,16 @@
                   dates.
                 </p>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  data-action="send-all-due-alerts"
+                  id="btnSendAllDueAlerts"
+                  class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
+                  title="Send automated rent due reminders to all pending/overdue tenants"
+                >
+                  ✉ Send Due Alerts to All
+                </button>
                 <label for="adminCalendarTenantFilter" class="text-xs font-semibold text-gray-600"
                   >Tenant:</label
                 >
@@ -1730,21 +1739,32 @@
             </div>
           </div>
         </div>
-        <div class="p-6 border-t bg-gray-50 flex justify-end gap-3">
-          <button
-            data-action="close-due-date-modal"
-            class="px-4 py-2 border rounded-lg hover:bg-gray-100"
-          >
-            Close
-          </button>
+        <div class="p-6 border-t bg-gray-50 flex justify-between items-center gap-3">
           <button
             type="button"
-            data-action="save-due-date"
-            id="saveDueDateBtn"
-            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+            data-action="send-modal-due-alert"
+            id="sendModalDueAlertBtn"
+            class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold text-sm flex items-center gap-1.5 transition-colors"
           >
-            Update Due Date
+            ✉ Send Due Reminder
           </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              data-action="close-due-date-modal"
+              class="px-4 py-2 border rounded-lg hover:bg-gray-100 text-sm font-medium"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              data-action="save-due-date"
+              id="saveDueDateBtn"
+              class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm transition-colors"
+            >
+              Update Due Date
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -2389,15 +2409,30 @@
             </div>
           </div>
 
+          <div class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
+            <span class="text-base text-emerald-600">✉</span>
+            <span>Automated welcome email with credentials dispatched to <strong id="createdTenantEmailBadge">tenant inbox</strong>.</span>
+          </div>
+
           <div class="pt-2 border-t flex items-center justify-between gap-3">
-            <button
-              type="button"
-              data-action="copy-created-tenant-password"
-              id="copyCreatedTenantBtn"
-              class="px-4 py-2.5 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold transition-colors"
-            >
-              Copy Login &amp; Password
-            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                data-action="copy-created-tenant-password"
+                id="copyCreatedTenantBtn"
+                class="px-4 py-2.5 border border-blue-300 text-blue-700 bg-white hover:bg-blue-50 rounded-lg text-sm font-semibold transition-colors"
+              >
+                Copy Login &amp; Password
+              </button>
+              <button
+                type="button"
+                data-action="resend-created-tenant-email"
+                id="resendCreatedTenantEmailBtn"
+                class="px-3.5 py-2.5 border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-sm font-semibold transition-colors"
+              >
+                ✉ Resend Email
+              </button>
+            </div>
             <button
               type="button"
               data-action="finish-create-tenant"

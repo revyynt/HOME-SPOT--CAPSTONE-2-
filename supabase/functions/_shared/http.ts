@@ -1,9 +1,3 @@
-declare const Deno: {
-  env: {
-    get(name: string): string | undefined;
-  };
-};
-
 const LOCAL_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
