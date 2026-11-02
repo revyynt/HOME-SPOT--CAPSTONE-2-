@@ -1,0 +1,266 @@
+import { supabase, supabaseData } from '../../supabase-service.js';
+import {
+  fetchGateLogs,
+  fetchTenantsPresence,
+  clearGateLogs,
+  confirmAbandonmentAndReleaseRoom,
+  formatGateTimestamp
+} from '../../lib/gate-service.js';
+import { Toast } from '../../render/toast.js';
+
+let currentPresenceList = [];
+let currentGateLogs = [];
+let activeFilter = 'ALL';
+
+export async function refreshGateMonitor() {
+  try {
+    currentPresenceList = await fetchTenantsPresence();
+    currentGateLogs = await fetchGateLogs(50);
+
+    renderGateKpis();
+    renderAwolAlerts();
+    renderGateLogsTable();
+  } catch (err) {
+    console.warn('Error refreshing gate monitor:', err);
+  }
+}
+
+function renderGateKpis() {
+  const totalEl = document.getElementById('gateTotalTenantsCount');
+  const insideEl = document.getElementById('gateInsideCount');
+  const outsideEl = document.getElementById('gateOutsideCount');
+  const awolEl = document.getElementById('gateAwolCount');
+  const badgeEl = document.getElementById('gateAwolBadge');
+
+  const total = currentPresenceList.length;
+  const inside = currentPresenceList.filter((t) => t.gateStatus !== 'OUTSIDE').length;
+  const outside = currentPresenceList.filter((t) => t.gateStatus === 'OUTSIDE').length;
+  const awol = currentPresenceList.filter((t) => t.isAwol).length;
+
+  if (totalEl) totalEl.textContent = total;
+  if (insideEl) insideEl.textContent = inside;
+  if (outsideEl) outsideEl.textContent = outside;
+  if (awolEl) awolEl.textContent = awol;
+
+  if (badgeEl) {
+    if (awol > 0) {
+      badgeEl.textContent = `${awol} AWOL`;
+      badgeEl.classList.remove('hidden');
+    } else {
+      badgeEl.classList.add('hidden');
+    }
+  }
+}
+
+function renderAwolAlerts() {
+  const container = document.getElementById('gateAwolAlertContainer');
+  if (!container) return;
+
+  const awolTenants = currentPresenceList.filter((t) => t.isAwol);
+
+  if (!awolTenants.length) {
+    container.innerHTML = '';
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  container.innerHTML = `
+    <div class="bg-red-50 border-l-4 border-red-500 p-4 sm:p-5 rounded-r-xl shadow-xs">
+      <div class="flex items-start justify-between">
+        <div class="flex items-center space-x-2">
+          <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <h4 class="text-sm font-bold text-red-900">
+            Prolonged Absence Alert: ${awolTenants.length} Tenant(s) Outside > 7 Days (Potential Unannounced Move-Out)
+          </h4>
+        </div>
+      </div>
+      <p class="text-xs text-red-700 mt-1 mb-3">
+        These tenants have tapped OUT at the gate and have not returned for over 7 days. If they have moved out without notice, you can confirm their vacancy to immediately free up the room inventory.
+      </p>
+      <div class="space-y-2">
+        ${awolTenants
+          .map(
+            (t) => `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-white rounded-lg border border-red-200 shadow-2xs gap-2">
+            <div>
+              <p class="text-sm font-bold text-gray-900">${t.name || 'Tenant'} <span class="text-xs font-normal text-gray-500">(${t.room || 'Assigned Room'})</span></p>
+              <p class="text-xs text-red-600 font-medium">Away for <strong>${t.daysAway} days</strong> • Last gate tap: ${formatGateTimestamp(t.lastGateTapAt)}</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button
+                type="button"
+                data-action="confirm-vacate"
+                data-tenant-id="${t.id}"
+                data-tenant-name="${t.name || 'Tenant'}"
+                data-tenant-room="${t.room || ''}"
+                class="px-3 py-1.5 bg-red-600 hover:bg-red-700 active:scale-95 text-white text-xs font-bold rounded-lg transition shadow-xs"
+              >
+                Confirm Vacate & Free Room
+              </button>
+            </div>
+          </div>
+        `
+          )
+          .join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderGateLogsTable() {
+  const tbody = document.getElementById('gateLogsTableBody');
+  if (!tbody) return;
+
+  let filtered = currentGateLogs;
+  if (activeFilter === 'IN') {
+    filtered = currentGateLogs.filter((l) => l.direction === 'IN');
+  } else if (activeFilter === 'OUT') {
+    filtered = currentGateLogs.filter((l) => l.direction === 'OUT');
+  } else if (activeFilter === 'LATE') {
+    filtered = currentGateLogs.filter((l) => l.isLate);
+  }
+
+  if (!filtered.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center py-6 text-sm text-gray-400">
+          No gate activity logs found matching the selected filter.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered
+    .map((log) => {
+      const isEntry = log.direction === 'IN';
+      const pillClass = isEntry
+        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+        : 'bg-amber-100 text-amber-800 border-amber-300';
+      const pillLabel = isEntry ? 'Checked IN' : 'Checked OUT';
+      const curfewHtml = log.isLate
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-300">Curfew Violation</span>'
+        : '<span class="text-xs text-gray-400">On Time</span>';
+
+      return `
+        <tr class="hover:bg-gray-50/80 transition-colors border-b border-gray-100 text-sm">
+          <td class="py-3 px-4 font-semibold text-gray-900">${log.tenantName || 'Tenant'}</td>
+          <td class="py-3 px-4 text-gray-600">${log.room || 'Assigned Room'}</td>
+          <td class="py-3 px-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${pillClass}">
+              ${pillLabel}
+            </span>
+          </td>
+          <td class="py-3 px-4 text-gray-600">${formatGateTimestamp(log.timestamp)}</td>
+          <td class="py-3 px-4">${curfewHtml}</td>
+          <td class="py-3 px-4 font-mono text-xs text-gray-500">${log.cardUid || 'N/A'}</td>
+        </tr>
+      `;
+    })
+    .join('');
+}
+
+export function initGateMonitor() {
+  refreshGateMonitor();
+
+  // Listen to filter buttons
+  const filterButtons = document.querySelectorAll('[data-gate-filter]');
+  filterButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterButtons.forEach((b) => b.classList.remove('bg-emerald-600', 'text-white'));
+      filterButtons.forEach((b) => b.classList.add('bg-gray-100', 'text-gray-700'));
+
+      btn.classList.remove('bg-gray-100', 'text-gray-700');
+      btn.classList.add('bg-emerald-600', 'text-white');
+
+      activeFilter = btn.dataset.gateFilter;
+      renderGateLogsTable();
+    });
+  });
+
+  // Refresh button
+  const refreshBtn = document.getElementById('btnRefreshGatePresence');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', async () => {
+      await refreshGateMonitor();
+      Toast.info('Gate presence logs refreshed.');
+    });
+  }
+
+  // Clear Logs button
+  const clearBtn = document.getElementById('btnClearGateLogs');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', async () => {
+      const confirmed = window.confirm(
+        'Are you sure you want to clear all gate logs?\n\nThis will purge test logs and reset active tenants to Inside status.'
+      );
+      if (!confirmed) return;
+
+      clearBtn.disabled = true;
+      clearBtn.textContent = 'Clearing...';
+
+      try {
+        await clearGateLogs();
+        await refreshGateMonitor();
+        Toast.success('Gate activity logs have been reset.');
+      } catch (err) {
+        Toast.error(err.message || 'Failed to clear logs.');
+      } finally {
+        clearBtn.disabled = false;
+        clearBtn.textContent = 'Clear Logs';
+      }
+    });
+  }
+
+  // Handle Confirm Vacate Button clicks (event delegation)
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-action="confirm-vacate"]');
+    if (!btn) return;
+
+    const tenantId = btn.dataset.tenantId;
+    const tenantName = btn.dataset.tenantName;
+    const roomName = btn.dataset.tenantRoom;
+
+    const confirmRelease = window.confirm(
+      `Confirm tenant vacancy?\n\nTenant: ${tenantName}\nRoom: ${roomName}\n\nThis will mark the tenant as vacated/archived and immediately increment available room slots by 1.`
+    );
+
+    if (!confirmRelease) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Releasing...';
+
+    try {
+      await confirmAbandonmentAndReleaseRoom(tenantId, 'Unannounced Move-out / Abandoned (NFC Inactivity)');
+      Toast.success(`Success! ${tenantName} archived. Room ${roomName} vacancy restored (+1).`);
+      await refreshGateMonitor();
+    } catch (err) {
+      Toast.error(err.message || 'Error releasing room');
+      btn.disabled = false;
+      btn.textContent = 'Confirm Vacate & Free Room';
+    }
+  });
+
+  // Realtime updates with live toast notifications
+  let lastKnownLogId = null;
+  try {
+    supabaseData.onSnapshot(supabaseData.collection(supabase, 'messages'), async () => {
+      const logs = await fetchGateLogs(1);
+      if (logs.length > 0) {
+        const latest = logs[0];
+        if (lastKnownLogId && latest.id !== lastKnownLogId) {
+          const isEntry = latest.direction === 'IN';
+          const statusText = isEntry ? 'Checked IN (Inside Premises)' : 'Checked OUT (Outside Premises)';
+          Toast.info(`🚪 Gate Alert: ${latest.tenantName} (${latest.room}) - ${statusText}`);
+        }
+        lastKnownLogId = latest.id;
+      }
+      refreshGateMonitor();
+    });
+  } catch {
+    // optional realtime
+  }
+}

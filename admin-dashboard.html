@@ -269,6 +269,17 @@
           >
             <span>Floor Plan</span>
           </button>
+          <button
+            data-tab-button="gate-access"
+            class="tab-button px-3.5 sm:px-5 lg:px-6 py-2.5 sm:py-3 text-sm sm:text-base font-medium flex items-center gap-2"
+          >
+            <span>Gate Access</span>
+            <span
+              id="gateAwolBadge"
+              class="bg-red-100 text-red-800 text-xs font-semibold px-2 py-0.5 rounded-full hidden"
+              >0</span
+            >
+          </button>
         </div>
 
         <!-- Tab Content -->
@@ -1483,6 +1494,88 @@
                     class="space-y-1.5 max-h-[260px] overflow-y-auto pr-1"
                   ></div>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gate Access & Physical Presence Monitoring Pane -->
+          <div data-tab-content="gate-access" class="hidden space-y-6">
+            <!-- Header with actions -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+              <div>
+                <h3 class="text-xl font-bold text-gray-900">Gate Access & Physical Presence Monitoring</h3>
+                <p class="text-sm text-gray-500">Live NFC entry/exit tracking, curfew violation alerts, and unannounced move-out (AWOL) detection.</p>
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  type="button"
+                  id="btnRefreshGatePresence"
+                  class="px-3 py-2 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition"
+                >
+                  Refresh Logs
+                </button>
+                <button
+                  type="button"
+                  id="btnClearGateLogs"
+                  class="px-3 py-2 text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-lg transition"
+                >
+                  Clear Logs
+                </button>
+              </div>
+            </div>
+
+            <!-- KPI Metric Badges -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div class="bg-white p-4 rounded-xl border border-gray-100 shadow-xs">
+                <p class="text-xs font-medium text-gray-500">Total Active Tenants</p>
+                <p id="gateTotalTenantsCount" class="text-2xl font-black text-gray-900 mt-1">0</p>
+              </div>
+              <div class="bg-emerald-50/60 p-4 rounded-xl border border-emerald-100 shadow-xs">
+                <p class="text-xs font-medium text-emerald-800">Currently Inside Building</p>
+                <p id="gateInsideCount" class="text-2xl font-black text-emerald-700 mt-1">0</p>
+              </div>
+              <div class="bg-amber-50/60 p-4 rounded-xl border border-amber-100 shadow-xs">
+                <p class="text-xs font-medium text-amber-800">Currently Outside / Away</p>
+                <p id="gateOutsideCount" class="text-2xl font-black text-amber-700 mt-1">0</p>
+              </div>
+              <div class="bg-red-50/60 p-4 rounded-xl border border-red-100 shadow-xs">
+                <p class="text-xs font-medium text-red-800">Prolonged Absence (>7 Days)</p>
+                <p id="gateAwolCount" class="text-2xl font-black text-red-700 mt-1">0</p>
+              </div>
+            </div>
+
+            <!-- Prolonged Absence (AWOL) Warning Box -->
+            <div id="gateAwolAlertContainer" class="hidden"></div>
+
+            <!-- Gate Access Ledger Table -->
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+              <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Gate Activity Log</h4>
+                <div class="flex items-center space-x-2">
+                  <button type="button" data-gate-filter="ALL" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white transition">All Logs</button>
+                  <button type="button" data-gate-filter="IN" class="px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Entries (IN)</button>
+                  <button type="button" data-gate-filter="OUT" class="px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Exits (OUT)</button>
+                  <button type="button" data-gate-filter="LATE" class="px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Curfew Alerts</button>
+                </div>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase font-bold text-gray-500">
+                      <th class="py-3 px-4">Tenant</th>
+                      <th class="py-3 px-4">Unit / Room</th>
+                      <th class="py-3 px-4">Direction</th>
+                      <th class="py-3 px-4">Date & Time</th>
+                      <th class="py-3 px-4">Curfew Status</th>
+                      <th class="py-3 px-4">Card UID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gateLogsTableBody">
+                    <tr>
+                      <td colspan="6" class="text-center py-6 text-sm text-gray-400">Loading gate logs...</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

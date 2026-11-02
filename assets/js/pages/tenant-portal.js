@@ -26,6 +26,7 @@ import {
   syncBuildingUnitsWithRooms
 } from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
+import { formatGateTimestamp } from '../lib/gate-logic.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
 // parsing and scenario cascade. The tested decision logic already exists in
@@ -766,6 +767,32 @@ async function fetchTenantSupabaseProfile() {
         }
         populateTenantUI();
 
+        // Render Keycard & Presence data
+        const cardUid = docData.cardUid || `NFC-${String(tenantRoom || '101').replace(/\D+/g, '')}`;
+        const gateStatus = docData.gateStatus || 'INSIDE';
+        const lastGateTapAt = docData.lastGateTapAt;
+
+        const cardUidEl = document.getElementById('tenantCardUidDisplay');
+        const cardRoomEl = document.getElementById('tenantCardRoomDisplay');
+        const presenceBadge = document.getElementById('tenantGatePresenceBadge');
+        const lastTapEl = document.getElementById('tenantLastGateTapDisplay');
+
+        if (cardUidEl) cardUidEl.textContent = cardUid;
+        if (cardRoomEl) cardRoomEl.textContent = `Room: ${tenantRoom || 'Assigned Room'}`;
+        if (lastTapEl) lastTapEl.textContent = formatGateTimestamp(lastGateTapAt);
+
+        if (presenceBadge) {
+          if (gateStatus === 'OUTSIDE') {
+            presenceBadge.style.background = '#fef3c7';
+            presenceBadge.style.color = '#92400e';
+            presenceBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Currently Away / Checked Out';
+          } else {
+            presenceBadge.style.background = '#d1fae5';
+            presenceBadge.style.color = '#065f46';
+            presenceBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Currently Inside Building';
+          }
+        }
+
         if (docData.rulesAgreedByTenant === true) {
           const m = document.getElementById('tenantTermsAgreementModal');
           if (m) m.style.display = 'none';
@@ -865,6 +892,61 @@ function switchTab(tabName, evt) {
     setTimeout(() => {
       ensureTenantBuilding3DInitialized();
     }, 40);
+  }
+  if (tabName === 'gate-access') {
+    loadTenantGateLogs();
+  }
+}
+
+async function loadTenantGateLogs() {
+  const tbody = document.getElementById('tenantGateLogsTableBody');
+  if (!tbody) return;
+
+  try {
+    const messagesRef = supabaseData.collection(supabase, 'messages');
+    const snap = await supabaseData.getDocs(messagesRef);
+    const logs = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((m) => m.type === 'gate_log')
+      .filter((m) => {
+        if (currentTenantDocId && m.tenantId === currentTenantDocId) return true;
+        if (userEmail && m.email && m.email.toLowerCase() === userEmail.toLowerCase()) return true;
+        if (tenantRoom && m.room === tenantRoom) return true;
+        return false;
+      })
+      .sort((a, b) => new Date(b.timestamp || b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime());
+
+    if (!logs.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #94a3b8;">No gate activity recorded yet. Tap your NFC keycard at the gate scanner to record entry or exit.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = logs
+      .map((log) => {
+        const isEntry = log.direction === 'IN';
+        const pillBg = isEntry ? '#d1fae5' : '#fef3c7';
+        const pillColor = isEntry ? '#065f46' : '#92400e';
+        const pillText = isEntry ? 'Checked IN' : 'Checked OUT';
+        const curfewHtml = log.isLate
+          ? '<span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #fee2e2; color: #991b1b;">Late (Curfew)</span>'
+          : '<span style="color: #94a3b8; font-size: 11px;">Normal</span>';
+
+        return `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px;">
+              <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: ${pillBg}; color: ${pillColor};">
+                ${pillText}
+              </span>
+            </td>
+            <td style="padding: 10px 12px; color: #1e293b;">${formatGateTimestamp(log.timestamp)}</td>
+            <td style="padding: 10px 12px;">${curfewHtml}</td>
+            <td style="padding: 10px 12px; font-family: monospace; color: #64748b;">${log.cardUid || 'N/A'}</td>
+          </tr>
+        `;
+      })
+      .join('');
+  } catch (err) {
+    console.warn('Error loading tenant gate logs:', err);
   }
 }
 

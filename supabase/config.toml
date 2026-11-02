@@ -125,6 +125,9 @@ file_size_limit = "50MiB"
 # allowed_mime_types = ["image/png", "image/jpeg"]
 # objects_path = "./images"
 
+[functions.gate-tap]
+verify_jwt = false
+
 [functions.site]
 verify_jwt = false
 

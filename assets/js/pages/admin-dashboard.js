@@ -223,6 +223,7 @@ import {
   openCreateTenantModalFromData
 } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
+import { initGateMonitor } from './admin-dashboard/gate-monitor.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
 import { initPanoramaViewer } from '../lib/panorama.js';
@@ -2670,6 +2671,7 @@ document.addEventListener(
     initAdminOverviewActivity();
     initAdminDataAnalysis();
     initAdminBuilding3D();
+    initGateMonitor();
   },
   { once: true }
 );
