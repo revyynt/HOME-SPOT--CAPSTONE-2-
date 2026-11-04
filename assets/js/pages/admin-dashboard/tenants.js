@@ -33,6 +33,7 @@ import { Toast } from '../../render/toast.js';
 let allTenants = [];
 let loadedTenants = [];
 let currentViewingTenant = null;
+let currentTenantTab = 'active'; // 'active' | 'archived'
 
 export function getTenants() {
   return loadedTenants;
@@ -60,11 +61,11 @@ export function listenToTenants() {
       (t) => String(t.status || 'Active').toLowerCase() !== 'archived'
     );
     if (statusEl) {
-      statusEl.textContent = `Synced with Supabase (${loadedTenants.length} tenants)`;
+      statusEl.textContent = `Synced with Supabase (${loadedTenants.length} active)`;
       statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
     }
     renderFiltered();
-    updateTenantStats(loadedTenants);
+    updateTenantStats();
     refreshTenantMessenger();
     refreshTenantRoomOptions();
   };
@@ -82,13 +83,54 @@ export function listenToTenants() {
   );
 }
 
+/**
+ * Toggles the tenant list between 'active' and 'archived' tabs.
+ * @param {'active' | 'archived'} tab
+ */
+export function setTenantTab(tab) {
+  currentTenantTab = tab === 'archived' ? 'archived' : 'active';
+  const activeBtn = document.getElementById('tabActiveTenants');
+  const archivedBtn = document.getElementById('tabArchivedTenants');
+  const activeBadge = document.getElementById('badgeActiveTenantsCount');
+  const archivedBadge = document.getElementById('badgeArchivedTenantsCount');
+  const label = document.getElementById('tenantTableContextLabel');
+
+  if (currentTenantTab === 'active') {
+    activeBtn?.classList.remove('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    activeBtn?.classList.add('bg-blue-600', 'text-white', 'shadow-sm');
+    activeBadge?.classList.remove('bg-gray-200', 'text-gray-700');
+    activeBadge?.classList.add('bg-blue-700', 'text-white');
+
+    archivedBtn?.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+    archivedBtn?.classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    archivedBadge?.classList.remove('bg-slate-600', 'text-white');
+    archivedBadge?.classList.add('bg-gray-200', 'text-gray-700');
+
+    if (label) label.textContent = 'Showing currently enrolled active tenants';
+  } else {
+    archivedBtn?.classList.remove('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    archivedBtn?.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+    archivedBadge?.classList.remove('bg-gray-200', 'text-gray-700');
+    archivedBadge?.classList.add('bg-slate-600', 'text-white');
+
+    activeBtn?.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+    activeBtn?.classList.add('text-gray-600', 'hover:text-gray-900', 'hover:bg-gray-200');
+    activeBadge?.classList.remove('bg-blue-700', 'text-white');
+    activeBadge?.classList.add('bg-gray-200', 'text-gray-700');
+
+    if (label) label.textContent = 'Showing former and archived inactive tenant records';
+  }
+
+  renderFiltered();
+}
+
 /** Applies the search + room filters and re-renders. */
 export function renderFiltered() {
   const search = (document.getElementById('tenantSearchInput')?.value || '').toLowerCase().trim();
   const roomFilter = (document.getElementById('tenantRoomFilter')?.value || '').trim();
 
-  const isArchivedFilter = roomFilter === '__archived__';
-  const sourceList = isArchivedFilter
+  const isArchived = currentTenantTab === 'archived' || roomFilter === '__archived__';
+  const sourceList = isArchived
     ? allTenants.filter((t) => String(t.status || '').toLowerCase() === 'archived')
     : loadedTenants;
 
@@ -99,16 +141,14 @@ export function renderFiltered() {
       .toLowerCase();
     const matchesSearch = !search || haystack.includes(search);
     const matchesRoom =
-      isArchivedFilter ||
-      !roomFilter ||
-      (t.room || '').toLowerCase().includes(roomFilter.toLowerCase());
+      isArchived || !roomFilter || (t.room || '').toLowerCase().includes(roomFilter.toLowerCase());
     return matchesSearch && matchesRoom;
   });
 
-  renderTenantsTable(filtered);
+  renderTenantsTable(filtered, isArchived);
 }
 
-function renderTenantsTable(tenants) {
+function renderTenantsTable(tenants, isArchived = false) {
   const tbody = document.getElementById('tenantsTableBody');
   if (!tbody) return;
 
@@ -116,8 +156,12 @@ function renderTenantsTable(tenants) {
     tbody.innerHTML = `
       <tr>
         <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-          <p class="font-medium">No tenants found</p>
-          <p class="text-sm mt-1">Adjust the filters, or create a tenant account.</p>
+          <p class="font-medium">${isArchived ? 'No archived or inactive tenants found' : 'No active tenants found'}</p>
+          <p class="text-sm mt-1">${
+            isArchived
+              ? 'When tenants move out or accounts are archived, their records appear here for historical tracking and reactivation.'
+              : 'Adjust the filters, or create a tenant account.'
+          }</p>
         </td>
       </tr>`;
     return;
@@ -130,57 +174,81 @@ function renderTenantsTable(tenants) {
 
       return `
         <tr class="hover:bg-gray-50/70 transition-colors">
-          <td class="px-4 py-3.5">
+          <td class="block md:table-cell pb-2.5 mb-2 border-b border-gray-100 md:border-none md:px-4 md:py-3.5 md:mb-0">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-gradient-to-tr ${gradient} text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
                 ${escapeHtml(initials(t.name))}
               </div>
-              <div class="min-w-0">
-                <div class="font-bold text-gray-900">${escapeHtml(t.name || 'Tenant')}</div>
-                <div class="text-xs text-gray-500 font-mono break-all">${escapeHtml(t.email || '—')}</div>
+              <div class="min-w-0 flex-1">
+                <div class="font-bold text-gray-900 truncate">${escapeHtml(t.name || 'Tenant')}</div>
+                <div class="text-xs text-gray-500 font-mono truncate">${escapeHtml(t.email || '—')}</div>
               </div>
             </div>
           </td>
-          <td class="px-4 py-3.5">
-            ${
-              String(t.status || '').toLowerCase() === 'archived'
-                ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
-                   ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
-                : `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
-                    ${escapeHtml(t.room || 'Unassigned')}
-                  </span>
-                  <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
-            }
-          </td>
-          <td class="px-4 py-3.5">
-            <div class="text-sm text-gray-800">${escapeHtml(t.phone || '—')}</div>
-            ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${escapeHtml(t.emergencyContact)}</div>` : ''}
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap text-sm text-gray-600">
-            ${escapeHtml(t.moveInDate || '—')}
-            <div class="text-xs text-gray-400">${escapeHtml(t.leaseTerm || '1 Year')}</div>
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap">
-            <div class="font-bold text-gray-900">${escapeHtml(rent)}</div>
-            <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap">
-            ${
-              String(t.status || '').toLowerCase() === 'archived'
-                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">● Archived</span>'
-                : getTenantLifecycle(t) === 'Pending Move-In'
-                  ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
-                  : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
-            }
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
-            <div class="flex items-center justify-end gap-1.5">
-              <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Assigned Room</span>
+            <div class="text-right md:text-left">
               ${
                 String(t.status || '').toLowerCase() === 'archived'
-                  ? `<button data-action="reactivate" data-id="${attr(t.id)}" title="Reactivate / Re-assign Room" class="px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200">Reactivate</button>`
-                  : `<button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
-                     <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove & Archive Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">x</button>`
+                  ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
+                     ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
+                  : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                      ${escapeHtml(t.room || 'Unassigned')}
+                    </span>
+                    <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
+              }
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Contact</span>
+            <div class="text-right md:text-left">
+              <div class="text-sm text-gray-800">${escapeHtml(t.phone || '—')}</div>
+              ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${escapeHtml(t.emergencyContact)}</div>` : ''}
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5 whitespace-nowrap text-sm text-gray-600">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Move-in Date</span>
+            <div class="text-right md:text-left">
+              <div>${escapeHtml(t.moveInDate || '—')}</div>
+              <div class="text-xs text-gray-400">${escapeHtml(t.leaseTerm || '1 Year')}</div>
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5 whitespace-nowrap">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Monthly Rent</span>
+            <div class="text-right md:text-left">
+              <div class="font-bold text-gray-900">${escapeHtml(rent)}</div>
+              <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5 whitespace-nowrap">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Status</span>
+            <div class="text-right md:text-left">
+              ${
+                String(t.status || '').toLowerCase() === 'archived'
+                  ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">● Archived</span>'
+                  : getTenantLifecycle(t) === 'Pending Move-In'
+                    ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
+                    : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
+              }
+              ${
+                String(t.status || '').toLowerCase() !== 'archived'
+                  ? `<div class="text-[11px] mt-0.5 font-medium ${
+                      t.rulesAgreedByTenant === true ? 'text-blue-600' : 'text-amber-600'
+                    }">
+                      ${t.rulesAgreedByTenant === true ? 'Rules Accepted' : 'Rules Pending'}
+                    </div>`
+                  : ''
+              }
+            </div>
+          </td>
+          <td class="block md:table-cell pt-2.5 mt-2 border-t border-gray-100 md:border-none md:px-4 md:py-3.5 md:mt-0 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end gap-2 md:gap-1.5">
+              <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="flex-1 md:flex-initial px-3 py-1.5 md:p-1.5 text-xs md:text-sm font-semibold text-blue-700 md:text-gray-500 bg-blue-50/70 md:bg-transparent border border-blue-200 md:border-none hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
+              ${
+                String(t.status || '').toLowerCase() === 'archived'
+                  ? `<button data-action="reactivate" data-id="${attr(t.id)}" title="Reactivate / Re-assign Room" class="flex-1 md:flex-initial px-3 py-1.5 md:px-2 md:py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200">Reactivate</button>`
+                  : `<button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="flex-1 md:flex-initial px-3 py-1.5 md:p-1.5 text-xs md:text-sm font-semibold text-emerald-700 md:text-gray-500 bg-emerald-50/70 md:bg-transparent border border-emerald-200 md:border-none hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
+                     <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove & Archive Account" class="px-3 py-1.5 md:p-1.5 text-xs md:text-sm font-semibold text-red-600 md:text-gray-400 bg-red-50/70 md:bg-transparent border border-red-200 md:border-none hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">Archive</button>`
               }
             </div>
           </td>
@@ -189,20 +257,27 @@ function renderTenantsTable(tenants) {
     .join('');
 }
 
-function updateTenantStats(tenants) {
-  const active = tenants.filter((t) => getTenantLifecycle(t) === 'Active').length;
-  const totalRent = tenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
+function updateTenantStats(source = allTenants) {
+  const activeTenants = source.filter(
+    (t) => String(t.status || 'Active').toLowerCase() !== 'archived'
+  );
+  const archivedTenants = source.filter((t) => String(t.status || '').toLowerCase() === 'archived');
+  const activeMovedIn = activeTenants.filter((t) => getTenantLifecycle(t) === 'Active');
+  const totalRent = activeTenants.reduce((sum, t) => sum + (Number(t.monthlyRent) || 0), 0);
 
   const set = (id, value) => {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
   };
 
-  set('activeBookingsCount', active);
-  set('tenantsCountBadge', tenants.length);
-  set('tenantsStatTotal', tenants.length);
-  set('tenantsStatActive', active);
+  set('activeBookingsCount', activeMovedIn.length);
+  set('tenantsCountBadge', activeTenants.length);
+  set('tenantsStatTotal', activeTenants.length);
+  set('tenantsStatArchived', archivedTenants.length);
+  set('tenantsStatActive', activeMovedIn.length);
   set('tenantsStatRent', formatPHP(totalRent));
+  set('badgeActiveTenantsCount', activeTenants.length);
+  set('badgeArchivedTenantsCount', archivedTenants.length);
 }
 
 /** Populates and reveals the read-only tenant profile modal. */
@@ -227,6 +302,26 @@ export function viewTenantDetails(tenantId) {
   set('viewTenantDue', `Due every ${tenant.dueDay || 5}th`);
   set('viewTenantMoveIn', tenant.moveInDate || '—');
   set('viewTenantPhone', tenant.phone || '—');
+  const rentNum = Number(tenant.monthlyRent) || 10000;
+  const advanceRentNum = Number(tenant.advanceRent) || Number(tenant.advanceDeposit) || rentNum;
+  const secDepNum = Number(tenant.securityDeposit) || rentNum * 2;
+  set('viewTenantAdvanceRent', formatPHP(advanceRentNum));
+  set('viewTenantSecurityDeposit', formatPHP(secDepNum));
+  set('viewTenantLeaseTerm', tenant.leaseTerm || '6 Months');
+  set(
+    'viewTenantAdminVerified',
+    tenant.contractSigned !== false ? '✓ Contract & Fees Verified' : 'Pending Verification'
+  );
+  const compEl = document.getElementById('viewTenantCompliance');
+  if (compEl) {
+    if (tenant.rulesAgreedByTenant === true) {
+      compEl.textContent = 'Accepted in Tenant Portal';
+      compEl.className = 'text-blue-700 font-semibold';
+    } else {
+      compEl.textContent = 'Pending Tenant Portal Acceptance';
+      compEl.className = 'text-amber-600 font-semibold';
+    }
+  }
   set('viewTenantLoginEmail', tenant.email || '—');
   // Never stored client-side; Supabase Auth owns the credential.
   set('viewTenantLoginPassword', 'Managed by Supabase Auth');
@@ -346,13 +441,16 @@ export async function deleteTenantAccount(tenantId, tenantName) {
       target.previousRoom = prevRoom;
       target.room = '';
       target.archivedAt = new Date().toISOString();
+      if (!allTenants.some((t) => t.id === target.id)) {
+        allTenants.push(target);
+      }
     }
     loadedTenants = loadedTenants.filter((t) => t.id !== tenantId);
-    renderFiltered();
-    updateTenantStats(loadedTenants);
+    updateTenantStats(allTenants);
     refreshTenantMessenger();
     refreshTenantRoomOptions();
-    Toast.success(`Tenant "${tenantName}" has been archived. Room is now available.`);
+    setTenantTab('archived');
+    Toast.success(`Tenant "${tenantName}" has been moved to Inactive records.`);
   } catch (error) {
     console.error('Failed to archive tenant:', error);
     Toast.alert({
@@ -399,8 +497,29 @@ export function initTenantTable() {
     el?.addEventListener('change', renderFiltered);
   }
 
+  document
+    .getElementById('tabActiveTenants')
+    ?.addEventListener('click', () => setTenantTab('active'));
+  document
+    .getElementById('tabArchivedTenants')
+    ?.addEventListener('click', () => setTenantTab('archived'));
+  document
+    .getElementById('cardActiveTenantsStat')
+    ?.addEventListener('click', () => setTenantTab('active'));
+  document
+    .getElementById('cardArchivedTenantsStat')
+    ?.addEventListener('click', () => setTenantTab('archived'));
+
   document.addEventListener('click', async (event) => {
     const target = event.target instanceof Element ? event.target : null;
+    if (target?.closest('#tabActiveTenants') || target?.closest('#cardActiveTenantsStat')) {
+      setTenantTab('active');
+      return;
+    }
+    if (target?.closest('#tabArchivedTenants') || target?.closest('#cardArchivedTenantsStat')) {
+      setTenantTab('archived');
+      return;
+    }
     if (target?.closest('[data-action="copy-credentials"]')) {
       copyCurrentTenantCredentials();
       return;

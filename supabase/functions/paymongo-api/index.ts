@@ -1,10 +1,3 @@
-declare const Deno: {
-  env: {
-    get(name: string): string | undefined;
-  };
-  serve(handler: (request: Request) => Promise<Response> | Response): void;
-};
-
 import { adminClient, authenticatedUser } from '../_shared/auth.ts';
 import { jsonResponse, optionsResponse } from '../_shared/http.ts';
 

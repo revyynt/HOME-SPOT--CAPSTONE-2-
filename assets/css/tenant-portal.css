@@ -1762,3 +1762,145 @@ html[data-auth-pending] body {
   background: #ecfdf5;
   border-color: #059669;
 }
+
+.tenant-due-alert-banner {
+  margin: 16px 0 20px 0;
+  padding: 16px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  flex-wrap: wrap;
+}
+
+.tenant-due-alert-banner.upcoming {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.tenant-due-alert-banner.overdue {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.due-alert-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.due-alert-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.tenant-due-alert-banner.upcoming .due-alert-badge {
+  background: #f59e0b;
+  color: white;
+}
+
+.tenant-due-alert-banner.overdue .due-alert-badge {
+  background: #dc2626;
+  color: white;
+}
+
+.due-alert-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.due-alert-desc {
+  font-size: 12.5px;
+  opacity: 0.95;
+}
+
+.due-alert-action-btn {
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tenant-due-alert-banner.upcoming .due-alert-action-btn {
+  background: #d97706;
+  color: white;
+}
+
+.tenant-due-alert-banner.upcoming .due-alert-action-btn:hover {
+  background: #b45309;
+}
+
+.tenant-due-alert-banner.overdue .due-alert-action-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.tenant-due-alert-banner.overdue .due-alert-action-btn:hover {
+  background: #b91c1c;
+}
+
+/* Mobile Calendar Border Highlights & Middle-Aged Ergonomics */
+@media (max-width: 640px) {
+  body {
+    background-color: #f0f2f5;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .cal-cell {
+    min-height: 42px !important;
+    padding: 4px 2px !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cal-cell.has-paid {
+    border: 2px solid #16a34a !important;
+    background: #f0fdf4 !important;
+  }
+
+  .cal-cell.has-overdue {
+    border: 2px solid #dc2626 !important;
+    background: #fef2f2 !important;
+  }
+
+  .cal-cell.has-due {
+    border: 2px solid #d97706 !important;
+    background: #fffbeb !important;
+  }
+
+  .cal-cell.has-scheduled {
+    border: 2px solid #2563eb !important;
+    background: #eff6ff !important;
+  }
+
+  .cal-chip {
+    display: none !important;
+  }
+
+  .tab-btn {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+}

@@ -129,6 +129,21 @@ function isDueDateBeforeMoveIn(dueDateObj, moveInDateStr) {
   return dueDateObj.getTime() < moveInStart;
 }
 
+function isFirstDueAfterMoveIn(dueDateObj, moveInDateStr, dueDay) {
+  if (!moveInDateStr) return false;
+  const m = new Date(moveInDateStr);
+  if (Number.isNaN(m.getTime())) return false;
+  let firstDue = new Date(m.getFullYear(), m.getMonth(), dueDay);
+  if (firstDue.getTime() <= m.getTime()) {
+    firstDue = new Date(m.getFullYear(), m.getMonth() + 1, dueDay);
+  }
+  return (
+    dueDateObj.getFullYear() === firstDue.getFullYear() &&
+    dueDateObj.getMonth() === firstDue.getMonth() &&
+    dueDateObj.getDate() === firstDue.getDate()
+  );
+}
+
 function isBeforeMoveIn(year, month, moveInDateStr) {
   if (!moveInDateStr) return false;
   const d = new Date(moveInDateStr);
@@ -280,7 +295,17 @@ export function buildPaymentCalendar({
 
     const monthPaidPayments = getPaymentsForMonth(filteredPayments, tenant, year, month);
 
-    const paidSum = monthPaidPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    let paidSum = monthPaidPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+
+    // If an advance security deposit was paid/recorded and no separate payment transaction was logged,
+    // automatically deduct it against the first scheduled rent due following move-in
+    if (
+      paidSum === 0 &&
+      Number(tenant.advanceDeposit) > 0 &&
+      isFirstDueAfterMoveIn(dueDateObj, tenant.moveInDate, dueDay)
+    ) {
+      paidSum = Number(tenant.advanceDeposit);
+    }
     const explicitSettled =
       isCurrentMonth &&
       tenant.amountDue !== undefined &&

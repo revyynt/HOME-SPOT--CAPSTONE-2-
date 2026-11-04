@@ -130,29 +130,70 @@
           <span>Sign In to Account</span>
           <span class="transition-transform group-hover:translate-x-1">→</span>
         </button>
+
+        <!-- Google Sign-In Button -->
+        <div class="relative my-4">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div
+            class="relative flex justify-center text-xs uppercase tracking-wider text-gray-400 font-medium"
+          >
+            <span class="bg-white px-2">or continue with</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          id="btnGoogleSignIn"
+          class="w-full py-3 px-4 bg-white hover:bg-gray-50 active:bg-gray-100 text-gray-700 font-semibold rounded-xl border border-gray-300 shadow-xs hover:shadow-sm transition-all flex items-center justify-center gap-3"
+        >
+          <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+            <path
+              fill="#4285F4"
+              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.02h3.87c2.26-2.09 3.57-5.16 3.57-8.12z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.02c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.12C3.26 21.36 7.35 24 12 24z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.27 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.61H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.39l4.02-3.12z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.26 2.64 1.25 6.61l4.02 3.12c.95-2.85 3.6-4.98 6.73-4.98z"
+            />
+          </svg>
+          <span>Continue with Google</span>
+        </button>
+        <p class="text-[11px] text-gray-400 text-center mt-2 select-none">
+          For active tenants or approved reservation holders only.
+        </p>
       </form>
 
       <!-- Quick Access & Info Divider -->
-      <div class="relative my-8">
+      <div class="relative my-6">
         <div class="absolute inset-0 flex items-center">
           <div class="w-full border-t border-gray-200"></div>
         </div>
         <div
           class="relative flex justify-center text-xs uppercase tracking-widest font-semibold text-gray-400"
         >
-          <span class="bg-slate-50 px-3">QUICK ACCESS &amp; INFO</span>
+          <span class="bg-slate-50 px-3">NEW USER REGISTRATION</span>
         </div>
       </div>
 
       <!-- Account Info Link -->
       <div class="text-center text-sm text-gray-600">
-        <span>New tenant moving in?</span>
+        <span>Don't have an account yet?</span>
         <button
           type="button"
           id="signupLink"
-          class="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline ml-1"
+          class="font-semibold text-emerald-600 hover:text-emerald-700 hover:underline ml-1 cursor-pointer"
         >
-          Account creation info
+          Create an account
         </button>
       </div>
 
@@ -164,65 +205,146 @@
       </div>
     </div>
 
-    <!-- Tenant Account Notice Modal -->
+    <!-- Tenant Self-Registration Modal -->
     <div
       id="signupModal"
-      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto"
       style="display: none"
     >
-      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+      <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden my-8">
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 class="text-lg font-bold text-gray-900">Tenant Account Notice</h2>
+          <div>
+            <h2 class="text-lg font-bold text-gray-900">Create Tenant Account</h2>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Register your account or claim your approved reservation
+            </p>
+          </div>
           <button
             type="button"
             id="closeModalBtn"
-            class="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            class="text-gray-400 hover:text-gray-600 text-2xl leading-none p-1"
           >
             &times;
           </button>
         </div>
-        <div class="p-6 text-gray-600 text-sm leading-relaxed">
-          <div class="flex items-center gap-3 mb-3">
-            <div
-              class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center flex-shrink-0"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                ></path>
-              </svg>
+
+        <div class="p-6">
+          <div
+            id="signupAlert"
+            class="hidden mb-4 p-3 rounded-xl text-xs leading-relaxed border"
+          ></div>
+
+          <form id="signupForm" class="space-y-3.5">
+            <div>
+              <label for="signupName" class="block text-xs font-semibold text-gray-700 mb-1"
+                >Full Name</label
+              >
+              <input
+                type="text"
+                id="signupName"
+                placeholder="e.g. Juan Dela Cruz"
+                required
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
             </div>
-            <h3 class="text-base font-bold text-gray-900">Moving into MJP Residences?</h3>
-          </div>
-          <p class="mb-3">
-            Tenant accounts are created by the <strong>Apartment Administrator</strong> upon move-in
-            to link your assigned room, lease term, and monthly rent schedule.
-          </p>
-          <p class="mb-4 text-xs text-gray-500">
-            If you have moved in or finalized your reservation, please ask the admin for your
-            official login credentials or visit the on-site office:
-          </p>
-          <a
-            href="https://www.google.com/maps?q=14.650403,120.977636"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mb-5 p-3 bg-blue-50/70 hover:bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between gap-2 text-xs font-semibold text-blue-700 transition-colors"
-          >
-            <span
-              >MX2H+53C, 9th Ave, Grace Park West, Manila, Metro Manila (Open in Google Maps)</span
+
+            <div>
+              <label for="signupEmail" class="block text-xs font-semibold text-gray-700 mb-1"
+                >Email Address</label
+              >
+              <input
+                type="email"
+                id="signupEmail"
+                placeholder="e.g. juan@example.com"
+                required
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+              <p class="text-[11px] text-gray-400 mt-0.5">
+                Use the email you used for your room reservation (if any).
+              </p>
+            </div>
+
+            <div>
+              <label for="signupPhone" class="block text-xs font-semibold text-gray-700 mb-1"
+                >Mobile Number</label
+              >
+              <input
+                type="tel"
+                id="signupPhone"
+                placeholder="0912 345 6789"
+                required
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label for="signupPassword" class="block text-xs font-semibold text-gray-700 mb-1"
+                >Password</label
+              >
+              <input
+                type="password"
+                id="signupPassword"
+                placeholder="At least 6 characters"
+                minlength="6"
+                required
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label
+                for="signupConfirmPassword"
+                class="block text-xs font-semibold text-gray-700 mb-1"
+                >Confirm Password</label
+              >
+              <input
+                type="password"
+                id="signupConfirmPassword"
+                placeholder="Repeat password"
+                minlength="6"
+                required
+                class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
+            </div>
+
+            <!-- Terms & Resident Certification -->
+            <div class="pt-1">
+              <label
+                class="flex items-start gap-2.5 text-xs text-gray-600 cursor-pointer select-none"
+              >
+                <input
+                  type="checkbox"
+                  id="signupTerms"
+                  required
+                  class="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0 cursor-pointer"
+                />
+                <span class="leading-snug">
+                  I certify that I am an actual tenant of <strong>MJP Residences</strong> or have an
+                  approved room reservation confirmed by the property administration.
+                </span>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              id="signupSubmitBtn"
+              class="w-full mt-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl transition shadow-md flex items-center justify-center gap-2"
             >
-            <span>↗</span>
-          </a>
-          <button
-            type="button"
-            id="understoodBtn"
-            class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors"
-          >
-            Understood
-          </button>
+              <span>Create Account</span>
+              <span>→</span>
+            </button>
+          </form>
+
+          <div class="mt-4 pt-3 border-t border-gray-100 text-center text-xs text-gray-500">
+            <span>Already have an account?</span>
+            <button
+              type="button"
+              id="understoodBtn"
+              class="text-blue-600 font-semibold hover:underline ml-1"
+            >
+              Sign In
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -230,6 +352,118 @@
     <script type="module" src="./assets/js/supabase-service.js"></script>
     <script type="module" src="./assets/js/lib/maintenance.js"></script>
     <script type="module" src="./assets/js/pages/login.js"></script>
+
+    <!-- Google OAuth Resident Terms & Eligibility Modal -->
+    <div
+      id="googleTermsModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden border border-gray-100 my-8"
+      >
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <div class="flex items-center gap-2.5">
+            <div
+              class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center"
+            >
+              <svg
+                class="w-5 h-5 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-base font-bold text-gray-900">Resident Eligibility &amp; Terms</h2>
+              <p class="text-[11px] text-gray-500">MJP Residences Resident Portal</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="closeGoogleTermsBtn"
+            class="text-gray-400 hover:text-gray-600 text-2xl leading-none p-1"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <div
+            class="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 leading-relaxed"
+          >
+            <p class="font-semibold mb-1">Notice to Residents &amp; Applicants:</p>
+            Access to this portal is restricted to registered tenants or individuals with an
+            approved reservation at MJP Residences.
+          </div>
+
+          <div class="space-y-2 text-xs text-gray-600 leading-relaxed">
+            <p class="font-semibold text-gray-800">
+              By continuing with Google Sign-In, you confirm that:
+            </p>
+            <ul class="list-disc pl-5 space-y-1.5 text-gray-600">
+              <li>
+                You are an <strong>active tenant</strong> currently residing at MJP Residences,
+                <strong class="text-gray-800">OR</strong>
+              </li>
+              <li>
+                You have a <strong>room reservation</strong> that has been officially approved by
+                the building administration.
+              </li>
+            </ul>
+            <p class="text-[11px] text-gray-400 pt-1">
+              Accounts without an active lease or approved reservation are reviewed and subject to
+              administrative deactivation.
+            </p>
+          </div>
+
+          <div class="pt-2 border-t border-gray-100">
+            <label
+              class="flex items-start gap-2.5 text-xs text-gray-700 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                id="googleTermsCheckbox"
+                class="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shrink-0 cursor-pointer"
+              />
+              <span class="font-medium leading-snug">
+                I certify that I am an actual tenant of MJP Residences or hold an admin-approved
+                reservation, and I accept these terms.
+              </span>
+            </label>
+          </div>
+
+          <div
+            id="googleTermsAlert"
+            class="hidden p-2.5 rounded-lg text-xs bg-red-50 text-red-700 border border-red-200"
+          ></div>
+
+          <div class="pt-2 flex gap-3">
+            <button
+              type="button"
+              id="cancelGoogleTermsBtn"
+              class="flex-1 py-2.5 px-4 border border-gray-300 rounded-xl text-gray-700 text-xs font-semibold hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="confirmGoogleTermsBtn"
+              class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>Agree &amp; Continue</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Forgot Password Modal -->
     <div

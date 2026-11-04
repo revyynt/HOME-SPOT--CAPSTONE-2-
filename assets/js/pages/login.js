@@ -34,6 +34,24 @@ const signupLink = document.getElementById('signupLink');
 const signupModal = document.getElementById('signupModal');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const understoodBtn = document.getElementById('understoodBtn');
+const btnGoogleSignIn = document.getElementById('btnGoogleSignIn');
+
+const signupForm = document.getElementById('signupForm');
+const signupName = document.getElementById('signupName');
+const signupEmail = document.getElementById('signupEmail');
+const signupPhone = document.getElementById('signupPhone');
+const signupPassword = document.getElementById('signupPassword');
+const signupConfirmPassword = document.getElementById('signupConfirmPassword');
+const signupTerms = document.getElementById('signupTerms');
+const signupSubmitBtn = document.getElementById('signupSubmitBtn');
+const signupAlert = document.getElementById('signupAlert');
+
+const googleTermsModal = document.getElementById('googleTermsModal');
+const closeGoogleTermsBtn = document.getElementById('closeGoogleTermsBtn');
+const cancelGoogleTermsBtn = document.getElementById('cancelGoogleTermsBtn');
+const confirmGoogleTermsBtn = document.getElementById('confirmGoogleTermsBtn');
+const googleTermsCheckbox = document.getElementById('googleTermsCheckbox');
+const googleTermsAlert = document.getElementById('googleTermsAlert');
 
 let isSubmitting = false;
 
@@ -297,9 +315,100 @@ async function cancelAdminOtp() {
 cancelAdminOtpBtn?.addEventListener('click', cancelAdminOtp);
 closeAdminOtpBtn?.addEventListener('click', cancelAdminOtp);
 
+async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
+  const cleanEmail = (email || user?.email || '').trim().toLowerCase();
+  if (!cleanEmail) return { data: {}, docId: null };
+
+  // 1. Check existing tenant profile
+  let existing = await loadProfile(user?.id, cleanEmail);
+  if (existing.docId) {
+    if (!existing.data.uid && user?.id) {
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', existing.docId), {
+          uid: user.id,
+          updatedAt: new Date().toISOString()
+        });
+        existing.data.uid = user.id;
+      } catch {}
+    }
+    return existing;
+  }
+
+  // 2. Check for approved reservation matching email
+  let reservation = null;
+  try {
+    const resQuery = supabaseData.query(
+      supabaseData.collection(db, 'reservations'),
+      supabaseData.where('email', '==', cleanEmail)
+    );
+    const snap = await supabaseData.getDocs(resQuery);
+    reservation =
+      snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .find((r) => r.status === 'Approved' || r.status === 'Pending') || null;
+  } catch (err) {
+    console.warn('Could not query reservations for auto-claim:', err);
+  }
+
+  const assignedRoom =
+    reservation?.assignedRoom || reservation?.room || optionalInfo.preferredRoom || '';
+  const isCommercial = assignedRoom.toLowerCase().includes('commercial');
+  const defaultRent = isCommercial ? 12000 : 10000;
+  const monthlyRent = Number(reservation?.amount) || defaultRent;
+  const moveInDate = reservation?.moveInDate || new Date().toISOString().slice(0, 10);
+  const tenantId = user?.id || `tenant-${Date.now()}`;
+  const nowIso = new Date().toISOString();
+
+  const newTenantData = {
+    uid: user?.id || tenantId,
+    name:
+      optionalInfo.name ||
+      reservation?.name ||
+      user?.user_metadata?.name ||
+      user?.user_metadata?.full_name ||
+      cleanEmail.split('@')[0],
+    email: cleanEmail,
+    phone: optionalInfo.phone || reservation?.phone || user?.user_metadata?.phone || '',
+    role: 'tenant',
+    status: 'Active',
+    room: assignedRoom || 'Room 101',
+    dormName: isCommercial ? 'Commercial Space' : 'Triple Occupancy Room',
+    monthlyRent,
+    moveInDate,
+    gateStatus: 'INSIDE',
+    cardUid: `NFC-${String(assignedRoom || '101').replace(/\D+/g, '') || '101'}`,
+    reservationId: reservation?.id || null,
+    termsAccepted: true,
+    termsAcceptedAt: nowIso,
+    createdAt: nowIso,
+    updatedAt: nowIso
+  };
+
+  try {
+    const docRef = supabaseData.doc(db, 'tenants', tenantId);
+    await supabaseData.setDoc(docRef, newTenantData);
+    return { data: newTenantData, docId: tenantId };
+  } catch (err) {
+    console.error('Failed to auto-provision tenant profile:', err);
+    return { data: newTenantData, docId: null };
+  }
+}
+
 async function routeUser(user, fallbackEmail) {
-  const role =
+  const cleanEmail = user?.email || fallbackEmail || '';
+  let role =
     user?.app_metadata?.role || (user?.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
+
+  // If no explicit role in metadata, check or provision tenant profile
+  if (!role || role === 'tenant') {
+    const profile = await claimOrProvisionTenant(user, cleanEmail);
+    if (profile.docId || profile.data.name) {
+      seedSession(profile, cleanEmail);
+      window.location.href = ROLE_DESTINATIONS.tenant;
+      return;
+    }
+  }
+
   const destination = ROLE_DESTINATIONS[role];
 
   if (!destination) {
@@ -307,13 +416,6 @@ async function routeUser(user, fallbackEmail) {
     throw new Error(
       'Your account does not have a portal role assigned. Please contact management.'
     );
-  }
-
-  if (role === 'tenant') {
-    const profile = await loadProfile(user.id, user.email || fallbackEmail);
-    seedSession(profile, user.email || fallbackEmail);
-    window.location.href = destination;
-    return;
   }
 
   // Admin and Superadmin require Reauthentication PIN verification
@@ -533,6 +635,22 @@ function openModal() {
 }
 function closeModal() {
   if (signupModal) signupModal.style.display = 'none';
+  clearSignupAlert();
+}
+
+function showSignupAlert(message, isSuccess = false) {
+  if (!signupAlert) return;
+  signupAlert.classList.remove('hidden');
+  signupAlert.className = isSuccess
+    ? 'mb-4 p-3 rounded-xl text-xs leading-relaxed border bg-emerald-50 text-emerald-800 border-emerald-200'
+    : 'mb-4 p-3 rounded-xl text-xs leading-relaxed border bg-red-50 text-red-800 border-red-200';
+  signupAlert.textContent = message;
+}
+
+function clearSignupAlert() {
+  if (!signupAlert) return;
+  signupAlert.classList.add('hidden');
+  signupAlert.textContent = '';
 }
 
 signupLink?.addEventListener('click', (e) => {
@@ -543,6 +661,169 @@ closeModalBtn?.addEventListener('click', closeModal);
 understoodBtn?.addEventListener('click', closeModal);
 signupModal?.addEventListener('click', (e) => {
   if (e.target === signupModal) closeModal();
+});
+
+if (typeof window !== 'undefined' && window.location.hash === '#signup') {
+  openModal();
+}
+
+// Google Sign-In Resident Terms Modal & OAuth
+function openGoogleTermsModal() {
+  if (googleTermsAlert) googleTermsAlert.classList.add('hidden');
+  if (googleTermsCheckbox) googleTermsCheckbox.checked = false;
+  if (googleTermsModal) googleTermsModal.classList.remove('hidden');
+}
+
+function closeGoogleTermsModal() {
+  if (googleTermsModal) googleTermsModal.classList.add('hidden');
+}
+
+btnGoogleSignIn?.addEventListener('click', () => {
+  openGoogleTermsModal();
+});
+
+closeGoogleTermsBtn?.addEventListener('click', closeGoogleTermsModal);
+cancelGoogleTermsBtn?.addEventListener('click', closeGoogleTermsModal);
+googleTermsModal?.addEventListener('click', (e) => {
+  if (e.target === googleTermsModal) closeGoogleTermsModal();
+});
+
+confirmGoogleTermsBtn?.addEventListener('click', async () => {
+  if (!googleTermsCheckbox?.checked) {
+    if (googleTermsAlert) {
+      googleTermsAlert.textContent =
+        'Please certify that you are an actual tenant or hold an approved reservation to proceed.';
+      googleTermsAlert.classList.remove('hidden');
+    }
+    return;
+  }
+
+  if (googleTermsAlert) googleTermsAlert.classList.add('hidden');
+  confirmGoogleTermsBtn.disabled = true;
+  confirmGoogleTermsBtn.innerHTML = '<span>Redirecting to Google...</span>';
+
+  try {
+    clearAlert();
+    const currentOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://homespot-mjp.web.app';
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${currentOrigin}/login.html`
+      }
+    });
+
+    if (error) throw error;
+  } catch (err) {
+    console.error('Google Sign-In error:', err);
+    closeGoogleTermsModal();
+    showAlert(err.message || 'Failed to initialize Google Sign-In.');
+    confirmGoogleTermsBtn.disabled = false;
+    confirmGoogleTermsBtn.innerHTML = '<span>Agree &amp; Continue</span><span>→</span>';
+  }
+});
+
+// Self-Registration Form Submission
+signupForm?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearSignupAlert();
+
+  const name = (signupName?.value || '').trim();
+  const email = (signupEmail?.value || '').trim().toLowerCase();
+  const phone = (signupPhone?.value || '').trim();
+  const password = signupPassword?.value || '';
+  const confirm = signupConfirmPassword?.value || '';
+
+  if (!name || !email || !password) {
+    showSignupAlert('Please fill out all required fields.');
+    return;
+  }
+
+  if (signupTerms && !signupTerms.checked) {
+    showSignupAlert(
+      'You must certify that you are an actual tenant of MJP Residences or have an approved reservation.'
+    );
+    return;
+  }
+
+  if (password.length < 6) {
+    showSignupAlert('Password must be at least 6 characters long.');
+    return;
+  }
+
+  if (password !== confirm) {
+    showSignupAlert('Passwords do not match. Please verify your password.');
+    return;
+  }
+
+  if (signupSubmitBtn) {
+    signupSubmitBtn.disabled = true;
+    signupSubmitBtn.innerHTML = '<span>Creating Account...</span>';
+  }
+
+  try {
+    const { data: authData, error: authErr } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name,
+          phone,
+          role: 'tenant',
+          termsAccepted: true
+        }
+      }
+    });
+
+    if (authErr) throw authErr;
+
+    // Auto-claim reservation & provision tenant document
+    const user = authData?.user;
+    const profile = await claimOrProvisionTenant(user, email, { name, phone });
+
+    showSignupAlert('Account created successfully! Preparing your portal...', true);
+
+    // If session was returned immediately (email confirmation disabled in Supabase)
+    if (authData?.session) {
+      seedSession(profile, email);
+      setTimeout(() => {
+        window.location.href = './tenant-portal.html';
+      }, 700);
+      return;
+    }
+
+    // Try logging in immediately with password
+    try {
+      const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInData?.user) {
+        seedSession(profile, email);
+        setTimeout(() => {
+          window.location.href = './tenant-portal.html';
+        }, 700);
+        return;
+      }
+    } catch {}
+
+    // Otherwise prompt user to sign in
+    showSignupAlert('Account created! You can now sign in with your email and password.', true);
+    setTimeout(() => {
+      closeModal();
+      if (emailInput) emailInput.value = email;
+      if (passwordInput) passwordInput.value = password;
+      showAlert('Account created successfully! Please click "Sign In to Account" below.', true);
+    }, 1200);
+  } catch (err) {
+    console.error('Registration error:', err);
+    showSignupAlert(err.message || 'Could not create account. Please try again.');
+  } finally {
+    if (signupSubmitBtn) {
+      signupSubmitBtn.disabled = false;
+      signupSubmitBtn.innerHTML = '<span>Create Account</span><span>→</span>';
+    }
+  }
 });
 
 // Form submission

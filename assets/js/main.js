@@ -204,11 +204,11 @@ function renderLandingHero3DUnitInfo(unitOverride = null) {
       `;
     } else {
       const listingId = unit.listingDocId || unit.listingId || 'triple-occupancy-room';
-      linkEl.href = `property-detail.html?id=${encodeURIComponent(listingId)}`;
+      linkEl.href = `property-detail.html?id=${encodeURIComponent(listingId)}&room=${encodeURIComponent(unit.id)}`;
       linkEl.removeAttribute('aria-disabled');
       linkEl.className =
         'inline-flex items-center gap-1 mt-1 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer';
-      linkEl.textContent = 'View Unit & Inquire';
+      linkEl.textContent = `View ${unit.id} & Inquire`;
     }
   }
 
@@ -387,6 +387,9 @@ async function initAdminActions() {
       case 'approve':
         reservations.approveReservation(id);
         break;
+      case 'close-approve-modal':
+        reservations.closeApproveReservationModal();
+        break;
       case 'decline':
         reservations.declineReservation(id);
         break;
@@ -482,11 +485,17 @@ function initMainPage() {
   initLandingRooms();
   initLandingHero3D();
 
-  // admin-dashboard.html only.
+  // admin-dashboard.html only — wait until admin guard passes so Realtime connects with the active session
   if (byId('reservationRequestsContainer') || byId('messagesContainer')) {
-    initStatusLine();
-    initAdminRealtime();
-    initAdminActions();
+    document.addEventListener(
+      'admin-access-granted',
+      () => {
+        initStatusLine();
+        initAdminRealtime();
+        initAdminActions();
+      },
+      { once: true }
+    );
   }
 }
 
@@ -583,6 +592,29 @@ if (typeof window !== 'undefined') {
         submitUpdateBtn.disabled = false;
         submitUpdateBtn.textContent = 'Update Password & Sign In';
       }
+    }
+  });
+}
+
+// Facebook Mobile Web 4-Tab Section Switcher for Landing Page (< 768px)
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => {
+    const tab = e.target instanceof Element ? e.target.closest('[data-mobile-nav]') : null;
+    if (!tab) return;
+    e.preventDefault();
+    const targetSection = tab.getAttribute('data-mobile-nav') || 'rooms';
+    document.body.setAttribute('data-mobile-section', targetSection);
+
+    document.querySelectorAll('[data-mobile-nav]').forEach((btn) => {
+      btn.classList.toggle('active', btn.getAttribute('data-mobile-nav') === targetSection);
+    });
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (targetSection === 'floor-plan') {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
     }
   });
 }

@@ -5,7 +5,7 @@
   "description": "Home-Spot apartment booking and management system",
   "type": "commonjs",
   "scripts": {
-    "dev": "vite --port 5173 --strictPort",
+    "dev": "vite --host --port 5173 --strictPort",
     "build": "vite build",
     "build:supabase": "vite build --base=/functions/v1/site/",
     "deploy:supabase-site": "npm run build:supabase && node scripts/publish-site.mjs",

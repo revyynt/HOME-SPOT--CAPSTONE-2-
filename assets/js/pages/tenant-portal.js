@@ -31,6 +31,7 @@ import {
   syncBuildingUnitsWithRooms
 } from '../lib/building-3d.js';
 import { Toast } from '../render/toast.js';
+import { formatGateTimestamp } from '../lib/gate-logic.js';
 
 // TODO(refactor): checkUrlPaymentReturn still carries its own parameter
 // parsing and scenario cascade. The tested decision logic already exists in
@@ -59,6 +60,11 @@ const authReady = guardPage({
     populateTenantUI();
   }
   subscribeTenantMessages();
+  await fetchTenantSupabaseProfile();
+});
+
+document.addEventListener('tenant-access-granted', () => {
+  void fetchTenantSupabaseProfile();
 });
 
 // Content stays hidden until the Supabase auth guard resolves.
@@ -283,9 +289,56 @@ function populateTenantUI() {
   updateAmountDueUI();
   renderTenantPaymentCalendar();
   syncTenant3DBuildingState();
+  renderDueDateAlert();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+function renderDueDateAlert() {
+  const banner = document.getElementById('tenantDueDateAlertBanner');
+  if (!banner) return;
+
+  const now = new Date();
+  const day = now.getDate();
+  const dueDay = tenantDueDay || 5;
+  const moveInInfo = getMoveInInfo();
+
+  if (moveInInfo.isPending || currentRemainingDue <= 0) {
+    banner.style.display = 'none';
+    return;
+  }
+
+  const monthName = now.toLocaleString('en-US', { month: 'long' });
+  const isOverdue = day > dueDay;
+  const isUpcoming = day <= dueDay;
+
+  const titleEl = document.getElementById('dueAlertTitle');
+  const descEl = document.getElementById('dueAlertDesc');
+  const badgeEl = document.getElementById('dueAlertBadge');
+
+  if (isOverdue) {
+    banner.style.display = 'flex';
+    banner.className = 'tenant-due-alert-banner overdue';
+    if (badgeEl) badgeEl.textContent = 'OVERDUE';
+    if (titleEl) titleEl.textContent = `Rent Overdue Notice (${monthName} ${dueDay})`;
+    if (descEl) {
+      descEl.textContent = `Your rent of ₱${currentRemainingDue.toLocaleString()} was due on ${monthName} ${dueDay}. Please settle immediately to keep your account current.`;
+    }
+  } else if (isUpcoming) {
+    banner.style.display = 'flex';
+    banner.className = 'tenant-due-alert-banner upcoming';
+    if (badgeEl) badgeEl.textContent = 'PAYMENT DUE';
+    const daysLeft = dueDay - day;
+    const dueTiming =
+      daysLeft === 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `in ${daysLeft} days`;
+    if (titleEl) titleEl.textContent = `Monthly Rent Due ${dueTiming} (${monthName} ${dueDay})`;
+    if (descEl) {
+      descEl.textContent = `Your rent of ₱${currentRemainingDue.toLocaleString()} is due on ${monthName} ${dueDay}. Settle conveniently online below.`;
+    }
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 let tenantBuilding3D = null;
@@ -523,12 +576,42 @@ function renderTenantPaymentCalendar() {
     return 'cal-chip-pending';
   };
 
+  // Auto-select first day with events if current selection has none in this month
+  const currentSelectedCell = cal.days.find((d) => d.dateKey === tenantSelectedDateKey);
+  if (
+    !currentSelectedCell ||
+    (!currentSelectedCell.dueEvents.length && !currentSelectedCell.paymentEvents.length)
+  ) {
+    const firstActiveDay = cal.days.find(
+      (d) => d.inCurrentMonth && (d.dueEvents.length > 0 || d.paymentEvents.length > 0)
+    );
+    if (firstActiveDay) {
+      tenantSelectedDateKey = firstActiveDay.dateKey;
+    }
+  }
+
   gridEl.innerHTML = cal.days
     .map((cell) => {
       const classes = ['cal-cell'];
       if (!cell.inCurrentMonth) classes.push('outside');
       if (cell.isToday) classes.push('today');
       if (cell.dateKey === tenantSelectedDateKey) classes.push('selected');
+
+      const hasOverdue =
+        cell.dueEvents.some((e) => e.status === 'Overdue') ||
+        cell.paymentEvents.some((p) => p.status === 'Overdue' || p.status === 'Failed');
+      const hasPaid =
+        cell.dueEvents.some((e) => e.status === 'Paid') ||
+        cell.paymentEvents.some((p) => p.status === 'Paid');
+      const hasPending = cell.dueEvents.some(
+        (e) => e.isMoveInMarker || e.status === 'Pending' || e.status === 'Due Soon'
+      );
+      const hasScheduled = cell.dueEvents.some((e) => e.status === 'Scheduled');
+
+      if (hasOverdue) classes.push('has-overdue');
+      else if (hasPaid) classes.push('has-paid');
+      else if (hasPending) classes.push('has-due');
+      else if (hasScheduled) classes.push('has-scheduled');
 
       const dueChips = cell.dueEvents
         .map((ev) => {
@@ -569,15 +652,27 @@ function renderTenantPaymentCalendar() {
       const items = [
         ...selectedCell.dueEvents.map(
           (ev) =>
-            `<div><strong>Rent Due (${escapeHtml(ev.status)}):</strong> ₱${ev.amount.toLocaleString()} (${escapeHtml(ev.room)}) — Remaining: ₱${ev.remaining.toLocaleString()}</div>`
+            `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+              <div>
+                <div style="font-weight:700;color:#0f172a;font-size:13px;">Scheduled Rent Due (${escapeHtml(ev.room)})</div>
+                <div style="font-size:11px;color:#64748b;">Remaining: ₱${ev.remaining.toLocaleString()}</div>
+              </div>
+              <span class="cal-chip ${chipClass(ev.status)}" style="display:inline-flex !important;white-space:nowrap;">${escapeHtml(ev.status)} • ₱${ev.amount.toLocaleString()}</span>
+            </div>`
         ),
         ...selectedCell.paymentEvents.map(
           (p) =>
-            `<div><strong>Payment (${escapeHtml(p.status)}):</strong> ₱${p.amount.toLocaleString()} • ${escapeHtml(p.purpose)} (${escapeHtml(p.referenceNumber || p.method)})</div>`
+            `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+              <div>
+                <div style="font-weight:700;color:#0f172a;font-size:13px;">${escapeHtml(p.purpose)}</div>
+                <div style="font-size:11px;color:#64748b;">${escapeHtml(p.referenceNumber || p.method)}</div>
+              </div>
+              <span class="cal-chip ${chipClass(p.status)}" style="display:inline-flex !important;white-space:nowrap;">${escapeHtml(p.status)} • ₱${p.amount.toLocaleString()}</span>
+            </div>`
         )
       ].join('');
       detailEl.style.display = 'block';
-      detailEl.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">Details for ${escapeHtml(selectedCell.dateKey)}</div>${items}`;
+      detailEl.innerHTML = `<div style="font-weight:700;font-size:11px;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Events on ${escapeHtml(selectedCell.dateKey)}</div>${items}`;
     } else {
       detailEl.style.display = 'none';
       detailEl.innerHTML = '';
@@ -648,75 +743,166 @@ async function fetchTenantSupabaseProfile() {
   try {
     const user = await getCurrentUser();
     if (!user) return;
+    const normalizedEmail = (user.email || userEmail || '').toLowerCase().trim();
     const meta = user.user_metadata || {};
     const tenantsRef = supabaseData.collection(supabase, 'tenants');
-    const q = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
 
-    supabaseData.onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const tenantDoc = snapshot.docs[0];
-          currentTenantDocId = tenantDoc.id;
-          sessionStorage.setItem('tenantDocId', currentTenantDocId);
-          const docData = tenantDoc.data();
-          const useMetaOverride =
-            meta.profileUpdatedAt &&
-            (!docData.updatedAt || String(meta.profileUpdatedAt) >= String(docData.updatedAt));
-          const resolvedName = (useMetaOverride && meta.name) || docData.name;
-          const resolvedPhone = (useMetaOverride && meta.phone) || docData.phone;
-          const resolvedEmergency =
-            (useMetaOverride && meta.emergencyContact) || docData.emergencyContact;
-          if (resolvedName) {
-            tenantName = resolvedName;
-            sessionStorage.setItem('tenantName', resolvedName);
-          }
-          if (resolvedPhone) {
-            tenantPhone = resolvedPhone;
-            sessionStorage.setItem('tenantPhone', resolvedPhone);
-          }
-          if (docData.room) {
-            tenantRoom = docData.room;
-            sessionStorage.setItem('tenantRoom', docData.room);
-          }
-          if (docData.dormName) {
-            tenantDorm = docData.dormName;
-            sessionStorage.setItem('tenantDorm', docData.dormName);
-          }
-          if (docData.moveInDate) {
-            tenantMoveIn = docData.moveInDate;
-            sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
-          }
-          if (docData.dueDay) {
-            tenantDueDay = parseInt(docData.dueDay);
-            sessionStorage.setItem('tenantDueDay', tenantDueDay);
-          }
-          if (docData.movedIn !== undefined) {
-            tenantMovedIn = Boolean(docData.movedIn);
-            sessionStorage.setItem('tenantMovedIn', tenantMovedIn ? 'true' : 'false');
-          }
-          if (docData.monthlyRent) {
-            tenantRent = parseFloat(docData.monthlyRent);
-            sessionStorage.setItem('tenantMonthlyRent', tenantRent);
-          }
-          if (docData.amountDue !== undefined && docData.amountDue !== null) {
-            currentRemainingDue = parseFloat(docData.amountDue);
-            tenantExplicitAmountDueSet = true;
-            sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
-            localStorage.setItem('tenant_amount_due_' + userEmail, currentRemainingDue);
-          }
-          if (resolvedEmergency) {
-            tenantEmergency = resolvedEmergency;
-            sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
-          }
-          populateTenantUI();
+    const onTenantSnapshot = (snapshot) => {
+      if (!snapshot.empty) {
+        const tenantDoc = snapshot.docs[0];
+        currentTenantDocId = tenantDoc.id;
+        sessionStorage.setItem('tenantDocId', currentTenantDocId);
+        const docData = tenantDoc.data();
+
+        // If doc is missing auth user uid, sync it now
+        if (docData && (!docData.uid || docData.uid !== user.id)) {
+          try {
+            const docRef = supabaseData.doc(supabase, 'tenants', currentTenantDocId);
+            supabaseData
+              .updateDoc(docRef, { uid: user.id, updatedAt: new Date().toISOString() })
+              .catch(() => {});
+          } catch {}
         }
-      },
-      (error) => console.error('Tenant profile subscription failed:', error)
+
+        const useMetaOverride =
+          meta.profileUpdatedAt &&
+          (!docData.updatedAt || String(meta.profileUpdatedAt) >= String(docData.updatedAt));
+        const resolvedName = (useMetaOverride && meta.name) || docData.name;
+        const resolvedPhone = (useMetaOverride && meta.phone) || docData.phone;
+        const resolvedEmergency =
+          (useMetaOverride && meta.emergencyContact) || docData.emergencyContact;
+        if (resolvedName) {
+          tenantName = resolvedName;
+          sessionStorage.setItem('tenantName', resolvedName);
+        }
+        if (resolvedPhone) {
+          tenantPhone = resolvedPhone;
+          sessionStorage.setItem('tenantPhone', resolvedPhone);
+        }
+        if (docData.room) {
+          tenantRoom = docData.room;
+          sessionStorage.setItem('tenantRoom', docData.room);
+        }
+        if (docData.dormName) {
+          tenantDorm = docData.dormName;
+          sessionStorage.setItem('tenantDorm', docData.dormName);
+        }
+        if (docData.moveInDate) {
+          tenantMoveIn = docData.moveInDate;
+          sessionStorage.setItem('tenantMoveInDate', docData.moveInDate);
+        }
+        if (docData.dueDay) {
+          tenantDueDay = parseInt(docData.dueDay);
+          sessionStorage.setItem('tenantDueDay', tenantDueDay);
+        }
+        if (docData.movedIn !== undefined) {
+          tenantMovedIn = Boolean(docData.movedIn);
+          sessionStorage.setItem('tenantMovedIn', tenantMovedIn ? 'true' : 'false');
+        }
+        if (docData.monthlyRent) {
+          tenantRent = parseFloat(docData.monthlyRent);
+          sessionStorage.setItem('tenantMonthlyRent', tenantRent);
+        }
+        if (docData.amountDue !== undefined && docData.amountDue !== null) {
+          currentRemainingDue = parseFloat(docData.amountDue);
+          tenantExplicitAmountDueSet = true;
+          sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
+          localStorage.setItem('tenant_amount_due_' + normalizedEmail, currentRemainingDue);
+        }
+        if (resolvedEmergency) {
+          tenantEmergency = resolvedEmergency;
+          sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
+        }
+        populateTenantUI();
+
+        // Render Keycard & Presence data
+        const cardUid = docData.cardUid || `NFC-${String(tenantRoom || '101').replace(/\D+/g, '')}`;
+        const gateStatus = docData.gateStatus || 'INSIDE';
+        const lastGateTapAt = docData.lastGateTapAt;
+
+        const cardUidEl = document.getElementById('tenantCardUidDisplay');
+        const cardRoomEl = document.getElementById('tenantCardRoomDisplay');
+        const presenceBadge = document.getElementById('tenantGatePresenceBadge');
+        const lastTapEl = document.getElementById('tenantLastGateTapDisplay');
+
+        if (cardUidEl) cardUidEl.textContent = cardUid;
+        if (cardRoomEl) cardRoomEl.textContent = `Room: ${tenantRoom || 'Assigned Room'}`;
+        if (lastTapEl) lastTapEl.textContent = formatGateTimestamp(lastGateTapAt);
+
+        if (presenceBadge) {
+          if (gateStatus === 'OUTSIDE') {
+            presenceBadge.style.background = '#fef3c7';
+            presenceBadge.style.color = '#92400e';
+            presenceBadge.innerHTML =
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Currently Away / Checked Out';
+          } else {
+            presenceBadge.style.background = '#d1fae5';
+            presenceBadge.style.color = '#065f46';
+            presenceBadge.innerHTML =
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Currently Inside Building';
+          }
+        }
+
+        if (docData.rulesAgreedByTenant === true) {
+          const m = document.getElementById('tenantTermsAgreementModal');
+          if (m) m.style.display = 'none';
+        } else {
+          checkAndShowTenantTermsModal(currentTenantDocId);
+        }
+      }
+    };
+
+    // First try querying by uid
+    let queryRef = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
+    const initialCheck = await supabaseData.getDocs(queryRef).catch(() => null);
+
+    // If no document matches by uid, fall back to email query
+    if ((!initialCheck || initialCheck.empty) && normalizedEmail) {
+      queryRef = supabaseData.query(tenantsRef, supabaseData.where('email', '==', normalizedEmail));
+    }
+
+    supabaseData.onSnapshot(queryRef, onTenantSnapshot, (error) =>
+      console.error('Tenant profile subscription failed:', error)
     );
   } catch (err) {
     console.warn('Could not sync tenant profile from Supabase:', err);
   }
+}
+
+function checkAndShowTenantTermsModal(tenantDocId) {
+  const modal = document.getElementById('tenantTermsAgreementModal');
+  const checkbox = document.getElementById('tenantAcceptRulesCheckbox');
+  const confirmBtn = document.getElementById('tenantConfirmAgreementBtn');
+  if (!modal || !confirmBtn || !checkbox) return;
+
+  modal.style.display = 'flex';
+
+  checkbox.onchange = () => {
+    confirmBtn.disabled = !checkbox.checked;
+    confirmBtn.style.opacity = checkbox.checked ? '1' : '0.5';
+    confirmBtn.style.cursor = checkbox.checked ? 'pointer' : 'not-allowed';
+  };
+
+  confirmBtn.onclick = async () => {
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Saving...';
+    try {
+      const docIdToUpdate =
+        tenantDocId || currentTenantDocId || sessionStorage.getItem('tenantDocId');
+      if (docIdToUpdate) {
+        const ref = supabaseData.doc(supabase, 'tenants', docIdToUpdate);
+        await supabaseData.updateDoc(ref, {
+          rulesAgreedByTenant: true,
+          rulesAgreedAt: new Date().toISOString()
+        });
+      }
+      modal.style.display = 'none';
+      Toast.success('Building house rules and lease terms accepted.');
+    } catch (err) {
+      console.warn('Failed to update tenant terms agreement:', err);
+      modal.style.display = 'none';
+    }
+  };
 }
 
 fetchTenantSupabaseProfile();
@@ -756,6 +942,66 @@ function switchTab(tabName, evt) {
     setTimeout(() => {
       ensureTenantBuilding3DInitialized();
     }, 40);
+  }
+  if (tabName === 'gate-access') {
+    loadTenantGateLogs();
+  }
+}
+
+async function loadTenantGateLogs() {
+  const tbody = document.getElementById('tenantGateLogsTableBody');
+  if (!tbody) return;
+
+  try {
+    const messagesRef = supabaseData.collection(supabase, 'messages');
+    const snap = await supabaseData.getDocs(messagesRef);
+    const logs = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((m) => m.type === 'gate_log')
+      .filter((m) => {
+        if (currentTenantDocId && m.tenantId === currentTenantDocId) return true;
+        if (userEmail && m.email && m.email.toLowerCase() === userEmail.toLowerCase()) return true;
+        if (tenantRoom && m.room === tenantRoom) return true;
+        return false;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp || b.createdAt).getTime() -
+          new Date(a.timestamp || a.createdAt).getTime()
+      );
+
+    if (!logs.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #94a3b8;">No gate activity recorded yet. Tap your NFC keycard at the gate scanner to record entry or exit.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = logs
+      .map((log) => {
+        const isEntry = log.direction === 'IN';
+        const pillBg = isEntry ? '#d1fae5' : '#fef3c7';
+        const pillColor = isEntry ? '#065f46' : '#92400e';
+        const pillText = isEntry ? 'Checked IN' : 'Checked OUT';
+        const curfewHtml = log.isLate
+          ? '<span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 700; background: #fee2e2; color: #991b1b;">Late (Curfew)</span>'
+          : '<span style="color: #94a3b8; font-size: 11px;">Normal</span>';
+
+        return `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 10px 12px;">
+              <span style="display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: ${pillBg}; color: ${pillColor};">
+                ${pillText}
+              </span>
+            </td>
+            <td style="padding: 10px 12px; color: #1e293b;">${formatGateTimestamp(log.timestamp)}</td>
+            <td style="padding: 10px 12px;">${curfewHtml}</td>
+            <td style="padding: 10px 12px; font-family: monospace; color: #64748b;">${log.cardUid || 'N/A'}</td>
+          </tr>
+        `;
+      })
+      .join('');
+  } catch (err) {
+    console.warn('Error loading tenant gate logs:', err);
   }
 }
 
@@ -2397,7 +2643,9 @@ function subscribeTenantMessages() {
 
         const docs = (snapshot.docs || [])
           .map((doc) => doc.data())
-          .filter((item) => item.sender === 'tenant' || item.sender === 'admin');
+          .filter((item) =>
+            ['tenant', 'admin', 'system'].includes(String(item.sender || '').toLowerCase())
+          );
         docs.sort((a, b) => resolveMessageTimeMs(a) - resolveMessageTimeMs(b));
 
         latestTenantChatMs = docs.reduce(
@@ -2415,9 +2663,9 @@ function subscribeTenantMessages() {
 
         chatMessages.innerHTML = '';
         docs.forEach((item) => {
+          const isFromTenant = String(item.sender || '').toLowerCase() === 'tenant';
           const msgBubble = document.createElement('div');
-          msgBubble.className =
-            item.sender === 'tenant' ? 'message-bubble sent' : 'message-bubble received';
+          msgBubble.className = isFromTenant ? 'message-bubble sent' : 'message-bubble received';
           const timeMs = resolveMessageTimeMs(item);
           const dateObj = timeMs ? new Date(timeMs) : new Date();
           const timeStr = dateObj.toLocaleTimeString('en-US', {
@@ -2426,8 +2674,18 @@ function subscribeTenantMessages() {
             hour12: true
           });
 
+          if (item.subject) {
+            const subjectDiv = document.createElement('div');
+            subjectDiv.style.fontWeight = '700';
+            subjectDiv.style.fontSize = '12px';
+            subjectDiv.style.marginBottom = '4px';
+            subjectDiv.style.color = isFromTenant ? '#ffffff' : '#047857';
+            subjectDiv.textContent = item.subject;
+            msgBubble.appendChild(subjectDiv);
+          }
+
           const textDiv = document.createElement('div');
-          textDiv.textContent = item.message || '';
+          textDiv.textContent = item.message || item.text || '';
           const timeDiv = document.createElement('div');
           timeDiv.className = 'message-time-stamp';
           timeDiv.textContent = timeStr;

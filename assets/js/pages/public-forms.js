@@ -123,10 +123,11 @@ async function handleInquirySubmit(event) {
 
   // Strictly constrained to the 8 keys whitelisted by the anonymous Supabase insert RLS policy:
   // ['name', 'email', 'phone', 'room', 'moveInDate', 'message', 'status', 'createdAt']
+  const preferredRoomVal = form.querySelector('[name="preferredRoom"]')?.value?.trim();
   const isCustomerSupport =
     Boolean(form.querySelector('[name="subject"]')) ||
     !window.location.pathname.includes('property-detail');
-  const room = isCustomerSupport ? 'Customer Support' : getRoomNameFromPage();
+  const room = preferredRoomVal || (isCustomerSupport ? 'Customer Support' : getRoomNameFromPage());
   const subjectVal = form.querySelector('[name="subject"]')?.value?.trim();
   const rawMsg = form.querySelector('[name="message"]')?.value?.trim() || '';
   const message = subjectVal ? `[${subjectVal}] ${rawMsg}` : rawMsg;
@@ -265,12 +266,16 @@ async function handleReservationSubmit(event) {
     validId: compressedValidId
   });
 
+  // Read preferred room from dropdown or fallback to page room
+  const preferredRoomVal = form.querySelector('[name="preferredRoom"]')?.value || null;
+  const targetRoom = preferredRoomVal || getRoomNameFromPage();
+
   // Field set is constrained by the anonymous Supabase insert policy.
   const reservation = {
     name,
     email,
     phone: normalizePhilippinePhone(phone) || phone,
-    room: getRoomNameFromPage(),
+    room: targetRoom,
     moveInDate: moveInDateVal,
     message: form.querySelector('[name="message"]')?.value.trim() || null,
     additionalInfo: additionalInfoPayload,
@@ -281,7 +286,7 @@ async function handleReservationSubmit(event) {
   try {
     await supabaseData.addDoc(reservationsRef, reservation);
     Toast.success(
-      'Reservation request submitted! The admin will review your valid ID and contact you.'
+      `Reservation request submitted for ${targetRoom}! Admin will review your application.`
     );
   } catch (error) {
     console.error('Supabase reservation submit failed:', error);
@@ -312,6 +317,16 @@ export function toggleInquiryForm() {
   modal?.classList.toggle('hidden');
   hidePanel('reservationForm');
   if (modal && !modal.classList.contains('hidden')) {
+    const isCommercial = getRoomNameFromPage().toLowerCase().includes('commercial');
+    const targetRoom = getUrlParam('room') || (isCommercial ? 'Commercial Space 1' : '');
+    const roomSelect = modal.querySelector('[name="preferredRoom"]');
+    if (roomSelect) {
+      if (targetRoom) {
+        roomSelect.value = targetRoom;
+      } else if (isCommercial) {
+        roomSelect.value = 'Commercial Space 1';
+      }
+    }
     requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
   }
 }
@@ -324,6 +339,16 @@ export function toggleReservationForm() {
   modal?.classList.toggle('hidden');
   hidePanel('inquiryForm');
   if (modal && !modal.classList.contains('hidden')) {
+    const isCommercial = getRoomNameFromPage().toLowerCase().includes('commercial');
+    const targetRoom = getUrlParam('room') || (isCommercial ? 'Commercial Space 1' : '');
+    const roomSelect = modal.querySelector('[name="preferredRoom"]');
+    if (roomSelect) {
+      if (targetRoom) {
+        roomSelect.value = targetRoom;
+      } else if (isCommercial) {
+        roomSelect.value = 'Commercial Space 1';
+      }
+    }
     requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
   }
 }
@@ -345,11 +370,11 @@ export function initPublicFormToggles() {
       document.getElementById('emailSupportModal')?.classList.remove('hidden');
       return;
     }
-    if (target.closest('#inquireBtn')) {
+    if (target.closest('#inquireBtn') || target.closest('[data-action="open-inquiry-form"]')) {
       toggleInquiryForm();
       return;
     }
-    if (target.closest('#reserveBtn')) {
+    if (target.closest('#reserveBtn') || target.closest('[data-action="open-reserve-form"]')) {
       toggleReservationForm();
       return;
     }

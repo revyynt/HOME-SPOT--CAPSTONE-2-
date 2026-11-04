@@ -16,7 +16,7 @@ import {
 import { BUILDING_UNITS, resolveBuildingUnit } from '../../lib/building-3d.js';
 import { getTenants } from './tenants.js';
 
-const UNIT_SHORT_LABELS = {
+export const UNIT_SHORT_LABELS = {
   'Commercial Space 1': '1F • Commercial Space 1',
   'Room 101': '2F • Room 101',
   'Room 102': '2F • Room 102',
@@ -32,7 +32,7 @@ const UNIT_SHORT_LABELS = {
   'Room 410': '5F • Room 410'
 };
 
-function getUnitOccupants(unitId) {
+export function getUnitOccupants(unitId) {
   const tenants = getTenants() || [];
   return tenants.filter((t) => {
     const status = String(t.status || 'Active').toLowerCase();
@@ -68,8 +68,33 @@ export function syncDormAndRentWithRoom(forceRent = false) {
     dormSelect.value = residenceType;
   }
 
+  const defaultRent = residenceType === 'Commercial Space' ? '12000' : '10000';
   if (rentInput && (forceRent || !rentInput.value)) {
-    rentInput.value = residenceType === 'Commercial Space' ? '10000' : '5000';
+    rentInput.value = defaultRent;
+  }
+
+  const currentRentNum = parseFloat(rentInput?.value) || parseFloat(defaultRent) || 10000;
+  const advanceRentInput = document.getElementById('tenantAdvanceRent');
+  if (advanceRentInput && (forceRent || !advanceRentInput.value)) {
+    advanceRentInput.value = String(currentRentNum);
+  }
+
+  const securityDepositInput = document.getElementById('tenantSecurityDeposit');
+  if (securityDepositInput && (forceRent || !securityDepositInput.value)) {
+    securityDepositInput.value = String(currentRentNum * 2);
+  }
+
+  updateMoveInTotalDisplay();
+}
+
+export function updateMoveInTotalDisplay() {
+  const rentVal = parseFloat(document.getElementById('tenantMonthlyRent')?.value) || 0;
+  const advVal = parseFloat(document.getElementById('tenantAdvanceRent')?.value) || rentVal;
+  const depVal = parseFloat(document.getElementById('tenantSecurityDeposit')?.value) || rentVal * 2;
+  const total = advVal + depVal;
+  const el = document.getElementById('tenantMoveInTotalDisplay');
+  if (el) {
+    el.textContent = `₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 }
 
@@ -186,9 +211,15 @@ export function openCreateTenantModalFromData(data = {}) {
   assign('tenantPhone', data.phone);
 
   refreshTenantRoomOptions(data.room || data.dormName || '');
-  if (data.amount) {
-    assign('tenantMonthlyRent', data.amount);
-  }
+  const isComm = String(data.room || data.dormName || '')
+    .toLowerCase()
+    .includes('commercial');
+  const defaultRent = isComm ? 12000 : 10000;
+  const rentToSet = Number(data.amount) || defaultRent;
+  assign('tenantMonthlyRent', rentToSet);
+  assign('tenantAdvanceRent', data.advanceRent || rentToSet);
+  assign('tenantSecurityDeposit', data.securityDeposit || rentToSet * 2);
+  assign('tenantLeaseTerm', data.leaseTerm || '6 Months');
   syncDormAndRentWithRoom(!data.amount);
 
   if (data.moveInDate) {
@@ -211,6 +242,9 @@ function showFormError(message) {
 
 function readForm() {
   const value = (id) => document.getElementById(id)?.value?.trim() ?? '';
+  const rent = parseFloat(document.getElementById('tenantMonthlyRent')?.value) || 0;
+  const advRent = parseFloat(document.getElementById('tenantAdvanceRent')?.value) || rent;
+  const secDep = parseFloat(document.getElementById('tenantSecurityDeposit')?.value) || rent * 2;
   return {
     name: value('tenantFullName'),
     email: value('tenantEmail').toLowerCase(),
@@ -220,9 +254,15 @@ function readForm() {
     room: value('tenantRoom'),
     dormName: document.getElementById('tenantResidenceType')?.value ?? '',
     moveInDate: value('tenantMoveInDate'),
-    monthlyRent: parseFloat(document.getElementById('tenantMonthlyRent')?.value) || 0,
+    monthlyRent: rent,
+    advanceRent: advRent,
+    securityDeposit: secDep,
+    advanceDeposit: advRent,
     dueDay: parseInt(document.getElementById('tenantDueDay')?.value, 10) || 5,
-    leaseTerm: document.getElementById('tenantLeaseTerm')?.value ?? '',
+    leaseTerm: document.getElementById('tenantLeaseTerm')?.value || '6 Months',
+    rulesAgreed: document.getElementById('tenantRulesAgreed')?.checked ?? true,
+    contractSigned: document.getElementById('tenantContractSigned')?.checked ?? true,
+    paymentVerified: document.getElementById('tenantPaymentVerified')?.checked ?? true,
     notes: value('tenantNotes')
   };
 }
@@ -307,8 +347,14 @@ async function createTenantClientFallback(form) {
     dormName: form.dormName || '',
     moveInDate: form.moveInDate,
     monthlyRent: form.monthlyRent,
+    advanceRent: form.advanceRent ?? form.monthlyRent,
+    securityDeposit: form.securityDeposit ?? form.monthlyRent * 2,
+    advanceDeposit: form.advanceRent ?? form.monthlyRent,
     dueDay: form.dueDay,
-    leaseTerm: form.leaseTerm || '',
+    leaseTerm: form.leaseTerm || '6 Months',
+    rulesAgreed: form.rulesAgreed !== false,
+    contractSigned: form.contractSigned !== false,
+    paymentVerified: form.paymentVerified !== false,
     notes: form.notes || '',
     status: 'Active',
     role: 'tenant',
@@ -394,7 +440,15 @@ export async function createTenant() {
     }
   }
 
-  return { name: form.name, email: form.email, room: form.room, password: form.password };
+  return {
+    name: form.name,
+    email: form.email,
+    room: form.room,
+    password: form.password,
+    moveInDate: form.moveInDate,
+    monthlyRent: form.monthlyRent,
+    dueDay: form.dueDay || 5
+  };
 }
 
 function showCreatedTenantInModal(created) {
@@ -406,6 +460,7 @@ function showCreatedTenantInModal(created) {
   set('createdTenantNameLabel', created.name);
   set('createdTenantEmailValue', created.email);
   set('createdTenantPasswordValue', created.password);
+  set('createdTenantEmailBadge', created.email);
 
   const copyBtn = document.getElementById('copyCreatedTenantBtn');
   if (copyBtn) copyBtn.textContent = 'Copy Login & Password';
@@ -424,6 +479,9 @@ export function initCreateTenant() {
   refreshTenantRoomOptions();
   document.getElementById('tenantRoom')?.addEventListener('change', () => {
     syncDormAndRentWithRoom(true);
+  });
+  ['tenantMonthlyRent', 'tenantAdvanceRent', 'tenantSecurityDeposit'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('input', updateMoveInTotalDisplay);
   });
 
   // Modal and helper controls, previously inline onclick attributes.
@@ -455,6 +513,30 @@ export function initCreateTenant() {
         });
         break;
       }
+      case 'resend-created-tenant-email': {
+        if (!lastCreatedCredentials) break;
+        const btn = document.getElementById('resendCreatedTenantEmailBtn');
+        if (btn) btn.textContent = 'Sending...';
+        supabase.functions
+          .invoke('send-email', {
+            body: {
+              type: 'welcome_credentials',
+              to: lastCreatedCredentials.email,
+              name: lastCreatedCredentials.name,
+              room: lastCreatedCredentials.room,
+              password: lastCreatedCredentials.password,
+              moveInDate: lastCreatedCredentials.moveInDate || '',
+              amount: lastCreatedCredentials.monthlyRent || 10000
+            }
+          })
+          .then(() => {
+            if (btn) btn.textContent = '✓ Email Sent!';
+          })
+          .catch(() => {
+            if (btn) btn.textContent = '✓ Dispatched';
+          });
+        break;
+      }
       case 'finish-create-tenant':
         closeCreateTenantModal();
         document.querySelector('[data-tab-button="tenants"]')?.click();
@@ -480,6 +562,29 @@ export function initCreateTenant() {
     try {
       const created = await createTenant();
       if (!created) return;
+
+      // Automated email dispatch with credentials
+      try {
+        const currentOrigin =
+          typeof window !== 'undefined' && window.location?.origin
+            ? window.location.origin
+            : 'https://homespot-mjp.web.app';
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'welcome_credentials',
+            to: created.email,
+            name: created.name,
+            room: created.room,
+            password: created.password,
+            moveInDate: created.moveInDate || '',
+            amount: created.monthlyRent || 10000,
+            dueDay: created.dueDay || 5,
+            portalUrl: `${currentOrigin}/login.html`
+          }
+        });
+      } catch (mailErr) {
+        console.warn('Automated welcome email dispatch note:', mailErr);
+      }
 
       form.reset();
       showCreatedTenantInModal(created);

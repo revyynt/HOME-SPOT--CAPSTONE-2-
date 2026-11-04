@@ -8,29 +8,30 @@
     <link rel="stylesheet" href="./assets/css/style.css" />
   </head>
 
-  <body class="bg-white overflow-x-hidden">
+  <body class="bg-white overflow-x-hidden" data-mobile-section="rooms">
     <!-- Header -->
     <header class="border-b bg-white sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/95">
-      <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 md:py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-8">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5 sm:gap-3">
               <img
                 src="assets/img/logo.png"
                 alt="Homespot AR Logo"
-                class="h-12 w-auto object-contain"
+                class="h-10 sm:h-12 w-auto object-contain"
               />
               <div>
-                <span class="text-2xl font-bold text-blue-600">MJP Residences</span>
-                <p class="text-xs text-green-600 font-medium">Home-Spot Apartment Realty</p>
+                <span class="text-xl sm:text-2xl font-bold text-blue-600 leading-tight block"
+                  >MJP Residences</span
+                >
+                <p class="text-[11px] sm:text-xs text-green-600 font-medium">
+                  Home-Spot Apartment Realty
+                </p>
               </div>
             </div>
             <nav class="hidden md:flex items-center gap-6">
               <a href="#rooms" class="text-gray-700 hover:text-blue-600 transition-colors"
                 >Apartment Units</a
-              >
-              <a href="#floor-plan" class="text-gray-700 hover:text-blue-600 transition-colors"
-                >Floor Plan</a
               >
               <a href="#about" class="text-gray-700 hover:text-blue-600 transition-colors">About</a>
               <a href="#support" class="text-gray-700 hover:text-blue-600 transition-colors"
@@ -41,63 +42,84 @@
           <div class="flex items-center gap-4">
             <a
               href="./login.html"
-              class="px-5 py-2 text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg transition-all hover:shadow-lg hover:-translate-y-0.5"
+              class="px-4 sm:px-5 py-2 text-sm sm:text-base text-white bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg transition-all hover:shadow-lg"
             >
               Portal Login
             </a>
           </div>
         </div>
       </div>
+      <!-- Facebook Mobile Web Style 3-Tab Icon Navigation Bar -->
       <nav
-        class="flex md:hidden max-w-7xl mx-auto px-4 pb-3 pt-2 border-t border-gray-100 items-center justify-around gap-2 text-xs font-semibold"
+        class="flex md:hidden border-t border-gray-200 bg-white items-stretch justify-around"
         aria-label="Mobile navigation"
       >
-        <a
-          href="#rooms"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Apartment Units</a
-        >
-        <a
-          href="#floor-plan"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Floor Plan</a
-        >
-        <a
-          href="#about"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >About</a
-        >
-        <a
-          href="#support"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Support</a
-        >
+        <a href="#rooms" data-mobile-nav="rooms" class="fb-mobile-tab active">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+            />
+          </svg>
+          <span>Units</span>
+        </a>
+        <a href="#about" data-mobile-nav="about" class="fb-mobile-tab">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <span>Location</span>
+        </a>
+        <a href="#support" data-mobile-nav="support" class="fb-mobile-tab">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+            />
+          </svg>
+          <span>Support</span>
+        </a>
       </nav>
     </header>
 
     <!-- Hero Section -->
     <section
-      class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-16 overflow-hidden"
+      id="hero-section"
+      class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-5 md:py-16 overflow-hidden"
     >
       <div class="max-w-7xl mx-auto px-4 relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           <div>
-            <div class="flex items-center gap-2 mb-3 text-yellow-300">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex items-center gap-2 mb-1.5 md:mb-3 text-yellow-300">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
                 ></path>
               </svg>
-              <span class="text-sm font-medium">Your Home Away From Home</span>
+              <span class="text-xs md:text-sm font-medium">Your Home Away From Home</span>
             </div>
 
             <h1
-              class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight tracking-tight"
+              class="text-2xl sm:text-5xl lg:text-6xl font-extrabold mb-2 md:mb-4 leading-tight tracking-tight"
             >
               MJP Residences
             </h1>
 
-            <div class="flex items-center gap-2 mb-5 text-blue-100">
+            <div class="flex items-center gap-2 mb-2 md:mb-5 text-blue-100">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
@@ -112,15 +134,15 @@
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 ></path>
               </svg>
-              <span class="text-sm">9th Avenue West, Caloocan City</span>
+              <span class="text-xs md:text-sm">9th Avenue West, Caloocan City</span>
             </div>
 
-            <p class="text-blue-50 mb-8 text-base leading-relaxed max-w-md">
+            <p class="text-blue-50 mb-3 md:mb-8 text-sm md:text-base leading-relaxed max-w-md">
               MJP Residences offers modern and secure apartment units designed for students and
               families.
             </p>
 
-            <div class="flex flex-wrap gap-3">
+            <div class="hidden md:flex flex-wrap gap-3">
               <a
                 href="#rooms"
                 class="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all hover:shadow-xl hover:-translate-y-0.5 text-sm"
@@ -136,7 +158,7 @@
             </div>
           </div>
 
-          <div class="relative">
+          <div class="relative hidden lg:block">
             <div class="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="assets/img/building-exterior.jpg"
@@ -153,11 +175,11 @@
     <section id="rooms" class="max-w-7xl mx-auto px-4 py-12">
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
         <div>
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex flex-wrap items-center gap-2.5 mb-2">
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Available Apartment Units</h2>
             <span
               id="landingUnitsCountBadge"
-              class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full border border-blue-200 hidden"
+              class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1 rounded-lg border border-blue-200 shadow-2xs whitespace-nowrap shrink-0 hidden"
             >
               0 Units Available
             </span>
@@ -387,117 +409,6 @@
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Floor Plan Section -->
-    <section id="floor-plan" class="max-w-7xl mx-auto px-4 pb-16">
-      <div class="mb-6">
-        <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">MJP Residences — Floor Plan</h2>
-      </div>
-
-      <div
-        class="rounded-2xl overflow-hidden shadow-2xl border border-gray-200 bg-white text-gray-900"
-      >
-        <!-- Top Floor Plan Bar -->
-        <div
-          class="px-4 py-2.5 bg-white border-b border-gray-200 flex flex-wrap items-center justify-between gap-2"
-        >
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-gray-900">MJP Residences — Floor Plan</span>
-            <span class="text-[11px] text-gray-500 hidden sm:inline"
-              >• Click any room to check vacancy</span
-            >
-          </div>
-          <div class="flex items-center gap-2">
-            <select
-              id="landing3DFloorSelect"
-              aria-label="Isolate Floor"
-              class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-gray-800 border border-gray-300 focus:outline-none cursor-pointer"
-            >
-              <option value="all">All Floors • 1F–5F</option>
-              <option value="1">1F • Commercial &amp; Water Station</option>
-              <option value="2">2F • Rooms 101–103</option>
-              <option value="3">3F • Rooms 201–203</option>
-              <option value="4">4F • Rooms &amp; Back Deck</option>
-              <option value="5">5F • Upper Rooms 401 &amp; 410</option>
-            </select>
-            <button
-              type="button"
-              id="landing3DFireBtn"
-              data-action="landing-3d-fire"
-              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-red-600 text-white border border-red-500 hover:bg-red-700 transition-colors cursor-pointer"
-            >
-              Fire Safety: ON
-            </button>
-          </div>
-        </div>
-
-        <!-- Interactive 3D Floor Plan Canvas -->
-        <div id="landingHero3DViewport" class="w-full h-80 sm:h-96 lg:h-[480px] bg-slate-950"></div>
-
-        <!-- Occupancy Legend Bar -->
-        <div
-          class="px-4 py-2 bg-white border-t border-gray-200 flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-600"
-        >
-          <div class="flex flex-wrap items-center gap-3">
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-              <span class="font-medium text-gray-700">Occupied Room</span>
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
-              <span class="font-medium text-gray-700">Vacant / Available</span>
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
-              <span class="font-medium text-gray-700">1F Commercial</span>
-            </span>
-          </div>
-          <span class="text-gray-400">Drag to rotate</span>
-        </div>
-
-        <!-- Selected Room Apartment Information Panel (Public Inquiry View - No Tenant PII) -->
-        <div id="landingHero3DUnitPanel" class="p-4 bg-white border-t border-gray-200">
-          <div class="mb-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span
-                id="landing3DUnitStatusBadge"
-                class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-700 border border-sky-300"
-              >
-                Vacant — Available
-              </span>
-              <span
-                id="landing3DUnitFloor"
-                class="px-2 py-0.5 rounded text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200"
-              >
-                3rd Floor • Front Wing
-              </span>
-              <h3 id="landing3DUnitTitle" class="text-base font-extrabold text-gray-900">
-                Room 201
-              </h3>
-            </div>
-            <p id="landing3DUnitSpecs" class="text-xs text-gray-500 mt-1">
-              Triple Occupancy Room • 30 sqm • 1 User
-            </p>
-          </div>
-          <div class="mb-3">
-            <div id="landing3DUnitPrice" class="text-lg font-extrabold text-emerald-600">
-              ₱5,000.00/mo
-            </div>
-            <a
-              id="landing3DUnitLink"
-              href="property-detail.html?id=triple-occupancy-room"
-              class="inline-flex items-center gap-1 mt-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
-            >
-              View Unit &amp; Inquire
-            </a>
-          </div>
-          <div
-            id="landing3DUnitFeatures"
-            class="flex flex-wrap gap-1.5 pt-2 border-t border-gray-100"
-          ></div>
         </div>
       </div>
     </section>
@@ -984,6 +895,30 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-700 mb-1"
+              >Room / Unit of Interest (optional)</label
+            >
+            <select
+              name="preferredRoom"
+              class="w-full px-3.5 py-2.5 text-sm border-2 border-gray-200 focus:border-blue-500 rounded-lg outline-none transition-all text-gray-700 bg-white"
+            >
+              <option value="">-- General / Any Available Room --</option>
+              <option value="Room 101">2F • Room 101</option>
+              <option value="Room 102">2F • Room 102</option>
+              <option value="Room 103">2F • Room 103</option>
+              <option value="Room 201">3F • Room 201</option>
+              <option value="Room 202">3F • Room 202</option>
+              <option value="Room 203">3F • Room 203</option>
+              <option value="Room 301">4F • Room 301</option>
+              <option value="Room 302">4F • Room 302</option>
+              <option value="Room 303">4F • Room 303</option>
+              <option value="Room 401">5F • Room 401</option>
+              <option value="Room 402">5F • Room 402</option>
+              <option value="Room 410">5F • Room 410</option>
+              <option value="Commercial Space 1">1F • Commercial Space 1</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-700 mb-1"
               >Message <span class="text-red-500">*</span></label
             >
             <textarea
@@ -1099,13 +1034,6 @@
               >
                 <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
                 Apartment Units
-              </a>
-              <a
-                href="#floor-plan"
-                class="block text-gray-300 text-sm hover:text-green-400 transition-colors flex items-center gap-2"
-              >
-                <span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
-                Floor Plan
               </a>
               <a
                 href="#about"

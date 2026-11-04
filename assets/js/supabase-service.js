@@ -189,6 +189,69 @@ async function deleteDoc(ref) {
   if (error) throw error;
 }
 
+const collectionListeners = new Map();
+let sharedChannel = null;
+let fallbackPollTimer = null;
+
+function notifyCollectionListeners(collectionName) {
+  if (!collectionName) {
+    for (const listeners of collectionListeners.values()) {
+      for (const fn of listeners) fn();
+    }
+    return;
+  }
+  const listeners = collectionListeners.get(collectionName);
+  if (!listeners) return;
+  for (const fn of listeners) fn();
+}
+
+function startFallbackPolling() {
+  if (fallbackPollTimer) return;
+  fallbackPollTimer = setInterval(() => {
+    if (typeof document !== 'undefined' && document.hidden) return;
+    notifyCollectionListeners();
+  }, 15000);
+}
+
+function ensureSharedRealtimeChannel() {
+  if (sharedChannel) return;
+  sharedChannel = supabase
+    .channel('app-documents-shared')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'app_documents'
+      },
+      (payload) => {
+        const col = payload?.new?.collection || payload?.old?.collection;
+        notifyCollectionListeners(col);
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        notifyCollectionListeners();
+      } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        startFallbackPolling();
+      }
+    });
+}
+
+function teardownSharedRealtimeIfIdle() {
+  let total = 0;
+  for (const set of collectionListeners.values()) total += set.size;
+  if (total > 0) return;
+  if (sharedChannel) {
+    supabase.removeChannel(sharedChannel);
+    sharedChannel = null;
+  }
+  if (fallbackPollTimer) {
+    clearInterval(fallbackPollTimer);
+    fallbackPollTimer = null;
+  }
+}
+
 function onSnapshot(ref, onData, onError) {
   const target = dataRef(ref);
   let active = true;
@@ -221,31 +284,30 @@ function onSnapshot(ref, onData, onError) {
     }
   };
 
-  // Immediately fetch current state via HTTP REST without waiting for WebSocket handshake
-  void refresh();
+  let set = collectionListeners.get(target.name);
+  if (!set) {
+    set = new Set();
+    collectionListeners.set(target.name, set);
+  }
+  set.add(refresh);
 
-  const channel = supabase
-    .channel(`app-documents:${target.name}:${crypto.randomUUID()}`)
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'app_documents',
-        filter: `collection=eq.${target.name}`
-      },
-      refresh
-    )
-    .subscribe((status, error) => {
-      if (status === 'SUBSCRIBED') refresh();
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        onError?.(error || new Error(`Supabase Realtime subscription failed: ${status}`));
-      }
+  // Wait for auth session initialization before fetching & opening shared Realtime channel
+  authReady
+    .catch(() => {})
+    .then(() => {
+      if (!active) return;
+      void refresh();
+      ensureSharedRealtimeChannel();
     });
 
   return () => {
     active = false;
-    supabase.removeChannel(channel);
+    const listeners = collectionListeners.get(target.name);
+    if (listeners) {
+      listeners.delete(refresh);
+      if (listeners.size === 0) collectionListeners.delete(target.name);
+    }
+    teardownSharedRealtimeIfIdle();
   };
 }
 

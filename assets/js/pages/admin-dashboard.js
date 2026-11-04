@@ -223,6 +223,7 @@ import {
   openCreateTenantModalFromData
 } from './admin-dashboard/create-tenant.js';
 import { initDetailModals } from './admin-dashboard/modals.js';
+import { initGateMonitor } from './admin-dashboard/gate-monitor.js';
 import { supabase, supabaseData } from '../supabase-service.js';
 import { DEFAULT_ROOMS, formatRoomPrice, mergeRoomData, normalizeRoomDocId } from '../lib/rooms.js';
 import { initPanoramaViewer } from '../lib/panorama.js';
@@ -1062,13 +1063,54 @@ function initAdminPaymentCalendar() {
         .join('');
     }
 
+    // Auto-select first day with events if current selection has none in this month
+    const currentSelectedCell = cal.days.find((d) => d.dateKey === selectedDateKey);
+    if (
+      !currentSelectedCell ||
+      (!currentSelectedCell.dueEvents.length && !currentSelectedCell.paymentEvents.length)
+    ) {
+      const firstActiveDay = cal.days.find(
+        (d) => d.inCurrentMonth && (d.dueEvents.length > 0 || d.paymentEvents.length > 0)
+      );
+      if (firstActiveDay) {
+        selectedDateKey = firstActiveDay.dateKey;
+      }
+    }
+
     gridEl.innerHTML = cal.days
       .map((cell) => {
+        const hasOverdue =
+          cell.dueEvents.some((e) => e.status === 'Overdue') ||
+          cell.paymentEvents.some((p) => p.status === 'Overdue' || p.status === 'Failed');
+        const hasPaid =
+          cell.dueEvents.some((e) => e.status === 'Paid') ||
+          cell.paymentEvents.some((p) => p.status === 'Paid');
+        const hasPending = cell.dueEvents.some(
+          (e) => e.isMoveInMarker || e.status === 'Pending' || e.status === 'Due Soon'
+        );
+        const hasScheduled = cell.dueEvents.some((e) => e.status === 'Scheduled');
+
+        let mobileStatusCls = 'border border-gray-200 bg-white hover:bg-gray-50';
+        if (!cell.inCurrentMonth) {
+          mobileStatusCls = 'border border-gray-200 bg-gray-50 opacity-45';
+        } else if (hasOverdue) {
+          mobileStatusCls =
+            'border-2 border-red-500 bg-red-50/40 sm:border sm:border-gray-200 sm:bg-white hover:bg-gray-50';
+        } else if (hasPaid) {
+          mobileStatusCls =
+            'border-2 border-emerald-500 bg-emerald-50/40 sm:border sm:border-gray-200 sm:bg-white hover:bg-gray-50';
+        } else if (hasPending) {
+          mobileStatusCls =
+            'border-2 border-amber-500 bg-amber-50/40 sm:border sm:border-gray-200 sm:bg-white hover:bg-gray-50';
+        } else if (hasScheduled) {
+          mobileStatusCls =
+            'border-2 border-blue-500 bg-blue-50/40 sm:border sm:border-gray-200 sm:bg-white hover:bg-gray-50';
+        }
+
         const baseCls = [
-          'min-h-[82px] border rounded-lg p-1.5 flex flex-col gap-1 cursor-pointer transition-colors'
+          'min-h-[42px] sm:min-h-[82px] rounded-lg p-1 sm:p-1.5 flex flex-col items-center sm:items-stretch justify-center sm:justify-start gap-0.5 sm:gap-1 cursor-pointer transition-colors',
+          mobileStatusCls
         ];
-        if (!cell.inCurrentMonth) baseCls.push('bg-gray-50 opacity-45');
-        else baseCls.push('bg-white hover:bg-gray-50');
         if (cell.isToday) baseCls.push('ring-2 ring-emerald-500 border-emerald-500');
         if (cell.dateKey === selectedDateKey) baseCls.push('ring-2 ring-blue-600 bg-blue-50/40');
 
@@ -1100,10 +1142,8 @@ function initAdminPaymentCalendar() {
 
         return `
           <div class="${baseCls.join(' ')}" data-action="admin-cal-select-day" data-date-key="${escapeHtml(cell.dateKey)}">
-            <div class="text-xs font-bold text-gray-700">${cell.dayNumber}</div>
-            ${dueHtml}
-            ${payHtml}
-            ${moreHtml}
+            <div class="text-xs font-bold text-gray-800">${cell.dayNumber}</div>
+            <div class="hidden sm:flex sm:flex-col sm:gap-1">${dueHtml}${payHtml}${moreHtml}</div>
           </div>`;
       })
       .join('');
@@ -1115,7 +1155,7 @@ function initAdminPaymentCalendar() {
           ...selectedCell.dueEvents.map((ev) => {
             if (ev.isMoveInMarker) {
               return `
-                <div class="flex items-center justify-between py-2 border-b last:border-b-0 gap-2 flex-wrap sm:flex-nowrap">
+                <div class="flex items-center justify-between py-2.5 border-b last:border-b-0 gap-2 flex-wrap sm:flex-nowrap">
                   <div class="flex items-center gap-2 min-w-0">
                     <div class="min-w-0">
                       <div class="text-sm font-bold text-gray-900 truncate">${escapeHtml(ev.tenantName)}</div>
@@ -1138,24 +1178,35 @@ function initAdminPaymentCalendar() {
                   </div>
                 </div>`;
             }
-            return `<div class="flex items-center justify-between py-1 border-b last:border-b-0">
-              <span><strong>${escapeHtml(ev.tenantName)}</strong> (${escapeHtml(ev.room)}) — Scheduled Rent Due</span>
-              <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(ev.status)}">${escapeHtml(ev.status)} • ${escapeHtml(formatPHP(ev.amount))}</span>
-            </div>`;
-          }),
-          ...selectedCell.paymentEvents.map(
-            (p) =>
-              `<div class="py-1.5 border-b last:border-b-0">
-                <div class="flex items-center justify-between">
-                  <span><strong>${escapeHtml(p.tenantName)}</strong> — ${escapeHtml(p.purpose)} (${escapeHtml(formatPaymentMethod(p.method, p))}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''})</span>
-                  <span class="px-2 py-0.5 rounded text-xs font-semibold border ${badgeStyle(p.status)}">Payment ${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
+            return `
+              <div class="py-2.5 border-b border-gray-200/70 last:border-b-0 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="text-sm font-bold text-gray-900 truncate">${escapeHtml(ev.tenantName)} <span class="text-xs font-normal text-gray-500">• ${escapeHtml(ev.room)}</span></div>
+                  <div class="text-xs text-gray-600">Scheduled Monthly Rent Due</div>
                 </div>
-                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1 font-normal">Note: ${escapeHtml(p.notes)}</div>` : ''}
-              </div>`
-          )
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border whitespace-nowrap shrink-0 ${badgeStyle(ev.status)}">${escapeHtml(ev.status)} • ${escapeHtml(formatPHP(ev.amount))}</span>
+              </div>`;
+          }),
+          ...selectedCell.paymentEvents.map((p) => {
+            const cleanMethod = formatPaymentMethod(p.method, p)
+              .replace(/^PayMongo Checkout\s*\((.+)\)$/i, '$1')
+              .trim();
+            return `
+              <div class="py-2.5 border-b border-gray-200/70 last:border-b-0">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-sm font-bold text-gray-900 truncate">${escapeHtml(p.tenantName)}</div>
+                    <div class="text-xs font-medium text-gray-700 mt-0.5">${escapeHtml(p.purpose)}</div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">${escapeHtml(cleanMethod)}${p.referenceNumber ? ' • ' + escapeHtml(p.referenceNumber) : ''}</div>
+                  </div>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border whitespace-nowrap shrink-0 ${badgeStyle(p.status)}">${escapeHtml(p.status)} • ${escapeHtml(formatPHP(p.amount))}</span>
+                </div>
+                ${p.notes ? `<div class="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 mt-1.5 font-normal">Note: ${escapeHtml(p.notes)}</div>` : ''}
+              </div>`;
+          })
         ].join('');
         detailEl.classList.remove('hidden');
-        detailEl.innerHTML = `<div class="font-bold text-gray-900 mb-2">Events on ${escapeHtml(selectedCell.dateKey)}</div><div class="space-y-1">${lines}</div>`;
+        detailEl.innerHTML = `<div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Events on ${escapeHtml(selectedCell.dateKey)}</div><div class="divide-y divide-gray-200/60">${lines}</div>`;
       } else {
         detailEl.classList.add('hidden');
         detailEl.innerHTML = '';
@@ -1168,16 +1219,33 @@ function initAdminPaymentCalendar() {
           '<p class="text-xs text-gray-400 italic">No upcoming unpaid tenant schedules found.</p>';
       } else {
         upcomingEl.innerHTML = cal.upcomingSchedule
-          .map(
-            (item) => `
+          .map((item) => {
+            const itemPayload = encodeURIComponent(
+              JSON.stringify({
+                id: item.tenantId,
+                name: item.tenantName,
+                email: item.tenantEmail,
+                room: item.room,
+                amount: item.amount,
+                dueDay: item.dueDay,
+                dueDate: item.dueDate,
+                status: item.status
+              })
+            );
+            return `
             <div class="p-3 rounded-lg border bg-gray-50 flex items-center justify-between gap-2">
               <div>
                 <div class="text-xs font-bold text-gray-900">${escapeHtml(item.tenantName)} • ${escapeHtml(item.room)}</div>
                 <div class="text-xs text-gray-600">${escapeHtml(item.dueDate)} — <strong>${escapeHtml(formatPHP(item.amount))}</strong></div>
               </div>
-              <span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeStyle(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
-            </div>`
-          )
+              <div class="flex items-center gap-1.5 flex-shrink-0">
+                <span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${badgeStyle(item.status === 'Due Soon' ? 'Pending' : item.status)}">${escapeHtml(item.status)}</span>
+                <button type="button" data-action="send-due-alert" data-tenant="${itemPayload}" class="px-2 py-0.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded transition-colors" title="Send Rent Due Reminder Email">
+                  Remind
+                </button>
+              </div>
+            </div>`;
+          })
           .join('');
       }
     }
@@ -1215,27 +1283,42 @@ function initAdminPaymentCalendar() {
                     : 'bg-yellow-100 text-yellow-800';
             return `
               <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="block md:table-cell pb-2 mb-1.5 border-b border-gray-100 md:border-none md:px-6 md:py-4 md:mb-0 whitespace-nowrap">
                   <div class="flex items-center">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm mr-3 shrink-0">
                       ${escapeHtml(initials(row.tenantName))}
                     </div>
-                    <div class="text-sm font-medium text-gray-900">${escapeHtml(row.tenantName)}</div>
+                    <div class="text-sm font-bold md:font-medium text-gray-900">${escapeHtml(row.tenantName)}</div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.room)}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${escapeHtml(formatPHP(row.amount))}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(row.dueDate)}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${pillCls}">${escapeHtml(row.status)}</span>
+                <td class="flex items-center justify-between py-1 md:table-cell md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-600">
+                  <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Room</span>
+                  <span>${escapeHtml(row.room)}</span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <button data-open-modal="payment" data-tenant="${payload}" class="text-blue-600 hover:text-blue-800 mr-3">
-                    View Payment
-                  </button>
-                  <button data-open-modal="dueDate" data-tenant="${payload}" class="text-green-600 hover:text-green-800">
-                    View Due Date
-                  </button>
+                <td class="flex items-center justify-between py-1 md:table-cell md:px-6 md:py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                  <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Amount</span>
+                  <span>${escapeHtml(formatPHP(row.amount))}</span>
+                </td>
+                <td class="flex items-center justify-between py-1 md:table-cell md:px-6 md:py-4 whitespace-nowrap text-sm text-gray-600">
+                  <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Due Date</span>
+                  <span>${escapeHtml(row.dueDate)}</span>
+                </td>
+                <td class="flex items-center justify-between py-1 md:table-cell md:px-6 md:py-4 whitespace-nowrap">
+                  <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Status</span>
+                  <span class="px-3 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${pillCls}">${escapeHtml(row.status)}</span>
+                </td>
+                <td class="block md:table-cell pt-2.5 mt-1.5 border-t border-gray-100 md:border-none md:px-6 md:py-4 md:mt-0 whitespace-nowrap text-sm">
+                  <div class="flex flex-wrap items-center justify-end md:justify-start gap-2">
+                    <button type="button" data-action="open-payment-modal" data-tenant="${payload}" class="flex-1 md:flex-initial px-2.5 py-1.5 md:p-0 text-xs md:text-sm bg-blue-50 md:bg-transparent border border-blue-200 md:border-none rounded-lg text-blue-600 hover:text-blue-800 font-semibold md:font-medium text-center">
+                      View Payment
+                    </button>
+                    <button type="button" data-action="open-due-modal" data-tenant="${payload}" class="flex-1 md:flex-initial px-2.5 py-1.5 md:p-0 text-xs md:text-sm bg-emerald-50 md:bg-transparent border border-emerald-200 md:border-none rounded-lg text-emerald-600 hover:text-emerald-800 font-semibold md:font-medium text-center">
+                      View Due Date
+                    </button>
+                    <button type="button" data-action="send-due-alert" data-tenant="${payload}" class="px-2.5 py-1.5 md:px-2 md:py-0.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-lg md:rounded transition-colors flex items-center justify-center gap-1" title="Send Rent Due Reminder">
+                      Remind
+                    </button>
+                  </div>
                 </td>
               </tr>`;
           })
@@ -1458,6 +1541,224 @@ function initAdminPaymentCalendar() {
         }
         break;
       }
+      case 'open-payment-modal': {
+        const payload = btn.dataset.tenant;
+        if (payload) {
+          try {
+            openPaymentModal(JSON.parse(decodeURIComponent(payload)));
+          } catch {}
+        }
+        break;
+      }
+      case 'open-due-modal': {
+        const payload = btn.dataset.tenant;
+        if (payload) {
+          try {
+            openDueDateModal(JSON.parse(decodeURIComponent(payload)));
+          } catch {}
+        }
+        break;
+      }
+      case 'send-due-alert': {
+        const payload = btn.dataset.tenant;
+        if (payload) {
+          try {
+            await sendDueAlert(JSON.parse(decodeURIComponent(payload)));
+          } catch {}
+        }
+        break;
+      }
+      case 'send-all-due-alerts': {
+        await sendAllDueAlerts();
+        break;
+      }
+      default:
+        break;
+    }
+  });
+
+  let activeModalTenant = null;
+
+  const openPaymentModal = (tenant) => {
+    activeModalTenant = tenant;
+    const modal = document.getElementById('paymentModal');
+    if (!modal || !tenant) return;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('modalTenantName', tenant.name || 'Tenant');
+    set('modalRoom', tenant.room || 'Assigned Room');
+    set('modalAmount', formatPHP(tenant.amount || 10000));
+    set('modalDueDate', tenant.dueDate || '5th of each month');
+    set('modalAvatar', initials(tenant.name || 'Tenant'));
+
+    const statusEl = document.getElementById('modalStatus');
+    if (statusEl) {
+      statusEl.textContent = tenant.status || 'Pending';
+      statusEl.className = `px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${badgeStyle(tenant.status)}`;
+    }
+    modal.classList.remove('hidden');
+  };
+
+  const closePaymentModal = () => {
+    document.getElementById('paymentModal')?.classList.add('hidden');
+  };
+
+  const openDueDateModal = (tenant) => {
+    activeModalTenant = tenant;
+    const modal = document.getElementById('dueDateModal');
+    if (!modal || !tenant) return;
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+    set('dueDateModalTenantName', tenant.name || 'Tenant');
+    set('dueDateModalRoom', tenant.room || 'Assigned Room');
+    set('dueDateModalDate', `${tenant.dueDay || 5}th of each month`);
+    set('dueDateModalRent', formatPHP(tenant.amount || 10000));
+    set('dueDateModalCycle', `Monthly (${tenant.dueDay || 5}th of each month)`);
+    set('dueDateModalNextDate', tenant.dueDate || `${tenant.dueDay || 5}th of next month`);
+    set('dueDateModalAvatar', initials(tenant.name || 'Tenant'));
+
+    const input = document.getElementById('dueDateModalDayInput');
+    if (input) input.value = tenant.dueDay || 5;
+
+    modal.classList.remove('hidden');
+  };
+
+  const closeDueDateModal = () => {
+    document.getElementById('dueDateModal')?.classList.add('hidden');
+  };
+
+  const sendDueAlert = async (tenant) => {
+    if (!tenant || !tenant.email) {
+      Toast.error('Tenant email is not available.');
+      return;
+    }
+    const ok = await Toast.confirm({
+      title: 'Send Rent Due Alert?',
+      message: `Send an automated rent due reminder email to ${tenant.name} (${tenant.email}) for ${tenant.room}?`,
+      confirmText: 'Send Alert',
+      cancelText: 'Cancel'
+    });
+    if (!ok) return;
+
+    try {
+      const currentOrigin =
+        typeof window !== 'undefined' && window.location?.origin
+          ? window.location.origin
+          : 'https://homespot-mjp.web.app';
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'due_date_alert',
+          to: tenant.email,
+          name: tenant.name,
+          room: tenant.room,
+          amount: tenant.amount,
+          dueDate: tenant.dueDate,
+          dueDay: tenant.dueDay || 5,
+          portalUrl: `${currentOrigin}/login.html`
+        }
+      });
+      if (error) throw error;
+      Toast.success(`Rent due reminder sent to ${tenant.name} (${tenant.email}).`);
+    } catch (err) {
+      console.error('Failed to send due reminder:', err);
+      Toast.error('Failed to dispatch alert: ' + (err.message || 'Check connection'));
+    }
+  };
+
+  const sendAllDueAlerts = async () => {
+    const pendingRows = calTenants.filter(
+      (t) => String(t.status || 'Active').toLowerCase() !== 'archived' && t.email
+    );
+    if (!pendingRows.length) {
+      Toast.error('No active tenants found with email addresses.');
+      return;
+    }
+    const ok = await Toast.confirm({
+      title: 'Dispatch Due Alerts to All Active Tenants?',
+      message: `Send automated rent due date reminder emails to all ${pendingRows.length} active tenant(s)?`,
+      confirmText: 'Send to All',
+      cancelText: 'Cancel'
+    });
+    if (!ok) return;
+
+    let sentCount = 0;
+    const currentOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://homespot-mjp.web.app';
+    for (const t of pendingRows) {
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'due_date_alert',
+            to: t.email,
+            name: t.name || 'Tenant',
+            room: t.room || 'Unit',
+            amount: t.monthlyRent || 10000,
+            dueDay: t.dueDay || 5,
+            dueDate: `Day ${t.dueDay || 5} of each month`,
+            portalUrl: `${currentOrigin}/login.html`
+          }
+        });
+        sentCount += 1;
+      } catch (err) {
+        console.warn('Batch due alert dispatch note:', err);
+      }
+    }
+    Toast.success(`Dispatched automated due date reminders to ${sentCount} tenant(s).`);
+  };
+
+  // Delegated modal button actions (inside or outside section)
+  document.addEventListener('click', async (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const btn = target?.closest('[data-action]');
+    if (!btn) return;
+
+    switch (btn.dataset.action) {
+      case 'close-payment-modal':
+        closePaymentModal();
+        break;
+      case 'close-due-date-modal':
+        closeDueDateModal();
+        break;
+      case 'send-modal-due-alert': {
+        if (activeModalTenant) {
+          await sendDueAlert(activeModalTenant);
+        }
+        break;
+      }
+      case 'save-due-date': {
+        if (!activeModalTenant) return;
+        const input = document.getElementById('dueDateModalDayInput');
+        const newDueDay = parseInt(input?.value, 10);
+        if (!newDueDay || newDueDay < 1 || newDueDay > 31) {
+          Toast.error('Please enter a valid day between 1 and 31.');
+          return;
+        }
+        try {
+          const tenantId = activeModalTenant.id;
+          if (tenantId) {
+            await supabaseData.updateDoc(supabaseData.doc(supabase, 'tenants', tenantId), {
+              dueDay: newDueDay,
+              updatedAt: supabaseData.serverTimestamp()
+            });
+            Toast.success(
+              `Updated monthly due day to the ${newDueDay}th for ${activeModalTenant.name}.`
+            );
+            activeModalTenant.dueDay = newDueDay;
+            closeDueDateModal();
+            renderCalendar();
+          }
+        } catch (err) {
+          console.error('Failed to update due date:', err);
+          Toast.error('Could not update due date: ' + (err.message || 'Error'));
+        }
+        break;
+      }
       default:
         break;
     }
@@ -1553,7 +1854,14 @@ function initAdminOverviewActivity() {
     }
 
     for (const m of state.messages) {
-      if (m.sender === 'admin') continue;
+      if (
+        m.sender === 'admin' ||
+        m.sender === 'security' ||
+        m.type === 'gate_log' ||
+        m.type === 'gate_notification'
+      ) {
+        continue;
+      }
       const raw = m.createdAt;
       const time = new Date(raw || 0).getTime() || 0;
       const isTenant = m.sender === 'tenant';
@@ -1804,12 +2112,12 @@ function initAdminDataAnalysis() {
     const chartGrid = document.getElementById('adminAnalysisChartGrid');
     if (chartGrid) {
       const maxScale = Math.max(totalRooms, ...allMonthlyStats.map((s) => s.tenants), 1);
-      const svgW = 960;
-      const svgH = 290;
-      const xStart = 70;
-      const xEnd = 920;
-      const yBottom = 225;
-      const yTop = 25;
+      const svgW = 680;
+      const svgH = 265;
+      const xStart = 48;
+      const xEnd = 656;
+      const yBottom = 205;
+      const yTop = 22;
       const plotH = yBottom - yTop;
       const plotW = xEnd - xStart;
 
@@ -1837,8 +2145,8 @@ function initAdminDataAnalysis() {
           const y = getY(val).toFixed(1);
           return `
             <line x1="${xStart}" y1="${y}" x2="${xEnd}" y2="${y}" stroke="#cbd5e1" stroke-width="1" />
-            <line x1="${xStart - 6}" y1="${y}" x2="${xStart}" y2="${y}" stroke="#334155" stroke-width="1.5" />
-            <text x="${xStart - 10}" y="${Number(y) + 4}" text-anchor="end" font-size="11" font-weight="600" fill="#475569">${val}</text>`;
+            <line x1="${xStart - 5}" y1="${y}" x2="${xStart}" y2="${y}" stroke="#334155" stroke-width="1.5" />
+            <text x="${xStart - 8}" y="${Number(y) + 4}" text-anchor="end" font-size="12" font-weight="600" fill="#475569">${val}</text>`;
         })
         .join('');
 
@@ -1848,7 +2156,7 @@ function initAdminDataAnalysis() {
           const isFocus = s.monthIdx === focusMonthIdx;
           return `
             <line x1="${x}" y1="${yTop}" x2="${x}" y2="${yBottom}" stroke="#e2e8f0" stroke-width="1" />
-            <line x1="${x}" y1="${yBottom}" x2="${x}" y2="${yBottom + 6}" stroke="#334155" stroke-width="1.5" />
+            <line x1="${x}" y1="${yBottom}" x2="${x}" y2="${yBottom + 5}" stroke="#334155" stroke-width="1.5" />
             <text x="${x}" y="${yBottom + 20}" text-anchor="middle" font-size="11" font-weight="${isFocus ? '700' : '600'}" fill="${isFocus ? '#0f172a' : '#64748b'}">${s.shortLabel}</text>`;
         })
         .join('');
@@ -1858,7 +2166,7 @@ function initAdminDataAnalysis() {
           ? getX(focusMonthIdx - startMonth).toFixed(1)
           : null;
       const focusColumnHtml = focusX
-        ? `<rect x="${Number(focusX) - 20}" y="${yTop}" width="40" height="${plotH}" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.8" />`
+        ? `<rect x="${Number(focusX) - 16}" y="${yTop}" width="32" height="${plotH}" fill="#f8fafc" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3" opacity="0.8" />`
         : '';
 
       const pointsHtml = monthlyStats
@@ -1873,7 +2181,7 @@ function initAdminDataAnalysis() {
             <g data-action="admin-analysis-pick-month" data-month="${s.monthIdx}" class="cursor-pointer">
               <title>${s.label} ${selectedYear}:&#10;• Occupied Rooms: ${s.occupiedRooms} / ${totalRooms}&#10;• Available Rooms: ${s.availableRooms} / ${totalRooms}&#10;• Active Tenants: ${s.tenants}</title>
               
-              <rect x="${Number(x) - 30}" y="${yTop}" width="60" height="${plotH + 30}" fill="transparent" />
+              <rect x="${Number(x) - 22}" y="${yTop}" width="44" height="${plotH + 28}" fill="transparent" />
 
               <!-- Available marker (Dashed line series) -->
               <circle cx="${x}" cy="${yAvail}" r="3" fill="#38bdf8" />
@@ -1889,9 +2197,9 @@ function initAdminDataAnalysis() {
         .join('');
 
       chartGrid.innerHTML = `
-        <div class="w-full overflow-x-auto bg-white rounded-lg p-2 sm:p-4 border border-gray-200">
-          <div class="min-w-[640px]">
-            <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-56 sm:h-72 select-none" style="overflow: visible;">
+        <div class="w-full bg-white rounded-lg p-1.5 sm:p-4 border border-gray-200">
+          <div class="w-full">
+            <svg viewBox="0 0 ${svgW} ${svgH}" class="w-full h-auto max-h-72 select-none" style="overflow: visible;">
               <!-- Outer frame border -->
               <rect x="${xStart}" y="${yTop}" width="${plotW}" height="${plotH}" fill="#ffffff" stroke="#334155" stroke-width="1.5" />
 
@@ -1917,8 +2225,8 @@ function initAdminDataAnalysis() {
               ${pointsHtml}
 
               <!-- Axis Titles -->
-              <text x="-125" y="24" transform="rotate(-90)" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Rooms / Units</text>
-              <text x="${xStart + plotW / 2}" y="272" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Month (${rangeLabel})</text>
+              <text x="-114" y="14" transform="rotate(-90)" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Rooms / Units</text>
+              <text x="${xStart + plotW / 2}" y="250" text-anchor="middle" font-size="11" font-weight="700" fill="#475569">Month (${rangeLabel})</text>
             </svg>
           </div>
         </div>`;
@@ -2419,6 +2727,78 @@ initLogoutButtons();
 initBackButtonGuard('admin');
 initDetailModals();
 
+// Facebook Mobile Web Navigation & Sub-Tab Ergonomics
+const PRIMARY_MOBILE_TABS = new Set(['overview', 'tenants', 'tenant-payments', 'gate-access']);
+document.body.setAttribute('data-admin-active-tab', 'overview');
+
+function syncMobileTopTabHighlight(activeTab, menuOpen = false) {
+  const menuBtn = document.getElementById('btnAdminMobileMenuToggle');
+  document.querySelectorAll('.fb-mobile-tab[data-tab-button]').forEach((btn) => {
+    const isThisTab = !menuOpen && btn.getAttribute('data-tab-button') === activeTab;
+    btn.classList.toggle('active', isThisTab);
+  });
+  if (menuBtn) {
+    menuBtn.classList.toggle('active', menuOpen || !PRIMARY_MOBILE_TABS.has(activeTab));
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const target = e.target instanceof Element ? e.target : null;
+  if (!target) return;
+
+  const menuToggle = target.closest('[data-action="toggle-admin-mobile-menu"]');
+  const drawer = document.getElementById('adminMobileMenuDrawer');
+  if (menuToggle && drawer) {
+    const isHidden = drawer.classList.toggle('hidden');
+    const currentTab = document.body.getAttribute('data-admin-active-tab') || 'overview';
+    syncMobileTopTabHighlight(currentTab, !isHidden);
+    return;
+  }
+
+  const tabBtn = target.closest('[data-tab-button]');
+  if (tabBtn) {
+    const tabName = tabBtn.getAttribute('data-tab-button') || 'overview';
+    document.body.setAttribute('data-admin-active-tab', tabName);
+    if (drawer && !drawer.classList.contains('hidden')) {
+      drawer.classList.add('hidden');
+    }
+    syncMobileTopTabHighlight(tabName, false);
+    if (window.innerWidth < 768) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  const overviewSubBtn = target.closest('[data-overview-sub-btn]');
+  if (overviewSubBtn) {
+    const subKey = overviewSubBtn.getAttribute('data-overview-sub-btn') || 'activity';
+    const overviewPane = document.querySelector('[data-tab-content="overview"]');
+    if (overviewPane) {
+      overviewPane.setAttribute('data-overview-active-sub', subKey);
+    }
+    document.querySelectorAll('[data-overview-sub-btn]').forEach((btn) => {
+      const active = btn.getAttribute('data-overview-sub-btn') === subKey;
+      btn.className = active
+        ? 'flex-1 py-2 px-3 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs transition-all cursor-pointer'
+        : 'flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white transition-all cursor-pointer';
+    });
+  }
+
+  const subBtn = target.closest('[data-payments-sub-btn]');
+  if (subBtn) {
+    const subKey = subBtn.getAttribute('data-payments-sub-btn') || 'calendar';
+    const paymentsPane = document.querySelector('[data-tab-content="tenant-payments"]');
+    if (paymentsPane) {
+      paymentsPane.setAttribute('data-payments-active-sub', subKey);
+    }
+    document.querySelectorAll('[data-payments-sub-btn]').forEach((btn) => {
+      const active = btn.getAttribute('data-payments-sub-btn') === subKey;
+      btn.className = active
+        ? 'flex-1 py-2 px-2 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs transition-all'
+        : 'flex-1 py-2 px-2 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white transition-all';
+    });
+  }
+});
+
 // Realtime listeners are bound only once the guard passes -- binding them for
 // an anonymous visitor would attempt to read tenant PII.
 document.addEventListener(
@@ -2432,6 +2812,7 @@ document.addEventListener(
     initAdminOverviewActivity();
     initAdminDataAnalysis();
     initAdminBuilding3D();
+    initGateMonitor();
   },
   { once: true }
 );
