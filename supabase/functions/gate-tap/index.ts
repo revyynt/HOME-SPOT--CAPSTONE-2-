@@ -3,9 +3,23 @@ import { jsonResponse, optionsResponse } from '../_shared/http.ts';
 
 const CURFEW_HOUR_START = 22; // 10:00 PM
 const CURFEW_HOUR_END = 5; // 5:00 AM
+const GATE_TIMEZONE = 'Asia/Manila';
+
+function getManilaHour(date = new Date()): number {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: GATE_TIMEZONE,
+      hour: 'numeric',
+      hour12: false
+    }).formatToParts(date);
+    const h = Number(parts.find((p) => p.type === 'hour')?.value);
+    if (Number.isFinite(h)) return h === 24 ? 0 : h;
+  } catch {}
+  return (date.getUTCHours() + 8) % 24;
+}
 
 function isCurfewViolation(date = new Date()) {
-  const hour = date.getHours();
+  const hour = getManilaHour(date);
   return hour >= CURFEW_HOUR_START || hour < CURFEW_HOUR_END;
 }
 
@@ -13,8 +27,18 @@ function formatGateTimestamp(isoString: string) {
   if (!isoString) return 'Never';
   const d = new Date(isoString);
   if (isNaN(d.getTime())) return 'Never';
-  const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const dateStr = d.toLocaleDateString('en-US', {
+    timeZone: GATE_TIMEZONE,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  const timeStr = d.toLocaleTimeString('en-US', {
+    timeZone: GATE_TIMEZONE,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  });
   return `${dateStr} at ${timeStr}`;
 }
 

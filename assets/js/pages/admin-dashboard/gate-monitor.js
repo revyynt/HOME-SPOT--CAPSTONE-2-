@@ -4,7 +4,8 @@ import {
   fetchTenantsPresence,
   clearGateLogs,
   confirmAbandonmentAndReleaseRoom,
-  formatGateTimestamp
+  formatGateTimestamp,
+  isCurfewViolation
 } from '../../lib/gate-service.js';
 import { Toast } from '../../render/toast.js';
 
@@ -114,13 +115,17 @@ function renderGateLogsTable() {
   const tbody = document.getElementById('gateLogsTableBody');
   if (!tbody) return;
 
+  const isLogLate = (log) =>
+    log.direction === 'IN' &&
+    (log.timestamp ? isCurfewViolation(new Date(log.timestamp)) : Boolean(log.isLate));
+
   let filtered = currentGateLogs;
   if (activeFilter === 'IN') {
     filtered = currentGateLogs.filter((l) => l.direction === 'IN');
   } else if (activeFilter === 'OUT') {
     filtered = currentGateLogs.filter((l) => l.direction === 'OUT');
   } else if (activeFilter === 'LATE') {
-    filtered = currentGateLogs.filter((l) => l.isLate);
+    filtered = currentGateLogs.filter((l) => isLogLate(l));
   }
 
   if (!filtered.length) {
@@ -141,7 +146,8 @@ function renderGateLogsTable() {
         ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
         : 'bg-amber-100 text-amber-800 border-amber-300';
       const pillLabel = isEntry ? 'Checked IN' : 'Checked OUT';
-      const curfewHtml = log.isLate
+      const late = isLogLate(log);
+      const curfewHtml = late
         ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-300">Curfew Violation</span>'
         : '<span class="text-xs text-gray-400">On Time</span>';
 
