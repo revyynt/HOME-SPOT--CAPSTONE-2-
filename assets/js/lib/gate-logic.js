@@ -3,8 +3,19 @@ export const CURFEW_HOUR_END = 5; // 5:00 AM
 export const ABANDONMENT_THRESHOLD_DAYS = 7; // Flag as AWOL after 7 days away
 export const GATE_TIMEZONE = 'Asia/Manila';
 
+function parseGateDate(input = new Date()) {
+  if (input instanceof Date) return input;
+  if (typeof input === 'string') {
+    const trimmed = input.trim();
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(trimmed)) {
+      return new Date(`${trimmed}+08:00`);
+    }
+  }
+  return new Date(input);
+}
+
 function getManilaHour(date = new Date()) {
-  const d = date instanceof Date ? date : new Date(date);
+  const d = parseGateDate(date);
   if (isNaN(d.getTime())) return 12;
   try {
     const parts = new Intl.DateTimeFormat('en-US', {
@@ -31,7 +42,7 @@ export function isCurfewViolation(date = new Date()) {
  */
 export function computeDaysAway(lastTapAt, nowMs = Date.now()) {
   if (!lastTapAt) return 0;
-  const tapDate = new Date(lastTapAt);
+  const tapDate = parseGateDate(lastTapAt);
   if (isNaN(tapDate.getTime())) return 0;
   const diffMs = nowMs - tapDate.getTime();
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
@@ -42,7 +53,7 @@ export function computeDaysAway(lastTapAt, nowMs = Date.now()) {
  */
 export function formatGateTimestamp(isoString) {
   if (!isoString) return 'Never';
-  const d = new Date(isoString);
+  const d = parseGateDate(isoString);
   if (isNaN(d.getTime())) return 'Never';
 
   const dateStr = d.toLocaleDateString('en-US', {

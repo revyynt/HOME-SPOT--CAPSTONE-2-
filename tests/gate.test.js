@@ -10,19 +10,19 @@ import {
 } from '../assets/js/lib/gate-logic.js';
 
 test('isCurfewViolation identifies night hours as curfew violations', () => {
-  const lateNight = new Date('2026-11-01T23:15:00');
+  const lateNight = new Date('2026-11-01T23:15:00+08:00');
   assert.equal(isCurfewViolation(lateNight), true, '11:15 PM should be curfew violation');
 
-  const midnight = new Date('2026-11-01T00:30:00');
+  const midnight = new Date('2026-11-01T00:30:00+08:00');
   assert.equal(isCurfewViolation(midnight), true, '12:30 AM should be curfew violation');
 
-  const earlyMorning = new Date('2026-11-01T04:45:00');
+  const earlyMorning = new Date('2026-11-01T04:45:00+08:00');
   assert.equal(isCurfewViolation(earlyMorning), true, '4:45 AM should be curfew violation');
 
-  const normalDay = new Date('2026-11-01T14:00:00');
+  const normalDay = new Date('2026-11-01T14:00:00+08:00');
   assert.equal(isCurfewViolation(normalDay), false, '2:00 PM should NOT be curfew violation');
 
-  const eveningBeforeCurfew = new Date('2026-11-01T21:45:00');
+  const eveningBeforeCurfew = new Date('2026-11-01T21:45:00+08:00');
   assert.equal(
     isCurfewViolation(eveningBeforeCurfew),
     false,
