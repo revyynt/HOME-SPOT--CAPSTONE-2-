@@ -808,10 +808,7 @@ signupForm?.addEventListener('submit', async (e) => {
     } catch {}
 
     // Otherwise prompt user to sign in
-    showSignupAlert(
-      'Account created! You can now sign in with your email and password.',
-      true
-    );
+    showSignupAlert('Account created! You can now sign in with your email and password.', true);
     setTimeout(() => {
       closeModal();
       if (emailInput) emailInput.value = email;

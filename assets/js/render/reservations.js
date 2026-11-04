@@ -4,7 +4,13 @@
  * All data access goes through supabase-service.js.
  */
 
-import { db, supabase, supabaseData, getReservationsRef, isDataReady } from '../supabase-service.js';
+import {
+  db,
+  supabase,
+  supabaseData,
+  getReservationsRef,
+  isDataReady
+} from '../supabase-service.js';
 import { escapeHtml } from '../lib/format.js';
 import { attr } from '../lib/dom.js';
 import { Toast } from './toast.js';
@@ -484,7 +490,9 @@ export async function submitApproveReservation(event) {
           portalUrl: `${currentOrigin}/login.html`
         }
       });
-      Toast.success(`Automated approval notification email dispatched to ${reservationData.email}.`);
+      Toast.success(
+        `Automated approval notification email dispatched to ${reservationData.email}.`
+      );
     } catch (mailErr) {
       console.warn('send-email reservation approval dispatch error:', mailErr);
     }
@@ -538,7 +546,9 @@ async function directApproveReservation(reservationId) {
           portalUrl: `${currentOrigin}/login.html`
         }
       });
-      Toast.success(`Automated approval notification email dispatched to ${reservationData.email}.`);
+      Toast.success(
+        `Automated approval notification email dispatched to ${reservationData.email}.`
+      );
     } catch (mailErr) {
       console.warn('send-email reservation approval dispatch error:', mailErr);
     }

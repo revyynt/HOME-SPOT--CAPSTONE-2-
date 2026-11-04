@@ -256,7 +256,10 @@ export function initGateMonitor() {
     btn.textContent = 'Releasing...';
 
     try {
-      await confirmAbandonmentAndReleaseRoom(tenantId, 'Unannounced Move-out / Abandoned (NFC Inactivity)');
+      await confirmAbandonmentAndReleaseRoom(
+        tenantId,
+        'Unannounced Move-out / Abandoned (NFC Inactivity)'
+      );
       Toast.success(`Success! ${tenantName} archived. Room ${roomName} vacancy restored (+1).`);
       await refreshGateMonitor();
     } catch (err) {
@@ -275,7 +278,9 @@ export function initGateMonitor() {
         const latest = logs[0];
         if (lastKnownLogId && latest.id !== lastKnownLogId) {
           const isEntry = latest.direction === 'IN';
-          const statusText = isEntry ? 'Checked IN (Inside Premises)' : 'Checked OUT (Outside Premises)';
+          const statusText = isEntry
+            ? 'Checked IN (Inside Premises)'
+            : 'Checked OUT (Outside Premises)';
           Toast.info(`Gate Alert: ${latest.tenantName} (${latest.room}) - ${statusText}`);
         }
         lastKnownLogId = latest.id;

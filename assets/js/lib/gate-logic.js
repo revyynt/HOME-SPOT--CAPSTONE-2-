@@ -59,4 +59,3 @@ export function formatGateTimestamp(isoString) {
   });
   return `${dateStr} at ${timeStr}`;
 }
-

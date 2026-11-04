@@ -7,7 +7,9 @@ const PORTAL_URL = 'https://home-spot.online/login.html';
 function buildTemplate(type: string, data: Record<string, unknown>) {
   const name = String(data.name || 'Tenant / Applicant').trim();
   const room = String(data.room || 'Assigned Room').trim();
-  const email = String(data.to || '').trim().toLowerCase();
+  const email = String(data.to || '')
+    .trim()
+    .toLowerCase();
   const moveInDate = String(data.moveInDate || '').trim();
   const password = String(data.password || '');
   const amount = data.amount ? `₱${Number(data.amount).toLocaleString()}` : '₱10,000';
@@ -161,7 +163,11 @@ Deno.serve(async (request) => {
   if (auth.errorResponse) return auth.errorResponse;
   const role = auth.user.app_metadata?.role;
   if (!['admin', 'superadmin'].includes(role)) {
-    return jsonResponse(request, { error: 'Only staff can dispatch automated notifications.' }, 403);
+    return jsonResponse(
+      request,
+      { error: 'Only staff can dispatch automated notifications.' },
+      403
+    );
   }
 
   let body: Record<string, unknown>;
@@ -198,7 +204,9 @@ Deno.serve(async (request) => {
     room: body.room || dbTenant?.room || dbTenant?.dormName || 'Assigned Room',
     amount: body.amount || dbTenant?.monthlyRent || 10000,
     dueDay: body.dueDay || dbTenant?.dueDay || 5,
-    dueDate: body.dueDate || (dbTenant?.dueDay ? `Day ${dbTenant.dueDay} of each month` : '5th of this month'),
+    dueDate:
+      body.dueDate ||
+      (dbTenant?.dueDay ? `Day ${dbTenant.dueDay} of each month` : '5th of this month'),
     moveInDate: body.moveInDate || dbTenant?.moveInDate || '',
     portalUrl: body.portalUrl || PORTAL_URL
   };
@@ -290,4 +298,3 @@ Deno.serve(async (request) => {
     timestamp: now
   });
 });
-

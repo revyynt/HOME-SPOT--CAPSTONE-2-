@@ -59,7 +59,12 @@ Deno.serve(async (request) => {
       if (msgErr) throw msgErr;
 
       const gateMsgIds = (messages || [])
-        .filter((m: { id: string; data: Record<string, unknown> }) => m.data?.type === 'gate_log' || m.id.startsWith('gate-') || m.id.startsWith('notif-gate-'))
+        .filter(
+          (m: { id: string; data: Record<string, unknown> }) =>
+            m.data?.type === 'gate_log' ||
+            m.id.startsWith('gate-') ||
+            m.id.startsWith('notif-gate-')
+        )
         .map((m: { id: string }) => m.id);
 
       if (gateMsgIds.length > 0) {
@@ -116,7 +121,13 @@ Deno.serve(async (request) => {
           id: d.id,
           name: String(d.data.name || 'Tenant').trim(),
           room: String(d.data.room || d.data.dormName || 'Room').trim(),
-          cardUid: String(d.data.cardUid || d.data.nfcCardId || `NFC-${String(d.data.room || '101').replace(/\D+/g, '')}`).trim().toUpperCase(),
+          cardUid: String(
+            d.data.cardUid ||
+              d.data.nfcCardId ||
+              `NFC-${String(d.data.room || '101').replace(/\D+/g, '')}`
+          )
+            .trim()
+            .toUpperCase(),
           gateStatus: String(d.data.gateStatus || 'INSIDE').toUpperCase(),
           status: String(d.data.status || 'Active')
         }))
@@ -138,7 +149,9 @@ Deno.serve(async (request) => {
       return jsonResponse(request, { error: 'Invalid JSON request.' }, 400);
     }
 
-    const cardUid = String(body.cardUid || body.uid || '').trim().toUpperCase();
+    const cardUid = String(body.cardUid || body.uid || '')
+      .trim()
+      .toUpperCase();
     const tenantId = String(body.tenantId || '').trim();
     const explicitDirection = body.direction ? String(body.direction).toUpperCase() : null;
 
@@ -154,18 +167,22 @@ Deno.serve(async (request) => {
 
       if (fetchErr) throw fetchErr;
 
-      const tenantDoc = (tenantRows || []).find((row: { id: string; data: Record<string, unknown> }) => {
-        const d = row.data;
-        if (d.status === 'Archived') return false;
-        if (tenantId && row.id === tenantId) return true;
-        if (cardUid) {
-          const existingUid = String(d.cardUid || d.nfcCardId || '').trim().toUpperCase();
-          if (existingUid === cardUid) return true;
-          const roomDigits = String(d.room || '').replace(/\D+/g, '');
-          if (cardUid === `NFC-${roomDigits}` || cardUid === roomDigits) return true;
+      const tenantDoc = (tenantRows || []).find(
+        (row: { id: string; data: Record<string, unknown> }) => {
+          const d = row.data;
+          if (d.status === 'Archived') return false;
+          if (tenantId && row.id === tenantId) return true;
+          if (cardUid) {
+            const existingUid = String(d.cardUid || d.nfcCardId || '')
+              .trim()
+              .toUpperCase();
+            if (existingUid === cardUid) return true;
+            const roomDigits = String(d.room || '').replace(/\D+/g, '');
+            if (cardUid === `NFC-${roomDigits}` || cardUid === roomDigits) return true;
+          }
+          return false;
         }
-        return false;
-      });
+      );
 
       if (!tenantDoc) {
         return jsonResponse(
@@ -184,7 +201,9 @@ Deno.serve(async (request) => {
       const now = new Date();
       const nowIso = now.toISOString();
       const isLate = resolvedDirection === 'IN' && isCurfewViolation(now);
-      const finalCardUid = cardUid || String(tenantData.cardUid || `NFC-${String(tenantData.room || '101').replace(/\D+/g, '')}`);
+      const finalCardUid =
+        cardUid ||
+        String(tenantData.cardUid || `NFC-${String(tenantData.room || '101').replace(/\D+/g, '')}`);
 
       // 1. Insert gate log in messages collection
       const gateLogId = `gate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -264,4 +283,3 @@ Deno.serve(async (request) => {
 
   return jsonResponse(request, { error: 'Method not allowed.' }, 405);
 });
-

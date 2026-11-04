@@ -17,7 +17,9 @@ export {
   formatGateTimestamp
 };
 
-const SUPABASE_URL = (import.meta.env?.VITE_SUPABASE_URL || 'https://jfeosjevabaadudestcf.supabase.co').replace(/\/+$/, '');
+const SUPABASE_URL = (
+  import.meta.env?.VITE_SUPABASE_URL || 'https://jfeosjevabaadudestcf.supabase.co'
+).replace(/\/+$/, '');
 const SUPABASE_KEY = import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY || '';
 
 /**
@@ -80,7 +82,9 @@ export function playGateChime(direction = 'IN') {
  * can safely record taps without requiring an admin login session.
  */
 export async function recordGateTap({ cardUid, tenantId, direction, source = 'NFC_KIOSK' }) {
-  const cleanUid = String(cardUid || '').trim().toUpperCase();
+  const cleanUid = String(cardUid || '')
+    .trim()
+    .toUpperCase();
   const cleanId = String(tenantId || '').trim();
 
   if (!cleanUid && !cleanId) {
@@ -109,71 +113,78 @@ export async function recordGateTap({ cardUid, tenantId, direction, source = 'NF
   }
 
   // Direct fallback if edge function unavailable
-    const tenantsRef = supabaseData.collection(supabase, 'tenants');
-    const snap = await supabaseData.getDocs(tenantsRef);
-    const tenantDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const tenantsRef = supabaseData.collection(supabase, 'tenants');
+  const snap = await supabaseData.getDocs(tenantsRef);
+  const tenantDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    const tenant = tenantDocs.find((t) => {
-      if (t.status === 'Archived') return false;
-      if (cleanId && t.id === cleanId) return true;
-      if (cleanUid) {
-        const existingUid = String(t.cardUid || t.nfcCardId || '').trim().toUpperCase();
-        if (existingUid === cleanUid) return true;
-        const roomDigits = String(t.room || '').replace(/\D+/g, '');
-        if (cleanUid === `NFC-${roomDigits}` || cleanUid === roomDigits) return true;
-      }
-      return false;
-    });
-
-    if (!tenant) {
-      throw new Error(
-        `Unrecognized or inactive keycard: "${cleanUid || cleanId}". Please register this card to an active tenant in Admin Dashboard.`
-      );
+  const tenant = tenantDocs.find((t) => {
+    if (t.status === 'Archived') return false;
+    if (cleanId && t.id === cleanId) return true;
+    if (cleanUid) {
+      const existingUid = String(t.cardUid || t.nfcCardId || '')
+        .trim()
+        .toUpperCase();
+      if (existingUid === cleanUid) return true;
+      const roomDigits = String(t.room || '').replace(/\D+/g, '');
+      if (cleanUid === `NFC-${roomDigits}` || cleanUid === roomDigits) return true;
     }
+    return false;
+  });
 
-    const currentStatus = tenant.gateStatus || 'INSIDE';
-    const resolvedDirection = direction ? direction.toUpperCase() : currentStatus === 'INSIDE' ? 'OUT' : 'IN';
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const isLate = resolvedDirection === 'IN' && isCurfewViolation(now);
-    const finalCardUid = cleanUid || tenant.cardUid || `NFC-${String(tenant.room || '101').replace(/\D+/g, '')}`;
+  if (!tenant) {
+    throw new Error(
+      `Unrecognized or inactive keycard: "${cleanUid || cleanId}". Please register this card to an active tenant in Admin Dashboard.`
+    );
+  }
 
-    const gateLogId = `gate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    await supabaseData.setDoc(supabaseData.doc(supabase, 'messages', gateLogId), {
-      type: 'gate_log',
-      tenantId: tenant.id,
-      tenantName: tenant.name || 'Tenant',
-      email: tenant.email || '',
-      room: tenant.room || '',
-      cardUid: finalCardUid,
-      direction: resolvedDirection,
-      timestamp: nowIso,
-      isLate,
-      source,
-      createdAt: nowIso
-    });
+  const currentStatus = tenant.gateStatus || 'INSIDE';
+  const resolvedDirection = direction
+    ? direction.toUpperCase()
+    : currentStatus === 'INSIDE'
+      ? 'OUT'
+      : 'IN';
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const isLate = resolvedDirection === 'IN' && isCurfewViolation(now);
+  const finalCardUid =
+    cleanUid || tenant.cardUid || `NFC-${String(tenant.room || '101').replace(/\D+/g, '')}`;
 
-    const tenantDocRef = supabaseData.doc(supabase, 'tenants', tenant.id);
-    const updatedTenantData = {
-      ...tenant,
-      cardUid: finalCardUid,
-      gateStatus: resolvedDirection === 'IN' ? 'INSIDE' : 'OUTSIDE',
-      lastGateTapAt: nowIso,
-      lastGateTapType: resolvedDirection,
-      updatedAt: nowIso
-    };
-    await supabaseData.setDoc(tenantDocRef, updatedTenantData);
+  const gateLogId = `gate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  await supabaseData.setDoc(supabaseData.doc(supabase, 'messages', gateLogId), {
+    type: 'gate_log',
+    tenantId: tenant.id,
+    tenantName: tenant.name || 'Tenant',
+    email: tenant.email || '',
+    room: tenant.room || '',
+    cardUid: finalCardUid,
+    direction: resolvedDirection,
+    timestamp: nowIso,
+    isLate,
+    source,
+    createdAt: nowIso
+  });
 
-    playGateChime(resolvedDirection);
+  const tenantDocRef = supabaseData.doc(supabase, 'tenants', tenant.id);
+  const updatedTenantData = {
+    ...tenant,
+    cardUid: finalCardUid,
+    gateStatus: resolvedDirection === 'IN' ? 'INSIDE' : 'OUTSIDE',
+    lastGateTapAt: nowIso,
+    lastGateTapType: resolvedDirection,
+    updatedAt: nowIso
+  };
+  await supabaseData.setDoc(tenantDocRef, updatedTenantData);
 
-    return {
-      success: true,
-      tenant: updatedTenantData,
-      direction: resolvedDirection,
-      timestamp: nowIso,
-      isLate,
-      cardUid: finalCardUid
-    };
+  playGateChime(resolvedDirection);
+
+  return {
+    success: true,
+    tenant: updatedTenantData,
+    direction: resolvedDirection,
+    timestamp: nowIso,
+    isLate,
+    cardUid: finalCardUid
+  };
 }
 
 /**
@@ -185,7 +196,11 @@ export async function fetchGateLogs(limit = 100) {
   const logs = snap.docs
     .map((d) => ({ id: d.id, ...d.data() }))
     .filter((m) => m.type === 'gate_log')
-    .sort((a, b) => new Date(b.timestamp || b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.timestamp || b.createdAt).getTime() -
+        new Date(a.timestamp || a.createdAt).getTime()
+    );
 
   return limit ? logs.slice(0, limit) : logs;
 }
@@ -253,7 +268,10 @@ export async function fetchTenantsPresence() {
  * Automatically archives the tenant, frees the room slot back to available,
  * and logs an audit trail.
  */
-export async function confirmAbandonmentAndReleaseRoom(tenantId, reason = 'Unannounced Move-out / Abandoned') {
+export async function confirmAbandonmentAndReleaseRoom(
+  tenantId,
+  reason = 'Unannounced Move-out / Abandoned'
+) {
   if (!tenantId) throw new Error('Tenant ID is required.');
 
   const tenantDocRef = supabaseData.doc(supabase, 'tenants', tenantId);

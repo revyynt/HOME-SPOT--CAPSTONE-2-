@@ -23,7 +23,11 @@ test('isCurfewViolation identifies night hours as curfew violations', () => {
   assert.equal(isCurfewViolation(normalDay), false, '2:00 PM should NOT be curfew violation');
 
   const eveningBeforeCurfew = new Date('2026-11-01T21:45:00');
-  assert.equal(isCurfewViolation(eveningBeforeCurfew), false, '9:45 PM should NOT be curfew violation');
+  assert.equal(
+    isCurfewViolation(eveningBeforeCurfew),
+    false,
+    '9:45 PM should NOT be curfew violation'
+  );
 });
 
 test('computeDaysAway computes accurate days elapsed from timestamp', () => {
@@ -37,7 +41,10 @@ test('computeDaysAway computes accurate days elapsed from timestamp', () => {
 
   const tenDaysAgo = new Date(now - 10 * 24 * 60 * 60 * 1000).toISOString();
   assert.equal(computeDaysAway(tenDaysAgo), 10);
-  assert.ok(computeDaysAway(tenDaysAgo) >= ABANDONMENT_THRESHOLD_DAYS, '10 days should trigger abandonment threshold');
+  assert.ok(
+    computeDaysAway(tenDaysAgo) >= ABANDONMENT_THRESHOLD_DAYS,
+    '10 days should trigger abandonment threshold'
+  );
 
   assert.equal(CURFEW_HOUR_START, 22);
   assert.equal(CURFEW_HOUR_END, 5);

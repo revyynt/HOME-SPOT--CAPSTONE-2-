@@ -325,7 +325,8 @@ function renderDueDateAlert() {
     banner.className = 'tenant-due-alert-banner upcoming';
     if (badgeEl) badgeEl.textContent = 'PAYMENT DUE';
     const daysLeft = dueDay - day;
-    const dueTiming = daysLeft === 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `in ${daysLeft} days`;
+    const dueTiming =
+      daysLeft === 0 ? 'Today' : daysLeft === 1 ? 'Tomorrow' : `in ${daysLeft} days`;
     if (titleEl) titleEl.textContent = `Monthly Rent Due ${dueTiming} (${monthName} ${dueDay})`;
     if (descEl) {
       descEl.textContent = `Your rent of ₱${currentRemainingDue.toLocaleString()} is due on ${monthName} ${dueDay}. Settle conveniently online below.`;
@@ -827,11 +828,13 @@ async function fetchTenantSupabaseProfile() {
           if (gateStatus === 'OUTSIDE') {
             presenceBadge.style.background = '#fef3c7';
             presenceBadge.style.color = '#92400e';
-            presenceBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Currently Away / Checked Out';
+            presenceBadge.innerHTML =
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Currently Away / Checked Out';
           } else {
             presenceBadge.style.background = '#d1fae5';
             presenceBadge.style.color = '#065f46';
-            presenceBadge.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Currently Inside Building';
+            presenceBadge.innerHTML =
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Currently Inside Building';
           }
         }
 
@@ -956,10 +959,15 @@ async function loadTenantGateLogs() {
         if (tenantRoom && m.room === tenantRoom) return true;
         return false;
       })
-      .sort((a, b) => new Date(b.timestamp || b.createdAt).getTime() - new Date(a.timestamp || a.createdAt).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp || b.createdAt).getTime() -
+          new Date(a.timestamp || a.createdAt).getTime()
+      );
 
     if (!logs.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #94a3b8;">No gate activity recorded yet. Tap your NFC keycard at the gate scanner to record entry or exit.</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #94a3b8;">No gate activity recorded yet. Tap your NFC keycard at the gate scanner to record entry or exit.</td></tr>';
       return;
     }
 
