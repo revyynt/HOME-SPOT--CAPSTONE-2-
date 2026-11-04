@@ -221,7 +221,7 @@ function renderTenantsTable(tenants, isArchived = false) {
                 ? `<div class="text-[11px] mt-1 font-medium ${
                     t.rulesAgreedByTenant === true ? 'text-blue-600' : 'text-amber-600'
                   }">
-                    ${t.rulesAgreedByTenant === true ? '✓ Rules Accepted' : '⏳ Rules Pending'}
+                    ${t.rulesAgreedByTenant === true ? 'Rules Accepted' : 'Rules Pending'}
                   </div>`
                 : ''
             }
@@ -300,10 +300,10 @@ export function viewTenantDetails(tenantId) {
   const compEl = document.getElementById('viewTenantCompliance');
   if (compEl) {
     if (tenant.rulesAgreedByTenant === true) {
-      compEl.textContent = '✓ Accepted in Tenant Portal';
+      compEl.textContent = 'Accepted in Tenant Portal';
       compEl.className = 'text-blue-700 font-semibold';
     } else {
-      compEl.textContent = '⏳ Pending Tenant Portal Acceptance';
+      compEl.textContent = 'Pending Tenant Portal Acceptance';
       compEl.className = 'text-amber-600 font-semibold';
     }
   }

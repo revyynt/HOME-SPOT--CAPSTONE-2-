@@ -185,7 +185,7 @@ Deno.serve(async (request) => {
       // 2. Insert notification message
       const notifId = `notif-gate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const statusPhrase = resolvedDirection === 'IN' ? 'INSIDE PREMISES' : 'OUT OF PREMISES';
-      const curfewNote = isLate ? ' ⚠️ CURFEW WARNING: Entry logged past 10:00 PM.' : '';
+      const curfewNote = isLate ? ' [CURFEW VIOLATION] Entry logged past 10:00 PM.' : '';
 
       await admin.from('app_documents').insert({
         collection: 'messages',

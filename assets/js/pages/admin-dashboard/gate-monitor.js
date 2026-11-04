@@ -254,7 +254,7 @@ export function initGateMonitor() {
         if (lastKnownLogId && latest.id !== lastKnownLogId) {
           const isEntry = latest.direction === 'IN';
           const statusText = isEntry ? 'Checked IN (Inside Premises)' : 'Checked OUT (Outside Premises)';
-          Toast.info(`🚪 Gate Alert: ${latest.tenantName} (${latest.room}) - ${statusText}`);
+          Toast.info(`Gate Alert: ${latest.tenantName} (${latest.room}) - ${statusText}`);
         }
         lastKnownLogId = latest.id;
       }

@@ -889,7 +889,10 @@
                   class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
                   title="Send automated rent due reminders to all pending/overdue tenants"
                 >
-                  ✉ Send Due Alerts to All
+                  <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>Send Due Alerts to All</span>
                 </button>
                 <label for="adminCalendarTenantFilter" class="text-xs font-semibold text-gray-600"
                   >Tenant:</label
@@ -1839,7 +1842,10 @@
             id="sendModalDueAlertBtn"
             class="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-semibold text-sm flex items-center gap-1.5 transition-colors"
           >
-            ✉ Send Due Reminder
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <span>Send Due Reminder</span>
           </button>
           <div class="flex items-center gap-2">
             <button
@@ -2503,7 +2509,9 @@
           </div>
 
           <div class="flex items-center gap-2.5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
-            <span class="text-base text-emerald-600">✉</span>
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
             <span>Automated welcome email with credentials dispatched to <strong id="createdTenantEmailBadge">tenant inbox</strong>.</span>
           </div>
 
@@ -2521,9 +2529,12 @@
                 type="button"
                 data-action="resend-created-tenant-email"
                 id="resendCreatedTenantEmailBtn"
-                class="px-3.5 py-2.5 border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-sm font-semibold transition-colors"
+                class="px-3.5 py-2.5 border border-emerald-300 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-sm font-semibold transition-colors flex items-center gap-1.5"
               >
-                ✉ Resend Email
+                <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>Resend Email</span>
               </button>
             </div>
             <button

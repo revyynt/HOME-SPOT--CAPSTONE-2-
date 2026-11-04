@@ -1255,7 +1255,7 @@ function initAdminPaymentCalendar() {
                     View Due Date
                   </button>
                   <button type="button" data-action="send-due-alert" data-tenant="${payload}" class="px-2 py-0.5 text-xs font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded transition-colors flex items-center gap-1" title="Send Rent Due Reminder">
-                    ✉ Remind
+                    Remind
                   </button>
                 </td>
               </tr>`;
