@@ -204,11 +204,11 @@ function renderLandingHero3DUnitInfo(unitOverride = null) {
       `;
     } else {
       const listingId = unit.listingDocId || unit.listingId || 'triple-occupancy-room';
-      linkEl.href = `property-detail.html?id=${encodeURIComponent(listingId)}`;
+      linkEl.href = `property-detail.html?id=${encodeURIComponent(listingId)}&room=${encodeURIComponent(unit.id)}`;
       linkEl.removeAttribute('aria-disabled');
       linkEl.className =
         'inline-flex items-center gap-1 mt-1 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer';
-      linkEl.textContent = 'View Unit & Inquire';
+      linkEl.textContent = `View ${unit.id} & Inquire`;
     }
   }
 

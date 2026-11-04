@@ -265,12 +265,16 @@ async function handleReservationSubmit(event) {
     validId: compressedValidId
   });
 
+  // Read preferred room from dropdown or fallback to page room
+  const preferredRoomVal = form.querySelector('[name="preferredRoom"]')?.value || null;
+  const targetRoom = preferredRoomVal || getRoomNameFromPage();
+
   // Field set is constrained by the anonymous Supabase insert policy.
   const reservation = {
     name,
     email,
     phone: normalizePhilippinePhone(phone) || phone,
-    room: getRoomNameFromPage(),
+    room: targetRoom,
     moveInDate: moveInDateVal,
     message: form.querySelector('[name="message"]')?.value.trim() || null,
     additionalInfo: additionalInfoPayload,
@@ -281,7 +285,7 @@ async function handleReservationSubmit(event) {
   try {
     await supabaseData.addDoc(reservationsRef, reservation);
     Toast.success(
-      'Reservation request submitted! The admin will review your valid ID and contact you.'
+      `Reservation request submitted for ${targetRoom}! Admin will review your application.`
     );
   } catch (error) {
     console.error('Supabase reservation submit failed:', error);
@@ -312,6 +316,11 @@ export function toggleInquiryForm() {
   modal?.classList.toggle('hidden');
   hidePanel('reservationForm');
   if (modal && !modal.classList.contains('hidden')) {
+    const targetRoom = getUrlParam('room');
+    if (targetRoom) {
+      const roomSelect = modal.querySelector('[name="preferredRoom"]');
+      if (roomSelect) roomSelect.value = targetRoom;
+    }
     requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
   }
 }
@@ -324,6 +333,11 @@ export function toggleReservationForm() {
   modal?.classList.toggle('hidden');
   hidePanel('inquiryForm');
   if (modal && !modal.classList.contains('hidden')) {
+    const targetRoom = getUrlParam('room');
+    if (targetRoom) {
+      const roomSelect = modal.querySelector('[name="preferredRoom"]');
+      if (roomSelect) roomSelect.value = targetRoom;
+    }
     requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
   }
 }
