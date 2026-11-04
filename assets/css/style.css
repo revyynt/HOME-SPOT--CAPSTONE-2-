@@ -414,24 +414,14 @@ h4 {
   }
 
   /* Landing page section isolation: show only active mobile tab section */
-  body[data-mobile-section='rooms'] #floor-plan,
   body[data-mobile-section='rooms'] #about,
   body[data-mobile-section='rooms'] #support,
   body[data-mobile-section='rooms'] footer {
     display: none !important;
   }
 
-  body[data-mobile-section='floor-plan'] #hero-section,
-  body[data-mobile-section='floor-plan'] #rooms,
-  body[data-mobile-section='floor-plan'] #about,
-  body[data-mobile-section='floor-plan'] #support,
-  body[data-mobile-section='floor-plan'] footer {
-    display: none !important;
-  }
-
   body[data-mobile-section='about'] #hero-section,
   body[data-mobile-section='about'] #rooms,
-  body[data-mobile-section='about'] #floor-plan,
   body[data-mobile-section='about'] #support,
   body[data-mobile-section='about'] footer {
     display: none !important;
@@ -439,14 +429,12 @@ h4 {
 
   body[data-mobile-section='support'] #hero-section,
   body[data-mobile-section='support'] #rooms,
-  body[data-mobile-section='support'] #floor-plan,
   body[data-mobile-section='support'] #about {
     display: none !important;
   }
 
   /* Tighten vertical spacing on mobile so content fits in one viewport */
   #rooms,
-  #floor-plan,
   #about,
   #support {
     padding-top: 12px !important;
