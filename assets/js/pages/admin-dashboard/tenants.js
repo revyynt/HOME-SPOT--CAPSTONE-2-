@@ -174,66 +174,81 @@ function renderTenantsTable(tenants, isArchived = false) {
 
       return `
         <tr class="hover:bg-gray-50/70 transition-colors">
-          <td class="px-4 py-3.5">
+          <td class="block md:table-cell pb-2.5 mb-2 border-b border-gray-100 md:border-none md:px-4 md:py-3.5 md:mb-0">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl bg-gradient-to-tr ${gradient} text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
                 ${escapeHtml(initials(t.name))}
               </div>
-              <div class="min-w-0">
-                <div class="font-bold text-gray-900">${escapeHtml(t.name || 'Tenant')}</div>
-                <div class="text-xs text-gray-500 font-mono break-all">${escapeHtml(t.email || '—')}</div>
+              <div class="min-w-0 flex-1">
+                <div class="font-bold text-gray-900 truncate">${escapeHtml(t.name || 'Tenant')}</div>
+                <div class="text-xs text-gray-500 font-mono truncate">${escapeHtml(t.email || '—')}</div>
               </div>
             </div>
           </td>
-          <td class="px-4 py-3.5">
-            ${
-              String(t.status || '').toLowerCase() === 'archived'
-                ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
-                   ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
-                : `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
-                    ${escapeHtml(t.room || 'Unassigned')}
-                  </span>
-                  <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
-            }
-          </td>
-          <td class="px-4 py-3.5">
-            <div class="text-sm text-gray-800">${escapeHtml(t.phone || '—')}</div>
-            ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${escapeHtml(t.emergencyContact)}</div>` : ''}
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap text-sm text-gray-600">
-            ${escapeHtml(t.moveInDate || '—')}
-            <div class="text-xs text-gray-400">${escapeHtml(t.leaseTerm || '1 Year')}</div>
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap">
-            <div class="font-bold text-gray-900">${escapeHtml(rent)}</div>
-            <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap">
-            ${
-              String(t.status || '').toLowerCase() === 'archived'
-                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">● Archived</span>'
-                : getTenantLifecycle(t) === 'Pending Move-In'
-                  ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
-                  : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
-            }
-            ${
-              String(t.status || '').toLowerCase() !== 'archived'
-                ? `<div class="text-[11px] mt-1 font-medium ${
-                    t.rulesAgreedByTenant === true ? 'text-blue-600' : 'text-amber-600'
-                  }">
-                    ${t.rulesAgreedByTenant === true ? 'Rules Accepted' : 'Rules Pending'}
-                  </div>`
-                : ''
-            }
-          </td>
-          <td class="px-4 py-3.5 whitespace-nowrap text-right text-sm">
-            <div class="flex items-center justify-end gap-1.5">
-              <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Assigned Room</span>
+            <div class="text-right md:text-left">
               ${
                 String(t.status || '').toLowerCase() === 'archived'
-                  ? `<button data-action="reactivate" data-id="${attr(t.id)}" title="Reactivate / Re-assign Room" class="px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200">Reactivate</button>`
-                  : `<button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="p-1.5 text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
-                     <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove & Archive Account" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">x</button>`
+                  ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
+                     ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
+                  : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                      ${escapeHtml(t.room || 'Unassigned')}
+                    </span>
+                    <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
+              }
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Contact</span>
+            <div class="text-right md:text-left">
+              <div class="text-sm text-gray-800">${escapeHtml(t.phone || '—')}</div>
+              ${t.emergencyContact ? `<div class="text-xs text-gray-400">Emg: ${escapeHtml(t.emergencyContact)}</div>` : ''}
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5 whitespace-nowrap text-sm text-gray-600">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Move-in Date</span>
+            <div class="text-right md:text-left">
+              <div>${escapeHtml(t.moveInDate || '—')}</div>
+              <div class="text-xs text-gray-400">${escapeHtml(t.leaseTerm || '1 Year')}</div>
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5 whitespace-nowrap">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Monthly Rent</span>
+            <div class="text-right md:text-left">
+              <div class="font-bold text-gray-900">${escapeHtml(rent)}</div>
+              <div class="text-xs text-gray-500">Due every ${escapeHtml(String(t.dueDay || 5))}th</div>
+            </div>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:px-4 md:py-3.5 whitespace-nowrap">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Status</span>
+            <div class="text-right md:text-left">
+              ${
+                String(t.status || '').toLowerCase() === 'archived'
+                  ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-300">● Archived</span>'
+                  : getTenantLifecycle(t) === 'Pending Move-In'
+                    ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">● Pending Move-In</span>'
+                    : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">● Active</span>'
+              }
+              ${
+                String(t.status || '').toLowerCase() !== 'archived'
+                  ? `<div class="text-[11px] mt-0.5 font-medium ${
+                      t.rulesAgreedByTenant === true ? 'text-blue-600' : 'text-amber-600'
+                    }">
+                      ${t.rulesAgreedByTenant === true ? 'Rules Accepted' : 'Rules Pending'}
+                    </div>`
+                  : ''
+              }
+            </div>
+          </td>
+          <td class="block md:table-cell pt-2.5 mt-2 border-t border-gray-100 md:border-none md:px-4 md:py-3.5 md:mt-0 whitespace-nowrap text-right text-sm">
+            <div class="flex items-center justify-end gap-2 md:gap-1.5">
+              <button data-action="view" data-id="${attr(t.id)}" title="View Profile" class="flex-1 md:flex-initial px-3 py-1.5 md:p-1.5 text-xs md:text-sm font-semibold text-blue-700 md:text-gray-500 bg-blue-50/70 md:bg-transparent border border-blue-200 md:border-none hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">View</button>
+              ${
+                String(t.status || '').toLowerCase() === 'archived'
+                  ? `<button data-action="reactivate" data-id="${attr(t.id)}" title="Reactivate / Re-assign Room" class="flex-1 md:flex-initial px-3 py-1.5 md:px-2 md:py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-blue-200">Reactivate</button>`
+                  : `<button data-action="copy" data-id="${attr(t.id)}" title="Copy Portal Link" class="flex-1 md:flex-initial px-3 py-1.5 md:p-1.5 text-xs md:text-sm font-semibold text-emerald-700 md:text-gray-500 bg-emerald-50/70 md:bg-transparent border border-emerald-200 md:border-none hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">Copy</button>
+                     <button data-action="delete" data-id="${attr(t.id)}" data-name="${attr(t.name || 'this tenant')}" title="Remove & Archive Account" class="px-3 py-1.5 md:p-1.5 text-xs md:text-sm font-semibold text-red-600 md:text-gray-400 bg-red-50/70 md:bg-transparent border border-red-200 md:border-none hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">Archive</button>`
               }
             </div>
           </td>

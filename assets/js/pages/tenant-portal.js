@@ -570,12 +570,42 @@ function renderTenantPaymentCalendar() {
     return 'cal-chip-pending';
   };
 
+  // Auto-select first day with events if current selection has none in this month
+  const currentSelectedCell = cal.days.find((d) => d.dateKey === tenantSelectedDateKey);
+  if (
+    !currentSelectedCell ||
+    (!currentSelectedCell.dueEvents.length && !currentSelectedCell.paymentEvents.length)
+  ) {
+    const firstActiveDay = cal.days.find(
+      (d) => d.inCurrentMonth && (d.dueEvents.length > 0 || d.paymentEvents.length > 0)
+    );
+    if (firstActiveDay) {
+      tenantSelectedDateKey = firstActiveDay.dateKey;
+    }
+  }
+
   gridEl.innerHTML = cal.days
     .map((cell) => {
       const classes = ['cal-cell'];
       if (!cell.inCurrentMonth) classes.push('outside');
       if (cell.isToday) classes.push('today');
       if (cell.dateKey === tenantSelectedDateKey) classes.push('selected');
+
+      const hasOverdue =
+        cell.dueEvents.some((e) => e.status === 'Overdue') ||
+        cell.paymentEvents.some((p) => p.status === 'Overdue' || p.status === 'Failed');
+      const hasPaid =
+        cell.dueEvents.some((e) => e.status === 'Paid') ||
+        cell.paymentEvents.some((p) => p.status === 'Paid');
+      const hasPending = cell.dueEvents.some(
+        (e) => e.isMoveInMarker || e.status === 'Pending' || e.status === 'Due Soon'
+      );
+      const hasScheduled = cell.dueEvents.some((e) => e.status === 'Scheduled');
+
+      if (hasOverdue) classes.push('has-overdue');
+      else if (hasPaid) classes.push('has-paid');
+      else if (hasPending) classes.push('has-due');
+      else if (hasScheduled) classes.push('has-scheduled');
 
       const dueChips = cell.dueEvents
         .map((ev) => {
@@ -616,15 +646,27 @@ function renderTenantPaymentCalendar() {
       const items = [
         ...selectedCell.dueEvents.map(
           (ev) =>
-            `<div><strong>Rent Due (${escapeHtml(ev.status)}):</strong> ₱${ev.amount.toLocaleString()} (${escapeHtml(ev.room)}) — Remaining: ₱${ev.remaining.toLocaleString()}</div>`
+            `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+              <div>
+                <div style="font-weight:700;color:#0f172a;font-size:13px;">Scheduled Rent Due (${escapeHtml(ev.room)})</div>
+                <div style="font-size:11px;color:#64748b;">Remaining: ₱${ev.remaining.toLocaleString()}</div>
+              </div>
+              <span class="cal-chip ${chipClass(ev.status)}" style="display:inline-flex !important;white-space:nowrap;">${escapeHtml(ev.status)} • ₱${ev.amount.toLocaleString()}</span>
+            </div>`
         ),
         ...selectedCell.paymentEvents.map(
           (p) =>
-            `<div><strong>Payment (${escapeHtml(p.status)}):</strong> ₱${p.amount.toLocaleString()} • ${escapeHtml(p.purpose)} (${escapeHtml(p.referenceNumber || p.method)})</div>`
+            `<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0;">
+              <div>
+                <div style="font-weight:700;color:#0f172a;font-size:13px;">${escapeHtml(p.purpose)}</div>
+                <div style="font-size:11px;color:#64748b;">${escapeHtml(p.referenceNumber || p.method)}</div>
+              </div>
+              <span class="cal-chip ${chipClass(p.status)}" style="display:inline-flex !important;white-space:nowrap;">${escapeHtml(p.status)} • ₱${p.amount.toLocaleString()}</span>
+            </div>`
         )
       ].join('');
       detailEl.style.display = 'block';
-      detailEl.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">Details for ${escapeHtml(selectedCell.dateKey)}</div>${items}`;
+      detailEl.innerHTML = `<div style="font-weight:700;font-size:11px;text-transform:uppercase;color:#64748b;margin-bottom:4px;">Events on ${escapeHtml(selectedCell.dateKey)}</div>${items}`;
     } else {
       detailEl.style.display = 'none';
       detailEl.innerHTML = '';

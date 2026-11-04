@@ -370,11 +370,11 @@ export function initPublicFormToggles() {
       document.getElementById('emailSupportModal')?.classList.remove('hidden');
       return;
     }
-    if (target.closest('#inquireBtn')) {
+    if (target.closest('#inquireBtn') || target.closest('[data-action="open-inquiry-form"]')) {
       toggleInquiryForm();
       return;
     }
-    if (target.closest('#reserveBtn')) {
+    if (target.closest('#reserveBtn') || target.closest('[data-action="open-reserve-form"]')) {
       toggleReservationForm();
       return;
     }

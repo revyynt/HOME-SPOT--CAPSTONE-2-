@@ -1854,3 +1854,53 @@ html[data-auth-pending] body {
 .tenant-due-alert-banner.overdue .due-alert-action-btn:hover {
   background: #b91c1c;
 }
+
+/* Mobile Calendar Border Highlights & Middle-Aged Ergonomics */
+@media (max-width: 640px) {
+  body {
+    background-color: #f0f2f5;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  .cal-cell {
+    min-height: 42px !important;
+    padding: 4px 2px !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cal-cell.has-paid {
+    border: 2px solid #16a34a !important;
+    background: #f0fdf4 !important;
+  }
+
+  .cal-cell.has-overdue {
+    border: 2px solid #dc2626 !important;
+    background: #fef2f2 !important;
+  }
+
+  .cal-cell.has-due {
+    border: 2px solid #d97706 !important;
+    background: #fffbeb !important;
+  }
+
+  .cal-cell.has-scheduled {
+    border: 2px solid #2563eb !important;
+    background: #eff6ff !important;
+  }
+
+  .cal-chip {
+    display: none !important;
+  }
+
+  .tab-btn {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 10px 14px;
+  }
+}

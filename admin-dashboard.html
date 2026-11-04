@@ -41,18 +41,18 @@
       </div>
     </header>
 
-    <div class="p-3 sm:p-5 lg:p-6 max-w-[1600px] w-full mx-auto">
-      <!-- Welcome Section -->
-      <div class="mb-4 sm:mb-6 lg:mb-8">
-        <h2 class="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Welcome back, Admin!</h2>
+    <div class="p-2.5 sm:p-5 lg:p-6 max-w-[1600px] w-full mx-auto">
+      <!-- Welcome Section (Shown only on Overview tab on mobile) -->
+      <div class="admin-overview-only-mobile mb-3 sm:mb-6 lg:mb-8">
+        <h2 class="text-xl sm:text-3xl font-bold mb-0.5 sm:mb-2">Welcome back, Admin!</h2>
         <p class="text-xs sm:text-sm text-gray-600">
           Manage your property listings and reservations
         </p>
       </div>
 
-      <!-- Stats Grid -->
+      <!-- Stats Grid (Shown only on Overview tab on mobile) -->
       <div
-        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8"
+        class="admin-overview-only-mobile grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 lg:gap-6 mb-3 sm:mb-6 lg:mb-8"
       >
         <div class="bg-white rounded-lg shadow p-3 sm:p-4 lg:p-6">
           <div class="flex items-center justify-between">
@@ -187,8 +187,154 @@
 
       <!-- Tabs -->
       <div class="bg-white rounded-lg shadow mb-4 sm:mb-6">
+        <!-- Facebook Mobile Web Style 5-Icon Tab Bar (< 768px) -->
+        <div class="flex md:hidden border-b border-gray-200 items-stretch justify-around bg-white rounded-t-lg sticky top-[53px] z-40">
+          <button
+            type="button"
+            data-tab-button="overview"
+            class="fb-mobile-tab active"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Home</span>
+          </button>
+          <button
+            type="button"
+            data-tab-button="tenants"
+            class="fb-mobile-tab"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Tenants</span>
+          </button>
+          <button
+            type="button"
+            data-tab-button="tenant-payments"
+            class="fb-mobile-tab"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Payments</span>
+          </button>
+          <button
+            type="button"
+            data-tab-button="gate-access"
+            class="fb-mobile-tab"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            <span>Gate</span>
+          </button>
+          <button
+            type="button"
+            id="btnAdminMobileMenuToggle"
+            data-action="toggle-admin-mobile-menu"
+            class="fb-mobile-tab"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+            <span>Menu</span>
+          </button>
+        </div>
+
+        <!-- Facebook Mobile Web "Menu" Grid Drawer (All Sections with Large Tap Targets) -->
         <div
-          class="flex border-b overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap -webkit-overflow-scrolling-touch"
+          id="adminMobileMenuDrawer"
+          class="hidden md:hidden p-3 bg-slate-100 border-b border-gray-200"
+        >
+          <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 px-1">
+            All Management Sections
+          </div>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              data-tab-button="reservations"
+              class="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs text-left active:bg-blue-50"
+            >
+              <div class="w-9 h-9 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                R
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-900 truncate">Reservations</div>
+                <div class="text-[11px] text-gray-500">Approve &amp; review</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              data-tab-button="listings"
+              class="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs text-left active:bg-blue-50"
+            >
+              <div class="w-9 h-9 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                L
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-900 truncate">My Listings</div>
+                <div class="text-[11px] text-gray-500">Edit room rates</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              data-tab-button="building-3d"
+              class="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs text-left active:bg-blue-50"
+            >
+              <div class="w-9 h-9 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                3D
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-900 truncate">Floor Plan</div>
+                <div class="text-[11px] text-gray-500">3D unit map</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              data-tab-button="tenant-messages"
+              class="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs text-left active:bg-blue-50"
+            >
+              <div class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                M
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-900 truncate">Tenant Chat</div>
+                <div class="text-[11px] text-gray-500">Direct messages</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              data-tab-button="messages"
+              class="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs text-left active:bg-blue-50"
+            >
+              <div class="w-9 h-9 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                I
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-900 truncate">Inquiries</div>
+                <div class="text-[11px] text-gray-500">Public questions</div>
+              </div>
+            </button>
+            <button
+              type="button"
+              data-tab-button="customer-support"
+              class="flex items-center gap-3 p-3.5 bg-white rounded-xl border border-gray-200 shadow-xs text-left active:bg-blue-50"
+            >
+              <div class="w-9 h-9 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 font-bold text-sm">
+                S
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-gray-900 truncate">Support</div>
+                <div class="text-[11px] text-gray-500">Helpdesk tickets</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Desktop 10-Tab Strip (md+) -->
+        <div
+          class="hidden md:flex border-b overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap -webkit-overflow-scrolling-touch"
         >
           <button
             data-tab-button="overview"
@@ -285,8 +431,26 @@
         <!-- Tab Content -->
         <div class="p-3 sm:p-5 lg:p-6">
           <!-- Overview Tab -->
-          <div data-tab-content="overview">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div data-tab-content="overview" data-overview-active-sub="activity">
+            <!-- Overview Sub-Tab Switcher (Activity & Quick Actions | Room Occupancy & Analysis) -->
+            <div class="flex gap-1.5 p-1 bg-slate-100 rounded-xl border border-gray-200 mb-4 max-w-md">
+              <button
+                type="button"
+                data-overview-sub-btn="activity"
+                class="flex-1 py-2 px-3 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs transition-all cursor-pointer"
+              >
+                Activity &amp; Quick Actions
+              </button>
+              <button
+                type="button"
+                data-overview-sub-btn="analysis"
+                class="flex-1 py-2 px-3 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white transition-all cursor-pointer"
+              >
+                Occupancy &amp; Analysis
+              </button>
+            </div>
+
+            <div data-overview-subpanel="activity" class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <!-- Recent Activity -->
               <div class="bg-white border rounded-lg p-3.5 sm:p-6">
                 <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4">Recent Activity</h3>
@@ -366,13 +530,14 @@
             <!-- Room Occupancy & Tenant Data Analysis Section -->
             <div
               id="adminDataAnalysisSection"
-              class="bg-white border rounded-xl p-6 mt-6 shadow-xs"
+              data-overview-subpanel="analysis"
+              class="bg-white border rounded-xl p-3.5 sm:p-6 shadow-xs"
             >
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div>
-                  <h3 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <h3 class="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
                     <svg
-                      class="w-5 h-5 text-blue-600"
+                      class="w-5 h-5 text-blue-600 shrink-0"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -386,36 +551,36 @@
                     </svg>
                     Room Occupancy &amp; Tenant Data Analysis
                   </h3>
-                  <p class="text-sm text-gray-500">
+                  <p class="text-xs sm:text-sm text-gray-500">
                     Counted across all 12 rooms (1F–5F, plus commercial space) • Filter by Year and
                     Month
                   </p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2.5">
-                  <div class="flex items-center gap-1.5">
+                <div class="grid grid-cols-3 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
                     <label
                       for="adminAnalysisYearSelect"
-                      class="text-xs font-bold uppercase text-gray-500"
+                      class="text-[10px] sm:text-xs font-bold uppercase text-gray-500"
                       >Year:</label
                     >
                     <select
                       id="adminAnalysisYearSelect"
-                      class="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full sm:w-auto px-2 sm:px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="2025">2025</option>
                       <option value="2026" selected>2026</option>
                       <option value="2027">2027</option>
                     </select>
                   </div>
-                  <div class="flex items-center gap-1.5">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
                     <label
                       for="adminAnalysisMonthFrom"
-                      class="text-xs font-bold uppercase text-gray-500"
-                      >Month From:</label
+                      class="text-[10px] sm:text-xs font-bold uppercase text-gray-500"
+                      >From:</label
                     >
                     <select
                       id="adminAnalysisMonthFrom"
-                      class="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full sm:w-auto px-2 sm:px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="0" selected>January</option>
                       <option value="1">February</option>
@@ -431,15 +596,15 @@
                       <option value="11">December</option>
                     </select>
                   </div>
-                  <div class="flex items-center gap-1.5">
+                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-1.5">
                     <label
                       for="adminAnalysisMonthTo"
-                      class="text-xs font-bold uppercase text-gray-500"
-                      >Month To:</label
+                      class="text-[10px] sm:text-xs font-bold uppercase text-gray-500"
+                      >To:</label
                     >
                     <select
                       id="adminAnalysisMonthTo"
-                      class="px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full sm:w-auto px-2 sm:px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="0">January</option>
                       <option value="1">February</option>
@@ -458,14 +623,14 @@
                 </div>
               </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-5 sm:mb-6">
                 <div
-                  class="p-4 rounded-xl bg-gradient-to-br from-blue-50/70 to-white border border-blue-100"
+                  class="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-blue-50/70 to-white border border-blue-100"
                 >
-                  <div class="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">
+                  <div class="text-[10px] sm:text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">
                     Active Tenants
                   </div>
-                  <div id="adminAnalysisTenantsCount" class="text-2xl font-extrabold text-blue-900">
+                  <div id="adminAnalysisTenantsCount" class="text-lg sm:text-2xl font-extrabold text-blue-900">
                     0 Tenants
                   </div>
                   <div id="adminAnalysisTenantsSub" class="text-[11px] text-gray-500 mt-1">
@@ -473,14 +638,14 @@
                   </div>
                 </div>
                 <div
-                  class="p-4 rounded-xl bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-100"
+                  class="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-100"
                 >
-                  <div class="text-xs font-semibold text-emerald-800 uppercase tracking-wider mb-1">
-                    Occupied Rooms (Month)
+                  <div class="text-[10px] sm:text-xs font-semibold text-emerald-800 uppercase tracking-wider mb-1">
+                    Occupied Rooms
                   </div>
                   <div
                     id="adminAnalysisOccupiedMonth"
-                    class="text-2xl font-extrabold text-emerald-900"
+                    class="text-lg sm:text-2xl font-extrabold text-emerald-900"
                   >
                     0 / 12 Rooms
                   </div>
@@ -489,14 +654,14 @@
                   </div>
                 </div>
                 <div
-                  class="p-4 rounded-xl bg-gradient-to-br from-sky-50/70 to-white border border-sky-100"
+                  class="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-sky-50/70 to-white border border-sky-100"
                 >
-                  <div class="text-xs font-semibold text-sky-800 uppercase tracking-wider mb-1">
-                    Available Rooms (Month)
+                  <div class="text-[10px] sm:text-xs font-semibold text-sky-800 uppercase tracking-wider mb-1">
+                    Available Rooms
                   </div>
                   <div
                     id="adminAnalysisAvailableMonth"
-                    class="text-2xl font-extrabold text-sky-900"
+                    class="text-lg sm:text-2xl font-extrabold text-sky-900"
                   >
                     12 / 12 Rooms
                   </div>
@@ -505,14 +670,14 @@
                   </div>
                 </div>
                 <div
-                  class="p-4 rounded-xl bg-gradient-to-br from-purple-50/70 to-white border border-purple-100"
+                  class="p-3 sm:p-4 rounded-xl bg-gradient-to-br from-purple-50/70 to-white border border-purple-100"
                 >
-                  <div class="text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">
-                    Yearly Room Summary
+                  <div class="text-[10px] sm:text-xs font-semibold text-purple-800 uppercase tracking-wider mb-1">
+                    Yearly Summary
                   </div>
                   <div
                     id="adminAnalysisYearSummary"
-                    class="text-2xl font-extrabold text-purple-900"
+                    class="text-base sm:text-2xl font-extrabold text-purple-900"
                   >
                     0 Occ • 11 Avail
                   </div>
@@ -618,13 +783,13 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
               <div
                 id="cardActiveTenantsStat"
-                class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 cursor-pointer hover:border-blue-300 transition-colors"
+                class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 cursor-pointer hover:border-blue-300 transition-colors min-w-0"
                 title="Filter by Active Tenants"
               >
                 <div
-                  class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
+                  class="w-9 h-9 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
                 >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -633,23 +798,23 @@
                     />
                   </svg>
                 </div>
-                <div>
-                  <div class="text-xs font-medium text-blue-900 uppercase tracking-wider">
+                <div class="min-w-0 w-full">
+                  <div class="text-[11px] sm:text-xs font-semibold text-blue-900 uppercase tracking-wider">
                     Active Tenants
                   </div>
-                  <div id="tenantsStatTotal" class="text-2xl font-bold text-blue-950">0</div>
+                  <div id="tenantsStatTotal" class="text-xl sm:text-2xl font-bold text-blue-950 truncate">0</div>
                 </div>
               </div>
 
               <div
                 id="cardArchivedTenantsStat"
-                class="bg-gradient-to-br from-slate-50 to-gray-100 border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4 cursor-pointer hover:border-slate-300 transition-colors"
+                class="bg-gradient-to-br from-slate-50 to-gray-100 border border-slate-200 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 cursor-pointer hover:border-slate-300 transition-colors min-w-0"
                 title="Filter by Archived / Inactive Tenants"
               >
                 <div
-                  class="w-12 h-12 bg-slate-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
+                  class="w-9 h-9 sm:w-12 sm:h-12 bg-slate-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
                 >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -658,21 +823,21 @@
                     />
                   </svg>
                 </div>
-                <div>
-                  <div class="text-xs font-medium text-slate-700 uppercase tracking-wider">
+                <div class="min-w-0 w-full">
+                  <div class="text-[11px] sm:text-xs font-semibold text-slate-700 uppercase tracking-wider">
                     Archived / Inactive
                   </div>
-                  <div id="tenantsStatArchived" class="text-2xl font-bold text-slate-900">0</div>
+                  <div id="tenantsStatArchived" class="text-xl sm:text-2xl font-bold text-slate-900 truncate">0</div>
                 </div>
               </div>
 
               <div
-                class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4"
+                class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0"
               >
                 <div
-                  class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
+                  class="w-9 h-9 sm:w-12 sm:h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
                 >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -681,21 +846,21 @@
                     />
                   </svg>
                 </div>
-                <div>
-                  <div class="text-xs font-medium text-emerald-900 uppercase tracking-wider">
+                <div class="min-w-0 w-full">
+                  <div class="text-[11px] sm:text-xs font-semibold text-emerald-900 uppercase tracking-wider">
                     Active Moved-In
                   </div>
-                  <div id="tenantsStatActive" class="text-2xl font-bold text-emerald-950">0</div>
+                  <div id="tenantsStatActive" class="text-xl sm:text-2xl font-bold text-emerald-950 truncate">0</div>
                 </div>
               </div>
 
               <div
-                class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-3 sm:p-4 flex items-center gap-3 sm:gap-4"
+                class="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-100 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 min-w-0"
               >
                 <div
-                  class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
+                  class="w-9 h-9 sm:w-12 sm:h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0"
                 >
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       stroke-linecap="round"
                       stroke-linejoin="round"
@@ -704,11 +869,11 @@
                     />
                   </svg>
                 </div>
-                <div>
-                  <div class="text-xs font-medium text-purple-900 uppercase tracking-wider">
+                <div class="min-w-0 w-full">
+                  <div class="text-[11px] sm:text-xs font-semibold text-purple-900 uppercase tracking-wider">
                     Monthly Rent Receivable
                   </div>
-                  <div id="tenantsStatRent" class="text-2xl font-bold text-purple-950">₱0.00</div>
+                  <div id="tenantsStatRent" class="text-base sm:text-2xl font-bold text-purple-950 truncate">₱0.00</div>
                 </div>
               </div>
             </div>
@@ -800,7 +965,7 @@
             <!-- Tenants Table Container -->
             <div class="bg-white border rounded-xl shadow-sm overflow-hidden">
               <div class="w-full overflow-x-auto">
-                <table class="w-full min-w-[640px] text-left border-collapse table-auto">
+                <table class="w-full md:min-w-[640px] text-left border-collapse table-auto admin-mobile-cards-table">
                   <thead
                     class="bg-gray-50/80 border-b text-xs font-semibold text-gray-500 uppercase tracking-wider"
                   >
@@ -872,7 +1037,32 @@
           </div>
 
           <!-- Tenant Payments Tab -->
-          <div data-tab-content="tenant-payments" class="hidden">
+          <div data-tab-content="tenant-payments" class="hidden" data-payments-active-sub="calendar">
+            <!-- Mobile Sub-Tab Switcher (Calendar & Dues | 6-Mo Forecast | Due Dates List) -->
+            <div class="flex md:hidden gap-1.5 p-1 bg-slate-100 rounded-xl border border-gray-200 mb-3">
+              <button
+                type="button"
+                data-payments-sub-btn="calendar"
+                class="flex-1 py-2 px-2 rounded-lg text-xs font-bold bg-blue-600 text-white shadow-xs transition-all"
+              >
+                Calendar
+              </button>
+              <button
+                type="button"
+                data-payments-sub-btn="forecast"
+                class="flex-1 py-2 px-2 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white transition-all"
+              >
+                Forecast
+              </button>
+              <button
+                type="button"
+                data-payments-sub-btn="ledger"
+                class="flex-1 py-2 px-2 rounded-lg text-xs font-semibold text-gray-700 hover:bg-white transition-all"
+              >
+                Due Dates List
+              </button>
+            </div>
+
             <div class="flex flex-wrap items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
               <div>
                 <h3 class="text-xl font-bold">Tenant Payment &amp; Future Schedule Calendar</h3>
@@ -923,7 +1113,7 @@
             </div>
 
             <!-- Current Month Collection Statistics Chart -->
-            <div class="bg-white border rounded-xl p-3.5 sm:p-5 mb-4 sm:mb-6 shadow-xs">
+            <div data-payments-subpanel="calendar" class="bg-white border rounded-xl p-3.5 sm:p-5 mb-4 sm:mb-6 shadow-xs">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                 <div>
                   <h4 class="text-base font-bold text-gray-900 flex items-center gap-2">
@@ -1008,6 +1198,7 @@
             <!-- Interactive Admin Payment Calendar -->
             <div
               id="adminPaymentCalendarSection"
+              data-payments-subpanel="calendar"
               class="bg-white border rounded-lg p-3 sm:p-5 lg:p-6 mb-4 sm:mb-6"
             >
               <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
@@ -1060,9 +1251,9 @@
               </div>
 
               <div class="w-full overflow-x-auto pb-2">
-                <div class="min-w-[540px]">
+                <div class="w-full sm:min-w-[540px]">
                   <div
-                    class="grid grid-cols-7 text-center text-xs font-bold uppercase text-gray-500 pb-2 border-b"
+                    class="grid grid-cols-7 text-center text-[11px] sm:text-xs font-bold uppercase text-gray-500 pb-2 border-b"
                   >
                     <div>Sun</div>
                     <div>Mon</div>
@@ -1072,7 +1263,7 @@
                     <div>Fri</div>
                     <div>Sat</div>
                   </div>
-                  <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1.5 mt-2"></div>
+                  <div id="adminCalendarGrid" class="grid grid-cols-7 gap-1 sm:gap-1.5 mt-2"></div>
                 </div>
               </div>
 
@@ -1093,7 +1284,7 @@
             </div>
 
             <!-- 6-Month Sales & Revenue Forecast Section -->
-            <div class="bg-white border rounded-xl p-3.5 sm:p-5 lg:p-6 mb-4 sm:mb-6 shadow-xs">
+            <div data-payments-subpanel="forecast" class="bg-white border rounded-xl p-3.5 sm:p-5 lg:p-6 mb-4 sm:mb-6 shadow-xs">
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                 <div>
                   <h4 class="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -1188,12 +1379,12 @@
             </div>
 
             <!-- Payment Due Dates Table -->
-            <div class="bg-white border rounded-lg">
-              <div class="p-6 border-b">
+            <div data-payments-subpanel="ledger" class="bg-white border rounded-lg">
+              <div class="p-4 sm:p-6 border-b">
                 <h4 class="text-lg font-bold">Payment Due Dates</h4>
               </div>
               <div class="overflow-x-auto">
-                <table class="w-full">
+                <table class="w-full admin-mobile-cards-table">
                   <thead class="bg-gray-50">
                     <tr>
                       <th
@@ -1552,17 +1743,17 @@
 
             <!-- Gate Access Ledger Table -->
             <div class="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-              <div class="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="p-3.5 sm:p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
                 <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Gate Activity Log</h4>
-                <div class="flex items-center space-x-2">
-                  <button type="button" data-gate-filter="ALL" class="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-600 text-white transition">All Logs</button>
-                  <button type="button" data-gate-filter="IN" class="px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Entries (IN)</button>
-                  <button type="button" data-gate-filter="OUT" class="px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Exits (OUT)</button>
-                  <button type="button" data-gate-filter="LATE" class="px-3 py-1 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Curfew Alerts</button>
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                  <button type="button" data-gate-filter="ALL" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition">All Logs</button>
+                  <button type="button" data-gate-filter="IN" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Entries (IN)</button>
+                  <button type="button" data-gate-filter="OUT" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Exits (OUT)</button>
+                  <button type="button" data-gate-filter="LATE" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 transition">Curfew Alerts</button>
                 </div>
               </div>
               <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse admin-mobile-cards-table">
                   <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-xs uppercase font-bold text-gray-500">
                       <th class="py-3 px-4">Tenant</th>

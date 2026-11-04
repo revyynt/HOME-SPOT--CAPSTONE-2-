@@ -147,16 +147,32 @@ function renderGateLogsTable() {
 
       return `
         <tr class="hover:bg-gray-50/80 transition-colors border-b border-gray-100 text-sm">
-          <td class="py-3 px-4 font-semibold text-gray-900">${log.tenantName || 'Tenant'}</td>
-          <td class="py-3 px-4 text-gray-600">${log.room || 'Assigned Room'}</td>
-          <td class="py-3 px-4">
+          <td class="flex items-center justify-between gap-2 py-1.5 border-b border-gray-100 md:border-none md:table-cell md:py-3 md:px-4 font-bold text-gray-900">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Tenant</span>
+            <span>${log.tenantName || 'Tenant'}</span>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4 text-gray-600">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Unit / Room</span>
+            <span class="font-medium text-gray-800 md:font-normal md:text-gray-600">${log.room || 'Assigned Room'}</span>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Direction</span>
             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${pillClass}">
               ${pillLabel}
             </span>
           </td>
-          <td class="py-3 px-4 text-gray-600">${formatGateTimestamp(log.timestamp)}</td>
-          <td class="py-3 px-4">${curfewHtml}</td>
-          <td class="py-3 px-4 font-mono text-xs text-gray-500">${log.cardUid || 'N/A'}</td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4 text-gray-600">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Date &amp; Time</span>
+            <span class="text-xs sm:text-sm text-gray-700">${formatGateTimestamp(log.timestamp)}</span>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4">
+            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Curfew Status</span>
+            <span>${curfewHtml}</span>
+          </td>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4 font-mono text-xs text-gray-500">
+            <span class="md:hidden text-[11px] font-sans font-bold uppercase text-gray-400">Card UID</span>
+            <span>${log.cardUid || 'N/A'}</span>
+          </td>
         </tr>
       `;
     })

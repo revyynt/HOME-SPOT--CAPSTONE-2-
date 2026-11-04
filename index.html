@@ -8,21 +8,21 @@
     <link rel="stylesheet" href="./assets/css/style.css" />
   </head>
 
-  <body class="bg-white overflow-x-hidden">
+  <body class="bg-white overflow-x-hidden" data-mobile-section="rooms">
     <!-- Header -->
     <header class="border-b bg-white sticky top-0 z-50 shadow-sm backdrop-blur-sm bg-white/95">
-      <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="max-w-7xl mx-auto px-3 sm:px-4 py-2.5 md:py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-8">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5 sm:gap-3">
               <img
                 src="assets/img/logo.png"
                 alt="Homespot AR Logo"
-                class="h-12 w-auto object-contain"
+                class="h-10 sm:h-12 w-auto object-contain"
               />
               <div>
-                <span class="text-2xl font-bold text-blue-600">MJP Residences</span>
-                <p class="text-xs text-green-600 font-medium">Home-Spot Apartment Realty</p>
+                <span class="text-xl sm:text-2xl font-bold text-blue-600 leading-tight block">MJP Residences</span>
+                <p class="text-[11px] sm:text-xs text-green-600 font-medium">Home-Spot Apartment Realty</p>
               </div>
             </div>
             <nav class="hidden md:flex items-center gap-6">
@@ -41,63 +41,86 @@
           <div class="flex items-center gap-4">
             <a
               href="./login.html"
-              class="px-5 py-2 text-white bg-blue-600 hover:bg-blue-700 font-medium rounded-lg transition-all hover:shadow-lg hover:-translate-y-0.5"
+              class="px-4 sm:px-5 py-2 text-sm sm:text-base text-white bg-blue-600 hover:bg-blue-700 font-semibold rounded-lg transition-all hover:shadow-lg"
             >
               Portal Login
             </a>
           </div>
         </div>
       </div>
+      <!-- Facebook Mobile Web Style 4-Tab Icon Navigation Bar -->
       <nav
-        class="flex md:hidden max-w-7xl mx-auto px-4 pb-3 pt-2 border-t border-gray-100 items-center justify-around gap-2 text-xs font-semibold"
+        class="flex md:hidden border-t border-gray-200 bg-white items-stretch justify-around"
         aria-label="Mobile navigation"
       >
         <a
           href="#rooms"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Apartment Units</a
+          data-mobile-nav="rooms"
+          class="fb-mobile-tab active"
         >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>Units</span>
+        </a>
         <a
           href="#floor-plan"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Floor Plan</a
+          data-mobile-nav="floor-plan"
+          class="fb-mobile-tab"
         >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          <span>3D Floor Plan</span>
+        </a>
         <a
           href="#about"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >About</a
+          data-mobile-nav="about"
+          class="fb-mobile-tab"
         >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span>Location</span>
+        </a>
         <a
           href="#support"
-          class="px-3 py-1 rounded-md text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-          >Support</a
+          data-mobile-nav="support"
+          class="fb-mobile-tab"
         >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          <span>Support</span>
+        </a>
       </nav>
     </header>
 
     <!-- Hero Section -->
     <section
-      class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-16 overflow-hidden"
+      id="hero-section"
+      class="relative bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white py-5 md:py-16 overflow-hidden"
     >
       <div class="max-w-7xl mx-auto px-4 relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center">
           <div>
-            <div class="flex items-center gap-2 mb-3 text-yellow-300">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex items-center gap-2 mb-1.5 md:mb-3 text-yellow-300">
+              <svg class="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path
                   d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
                 ></path>
               </svg>
-              <span class="text-sm font-medium">Your Home Away From Home</span>
+              <span class="text-xs md:text-sm font-medium">Your Home Away From Home</span>
             </div>
 
             <h1
-              class="text-4xl sm:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight tracking-tight"
+              class="text-2xl sm:text-5xl lg:text-6xl font-extrabold mb-2 md:mb-4 leading-tight tracking-tight"
             >
               MJP Residences
             </h1>
 
-            <div class="flex items-center gap-2 mb-5 text-blue-100">
+            <div class="flex items-center gap-2 mb-2 md:mb-5 text-blue-100">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
@@ -112,15 +135,15 @@
                   d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 ></path>
               </svg>
-              <span class="text-sm">9th Avenue West, Caloocan City</span>
+              <span class="text-xs md:text-sm">9th Avenue West, Caloocan City</span>
             </div>
 
-            <p class="text-blue-50 mb-8 text-base leading-relaxed max-w-md">
+            <p class="text-blue-50 mb-3 md:mb-8 text-sm md:text-base leading-relaxed max-w-md">
               MJP Residences offers modern and secure apartment units designed for students and
               families.
             </p>
 
-            <div class="flex flex-wrap gap-3">
+            <div class="hidden md:flex flex-wrap gap-3">
               <a
                 href="#rooms"
                 class="bg-white text-blue-700 hover:bg-blue-50 px-6 py-3 rounded-lg font-semibold transition-all hover:shadow-xl hover:-translate-y-0.5 text-sm"
@@ -136,7 +159,7 @@
             </div>
           </div>
 
-          <div class="relative">
+          <div class="relative hidden lg:block">
             <div class="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
                 src="assets/img/building-exterior.jpg"

@@ -365,3 +365,143 @@ h4 {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* ==========================================================================
+   Facebook Mobile Web (m.facebook.com) Ergonomics & Single-Screen Tab Isolation
+   Designed for middle-aged demographic readability and minimal vertical scroll
+   ========================================================================== */
+.fb-mobile-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 50px;
+  flex: 1 1 0%;
+  color: #65676b;
+  font-size: 12px;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fb-mobile-tab:active {
+  background-color: #f0f2f5;
+}
+
+.fb-mobile-tab.active {
+  color: #1877f2;
+  border-bottom-color: #1877f2;
+  font-weight: 700;
+}
+
+@media (max-width: 767px) {
+  body {
+    background-color: #f0f2f5;
+    color: #1c1e21;
+  }
+
+  /* Prevent iOS auto-zoom and improve middle-aged legibility */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Landing page section isolation: show only active mobile tab section */
+  body[data-mobile-section='rooms'] #floor-plan,
+  body[data-mobile-section='rooms'] #about,
+  body[data-mobile-section='rooms'] #support,
+  body[data-mobile-section='rooms'] footer {
+    display: none !important;
+  }
+
+  body[data-mobile-section='floor-plan'] #hero-section,
+  body[data-mobile-section='floor-plan'] #rooms,
+  body[data-mobile-section='floor-plan'] #about,
+  body[data-mobile-section='floor-plan'] #support,
+  body[data-mobile-section='floor-plan'] footer {
+    display: none !important;
+  }
+
+  body[data-mobile-section='about'] #hero-section,
+  body[data-mobile-section='about'] #rooms,
+  body[data-mobile-section='about'] #floor-plan,
+  body[data-mobile-section='about'] #support,
+  body[data-mobile-section='about'] footer {
+    display: none !important;
+  }
+
+  body[data-mobile-section='support'] #hero-section,
+  body[data-mobile-section='support'] #rooms,
+  body[data-mobile-section='support'] #floor-plan,
+  body[data-mobile-section='support'] #about {
+    display: none !important;
+  }
+
+  /* Tighten vertical spacing on mobile so content fits in one viewport */
+  #rooms,
+  #floor-plan,
+  #about,
+  #support {
+    padding-top: 12px !important;
+    padding-bottom: 20px !important;
+  }
+
+  /* Admin dashboard: hide bulky top KPI cards when not on Overview tab */
+  body[data-admin-active-tab]:not([data-admin-active-tab='overview']) .admin-overview-only-mobile {
+    display: none !important;
+  }
+
+  /* Admin Tenant Payments mobile sub-tabs isolation */
+  [data-payments-active-sub='calendar'] [data-payments-subpanel='forecast'],
+  [data-payments-active-sub='calendar'] [data-payments-subpanel='ledger'] {
+    display: none !important;
+  }
+
+  [data-payments-active-sub='forecast'] [data-payments-subpanel='calendar'],
+  [data-payments-active-sub='forecast'] [data-payments-subpanel='ledger'] {
+    display: none !important;
+  }
+
+  [data-payments-active-sub='ledger'] [data-payments-subpanel='calendar'],
+  [data-payments-active-sub='ledger'] [data-payments-subpanel='forecast'] {
+    display: none !important;
+  }
+
+  /* Admin Mobile Stacked Cards for Tables & Logs */
+  .admin-mobile-cards-table thead {
+    display: none !important;
+  }
+
+  .admin-mobile-cards-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    background-color: #f8fafc !important;
+  }
+
+  .admin-mobile-cards-table tbody tr {
+    display: block !important;
+    background-color: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  }
+}
+
+/* Admin Overview Sub-Tab Isolation (Activity & Quick Actions vs Occupancy & Analysis) */
+[data-overview-active-sub='activity'] [data-overview-subpanel='analysis'] {
+  display: none !important;
+}
+
+[data-overview-active-sub='analysis'] [data-overview-subpanel='activity'] {
+  display: none !important;
+}

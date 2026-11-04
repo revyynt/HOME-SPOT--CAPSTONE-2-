@@ -263,7 +263,18 @@ export async function sendAdminChatMessage(email, name, messageText) {
  * Renders messages into #messagesContainer and #tenantMessagesContainer.
  * @param {{ empty: boolean, map: (callback: (doc: {id: string, data: () => Object}) => string) => string[] }} docs
  */
+export function isGateEventDoc(doc) {
+  const d = typeof doc?.data === 'function' ? doc.data() : doc || {};
+  return (
+    d.type === 'gate_log' ||
+    d.type === 'gate_notification' ||
+    d.sender === 'security' ||
+    (typeof d.subject === 'string' && d.subject.startsWith('Gate Security Alert:'))
+  );
+}
+
 export function isSupportDoc(doc) {
+  if (isGateEventDoc(doc)) return false;
   const d = typeof doc?.data === 'function' ? doc.data() : doc || {};
   return (
     d.room === 'Customer Support' ||
@@ -400,11 +411,19 @@ export function renderMessages(docs) {
   };
 
   const supportDocs = docList.filter(
-    (doc) => isSupportDoc(doc) && doc.data().sender !== 'tenant' && doc.data().sender !== 'admin'
+    (doc) =>
+      !isGateEventDoc(doc) &&
+      isSupportDoc(doc) &&
+      doc.data().sender !== 'tenant' &&
+      doc.data().sender !== 'admin'
   );
 
   const inquiryDocs = docList.filter(
-    (doc) => !isSupportDoc(doc) && doc.data().sender !== 'tenant' && doc.data().sender !== 'admin'
+    (doc) =>
+      !isGateEventDoc(doc) &&
+      !isSupportDoc(doc) &&
+      doc.data().sender !== 'tenant' &&
+      doc.data().sender !== 'admin'
   );
 
   if (tenantContainer) {
@@ -547,6 +566,7 @@ export function watchMessages(onUnreadCount) {
       const inquiryUnread = allDocs.filter(
         (doc) =>
           (doc.data().status === 'Unread' || doc.data().status === 'New') &&
+          !isGateEventDoc(doc) &&
           !isSupportDoc(doc) &&
           doc.data().sender !== 'tenant' &&
           doc.data().sender !== 'admin'
