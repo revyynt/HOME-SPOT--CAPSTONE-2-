@@ -123,10 +123,11 @@ async function handleInquirySubmit(event) {
 
   // Strictly constrained to the 8 keys whitelisted by the anonymous Supabase insert RLS policy:
   // ['name', 'email', 'phone', 'room', 'moveInDate', 'message', 'status', 'createdAt']
+  const preferredRoomVal = form.querySelector('[name="preferredRoom"]')?.value?.trim();
   const isCustomerSupport =
     Boolean(form.querySelector('[name="subject"]')) ||
     !window.location.pathname.includes('property-detail');
-  const room = isCustomerSupport ? 'Customer Support' : getRoomNameFromPage();
+  const room = preferredRoomVal || (isCustomerSupport ? 'Customer Support' : getRoomNameFromPage());
   const subjectVal = form.querySelector('[name="subject"]')?.value?.trim();
   const rawMsg = form.querySelector('[name="message"]')?.value?.trim() || '';
   const message = subjectVal ? `[${subjectVal}] ${rawMsg}` : rawMsg;
@@ -316,10 +317,15 @@ export function toggleInquiryForm() {
   modal?.classList.toggle('hidden');
   hidePanel('reservationForm');
   if (modal && !modal.classList.contains('hidden')) {
-    const targetRoom = getUrlParam('room');
-    if (targetRoom) {
-      const roomSelect = modal.querySelector('[name="preferredRoom"]');
-      if (roomSelect) roomSelect.value = targetRoom;
+    const isCommercial = getRoomNameFromPage().toLowerCase().includes('commercial');
+    const targetRoom = getUrlParam('room') || (isCommercial ? 'Commercial Space 1' : '');
+    const roomSelect = modal.querySelector('[name="preferredRoom"]');
+    if (roomSelect) {
+      if (targetRoom) {
+        roomSelect.value = targetRoom;
+      } else if (isCommercial) {
+        roomSelect.value = 'Commercial Space 1';
+      }
     }
     requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
   }
@@ -333,10 +339,15 @@ export function toggleReservationForm() {
   modal?.classList.toggle('hidden');
   hidePanel('inquiryForm');
   if (modal && !modal.classList.contains('hidden')) {
-    const targetRoom = getUrlParam('room');
-    if (targetRoom) {
-      const roomSelect = modal.querySelector('[name="preferredRoom"]');
-      if (roomSelect) roomSelect.value = targetRoom;
+    const isCommercial = getRoomNameFromPage().toLowerCase().includes('commercial');
+    const targetRoom = getUrlParam('room') || (isCommercial ? 'Commercial Space 1' : '');
+    const roomSelect = modal.querySelector('[name="preferredRoom"]');
+    if (roomSelect) {
+      if (targetRoom) {
+        roomSelect.value = targetRoom;
+      } else if (isCommercial) {
+        roomSelect.value = 'Commercial Space 1';
+      }
     }
     requestAnimationFrame(() => modal.querySelector('input[name="name"]')?.focus());
   }

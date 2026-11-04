@@ -473,12 +473,31 @@ function applyRoomDetails(room) {
   }
 
   document.getElementById('roomPrice').textContent = formatRoomPrice(room.price, true);
+  const isCommercial =
+    room.id === 'commercial-space' || /commercial|business/i.test(`${room.name} ${room.type}`);
+
   const priceSubtitle = document.getElementById('roomPriceSubtitle');
   if (priceSubtitle) {
-    const isCommercial =
-      room.id === 'commercial-space' || /commercial|business/i.test(`${room.name} ${room.type}`);
     priceSubtitle.textContent = isCommercial ? 'per space / month' : 'per unit / month';
   }
+
+  // In MJP Residences there is only 1 commercial space (1F)
+  const inquiryRoomSelect = document.getElementById('inquiryPreferredRoom');
+  if (inquiryRoomSelect) {
+    if (isCommercial) {
+      inquiryRoomSelect.innerHTML =
+        '<option value="Commercial Space 1" selected>1F • Commercial Space (Single Unit in MJP Residences)</option>';
+    }
+  }
+
+  const reservationRoomSelect = document.getElementById('reservationPreferredRoom');
+  if (reservationRoomSelect) {
+    if (isCommercial) {
+      reservationRoomSelect.innerHTML =
+        '<option value="Commercial Space 1" selected>1F • Commercial Space (Single Unit in MJP Residences)</option>';
+    }
+  }
+
   updateAvailabilityUI(room, room.available);
 }
 
