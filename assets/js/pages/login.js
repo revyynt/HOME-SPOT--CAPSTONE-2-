@@ -319,7 +319,39 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
   const cleanEmail = (email || user?.email || '').trim().toLowerCase();
   if (!cleanEmail) return { data: {}, docId: null };
 
-  // 1. Check existing tenant profile
+  // 1. Provision or claim via Edge Function (service-role bypasses RLS & sets app_metadata.role = 'tenant')
+  try {
+    const { data: edgeRes, error: edgeErr } = await supabase.functions.invoke('create-tenant', {
+      body: {
+        mode: 'self-claim',
+        email: cleanEmail,
+        name:
+          optionalInfo.name || user?.user_metadata?.name || user?.user_metadata?.full_name || '',
+        phone: optionalInfo.phone || user?.user_metadata?.phone || '',
+        preferredRoom: optionalInfo.preferredRoom || ''
+      }
+    });
+    if (!edgeErr && edgeRes?.tenant) {
+      return { data: edgeRes.tenant, docId: edgeRes.tenantId || user?.id || null };
+    }
+  } catch (err) {
+    console.warn('Edge self-claim fallback:', err);
+  }
+
+  // 2. Ensure user_metadata has role: 'tenant' for client-side session checks
+  if (user && user.user_metadata?.role !== 'tenant') {
+    try {
+      await supabase.auth.updateUser({
+        data: {
+          ...(user.user_metadata || {}),
+          role: 'tenant',
+          termsAccepted: true
+        }
+      });
+    } catch {}
+  }
+
+  // 3. Check existing tenant profile
   let existing = await loadProfile(user?.id, cleanEmail);
   if (existing.docId) {
     if (!existing.data.uid && user?.id) {
@@ -334,7 +366,7 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
     return existing;
   }
 
-  // 2. Check for approved reservation matching email
+  // 4. Check for approved reservation matching email
   let reservation = null;
   try {
     const resQuery = supabaseData.query(
@@ -538,7 +570,7 @@ function checkAuthHashState() {
     return;
   }
 
-  if (hash.includes('type=recovery') || hash.includes('access_token')) {
+  if (hash.includes('type=recovery')) {
     isRecoveringPassword = true;
     const modal = document.getElementById('updatePasswordModal');
     if (modal) modal.classList.remove('hidden');
@@ -780,32 +812,30 @@ signupForm?.addEventListener('submit', async (e) => {
 
     if (authErr) throw authErr;
 
+    let activeUser = authData?.user;
+    let hasSession = Boolean(authData?.session);
+    if (!hasSession) {
+      try {
+        const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
+        if (signInData?.user) {
+          activeUser = signInData.user;
+          hasSession = Boolean(signInData.session);
+        }
+      } catch {}
+    }
+
     // Auto-claim reservation & provision tenant document
-    const user = authData?.user;
-    const profile = await claimOrProvisionTenant(user, email, { name, phone });
+    const profile = await claimOrProvisionTenant(activeUser, email, { name, phone });
 
     showSignupAlert('Account created successfully! Preparing your portal...', true);
 
-    // If session was returned immediately (email confirmation disabled in Supabase)
-    if (authData?.session) {
+    if (hasSession) {
       seedSession(profile, email);
       setTimeout(() => {
         window.location.href = './tenant-portal.html';
       }, 700);
       return;
     }
-
-    // Try logging in immediately with password
-    try {
-      const { data: signInData } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInData?.user) {
-        seedSession(profile, email);
-        setTimeout(() => {
-          window.location.href = './tenant-portal.html';
-        }, 700);
-        return;
-      }
-    } catch {}
 
     // Otherwise prompt user to sign in
     showSignupAlert('Account created! You can now sign in with your email and password.', true);
@@ -868,13 +898,14 @@ loginForm?.addEventListener('submit', async (event) => {
   }
 });
 
+let isRoutingSession = false;
+
 async function checkExistingSession() {
   if (
     isRecoveringPassword ||
     (typeof window !== 'undefined' &&
       window.location.hash &&
-      (window.location.hash.includes('type=recovery') ||
-        window.location.hash.includes('access_token')))
+      window.location.hash.includes('type=recovery'))
   ) {
     console.log('[auth] In password recovery, preventing auto-redirect to portal');
     return;
@@ -885,31 +916,42 @@ async function checkExistingSession() {
       isRecoveringPassword ||
       (typeof window !== 'undefined' &&
         window.location.hash &&
-        (window.location.hash.includes('type=recovery') ||
-          window.location.hash.includes('access_token')))
+        window.location.hash.includes('type=recovery'))
     ) {
       return;
     }
     const user = await getCurrentUser();
-    if (!user) return;
-    const role =
-      user.app_metadata?.role || (user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
-    const destination = ROLE_DESTINATIONS[role];
-    if (destination) {
+    if (!user || isRoutingSession) return;
+    isRoutingSession = true;
+
+    const role = user.app_metadata?.role;
+    if (role === 'admin' || role === 'superadmin') {
+      const destination = ROLE_DESTINATIONS[role];
       const isOtpVerified =
         sessionStorage.getItem('admin_otp_verified') === 'true' ||
         localStorage.getItem('admin_otp_verified') === 'true';
-      if ((role === 'admin' || role === 'superadmin') && !isOtpVerified) {
+      if (!isOtpVerified) {
         if (adminOtpModal && !adminOtpModal.classList.contains('hidden')) return;
         if (isSubmitting || isSendingAdminOtp) return;
         await triggerAdminOtp(user, destination);
         return;
       }
       window.location.replace(destination);
+      return;
     }
+
+    showAlert('Signing in with your account... Preparing your Tenant Portal...', true);
+    await routeUser(user, user.email);
   } catch (error) {
+    isRoutingSession = false;
     console.warn('[auth] Existing session check error:', error);
   }
 }
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session?.user && !isRecoveringPassword && !isSubmitting) {
+    void checkExistingSession();
+  }
+});
 
 checkExistingSession();

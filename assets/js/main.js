@@ -1,7 +1,7 @@
 // If an auth recovery link or error lands on index.html, forward immediately to login.html
 if (typeof window !== 'undefined' && window.location.hash) {
   const hash = window.location.hash;
-  if (hash.includes('type=recovery') || hash.includes('access_token') || hash.includes('error=')) {
+  if (hash.includes('type=recovery') || hash.includes('error=')) {
     window.location.replace('./login.html' + hash);
   }
 }
@@ -522,11 +522,7 @@ const updatePassAlert = document.getElementById('updatePassAlert');
 
 if (typeof window !== 'undefined') {
   // Check hash on landing
-  if (
-    window.location.hash &&
-    (window.location.hash.includes('type=recovery') ||
-      window.location.hash.includes('access_token'))
-  ) {
+  if (window.location.hash && window.location.hash.includes('type=recovery')) {
     if (updatePassModal) updatePassModal.classList.remove('hidden');
   }
 
