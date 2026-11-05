@@ -427,6 +427,9 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
 }
 
 async function routeUser(user, fallbackEmail) {
+  try {
+    localStorage.removeItem('oauth_login_pending');
+  } catch {}
   const cleanEmail = user?.email || fallbackEmail || '';
   let role =
     user?.app_metadata?.role || (user?.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
@@ -741,6 +744,10 @@ confirmGoogleTermsBtn?.addEventListener('click', async () => {
         ? window.location.origin
         : 'https://homespot-mjp.web.app';
 
+    try {
+      localStorage.setItem('oauth_login_pending', '1');
+    } catch {}
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -750,6 +757,9 @@ confirmGoogleTermsBtn?.addEventListener('click', async () => {
 
     if (error) throw error;
   } catch (err) {
+    try {
+      localStorage.removeItem('oauth_login_pending');
+    } catch {}
     console.error('Google Sign-In error:', err);
     closeGoogleTermsModal();
     showAlert(err.message || 'Failed to initialize Google Sign-In.');
@@ -921,7 +931,14 @@ async function checkExistingSession() {
       return;
     }
     const user = await getCurrentUser();
-    if (!user || isRoutingSession) return;
+    if (!user || isRoutingSession) {
+      if (!user && !(window.location.hash || '').includes('access_token')) {
+        try {
+          localStorage.removeItem('oauth_login_pending');
+        } catch {}
+      }
+      return;
+    }
     isRoutingSession = true;
 
     const role = user.app_metadata?.role;

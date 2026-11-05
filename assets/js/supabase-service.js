@@ -30,8 +30,34 @@ const authStorage = {
   }
 };
 
+let isLandingAuthRedirect = false;
+if (typeof window !== 'undefined') {
+  const path = (window.location.pathname || '').toLowerCase();
+  const isLanding = path === '/' || path === '' || path.endsWith('/index.html');
+  const hash = window.location.hash || '';
+  let oauthPending = false;
+  try {
+    oauthPending = window.localStorage?.getItem('oauth_login_pending') === '1';
+  } catch {}
+  if (
+    isLanding &&
+    (hash.includes('access_token=') ||
+      hash.includes('type=recovery') ||
+      hash.includes('error=') ||
+      oauthPending)
+  ) {
+    isLandingAuthRedirect = true;
+    window.location.replace('./login.html' + hash);
+  }
+}
+
 export const supabase = createClient(supabaseUrl, supabasePublishableKey, {
-  auth: { storage: authStorage, persistSession: true, autoRefreshToken: true }
+  auth: {
+    storage: authStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: !isLandingAuthRedirect
+  }
 });
 
 export const db = supabase;

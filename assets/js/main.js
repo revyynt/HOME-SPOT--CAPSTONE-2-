@@ -1,7 +1,16 @@
-// If an auth recovery link or error lands on index.html, forward immediately to login.html
-if (typeof window !== 'undefined' && window.location.hash) {
-  const hash = window.location.hash;
-  if (hash.includes('type=recovery') || hash.includes('error=')) {
+// If an auth OAuth token, recovery link, or error lands on index.html, forward immediately to login.html
+if (typeof window !== 'undefined') {
+  const hash = window.location.hash || '';
+  let oauthPending = false;
+  try {
+    oauthPending = window.localStorage?.getItem('oauth_login_pending') === '1';
+  } catch {}
+  if (
+    hash.includes('type=recovery') ||
+    hash.includes('access_token') ||
+    hash.includes('error=') ||
+    oauthPending
+  ) {
     window.location.replace('./login.html' + hash);
   }
 }
