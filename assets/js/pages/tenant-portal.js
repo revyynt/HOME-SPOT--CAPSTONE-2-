@@ -854,11 +854,27 @@ async function fetchTenantSupabaseProfile() {
 
     // First try querying by uid
     let queryRef = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
-    const initialCheck = await supabaseData.getDocs(queryRef).catch(() => null);
+    let initialCheck = await supabaseData.getDocs(queryRef).catch(() => null);
 
     // If no document matches by uid, fall back to email query
     if ((!initialCheck || initialCheck.empty) && normalizedEmail) {
       queryRef = supabaseData.query(tenantsRef, supabaseData.where('email', '==', normalizedEmail));
+      initialCheck = await supabaseData.getDocs(queryRef).catch(() => null);
+    }
+
+    // If still empty (e.g. Google OAuth account created before self-claim), auto-provision now
+    if (!initialCheck || initialCheck.empty) {
+      try {
+        await supabase.functions.invoke('create-tenant', {
+          body: {
+            mode: 'self-claim',
+            email: normalizedEmail,
+            name: meta.name || meta.full_name || '',
+            phone: meta.phone || ''
+          }
+        });
+        queryRef = supabaseData.query(tenantsRef, supabaseData.where('uid', '==', user.id));
+      } catch {}
     }
 
     supabaseData.onSnapshot(queryRef, onTenantSnapshot, (error) =>

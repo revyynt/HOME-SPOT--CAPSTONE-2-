@@ -354,9 +354,12 @@ async function requireRole(requiredRole, redirectTo) {
     return false;
   }
 
+  const appRole = user.app_metadata?.role;
   const role =
-    user.app_metadata?.role ||
-    (requiredRole === 'tenant' && user.user_metadata?.role === 'tenant' ? 'tenant' : undefined);
+    appRole ||
+    (requiredRole === 'tenant' && appRole !== 'admin' && appRole !== 'superadmin'
+      ? 'tenant'
+      : undefined);
   if (role !== requiredRole) {
     console.warn(`[auth] role mismatch: required ${requiredRole}, found ${role || 'none'}`);
     window.location.replace(redirectTo || 'login.html');
