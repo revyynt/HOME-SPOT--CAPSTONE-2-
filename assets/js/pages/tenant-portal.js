@@ -273,8 +273,14 @@ function populateTenantUI() {
 
   const statusPill = document.querySelector('.tenant-status-pill');
   const moveInInfo = getMoveInInfo();
+  const isRoomUnassigned = !tenantRoom || tenantRoom.toLowerCase().includes('pending');
   if (statusPill) {
-    if (moveInInfo.isPending) {
+    if (isRoomUnassigned) {
+      statusPill.textContent = '● Room Assignment Pending';
+      statusPill.style.background = '#fef3c7';
+      statusPill.style.color = '#92400e';
+      statusPill.style.border = '1px solid #fde68a';
+    } else if (moveInInfo.isPending) {
       statusPill.textContent = '● Pending Move-In';
       statusPill.style.background = '#fef3c7';
       statusPill.style.color = '#92400e';

@@ -382,9 +382,28 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
     console.warn('Could not query reservations for auto-claim:', err);
   }
 
+  const isApprovedReservation = reservation?.status === 'Approved';
+  const approvedRoom = isApprovedReservation
+    ? String(reservation?.assignedRoom || reservation?.room || '').trim()
+    : '';
+
   const assignedRoom =
-    reservation?.assignedRoom || reservation?.room || optionalInfo.preferredRoom || '';
-  const isCommercial = assignedRoom.toLowerCase().includes('commercial');
+    approvedRoom || optionalInfo.preferredRoom || 'Unassigned (Pending Admin Assignment)';
+  const isUnassigned =
+    !assignedRoom ||
+    assignedRoom === 'Unassigned (Pending Admin Assignment)' ||
+    assignedRoom.toLowerCase().includes('pending');
+
+  const inquiredUnit = String(
+    reservation?.assignedRoom ||
+      reservation?.room ||
+      optionalInfo.preferredRoom ||
+      'Triple Occupancy Room'
+  ).trim();
+
+  const isCommercial =
+    assignedRoom.toLowerCase().includes('commercial') ||
+    inquiredUnit.toLowerCase().includes('commercial');
   const defaultRent = isCommercial ? 12000 : 10000;
   const monthlyRent = Number(reservation?.amount) || defaultRent;
   const moveInDate = reservation?.moveInDate || new Date().toISOString().slice(0, 10);
@@ -402,8 +421,10 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
     email: cleanEmail,
     phone: optionalInfo.phone || reservation?.phone || user?.user_metadata?.phone || '',
     role: 'tenant',
-    status: 'Active',
-    room: assignedRoom || 'Room 101',
+    status: isUnassigned ? 'Pending Assignment' : 'Active',
+    room: assignedRoom,
+    inquiredRoom: inquiredUnit,
+    needsAssignment: isUnassigned,
     dormName: isCommercial ? 'Commercial Space' : 'Triple Occupancy Room',
     monthlyRent,
     moveInDate,

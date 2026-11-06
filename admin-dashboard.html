@@ -2989,10 +2989,60 @@
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <div class="text-xs text-gray-500 font-medium">Assigned Unit</div>
-              <div id="viewTenantRoom" class="font-bold text-gray-800 text-base">Room 201</div>
-              <div id="viewTenantResidenceType" class="text-xs text-gray-500">Triple Occupancy</div>
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 sm:col-span-2">
+              <div class="flex items-center justify-between gap-2 flex-wrap mb-1">
+                <div class="text-xs text-gray-500 font-medium">Assigned Unit</div>
+                <div
+                  id="viewTenantInquiredBadge"
+                  class="hidden text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800"
+                >
+                  Inquired: Triple Occupancy Room
+                </div>
+              </div>
+              <div
+                class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2"
+              >
+                <div>
+                  <div id="viewTenantRoom" class="font-bold text-gray-800 text-base">Room 201</div>
+                  <div id="viewTenantResidenceType" class="text-xs text-gray-500">
+                    Triple Occupancy
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="btnToggleAssignRoom"
+                  data-action="toggle-assign-room"
+                  class="px-2.5 py-1 text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                >
+                  Change Unit
+                </button>
+              </div>
+
+              <!-- Inline Unit Assignment / Reassignment Dropdown -->
+              <div
+                id="viewTenantAssignBox"
+                class="hidden mt-3 pt-3 border-t border-gray-200 space-y-2"
+              >
+                <label for="viewTenantRoomSelect" class="block text-xs font-semibold text-gray-700">
+                  Select Unit to Assign:
+                </label>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <select
+                    id="viewTenantRoomSelect"
+                    class="flex-1 px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    <!-- Populated dynamically with BUILDING_UNITS -->
+                  </select>
+                  <button
+                    type="button"
+                    id="btnSaveAssignRoom"
+                    data-action="save-assigned-room"
+                    class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition-colors cursor-pointer text-center"
+                  >
+                    Confirm Unit
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
               <div class="text-xs text-gray-500 font-medium">Monthly Rent</div>

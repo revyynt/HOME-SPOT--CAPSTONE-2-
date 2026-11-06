@@ -457,6 +457,38 @@ export async function submitApproveReservation(event) {
       decisionAt: supabaseData.serverTimestamp()
     });
 
+    // Check if this applicant already signed up as a tenant with this email
+    const applicantEmail = (reservationData?.email || '').trim().toLowerCase();
+    if (applicantEmail) {
+      try {
+        const tenantsSnap = await supabaseData.getDocs(
+          supabaseData.query(
+            supabaseData.collection(db, 'tenants'),
+            supabaseData.where('email', '==', applicantEmail)
+          )
+        );
+        if (!tenantsSnap.empty) {
+          const tenantDoc = tenantsSnap.docs[0];
+          const isComm = String(assignedRoom).toLowerCase().includes('commercial');
+          const roomDigits = assignedRoom.replace(/\D+/g, '') || '101';
+          await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', tenantDoc.id), {
+            room: assignedRoom,
+            dormName: isComm ? 'Commercial Space' : 'Triple Occupancy Room',
+            monthlyRent: monthlyRent,
+            advanceRent: monthlyRent,
+            securityDeposit: monthlyRent * 2,
+            moveInDate: moveInDate,
+            needsAssignment: false,
+            status: 'Active',
+            cardUid: `NFC-${roomDigits}`,
+            updatedAt: new Date().toISOString()
+          });
+        }
+      } catch (syncErr) {
+        console.warn('Syncing approved room to existing tenant profile notice:', syncErr);
+      }
+    }
+
     closeApproveReservationModal();
     Toast.success(`Reservation approved for ${assignedRoom}. Move-in set to ${moveInDate}.`);
   } catch (error) {
@@ -514,6 +546,40 @@ async function directApproveReservation(reservationId) {
       status: 'Approved',
       decisionAt: supabaseData.serverTimestamp()
     });
+
+    // Check if this applicant already signed up as a tenant with this email
+    const applicantEmail = (reservationData?.email || '').trim().toLowerCase();
+    if (applicantEmail && reservationData?.room) {
+      try {
+        const tenantsSnap = await supabaseData.getDocs(
+          supabaseData.query(
+            supabaseData.collection(db, 'tenants'),
+            supabaseData.where('email', '==', applicantEmail)
+          )
+        );
+        if (!tenantsSnap.empty) {
+          const tenantDoc = tenantsSnap.docs[0];
+          const isComm = String(reservationData.room).toLowerCase().includes('commercial');
+          const roomDigits = reservationData.room.replace(/\D+/g, '') || '101';
+          const defaultRent = isComm ? 12000 : 10000;
+          const rentVal = Number(reservationData.amount) || defaultRent;
+          await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', tenantDoc.id), {
+            room: reservationData.room,
+            dormName: isComm ? 'Commercial Space' : 'Triple Occupancy Room',
+            monthlyRent: rentVal,
+            advanceRent: rentVal,
+            securityDeposit: rentVal * 2,
+            needsAssignment: false,
+            status: 'Active',
+            cardUid: `NFC-${roomDigits}`,
+            updatedAt: new Date().toISOString()
+          });
+        }
+      } catch (syncErr) {
+        console.warn('Syncing direct approved room to tenant profile notice:', syncErr);
+      }
+    }
+
     Toast.success('Reservation approved. You can now click "Create Tenant Account" below.');
   } catch (error) {
     console.error('Supabase approve failed:', error);

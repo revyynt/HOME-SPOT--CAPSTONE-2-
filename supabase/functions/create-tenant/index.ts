@@ -71,15 +71,34 @@ Deno.serve(async (request) => {
       form.phone || existingData.phone || matchedRes.phone || meta.phone || ''
     ).trim();
 
+    const isApprovedReservation = matchedRow?.data?.status === 'Approved';
+    const approvedRoom = isApprovedReservation
+      ? String(matchedRes.assignedRoom || matchedRes.room || '').trim()
+      : '';
+
     const resolvedRoom = String(
       existingData.room ||
+        approvedRoom ||
+        form.preferredRoom ||
+        'Unassigned (Pending Admin Assignment)'
+    ).trim();
+
+    const isUnassigned =
+      !resolvedRoom ||
+      resolvedRoom === 'Unassigned (Pending Admin Assignment)' ||
+      resolvedRoom.toLowerCase().includes('pending');
+
+    const inquiredUnitLabel = String(
+      existingData.inquiredRoom ||
         matchedRes.assignedRoom ||
         matchedRes.room ||
         form.preferredRoom ||
-        'Room 101'
+        'Triple Occupancy Room'
     ).trim();
 
-    const isCommercial = resolvedRoom.toLowerCase().includes('commercial');
+    const isCommercial =
+      resolvedRoom.toLowerCase().includes('commercial') ||
+      inquiredUnitLabel.toLowerCase().includes('commercial');
     const resolvedDorm = String(
       existingData.dormName || (isCommercial ? 'Commercial Space' : 'Triple Occupancy Room')
     );
@@ -113,6 +132,8 @@ Deno.serve(async (request) => {
       phone: resolvedPhone,
       emergencyContact: String(existingData.emergencyContact || ''),
       room: resolvedRoom,
+      inquiredRoom: inquiredUnitLabel,
+      needsAssignment: isUnassigned,
       dormName: resolvedDorm,
       moveInDate: resolvedMoveIn,
       monthlyRent: resolvedRent,
@@ -121,7 +142,7 @@ Deno.serve(async (request) => {
       advanceDeposit: Number(existingData.advanceDeposit) || resolvedRent,
       dueDay: resolvedDueDay,
       leaseTerm: String(existingData.leaseTerm || '6 Months'),
-      status: String(existingData.status || 'Active'),
+      status: String(existingData.status || (isUnassigned ? 'Pending Assignment' : 'Active')),
       role: 'tenant',
       gateStatus: String(existingData.gateStatus || 'INSIDE'),
       cardUid: String(existingData.cardUid || `NFC-${roomDigits}`),

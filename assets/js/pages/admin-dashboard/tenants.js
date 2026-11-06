@@ -29,8 +29,11 @@ import { refreshTenantMessenger } from '../../render/messages.js';
 import {
   refreshTenantRoomOptions,
   openCreateTenantModalFromData,
-  uploadContractProofFile
+  uploadContractProofFile,
+  getUnitOccupants,
+  UNIT_SHORT_LABELS
 } from './create-tenant.js';
+import { BUILDING_UNITS } from '../../lib/building-3d.js';
 import { Toast } from '../../render/toast.js';
 
 /** @type {Array<Object & {id: string}>} */
@@ -203,10 +206,15 @@ function renderTenantsTable(tenants, isArchived = false) {
                 String(t.status || '').toLowerCase() === 'archived'
                   ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
                      ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
-                  : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
-                      ${escapeHtml(t.room || 'Unassigned')}
-                    </span>
-                    <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
+                  : !t.room || t.room.toLowerCase().includes('pending') || t.needsAssignment
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap">
+                        Needs Unit Assignment
+                      </span>
+                      <div class="text-[11px] text-blue-700 font-medium mt-0.5">Inquired: ${escapeHtml(t.inquiredRoom || t.dormName || 'Standard')}</div>`
+                    : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                        ${escapeHtml(t.room || 'Unassigned')}
+                      </span>
+                      <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
               }
             </div>
           </td>
@@ -421,8 +429,58 @@ export function viewTenantDetails(tenantId) {
     notesSection?.classList.add('hidden');
   }
 
+  // Populate Inquired Unit badge if present
+  const inquiredBadge = document.getElementById('viewTenantInquiredBadge');
+  if (inquiredBadge) {
+    if (tenant.inquiredRoom && tenant.inquiredRoom !== tenant.room) {
+      inquiredBadge.textContent = `Inquired: ${tenant.inquiredRoom}`;
+      inquiredBadge.classList.remove('hidden');
+    } else {
+      inquiredBadge.classList.add('hidden');
+    }
+  }
+
+  // Setup unit assignment dropdown
+  const assignBox = document.getElementById('viewTenantAssignBox');
+  assignBox?.classList.add('hidden');
+  const toggleBtn = document.getElementById('btnToggleAssignRoom');
+  if (toggleBtn) {
+    const isUnassigned =
+      !tenant.room || tenant.room.toLowerCase().includes('pending') || tenant.needsAssignment;
+    toggleBtn.textContent = isUnassigned ? 'Assign Unit Now' : 'Change Unit';
+    toggleBtn.className = isUnassigned
+      ? 'px-3 py-1 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm transition-colors cursor-pointer'
+      : 'px-2.5 py-1 text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg shadow-2xs transition-colors cursor-pointer';
+  }
+
+  populateViewTenantRoomSelect(tenant.room || tenant.inquiredRoom || '');
   renderViewTenantContract(tenant);
   document.getElementById('viewTenantModal')?.classList.remove('hidden');
+}
+
+function populateViewTenantRoomSelect(currentRoom = '') {
+  const select = document.getElementById('viewTenantRoomSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="" disabled selected>Select Room / Unit</option>';
+
+  BUILDING_UNITS.forEach((unit) => {
+    const occList = getUnitOccupants(unit.id);
+    const occ = occList.filter((t) => t.id !== currentViewingTenant?.id).length;
+    const cap = 1;
+    const isFull = occ >= cap;
+    const label = UNIT_SHORT_LABELS[unit.id] || `${unit.floor}F • ${unit.name}`;
+
+    const opt = document.createElement('option');
+    opt.value = unit.id;
+    opt.textContent = `${label} — ${isFull ? 'FULL' : 'Available (0/1)'}`;
+    opt.disabled = isFull;
+    select.appendChild(opt);
+  });
+
+  if (currentRoom) {
+    const exact = Array.from(select.options).find((o) => o.value === currentRoom && !o.disabled);
+    if (exact) select.value = currentRoom;
+  }
 }
 
 export function closeViewTenantModal() {
@@ -608,6 +666,87 @@ export function initTenantTable() {
     }
     if (target?.closest('[data-action="copy-credentials"]')) {
       copyCurrentTenantCredentials();
+      return;
+    }
+
+    if (target?.closest('[data-action="toggle-assign-room"]')) {
+      const box = document.getElementById('viewTenantAssignBox');
+      box?.classList.toggle('hidden');
+      return;
+    }
+
+    if (target?.closest('[data-action="save-assigned-room"]')) {
+      if (!currentViewingTenant?.id) return;
+      const select = document.getElementById('viewTenantRoomSelect');
+      const selectedUnit = select?.value;
+      if (!selectedUnit) {
+        Toast.error('Please choose a unit to assign.');
+        return;
+      }
+
+      const isComm = selectedUnit.toLowerCase().includes('commercial');
+      const dormName = isComm ? 'Commercial Space' : 'Triple Occupancy Room';
+      const rent = isComm ? 12000 : 10000;
+      const roomDigits = selectedUnit.replace(/\D+/g, '') || '101';
+      const cardUid = `NFC-${roomDigits}`;
+
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          room: selectedUnit,
+          dormName,
+          monthlyRent: rent,
+          advanceRent: rent,
+          securityDeposit: rent * 2,
+          needsAssignment: false,
+          status: 'Active',
+          cardUid,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Also sync user profile record if available
+        if (currentViewingTenant.uid) {
+          try {
+            await supabaseData.updateDoc(supabaseData.doc(db, 'users', currentViewingTenant.uid), {
+              room: selectedUnit,
+              dormName,
+              updatedAt: new Date().toISOString()
+            });
+          } catch {}
+        }
+
+        currentViewingTenant.room = selectedUnit;
+        currentViewingTenant.dormName = dormName;
+        currentViewingTenant.monthlyRent = rent;
+        currentViewingTenant.needsAssignment = false;
+        currentViewingTenant.status = 'Active';
+
+        const roomEl = document.getElementById('viewTenantRoom');
+        if (roomEl) roomEl.textContent = selectedUnit;
+        const resEl = document.getElementById('viewTenantResidenceType');
+        if (resEl) resEl.textContent = dormName;
+        const rentEl = document.getElementById('viewTenantRent');
+        if (rentEl) rentEl.textContent = formatPHP(rent);
+        const statusEl = document.getElementById('viewTenantStatus');
+        if (statusEl) {
+          statusEl.textContent = 'Active Tenant';
+          statusEl.className =
+            'inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800';
+        }
+
+        document.getElementById('viewTenantAssignBox')?.classList.add('hidden');
+        const toggleBtn = document.getElementById('btnToggleAssignRoom');
+        if (toggleBtn) {
+          toggleBtn.textContent = 'Change Unit';
+          toggleBtn.className =
+            'px-2.5 py-1 text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg shadow-2xs transition-colors cursor-pointer';
+        }
+
+        renderFiltered();
+        Toast.success(`Assigned ${selectedUnit} to ${currentViewingTenant.name}.`);
+      } catch (err) {
+        console.error('Failed to assign unit:', err);
+        Toast.error(err.message || 'Could not assign unit.');
+      }
       return;
     }
 
