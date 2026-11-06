@@ -116,6 +116,47 @@ function buildTemplate(type: string, data: Record<string, unknown>) {
     return { subject, text, html };
   }
 
+  const isOverdue =
+    type === 'overdue_alert' || String(data.status || '').toLowerCase() === 'overdue';
+
+  if (isOverdue) {
+    const subject = `[Home-Spot] OVERDUE Rent Notice - ${room} (Due: ${dueDate})`;
+    const text =
+      `Hi ${name},\n\n` +
+      `IMPORTANT NOTICE: Your monthly rent of ${amount} for ${room} (Due: ${dueDate}) is currently OVERDUE.\n\n` +
+      `Payment Instructions:\n` +
+      `Please log in to your tenant account on the Tenant Portal to settle your overdue balance immediately (GCash, Maya, Debit/Credit Card):\n` +
+      `${portalUrl}\n\n` +
+      `If you have already settled your payment at the Property Admin Office, please disregard this notice.\n\n` +
+      `Best regards,\n` +
+      `Home-Spot Billing Team\n` +
+      `MJP Residences\n` +
+      `Contact: ${OFFICIAL_GMAIL}`;
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; line-height: 1.6; border: 1px solid #fecaca; border-radius: 8px; padding: 24px;">
+        <h2 style="color: #dc2626; margin-top: 0;">Overdue Rent Notice</h2>
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>Our records indicate that your monthly rent for <strong>${room}</strong> is currently <strong>OVERDUE</strong>.</p>
+        
+        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 20px 0; border-radius: 4px;">
+          <h3 style="margin-top: 0; font-size: 16px; color: #991b1b;">Overdue Billing Details</h3>
+          <p style="margin: 4px 0;"><strong>Unit:</strong> ${room}</p>
+          <p style="margin: 4px 0;"><strong>Amount Overdue:</strong> ${amount}</p>
+          <p style="margin: 4px 0;"><strong>Due Date:</strong> ${dueDate}</p>
+          <p style="margin: 4px 0;"><strong>Status:</strong> <span style="color: #dc2626; font-weight: bold;">OVERDUE</span></p>
+        </div>
+
+        <p>Please log in to your Tenant Portal immediately to view your statement and settle your balance via GCash, Maya, or Card:</p>
+        <div style="margin: 25px 0;">
+          <a href="${portalUrl}" style="background: #dc2626; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Settle Overdue Rent</a>
+        </div>
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #64748b;">MJP Residences Management • Contact: ${OFFICIAL_GMAIL}</p>
+      </div>`;
+    return { subject, text, html };
+  }
+
   // default / due_date_alert
   const subject = `[Home-Spot] Rent Due Reminder - ${room} (Due: ${dueDate})`;
   const text =
@@ -161,14 +202,6 @@ Deno.serve(async (request) => {
 
   const auth = await authenticatedUser(request);
   if (auth.errorResponse) return auth.errorResponse;
-  const role = auth.user.app_metadata?.role;
-  if (!['admin', 'superadmin'].includes(role)) {
-    return jsonResponse(
-      request,
-      { error: 'Only staff can dispatch automated notifications.' },
-      403
-    );
-  }
 
   let body: Record<string, unknown>;
   try {
@@ -182,19 +215,48 @@ Deno.serve(async (request) => {
     return jsonResponse(request, { error: 'A valid recipient email is required.' }, 400);
   }
 
+  const role = auth.user.app_metadata?.role;
+  const isStaff = ['admin', 'superadmin'].includes(role);
+  const callerEmail = (auth.user.email || '').trim().toLowerCase();
+  const type = typeof body.type === 'string' ? body.type : 'due_date_alert';
+  const isSelfDueAlert =
+    callerEmail && callerEmail === to && (type === 'due_date_alert' || type === 'overdue_alert');
+
+  if (!isStaff && !isSelfDueAlert) {
+    return jsonResponse(
+      request,
+      { error: 'Only staff can dispatch automated notifications.' },
+      403
+    );
+  }
+
   const admin = adminClient();
+  let dbTenantId: string | null = null;
   let dbTenant: Record<string, unknown> | null = null;
   try {
     const { data: tenantDocs } = await admin
       .from('app_documents')
-      .select('data')
+      .select('id, data')
       .eq('collection', 'tenants');
-    dbTenant =
-      (tenantDocs as Array<{ data: Record<string, unknown> }>)
-        ?.map((d) => d.data)
-        ?.find((t) => String(t?.email || '').toLowerCase() === to) || null;
+    const matchedRow = (tenantDocs as Array<{ id: string; data: Record<string, unknown> }>)?.find(
+      (d) => String(d.data?.email || '').toLowerCase() === to
+    );
+    if (matchedRow) {
+      dbTenantId = matchedRow.id;
+      dbTenant = matchedRow.data;
+    }
   } catch (err) {
     console.warn('Could not query tenants collection:', err);
+  }
+
+  const autoCycleKey = typeof body.autoCycleKey === 'string' ? body.autoCycleKey.trim() : '';
+  if (autoCycleKey && dbTenant && String(dbTenant.lastAutoAlertKey || '') === autoCycleKey) {
+    return jsonResponse(request, {
+      success: true,
+      skippedDuplicate: true,
+      autoCycleKey,
+      recipient: to
+    });
   }
 
   const mergedBody: Record<string, unknown> = {
@@ -211,8 +273,26 @@ Deno.serve(async (request) => {
     portalUrl: body.portalUrl || PORTAL_URL
   };
 
-  const type = typeof body.type === 'string' ? body.type : 'due_date_alert';
   const { subject, text, html } = buildTemplate(type, mergedBody);
+
+  if (autoCycleKey && dbTenantId && dbTenant) {
+    try {
+      await admin
+        .from('app_documents')
+        .update({
+          data: {
+            ...dbTenant,
+            lastAutoAlertKey: autoCycleKey,
+            lastAutoAlertAt: new Date().toISOString()
+          },
+          updated_at: new Date().toISOString()
+        })
+        .eq('collection', 'tenants')
+        .eq('id', dbTenantId);
+    } catch (updateErr) {
+      console.warn('Could not persist lastAutoAlertKey on tenant doc:', updateErr);
+    }
+  }
 
   let emailDelivered = false;
   let deliveryProvider = 'none';

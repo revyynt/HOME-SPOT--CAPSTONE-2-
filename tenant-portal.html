@@ -367,63 +367,155 @@
       </div>
 
       <div id="profile-tab" class="tab-content">
-        <div class="profile-container">
-          <div class="profile-section">
-            <h3>Personal Information</h3>
-            <div class="profile-field">
-              <label>Full Name</label>
-              <input type="text" id="fullName" value="Juan Dela Cruz" />
+        <div class="profile-layout-grid">
+          <div class="profile-container">
+            <div class="profile-section">
+              <h3>Personal Information</h3>
+              <div class="profile-field">
+                <label>Full Name</label>
+                <input type="text" id="fullName" value="Juan Dela Cruz" />
+              </div>
+              <div class="profile-field">
+                <label>Email Address</label>
+                <input type="email" id="email" value="juan.delacruz@email.com" disabled />
+              </div>
+              <div class="profile-field">
+                <label>Phone Number</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value="0912 345 6789"
+                  maxlength="13"
+                  inputmode="tel"
+                  placeholder="0912 345 6789"
+                />
+              </div>
+              <div class="profile-field">
+                <label>Emergency Contact</label>
+                <input
+                  type="tel"
+                  id="emergencyContact"
+                  value="0923 456 7890"
+                  maxlength="13"
+                  inputmode="tel"
+                  placeholder="0923 456 7890"
+                />
+              </div>
             </div>
-            <div class="profile-field">
-              <label>Email Address</label>
-              <input type="email" id="email" value="juan.delacruz@email.com" disabled />
+
+            <div class="profile-section">
+              <h3>Current Residence</h3>
+              <div class="profile-field">
+                <label>Residence Type</label>
+                <input
+                  type="text"
+                  id="tenantProfileResidenceType"
+                  value="Triple Occupancy Room"
+                  disabled
+                />
+              </div>
+              <div class="profile-field">
+                <label>Room Number</label>
+                <input type="text" id="tenantProfileRoom" value="Room 201" disabled />
+              </div>
+              <div class="profile-field">
+                <label>Move-in Date</label>
+                <input type="text" id="tenantProfileMoveIn" value="January 10, 2026" disabled />
+              </div>
             </div>
-            <div class="profile-field">
-              <label>Phone Number</label>
-              <input
-                type="tel"
-                id="phone"
-                value="0912 345 6789"
-                maxlength="13"
-                inputmode="tel"
-                placeholder="0912 345 6789"
-              />
-            </div>
-            <div class="profile-field">
-              <label>Emergency Contact</label>
-              <input
-                type="tel"
-                id="emergencyContact"
-                value="0923 456 7890"
-                maxlength="13"
-                inputmode="tel"
-                placeholder="0923 456 7890"
-              />
-            </div>
+
+            <button class="save-profile-btn" data-action="save-profile">Save Changes</button>
           </div>
 
-          <div class="profile-section">
-            <h3>Current Residence</h3>
-            <div class="profile-field">
-              <label>Residence Type</label>
-              <input
-                type="text"
-                id="tenantProfileResidenceType"
-                value="Triple Occupancy Room"
-                disabled
-              />
+          <div class="profile-contract-card">
+            <div class="profile-contract-header">
+              <div>
+                <h3>Signed Lease Contract</h3>
+                <p class="profile-contract-subtitle">
+                  Official proof of lease agreement uploaded by MJP Residences Admin
+                </p>
+              </div>
+              <span id="tenantContractStatusBadge" class="profile-contract-badge pending">
+                Pending Admin Upload
+              </span>
             </div>
-            <div class="profile-field">
-              <label>Room Number</label>
-              <input type="text" id="tenantProfileRoom" value="Room 201" disabled />
+
+            <div class="profile-contract-meta-grid">
+              <div class="profile-contract-meta-item">
+                <span class="meta-label">Assigned Unit</span>
+                <span id="tenantContractRoom" class="meta-value">Room 201</span>
+              </div>
+              <div class="profile-contract-meta-item">
+                <span class="meta-label">Contract Term</span>
+                <span id="tenantContractTerm" class="meta-value">6 Months</span>
+              </div>
+              <div class="profile-contract-meta-item">
+                <span class="meta-label">Move-In Date</span>
+                <span id="tenantContractMoveIn" class="meta-value">January 10, 2026</span>
+              </div>
+              <div class="profile-contract-meta-item">
+                <span class="meta-label">Document Status</span>
+                <span id="tenantContractUploadedAt" class="meta-value">Awaiting upload</span>
+              </div>
             </div>
-            <div class="profile-field">
-              <label>Move-in Date</label>
-              <input type="text" id="tenantProfileMoveIn" value="January 10, 2026" disabled />
+
+            <div id="tenantContractEmptyState" class="profile-contract-empty">
+              <div class="profile-contract-empty-icon">📄</div>
+              <div class="profile-contract-empty-title">No Contract Copy Uploaded Yet</div>
+              <p class="profile-contract-empty-desc">
+                Once the property administrator uploads a scanned image or PDF copy of your signed
+                lease contract, it will appear here for you to view or download anytime.
+              </p>
+            </div>
+
+            <div id="tenantContractPreviewState" class="profile-contract-preview hidden">
+              <div id="tenantContractImgWrap" class="profile-contract-img-wrap hidden">
+                <img
+                  id="tenantContractImg"
+                  src=""
+                  alt="Signed Lease Contract Proof"
+                  class="profile-contract-img"
+                />
+              </div>
+
+              <div id="tenantContractPdfWrap" class="profile-contract-pdf-wrap hidden">
+                <iframe
+                  id="tenantContractPdfFrame"
+                  title="Signed Lease Contract PDF"
+                  class="profile-contract-pdf-frame"
+                ></iframe>
+              </div>
+
+              <div class="profile-contract-file-bar">
+                <div class="profile-contract-file-info">
+                  <span id="tenantContractFileName" class="profile-contract-file-name">
+                    signed-lease-contract.pdf
+                  </span>
+                </div>
+                <div class="profile-contract-actions">
+                  <a
+                    id="tenantContractViewBtn"
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="profile-contract-btn secondary"
+                  >
+                    View Full Screen
+                  </a>
+                  <a
+                    id="tenantContractDownloadBtn"
+                    href="#"
+                    download="Signed-Lease-Contract"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="profile-contract-btn primary"
+                  >
+                    Download Copy
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
-
-          <button class="save-profile-btn" data-action="save-profile">Save Changes</button>
         </div>
       </div>
 

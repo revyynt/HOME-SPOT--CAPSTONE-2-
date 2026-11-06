@@ -74,6 +74,12 @@ let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000
 let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
 let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
 let tenantMovedIn = sessionStorage.getItem('tenantMovedIn') === 'true';
+let tenantLeaseTerm = sessionStorage.getItem('tenantLeaseTerm') || '6 Months';
+let tenantContractFileUrl = sessionStorage.getItem('tenantContractFileUrl') || '';
+let tenantContractFileName = sessionStorage.getItem('tenantContractFileName') || '';
+let tenantContractFileType = sessionStorage.getItem('tenantContractFileType') || '';
+let tenantContractUploadedAt = sessionStorage.getItem('tenantContractUploadedAt') || '';
+let tenantContractSigned = sessionStorage.getItem('tenantContractSigned') !== 'false';
 let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
 
 // Global State
@@ -285,9 +291,106 @@ function populateTenantUI() {
   renderTenantPaymentCalendar();
   syncTenant3DBuildingState();
   renderDueDateAlert();
+  renderTenantContractCard();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+function renderTenantContractCard() {
+  const roomEl = document.getElementById('tenantContractRoom');
+  if (roomEl) roomEl.textContent = tenantRoom || 'Unassigned';
+
+  const termEl = document.getElementById('tenantContractTerm');
+  if (termEl) termEl.textContent = tenantLeaseTerm || '6 Months';
+
+  const moveInEl = document.getElementById('tenantContractMoveIn');
+  if (moveInEl) moveInEl.textContent = tenantMoveIn || '—';
+
+  const badgeEl = document.getElementById('tenantContractStatusBadge');
+  const uploadedAtEl = document.getElementById('tenantContractUploadedAt');
+  const emptyState = document.getElementById('tenantContractEmptyState');
+  const previewState = document.getElementById('tenantContractPreviewState');
+  const imgWrap = document.getElementById('tenantContractImgWrap');
+  const imgEl = document.getElementById('tenantContractImg');
+  const pdfWrap = document.getElementById('tenantContractPdfWrap');
+  const pdfFrame = document.getElementById('tenantContractPdfFrame');
+  const fileNameEl = document.getElementById('tenantContractFileName');
+  const viewBtn = document.getElementById('tenantContractViewBtn');
+  const downloadBtn = document.getElementById('tenantContractDownloadBtn');
+
+  const url = String(tenantContractFileUrl || '').trim();
+  const name = String(tenantContractFileName || '').trim() || 'Signed-Lease-Contract';
+  const type = String(tenantContractFileType || '').toLowerCase();
+
+  if (!url) {
+    if (badgeEl) {
+      badgeEl.textContent = tenantContractSigned ? 'Verified • Pending Copy' : 'Pending Upload';
+      badgeEl.className = 'profile-contract-badge pending';
+    }
+    if (uploadedAtEl) {
+      uploadedAtEl.textContent = tenantContractSigned
+        ? 'Verified by Admin'
+        : 'Awaiting Admin Upload';
+    }
+    emptyState?.classList.remove('hidden');
+    previewState?.classList.add('hidden');
+    imgWrap?.classList.add('hidden');
+    pdfWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+    if (pdfFrame) pdfFrame.removeAttribute('src');
+    return;
+  }
+
+  if (badgeEl) {
+    badgeEl.textContent = '✓ Signed Lease on File';
+    badgeEl.className = 'profile-contract-badge verified';
+  }
+
+  if (uploadedAtEl) {
+    if (tenantContractUploadedAt) {
+      const parsed = new Date(tenantContractUploadedAt);
+      uploadedAtEl.textContent = !Number.isNaN(parsed.getTime())
+        ? `Uploaded ${parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+        : 'Uploaded by Admin';
+    } else {
+      uploadedAtEl.textContent = 'Uploaded by Admin';
+    }
+  }
+
+  emptyState?.classList.add('hidden');
+  previewState?.classList.remove('hidden');
+
+  const isPdf =
+    type.includes('pdf') ||
+    name.toLowerCase().endsWith('.pdf') ||
+    url.toLowerCase().startsWith('data:application/pdf') ||
+    url.toLowerCase().split('?')[0].endsWith('.pdf');
+
+  if (isPdf) {
+    imgWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+    pdfWrap?.classList.remove('hidden');
+    if (pdfFrame && pdfFrame.getAttribute('src') !== url) {
+      pdfFrame.src = url;
+    }
+  } else {
+    pdfWrap?.classList.add('hidden');
+    if (pdfFrame) pdfFrame.removeAttribute('src');
+    imgWrap?.classList.remove('hidden');
+    if (imgEl) imgEl.src = url;
+  }
+
+  if (fileNameEl) {
+    fileNameEl.textContent = isPdf ? `📄 ${name}` : `🖼️ ${name}`;
+  }
+  if (viewBtn) {
+    viewBtn.href = url;
+  }
+  if (downloadBtn) {
+    downloadBtn.href = url;
+    downloadBtn.setAttribute('download', name);
+  }
 }
 
 function renderDueDateAlert() {
@@ -728,6 +831,50 @@ function renderTenantPaymentCalendar() {
         .join('');
     }
   }
+
+  // Automatically dispatch overdue rent email once per billing cycle if current month is Overdue
+  const now = new Date();
+  if (
+    userEmail &&
+    tenantCalYear === now.getFullYear() &&
+    tenantCalMonth === now.getMonth() &&
+    Array.isArray(cal.monthSummary?.rows)
+  ) {
+    const overdueRow = cal.monthSummary.rows.find((r) => r.status === 'Overdue');
+    if (overdueRow) {
+      const cycleKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-Overdue`;
+      const storageKey = `auto_overdue_alert_${userEmail.toLowerCase()}_${cycleKey}`;
+      let alreadyTriggered = false;
+      try {
+        alreadyTriggered = sessionStorage.getItem(storageKey) === '1';
+      } catch {}
+      if (!alreadyTriggered) {
+        try {
+          sessionStorage.setItem(storageKey, '1');
+        } catch {}
+        const currentOrigin =
+          typeof window !== 'undefined' && window.location?.origin
+            ? window.location.origin
+            : 'https://homespot-mjp.web.app';
+        supabase.functions
+          .invoke('send-email', {
+            body: {
+              type: 'overdue_alert',
+              status: 'Overdue',
+              autoCycleKey: cycleKey,
+              to: userEmail,
+              name: tenantName,
+              room: tenantRoom,
+              amount: overdueRow.amount || tenantRent,
+              dueDate: overdueRow.dueDate,
+              dueDay: tenantDueDay || 5,
+              portalUrl: `${currentOrigin}/login.html`
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }
 }
 
 // Apply immediately from session storage
@@ -808,6 +955,20 @@ async function fetchTenantSupabaseProfile() {
           tenantEmergency = resolvedEmergency;
           sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
         }
+        if (docData.leaseTerm) {
+          tenantLeaseTerm = String(docData.leaseTerm);
+          sessionStorage.setItem('tenantLeaseTerm', tenantLeaseTerm);
+        }
+        tenantContractFileUrl = String(docData.contractFileUrl || '');
+        tenantContractFileName = String(docData.contractFileName || '');
+        tenantContractFileType = String(docData.contractFileType || '');
+        tenantContractUploadedAt = String(docData.contractUploadedAt || '');
+        tenantContractSigned = docData.contractSigned !== false;
+        sessionStorage.setItem('tenantContractFileUrl', tenantContractFileUrl);
+        sessionStorage.setItem('tenantContractFileName', tenantContractFileName);
+        sessionStorage.setItem('tenantContractFileType', tenantContractFileType);
+        sessionStorage.setItem('tenantContractUploadedAt', tenantContractUploadedAt);
+        sessionStorage.setItem('tenantContractSigned', tenantContractSigned ? 'true' : 'false');
         populateTenantUI();
 
         // Render Keycard & Presence data

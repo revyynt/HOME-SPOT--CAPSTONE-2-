@@ -26,7 +26,11 @@ import { db, supabase, supabaseData } from '../../supabase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
 import { refreshTenantMessenger } from '../../render/messages.js';
-import { refreshTenantRoomOptions, openCreateTenantModalFromData } from './create-tenant.js';
+import {
+  refreshTenantRoomOptions,
+  openCreateTenantModalFromData,
+  uploadContractProofFile
+} from './create-tenant.js';
 import { Toast } from '../../render/toast.js';
 
 /** @type {Array<Object & {id: string}>} */
@@ -63,6 +67,13 @@ export function listenToTenants() {
     if (statusEl) {
       statusEl.textContent = `Synced with Supabase (${loadedTenants.length} active)`;
       statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
+    }
+    if (currentViewingTenant?.id) {
+      const updatedViewing = allTenants.find((t) => t.id === currentViewingTenant.id);
+      if (updatedViewing) {
+        currentViewingTenant = updatedViewing;
+        renderViewTenantContract(currentViewingTenant);
+      }
     }
     renderFiltered();
     updateTenantStats();
@@ -280,6 +291,80 @@ function updateTenantStats(source = allTenants) {
   set('badgeArchivedTenantsCount', archivedTenants.length);
 }
 
+function isPdfContract(url = '', type = '', name = '') {
+  const lowerType = String(type || '').toLowerCase();
+  const lowerName = String(name || '').toLowerCase();
+  const lowerUrl = String(url || '').toLowerCase();
+  return (
+    lowerType.includes('pdf') ||
+    lowerName.endsWith('.pdf') ||
+    lowerUrl.startsWith('data:application/pdf') ||
+    lowerUrl.split('?')[0].endsWith('.pdf')
+  );
+}
+
+function renderViewTenantContract(tenant) {
+  const badgeEl = document.getElementById('viewTenantContractBadge');
+  const previewBox = document.getElementById('viewTenantContractPreviewBox');
+  const imgWrap = document.getElementById('viewTenantContractImgWrap');
+  const imgEl = document.getElementById('viewTenantContractImg');
+  const fileNameEl = document.getElementById('viewTenantContractFileName');
+  const openLinkEl = document.getElementById('viewTenantContractOpenLink');
+  const uploadBtn = document.getElementById('btnUploadTenantContract');
+  const removeBtn = document.getElementById('btnRemoveTenantContract');
+  const fileInput = document.getElementById('viewTenantContractInput');
+
+  if (fileInput) fileInput.value = '';
+
+  const fileUrl = String(tenant?.contractFileUrl || '').trim();
+  const fileName = String(tenant?.contractFileName || '').trim() || 'Signed Lease Contract';
+  const fileType = String(tenant?.contractFileType || '').trim();
+
+  if (!fileUrl) {
+    if (badgeEl) {
+      badgeEl.textContent = 'No File Uploaded';
+      badgeEl.className =
+        'text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800';
+    }
+    previewBox?.classList.add('hidden');
+    imgWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+    if (uploadBtn) uploadBtn.textContent = 'Upload Contract Proof (Image / PDF)';
+    removeBtn?.classList.add('hidden');
+    return;
+  }
+
+  if (badgeEl) {
+    badgeEl.textContent = '✓ Uploaded & Shared with Tenant';
+    badgeEl.className =
+      'text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800';
+  }
+  previewBox?.classList.remove('hidden');
+
+  const isPdf = isPdfContract(fileUrl, fileType, fileName);
+  if (!isPdf) {
+    if (imgEl) imgEl.src = fileUrl;
+    imgWrap?.classList.remove('hidden');
+  } else {
+    imgWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+  }
+
+  if (fileNameEl) {
+    fileNameEl.textContent = isPdf ? `📄 ${fileName}` : `🖼️ ${fileName}`;
+  }
+  if (openLinkEl) {
+    openLinkEl.href = fileUrl;
+    if (fileUrl.startsWith('data:')) {
+      openLinkEl.setAttribute('download', fileName);
+    } else {
+      openLinkEl.removeAttribute('download');
+    }
+  }
+  if (uploadBtn) uploadBtn.textContent = 'Replace Contract File';
+  removeBtn?.classList.remove('hidden');
+}
+
 /** Populates and reveals the read-only tenant profile modal. */
 export function viewTenantDetails(tenantId) {
   const tenant = (allTenants.length ? allTenants : loadedTenants).find((t) => t.id === tenantId);
@@ -336,6 +421,7 @@ export function viewTenantDetails(tenantId) {
     notesSection?.classList.add('hidden');
   }
 
+  renderViewTenantContract(tenant);
   document.getElementById('viewTenantModal')?.classList.remove('hidden');
 }
 
@@ -572,7 +658,96 @@ export function initTenantTable() {
       }
       return;
     }
+
+    if (target?.closest('[data-action="trigger-upload-contract"]')) {
+      if (!currentViewingTenant?.id) return;
+      document.getElementById('viewTenantContractInput')?.click();
+      return;
+    }
+
+    if (target?.closest('[data-action="remove-tenant-contract"]')) {
+      if (!currentViewingTenant?.id) return;
+      const confirmed = await Toast.confirm({
+        title: 'Remove Contract Proof',
+        message: `Remove the uploaded lease contract proof for ${currentViewingTenant.name}?`,
+        confirmText: 'Remove File',
+        cancelText: 'Cancel',
+        danger: true
+      });
+      if (!confirmed) return;
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          contractFileUrl: '',
+          contractFileName: '',
+          contractFileType: '',
+          contractUploadedAt: '',
+          updatedAt: new Date().toISOString()
+        });
+        currentViewingTenant.contractFileUrl = '';
+        currentViewingTenant.contractFileName = '';
+        currentViewingTenant.contractFileType = '';
+        currentViewingTenant.contractUploadedAt = '';
+        renderViewTenantContract(currentViewingTenant);
+        Toast.success('Removed contract proof file.');
+      } catch (err) {
+        console.error('Failed to remove contract proof:', err);
+        Toast.error('Could not remove contract proof: ' + (err.message || 'Unknown error'));
+      }
+      return;
+    }
   });
+
+  document
+    .getElementById('viewTenantContractInput')
+    ?.addEventListener('change', async (changeEvt) => {
+      const inputEl = changeEvt.target;
+      const file = inputEl?.files?.[0];
+      if (!file || !currentViewingTenant?.id) return;
+
+      const uploadBtn = document.getElementById('btnUploadTenantContract');
+      const prevText = uploadBtn ? uploadBtn.textContent : 'Upload Contract Proof (Image / PDF)';
+      if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+      }
+
+      try {
+        const uploaded = await uploadContractProofFile(
+          file,
+          currentViewingTenant.room || currentViewingTenant.id
+        );
+        if (!uploaded) return;
+
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          contractFileUrl: uploaded.contractFileUrl,
+          contractFileName: uploaded.contractFileName,
+          contractFileType: uploaded.contractFileType,
+          contractUploadedAt: uploaded.contractUploadedAt,
+          contractSigned: true,
+          updatedAt: new Date().toISOString()
+        });
+
+        currentViewingTenant.contractFileUrl = uploaded.contractFileUrl;
+        currentViewingTenant.contractFileName = uploaded.contractFileName;
+        currentViewingTenant.contractFileType = uploaded.contractFileType;
+        currentViewingTenant.contractUploadedAt = uploaded.contractUploadedAt;
+        currentViewingTenant.contractSigned = true;
+
+        const adminVerEl = document.getElementById('viewTenantAdminVerified');
+        if (adminVerEl) adminVerEl.textContent = '✓ Contract & Fees Verified';
+
+        renderViewTenantContract(currentViewingTenant);
+        Toast.success(
+          `Uploaded signed contract proof for ${currentViewingTenant.name}. Visible in Tenant Portal.`
+        );
+      } catch (err) {
+        console.error('Failed to upload contract proof:', err);
+        Toast.error(err.message || 'Could not upload contract proof.');
+        if (uploadBtn) uploadBtn.textContent = prevText;
+      } finally {
+        if (uploadBtn) uploadBtn.disabled = false;
+      }
+    });
 }
 
 // Password reset via Supabase email

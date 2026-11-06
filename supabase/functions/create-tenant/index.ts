@@ -258,6 +258,25 @@ Deno.serve(async (request) => {
     monthlyRent,
     dueDay,
     leaseTerm: typeof form.leaseTerm === 'string' ? form.leaseTerm : '',
+    contractSigned: form.contractSigned !== false,
+    paymentVerified: form.paymentVerified !== false,
+    rulesAgreed: form.rulesAgreed !== false,
+    contractFileUrl:
+      typeof form.contractFileUrl === 'string' && form.contractFileUrl
+        ? form.contractFileUrl
+        : String(existingData.contractFileUrl || ''),
+    contractFileName:
+      typeof form.contractFileName === 'string' && form.contractFileName
+        ? form.contractFileName
+        : String(existingData.contractFileName || ''),
+    contractFileType:
+      typeof form.contractFileType === 'string' && form.contractFileType
+        ? form.contractFileType
+        : String(existingData.contractFileType || ''),
+    contractUploadedAt:
+      typeof form.contractUploadedAt === 'string' && form.contractUploadedAt
+        ? form.contractUploadedAt
+        : String(existingData.contractUploadedAt || ''),
     notes: typeof form.notes === 'string' ? form.notes.trim() : '',
     status: 'Active',
     role: 'tenant',

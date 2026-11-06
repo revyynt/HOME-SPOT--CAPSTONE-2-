@@ -232,6 +232,73 @@ export function openCreateTenantModalFromData(data = {}) {
   }
 }
 
+const CONTRACT_BUCKET = 'room-media';
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Could not read file.'));
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Uploads a signed lease contract proof file (image or PDF) to Supabase Storage
+ * with an automatic Data URL fallback.
+ * @param {File} file
+ * @param {string} [prefix]
+ */
+export async function uploadContractProofFile(file, prefix = 'tenant') {
+  if (!file) return null;
+  const maxBytes = 10 * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new Error('Contract file must be 10 MB or smaller.');
+  }
+  const safePrefix =
+    String(prefix || 'tenant')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .slice(0, 40) || 'tenant';
+  const safeName =
+    String(file.name || 'contract')
+      .replace(/[^a-zA-Z0-9._-]/g, '_')
+      .slice(0, 80) || 'contract';
+  const filePath = `contracts/${safePrefix}-${Date.now()}-${safeName}`;
+  const contentType =
+    file.type || (safeName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+
+  try {
+    const { error: uploadErr } = await supabase.storage
+      .from(CONTRACT_BUCKET)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType
+      });
+    if (!uploadErr) {
+      const { data } = supabase.storage.from(CONTRACT_BUCKET).getPublicUrl(filePath);
+      if (data?.publicUrl) {
+        return {
+          contractFileUrl: data.publicUrl,
+          contractFileName: file.name || safeName,
+          contractFileType: contentType,
+          contractUploadedAt: new Date().toISOString()
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('Contract storage upload fallback to Data URL:', err);
+  }
+
+  const dataUrl = await readFileAsDataUrl(file);
+  return {
+    contractFileUrl: dataUrl,
+    contractFileName: file.name || safeName,
+    contractFileType: contentType,
+    contractUploadedAt: new Date().toISOString()
+  };
+}
+
 function showFormError(message) {
   const alertBox = document.getElementById('createTenantAlert');
   if (!alertBox) return;
@@ -355,6 +422,10 @@ async function createTenantClientFallback(form) {
     rulesAgreed: form.rulesAgreed !== false,
     contractSigned: form.contractSigned !== false,
     paymentVerified: form.paymentVerified !== false,
+    contractFileUrl: form.contractFileUrl || existingDoc?.data()?.contractFileUrl || '',
+    contractFileName: form.contractFileName || existingDoc?.data()?.contractFileName || '',
+    contractFileType: form.contractFileType || existingDoc?.data()?.contractFileType || '',
+    contractUploadedAt: form.contractUploadedAt || existingDoc?.data()?.contractUploadedAt || '',
     notes: form.notes || '',
     status: 'Active',
     role: 'tenant',
@@ -415,6 +486,23 @@ export async function createTenant() {
     form.dormName = targetUnit.floor === 1 ? 'Commercial Space' : 'Triple Occupancy Room';
   }
   form.phone = normalizePhilippinePhone(form.phone) || form.phone;
+
+  const contractFile = document.getElementById('tenantContractFileInput')?.files?.[0];
+  if (contractFile) {
+    try {
+      const uploaded = await uploadContractProofFile(contractFile, form.room || form.email);
+      if (uploaded) {
+        form.contractFileUrl = uploaded.contractFileUrl;
+        form.contractFileName = uploaded.contractFileName;
+        form.contractFileType = uploaded.contractFileType;
+        form.contractUploadedAt = uploaded.contractUploadedAt;
+        form.contractSigned = true;
+      }
+    } catch (uploadErr) {
+      showFormError(uploadErr.message || 'Could not upload contract proof file.');
+      return null;
+    }
+  }
 
   try {
     const { data, error } = await supabase.functions.invoke('create-tenant', {
