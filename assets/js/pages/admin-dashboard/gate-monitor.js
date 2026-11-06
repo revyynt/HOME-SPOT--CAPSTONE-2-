@@ -131,8 +131,8 @@ function renderGateLogsTable() {
   if (!filtered.length) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="6" class="text-center py-6 text-sm text-gray-400">
-          No gate activity logs found matching the selected filter.
+        <td colspan="6" class="text-center py-10 text-sm text-gray-500">
+          No gate activity logs found for this filter.
         </td>
       </tr>
     `;
@@ -143,40 +143,42 @@ function renderGateLogsTable() {
     .map((log) => {
       const isEntry = log.direction === 'IN';
       const pillClass = isEntry
-        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-        : 'bg-amber-100 text-amber-800 border-amber-300';
-      const pillLabel = isEntry ? 'Checked IN' : 'Checked OUT';
+        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        : 'bg-gray-100 text-gray-700 border-gray-200';
+      const dotClass = isEntry ? 'bg-emerald-500' : 'bg-gray-500';
+      const pillLabel = isEntry ? 'IN' : 'OUT';
       const late = isLogLate(log);
       const curfewHtml = late
-        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700 border border-red-300">Curfew Violation</span>'
-        : '<span class="text-xs text-gray-400">On Time</span>';
+        ? '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200">Late (Curfew)</span>'
+        : '<span class="text-xs text-gray-500">On Time</span>';
 
       return `
-        <tr class="hover:bg-gray-50/80 transition-colors border-b border-gray-100 text-sm">
-          <td class="flex items-center justify-between gap-2 py-1.5 border-b border-gray-100 md:border-none md:table-cell md:py-3 md:px-4 font-bold text-gray-900">
-            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Tenant</span>
+        <tr class="hover:bg-gray-50/70 transition-colors text-sm">
+          <td class="flex items-center justify-between gap-2 py-2 border-b border-gray-100 md:border-none md:table-cell md:py-3 md:px-5 font-semibold text-gray-900">
+            <span class="md:hidden text-[11px] font-semibold uppercase text-gray-400">Tenant</span>
             <span>${log.tenantName || 'Tenant'}</span>
           </td>
-          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4 text-gray-600">
-            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Unit / Room</span>
-            <span class="font-medium text-gray-800 md:font-normal md:text-gray-600">${log.room || 'Assigned Room'}</span>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-5 text-gray-600">
+            <span class="md:hidden text-[11px] font-semibold uppercase text-gray-400">Room</span>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700">${log.room || 'Assigned Room'}</span>
           </td>
-          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4">
-            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Direction</span>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${pillClass}">
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-5">
+            <span class="md:hidden text-[11px] font-semibold uppercase text-gray-400">Status</span>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-semibold border ${pillClass}">
+              <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span>
               ${pillLabel}
             </span>
           </td>
-          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4 text-gray-600">
-            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Date &amp; Time</span>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-5 text-gray-600">
+            <span class="md:hidden text-[11px] font-semibold uppercase text-gray-400">Date &amp; Time</span>
             <span class="text-xs sm:text-sm text-gray-700">${formatGateTimestamp(log.timestamp)}</span>
           </td>
-          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4">
-            <span class="md:hidden text-[11px] font-bold uppercase text-gray-400">Curfew Status</span>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-5">
+            <span class="md:hidden text-[11px] font-semibold uppercase text-gray-400">Remarks</span>
             <span>${curfewHtml}</span>
           </td>
-          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-4 font-mono text-xs text-gray-500">
-            <span class="md:hidden text-[11px] font-sans font-bold uppercase text-gray-400">Card UID</span>
+          <td class="flex items-center justify-between gap-2 py-1.5 md:table-cell md:py-3 md:px-5 font-mono text-xs text-gray-500 md:text-right">
+            <span class="md:hidden text-[11px] font-sans font-semibold uppercase text-gray-400">Card UID</span>
             <span>${log.cardUid || 'N/A'}</span>
           </td>
         </tr>
@@ -192,11 +194,13 @@ export function initGateMonitor() {
   const filterButtons = document.querySelectorAll('[data-gate-filter]');
   filterButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      filterButtons.forEach((b) => b.classList.remove('bg-emerald-600', 'text-white'));
-      filterButtons.forEach((b) => b.classList.add('bg-gray-100', 'text-gray-700'));
+      filterButtons.forEach((b) => {
+        b.classList.remove('bg-white', 'text-gray-900', 'shadow-2xs', 'font-semibold');
+        b.classList.add('text-gray-600', 'font-medium');
+      });
 
-      btn.classList.remove('bg-gray-100', 'text-gray-700');
-      btn.classList.add('bg-emerald-600', 'text-white');
+      btn.classList.remove('text-gray-600', 'font-medium');
+      btn.classList.add('bg-white', 'text-gray-900', 'shadow-2xs', 'font-semibold');
 
       activeFilter = btn.dataset.gateFilter;
       renderGateLogsTable();
@@ -278,10 +282,8 @@ export function initGateMonitor() {
         const latest = logs[0];
         if (lastKnownLogId && latest.id !== lastKnownLogId) {
           const isEntry = latest.direction === 'IN';
-          const statusText = isEntry
-            ? 'Checked IN (Inside Premises)'
-            : 'Checked OUT (Outside Premises)';
-          Toast.info(`Gate Alert: ${latest.tenantName} (${latest.room}) - ${statusText}`);
+          const statusText = isEntry ? 'IN' : 'OUT';
+          Toast.info(`Gate Log: ${latest.tenantName} (${latest.room}) - ${statusText}`);
         }
         lastKnownLogId = latest.id;
       }

@@ -993,15 +993,15 @@ async function fetchTenantSupabaseProfile() {
 
         if (presenceBadge) {
           if (gateStatus === 'OUTSIDE') {
-            presenceBadge.style.background = '#fef3c7';
-            presenceBadge.style.color = '#92400e';
+            presenceBadge.style.background = '#f1f5f9';
+            presenceBadge.style.color = '#334155';
             presenceBadge.innerHTML =
-              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Currently Away / Checked Out';
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #64748b;"></span> OUT';
           } else {
             presenceBadge.style.background = '#d1fae5';
             presenceBadge.style.color = '#065f46';
             presenceBadge.innerHTML =
-              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Currently Inside Building';
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> IN';
           }
         }
 

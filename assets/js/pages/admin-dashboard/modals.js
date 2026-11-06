@@ -9,6 +9,7 @@ import { deduplicatePayments, escapeHtml, formatPHP, initials } from '../../lib/
 import { parsePaymentDate } from '../../lib/payment-calendar.js';
 import { db, supabaseData } from '../../supabase-service.js';
 import { Toast } from '../../render/toast.js';
+import { closeApproveReservationModal } from '../../render/reservations.js';
 import { closeCreateTenantModal } from './create-tenant.js';
 import { closeViewTenantModal, getTenants } from './tenants.js';
 
@@ -321,6 +322,9 @@ export function initDetailModals() {
         case 'close-due-date-modal':
           closeDueDateModal();
           return;
+        case 'close-approve-modal':
+          closeApproveReservationModal();
+          return;
         case 'close-create-tenant-modal':
           closeCreateTenantModal();
           return;
@@ -362,7 +366,8 @@ export function initDetailModals() {
   // Backdrops: bind to the overlay itself so only a direct hit closes it.
   const backdrops = [
     ['paymentModal', closePaymentModal],
-    ['dueDateModal', closeDueDateModal]
+    ['dueDateModal', closeDueDateModal],
+    ['approveReservationModal', closeApproveReservationModal]
   ];
 
   for (const [id, close] of backdrops) {
