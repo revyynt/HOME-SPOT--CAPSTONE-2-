@@ -4,6 +4,7 @@ import {
   computeDaysAway,
   isCurfewViolation,
   formatGateTimestamp,
+  resolveNextGateDirection,
   CURFEW_HOUR_START,
   CURFEW_HOUR_END,
   ABANDONMENT_THRESHOLD_DAYS
@@ -50,4 +51,46 @@ test('computeDaysAway computes accurate days elapsed from timestamp', () => {
   assert.equal(CURFEW_HOUR_END, 5);
   assert.match(formatGateTimestamp('2026-11-01T21:00:00'), /Nov 1/);
   assert.equal(formatGateTimestamp(null), 'Never');
+});
+
+test('resolveNextGateDirection ensures initial tap is always IN', () => {
+  // First tap (no prior tap timestamp) should always be IN regardless of status
+  assert.equal(resolveNextGateDirection({}), 'IN');
+  assert.equal(resolveNextGateDirection({ currentStatus: 'INSIDE', lastGateTapAt: null }), 'IN');
+  assert.equal(resolveNextGateDirection({ currentStatus: 'OUTSIDE', lastGateTapAt: null }), 'IN');
+  assert.equal(resolveNextGateDirection({ currentStatus: 'PENDING', lastGateTapAt: null }), 'IN');
+
+  // Subsequent taps toggle based on currentStatus
+  assert.equal(
+    resolveNextGateDirection({
+      currentStatus: 'INSIDE',
+      lastGateTapAt: '2026-11-07T08:00:00Z'
+    }),
+    'OUT'
+  );
+  assert.equal(
+    resolveNextGateDirection({
+      currentStatus: 'OUTSIDE',
+      lastGateTapAt: '2026-11-07T08:00:00Z'
+    }),
+    'IN'
+  );
+
+  // Explicit direction overrides toggle
+  assert.equal(
+    resolveNextGateDirection({
+      explicitDirection: 'IN',
+      currentStatus: 'INSIDE',
+      lastGateTapAt: '2026-11-07T08:00:00Z'
+    }),
+    'IN'
+  );
+  assert.equal(
+    resolveNextGateDirection({
+      explicitDirection: 'OUT',
+      currentStatus: 'OUTSIDE',
+      lastGateTapAt: null
+    }),
+    'OUT'
+  );
 });

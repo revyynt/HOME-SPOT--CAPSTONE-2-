@@ -34,7 +34,7 @@ function renderGateKpis() {
   const badgeEl = document.getElementById('gateAwolBadge');
 
   const total = currentPresenceList.length;
-  const inside = currentPresenceList.filter((t) => t.gateStatus !== 'OUTSIDE').length;
+  const inside = currentPresenceList.filter((t) => t.gateStatus === 'INSIDE').length;
   const outside = currentPresenceList.filter((t) => t.gateStatus === 'OUTSIDE').length;
   const awol = currentPresenceList.filter((t) => t.isAwol).length;
 

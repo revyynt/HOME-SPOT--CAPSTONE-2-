@@ -144,8 +144,11 @@ Deno.serve(async (request) => {
       leaseTerm: String(existingData.leaseTerm || '6 Months'),
       status: String(existingData.status || (isUnassigned ? 'Pending Assignment' : 'Active')),
       role: 'tenant',
-      gateStatus: String(existingData.gateStatus || 'INSIDE'),
-      cardUid: String(existingData.cardUid || `NFC-${roomDigits}`),
+      gateStatus: String(existingData.gateStatus || (isUnassigned ? 'PENDING' : 'OUTSIDE')),
+      cardUid: String(
+        existingData.cardUid ||
+          (isUnassigned ? 'PENDING' : roomDigits ? `NFC-${roomDigits}` : 'PENDING')
+      ),
       rulesAgreed: Boolean(existingData.rulesAgreed ?? true),
       termsAccepted: true,
       termsAcceptedAt: String(existingData.termsAcceptedAt || now),

@@ -5,7 +5,8 @@ import {
   ABANDONMENT_THRESHOLD_DAYS,
   isCurfewViolation,
   computeDaysAway,
-  formatGateTimestamp
+  formatGateTimestamp,
+  resolveNextGateDirection
 } from './gate-logic.js';
 
 export {
@@ -14,7 +15,8 @@ export {
   ABANDONMENT_THRESHOLD_DAYS,
   isCurfewViolation,
   computeDaysAway,
-  formatGateTimestamp
+  formatGateTimestamp,
+  resolveNextGateDirection
 };
 
 const SUPABASE_URL = (
@@ -163,12 +165,11 @@ export async function recordGateTap({ cardUid, tenantId, direction, source = 'NF
     );
   }
 
-  const currentStatus = tenant.gateStatus || 'INSIDE';
-  const resolvedDirection = direction
-    ? direction.toUpperCase()
-    : currentStatus === 'INSIDE'
-      ? 'OUT'
-      : 'IN';
+  const resolvedDirection = resolveNextGateDirection({
+    explicitDirection: direction,
+    currentStatus: tenant.gateStatus,
+    lastGateTapAt: tenant.lastGateTapAt
+  });
   const now = new Date();
   const nowIso = now.toISOString();
   const isLate = resolvedDirection === 'IN' && isCurfewViolation(now);
@@ -261,10 +262,10 @@ export async function fetchTenantsPresence() {
     const result = await res.json();
     if (res.ok && Array.isArray(result.tenants)) {
       return result.tenants.map((t) => {
-        const gateStatus = t.gateStatus || 'INSIDE';
+        const gateStatus = t.gateStatus || (t.lastGateTapAt ? 'INSIDE' : 'OUTSIDE');
         const daysAway = gateStatus === 'OUTSIDE' ? computeDaysAway(t.lastGateTapAt) : 0;
         const isAwol = gateStatus === 'OUTSIDE' && daysAway >= ABANDONMENT_THRESHOLD_DAYS;
-        return { ...t, daysAway, isAwol };
+        return { ...t, gateStatus, daysAway, isAwol };
       });
     }
   } catch (err) {
@@ -297,7 +298,7 @@ export async function fetchTenantsPresence() {
   });
 
   return activeTenants.map((t) => {
-    const gateStatus = t.gateStatus || 'INSIDE';
+    const gateStatus = t.gateStatus || (t.lastGateTapAt ? 'INSIDE' : 'OUTSIDE');
     const daysAway = gateStatus === 'OUTSIDE' ? computeDaysAway(t.lastGateTapAt) : 0;
     const isAwol = gateStatus === 'OUTSIDE' && daysAway >= ABANDONMENT_THRESHOLD_DAYS;
 

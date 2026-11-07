@@ -23,6 +23,29 @@ function isCurfewViolation(date = new Date()) {
   return hour >= CURFEW_HOUR_START || hour < CURFEW_HOUR_END;
 }
 
+function resolveNextGateDirection({
+  explicitDirection,
+  currentStatus,
+  lastGateTapAt
+}: {
+  explicitDirection?: string | null;
+  currentStatus?: unknown;
+  lastGateTapAt?: unknown;
+} = {}) {
+  if (explicitDirection) {
+    const dir = String(explicitDirection).trim().toUpperCase();
+    if (dir === 'IN' || dir === 'OUT') return dir;
+  }
+  const hasTappedBefore = Boolean(lastGateTapAt);
+  const status = String(currentStatus || 'OUTSIDE')
+    .trim()
+    .toUpperCase();
+  if (!hasTappedBefore || status !== 'INSIDE') {
+    return 'IN';
+  }
+  return 'OUT';
+}
+
 function isUnassignedTenant(data: Record<string, unknown> = {}) {
   const room = String(data.room || data.dormName || '').toLowerCase();
   const status = String(data.status || '').toLowerCase();
@@ -88,7 +111,7 @@ Deno.serve(async (request) => {
           .in('id', gateMsgIds);
       }
 
-      // Reset all tenants to INSIDE and clear tap timestamps (or PENDING if unassigned)
+      // Reset all tenants to OUTSIDE and clear tap timestamps (or PENDING if unassigned)
       const { data: tenantDocs, error: tErr } = await admin
         .from('app_documents')
         .select('id, data')
@@ -101,7 +124,7 @@ Deno.serve(async (request) => {
           const unassigned = isUnassignedTenant(t.data);
           const updated = {
             ...t.data,
-            gateStatus: unassigned ? 'PENDING' : 'INSIDE',
+            gateStatus: unassigned ? 'PENDING' : 'OUTSIDE',
             cardUid: unassigned ? 'PENDING' : t.data.cardUid,
             lastGateTapAt: null,
             lastGateTapType: null
@@ -148,7 +171,11 @@ Deno.serve(async (request) => {
             name: String(d.data.name || 'Tenant').trim(),
             room: String(d.data.room || d.data.dormName || 'Room').trim(),
             cardUid,
-            gateStatus: String(d.data.gateStatus || 'INSIDE').toUpperCase(),
+            gateStatus: String(
+              d.data.gateStatus || (d.data.lastGateTapAt ? 'INSIDE' : 'OUTSIDE')
+            ).toUpperCase(),
+            lastGateTapAt: d.data.lastGateTapAt || null,
+            lastGateTapType: d.data.lastGateTapType || null,
             status: String(d.data.status || 'Active')
           };
         });
@@ -237,8 +264,11 @@ Deno.serve(async (request) => {
       }
 
       const tenantData = (tenantDoc.data || {}) as Record<string, unknown>;
-      const currentStatus = String(tenantData.gateStatus || 'INSIDE').toUpperCase();
-      const resolvedDirection = explicitDirection || (currentStatus === 'INSIDE' ? 'OUT' : 'IN');
+      const resolvedDirection = resolveNextGateDirection({
+        explicitDirection,
+        currentStatus: tenantData.gateStatus,
+        lastGateTapAt: tenantData.lastGateTapAt
+      });
 
       const now = new Date();
       const nowIso = now.toISOString();

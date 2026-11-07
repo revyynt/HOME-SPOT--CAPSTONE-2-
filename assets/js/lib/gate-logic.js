@@ -38,6 +38,26 @@ export function isCurfewViolation(date = new Date()) {
 }
 
 /**
+ * Resolves the direction (IN/OUT) for a gate keycard tap.
+ * When a tenant taps for the first time (no prior tap timestamp or presence is outside/pending),
+ * the direction is always IN.
+ */
+export function resolveNextGateDirection({ explicitDirection, currentStatus, lastGateTapAt } = {}) {
+  if (explicitDirection) {
+    const dir = String(explicitDirection).trim().toUpperCase();
+    if (dir === 'IN' || dir === 'OUT') return dir;
+  }
+  const hasTappedBefore = Boolean(lastGateTapAt);
+  const status = String(currentStatus || 'OUTSIDE')
+    .trim()
+    .toUpperCase();
+  if (!hasTappedBefore || status !== 'INSIDE') {
+    return 'IN';
+  }
+  return 'OUT';
+}
+
+/**
  * Calculate the number of whole days elapsed between a past ISO date string and now.
  */
 export function computeDaysAway(lastTapAt, nowMs = Date.now()) {
