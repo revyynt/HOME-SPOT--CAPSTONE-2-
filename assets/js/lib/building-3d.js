@@ -415,8 +415,7 @@ export function resolveBuildingUnit(roomName, dormType = '') {
   }
 
   const exact = BUILDING_UNITS.find(
-    (u) =>
-      u.id.toLowerCase() === norm || u.name.toLowerCase() === norm || u.aliases.includes(norm)
+    (u) => u.id.toLowerCase() === norm || u.name.toLowerCase() === norm || u.aliases.includes(norm)
   );
   if (exact) return exact;
   const partial = BUILDING_UNITS.find((u) =>

@@ -429,7 +429,9 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
     monthlyRent,
     moveInDate,
     gateStatus: isUnassigned ? 'PENDING' : 'INSIDE',
-    cardUid: isUnassigned ? 'PENDING' : `NFC-${String(assignedRoom || '101').replace(/\D+/g, '') || '101'}`,
+    cardUid: isUnassigned
+      ? 'PENDING'
+      : `NFC-${String(assignedRoom || '101').replace(/\D+/g, '') || '101'}`,
     reservationId: reservation?.id || null,
     termsAccepted: true,
     termsAcceptedAt: nowIso,

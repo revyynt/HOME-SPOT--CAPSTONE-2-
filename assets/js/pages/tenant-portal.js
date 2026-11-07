@@ -516,7 +516,8 @@ function renderTenant3DUnitInspector(unit) {
     const capEl = document.getElementById('tenant3DUnitCap');
     if (capEl) capEl.textContent = isUnassigned ? '1 Slot' : '—';
     const priceEl = document.getElementById('tenant3DUnitPrice');
-    if (priceEl) priceEl.textContent = isUnassigned ? '₱' + tenantRent.toLocaleString() + '/mo' : '—';
+    if (priceEl)
+      priceEl.textContent = isUnassigned ? '₱' + tenantRent.toLocaleString() + '/mo' : '—';
     const descEl = document.getElementById('tenant3DUnitDesc');
     if (descEl) {
       descEl.textContent = isUnassigned
@@ -607,8 +608,7 @@ function syncTenant3DBuildingState() {
   if (!tenantSelected3DUnitId && ownUnit) {
     tenantSelected3DUnitId = ownUnit.id;
   }
-  const activeUnit =
-    BUILDING_UNITS.find((u) => u.id === tenantSelected3DUnitId) || ownUnit || null;
+  const activeUnit = BUILDING_UNITS.find((u) => u.id === tenantSelected3DUnitId) || ownUnit || null;
   renderTenant3DUnitInspector(activeUnit);
 
   if (tenantBuilding3D) {
@@ -1041,7 +1041,10 @@ async function fetchTenantSupabaseProfile() {
         if (cardRoomEl) {
           cardRoomEl.textContent = `Room: ${isUnassignedCard ? 'Pending Assignment' : tenantRoom || 'Assigned Room'}`;
         }
-        if (lastTapEl) lastTapEl.textContent = isUnassignedCard ? 'Awaiting Move-In' : formatGateTimestamp(lastGateTapAt);
+        if (lastTapEl)
+          lastTapEl.textContent = isUnassignedCard
+            ? 'Awaiting Move-In'
+            : formatGateTimestamp(lastGateTapAt);
 
         if (presenceBadge) {
           if (isUnassignedCard) {

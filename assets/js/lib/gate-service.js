@@ -247,11 +247,20 @@ export async function fetchTenantsPresence() {
   const tenants = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
   const activeTenants = tenants.filter((t) => {
-    if (t.status === 'Archived' || t.status === 'Pending Assignment' || t.needsAssignment === true) {
+    if (
+      t.status === 'Archived' ||
+      t.status === 'Pending Assignment' ||
+      t.needsAssignment === true
+    ) {
       return false;
     }
     const room = String(t.room || '').toLowerCase();
-    if (!room || room.includes('unassigned') || room.includes('pending') || room.includes('needs unit')) {
+    if (
+      !room ||
+      room.includes('unassigned') ||
+      room.includes('pending') ||
+      room.includes('needs unit')
+    ) {
       return false;
     }
     return true;
