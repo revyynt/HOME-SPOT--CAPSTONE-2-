@@ -70,7 +70,7 @@ function renderOverlay(isStaff = false) {
       </span>
       <h2 class="text-2xl font-bold text-gray-900 tracking-tight mb-3"
         style="font-size: 1.5rem; font-weight: 700; color: #0f172a; margin-bottom: 0.75rem; margin-top: 0;">
-        HomeSpot Under Maintenance
+        Home-Spot Under Maintenance
       </h2>
       <p class="text-sm text-gray-600 leading-relaxed mb-6"
         style="font-size: 0.875rem; color: #475569; line-height: 1.5; margin-bottom: 1.5rem;">
@@ -116,7 +116,7 @@ function renderOverlay(isStaff = false) {
             <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 0.25rem;">
               Staff Email
             </label>
-            <input type="email" id="staff-modal-email" required placeholder="admin@homespot.com"
+            <input type="email" id="staff-modal-email" required placeholder="admin@home-spot.com"
               style="width: 100%; font-size: 13px; padding: 0.55rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; box-sizing: border-box; outline: none; font-family: inherit;" />
           </div>
 
