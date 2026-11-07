@@ -400,7 +400,7 @@ function renderTenantContractCard() {
   }
 
   if (fileNameEl) {
-    fileNameEl.textContent = isPdf ? `📄 ${name}` : `🖼️ ${name}`;
+    fileNameEl.textContent = name;
   }
   if (viewBtn) {
     viewBtn.href = url;
