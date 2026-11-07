@@ -1739,11 +1739,35 @@ function initAdminPaymentCalendar() {
   };
 
   const sendAllDueAlerts = async () => {
+    if (!calTenants.length) {
+      try {
+        const snap = await supabaseData.getDocs(supabaseData.collection(supabase, 'tenants'));
+        calTenants = snap.docs
+          .map((d) => ({ ...d.data(), id: d.id }))
+          .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
+      } catch (fetchErr) {
+        console.warn('Could not fetch tenants for due alerts:', fetchErr);
+      }
+    }
+
+    const isUnassigned = (t) => {
+      const room = String(t.room || '').toLowerCase();
+      const status = String(t.status || '').toLowerCase();
+      return (
+        !room ||
+        room.includes('unassigned') ||
+        room.includes('pending') ||
+        status === 'pending assignment' ||
+        Boolean(t.needsAssignment)
+      );
+    };
+
     const pendingRows = calTenants.filter(
-      (t) => String(t.status || 'Active').toLowerCase() !== 'archived' && t.email
+      (t) =>
+        String(t.status || 'Active').toLowerCase() !== 'archived' && t.email && !isUnassigned(t)
     );
     if (!pendingRows.length) {
-      Toast.error('No active tenants found with email addresses.');
+      Toast.error('No active assigned tenants found with email addresses.');
       return;
     }
     const ok = await Toast.confirm({
@@ -1754,32 +1778,51 @@ function initAdminPaymentCalendar() {
     });
     if (!ok) return;
 
+    const btn = document.getElementById('btnSendAllDueAlerts');
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+    }
+
     let sentCount = 0;
     const currentOrigin =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
         : 'https://home-spot.online';
-    for (const t of pendingRows) {
-      try {
-        await supabase.functions.invoke('send-email', {
-          body: {
-            type: 'due_date_alert',
-            to: t.email,
-            name: t.name || 'Tenant',
-            room: t.room || 'Unit',
-            amount: t.monthlyRent || 10000,
-            dueDay: t.dueDay || 5,
-            dueDate: `Day ${t.dueDay || 5} of each month`,
-            portalUrl: `${currentOrigin}/login.html`
-          }
-        });
-        sentCount += 1;
-      } catch (err) {
-        console.warn('Batch due alert dispatch note:', err);
+    try {
+      for (const t of pendingRows) {
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'due_date_alert',
+              to: t.email,
+              name: t.name || 'Tenant',
+              room: t.room || 'Unit',
+              amount: t.monthlyRent || 10000,
+              dueDay: t.dueDay || 5,
+              dueDate: `Day ${t.dueDay || 5} of each month`,
+              portalUrl: `${currentOrigin}/login.html`
+            }
+          });
+          sentCount += 1;
+        } catch (err) {
+          console.warn('Batch due alert dispatch note:', err);
+        }
+      }
+      Toast.success(`Dispatched automated due date reminders to ${sentCount} tenant(s).`);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
       }
     }
-    Toast.success(`Dispatched automated due date reminders to ${sentCount} tenant(s).`);
   };
+
+  const sendAllBtn = document.getElementById('btnSendAllDueAlerts');
+  sendAllBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await sendAllDueAlerts();
+  });
 
   // Delegated modal button actions (inside or outside section)
   document.addEventListener('click', async (event) => {
@@ -1788,6 +1831,9 @@ function initAdminPaymentCalendar() {
     if (!btn) return;
 
     switch (btn.dataset.action) {
+      case 'send-all-due-alerts':
+        await sendAllDueAlerts();
+        break;
       case 'close-payment-modal':
         closePaymentModal();
         break;
