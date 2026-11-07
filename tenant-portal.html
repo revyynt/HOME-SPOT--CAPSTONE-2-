@@ -43,7 +43,7 @@
           <div class="welcome-avatar" id="welcomeAvatar">JD</div>
           <div class="welcome-text">
             <h2 id="welcomeTenantName">Welcome back, Juan Dela Cruz!</h2>
-            <p id="welcomeTenantSub">Room 201 • Triple Occupancy Room</p>
+            <p id="welcomeTenantSub">Loading residence details...</p>
           </div>
         </div>
         <div class="welcome-right">
@@ -416,7 +416,7 @@
               </div>
               <div class="profile-field">
                 <label>Room Number</label>
-                <input type="text" id="tenantProfileRoom" value="Room 201" disabled />
+                <input type="text" id="tenantProfileRoom" value="" placeholder="Assigned Unit" disabled />
               </div>
               <div class="profile-field">
                 <label>Move-in Date</label>
@@ -443,7 +443,7 @@
             <div class="profile-contract-meta-grid">
               <div class="profile-contract-meta-item">
                 <span class="meta-label">Assigned Unit</span>
-                <span id="tenantContractRoom" class="meta-value">Room 201</span>
+                <span id="tenantContractRoom" class="meta-value">—</span>
               </div>
               <div class="profile-contract-meta-item">
                 <span class="meta-label">Contract Term</span>
@@ -600,17 +600,17 @@
 
           <div class="building-3d-info-card">
             <div class="building-3d-inspector-head">
-              <span id="tenant3DUnitBadge" class="building-3d-unit-badge">YOUR ASSIGNED UNIT</span>
-              <h3 id="tenant3DUnitTitle" class="building-3d-unit-title">Room 201</h3>
+              <span id="tenant3DUnitBadge" class="building-3d-unit-badge" style="background:#fef3c7;color:#92400e">● ASSIGNMENT PENDING</span>
+              <h3 id="tenant3DUnitTitle" class="building-3d-unit-title">Room Assignment Pending</h3>
               <p id="tenant3DUnitSubtitle" class="building-3d-unit-subtitle">
-                3rd Floor (Front Wing) • Triple Occupancy Room
+                Triple Occupancy Room • Unit awaiting administrator assignment
               </p>
             </div>
 
             <div class="building-3d-specs-grid">
               <div class="building-3d-spec-box">
                 <span class="spec-label">Floor Level</span>
-                <strong id="tenant3DUnitFloor" class="spec-val">3rd Floor</strong>
+                <strong id="tenant3DUnitFloor" class="spec-val">Pending</strong>
               </div>
               <div class="building-3d-spec-box">
                 <span class="spec-label">Floor Area</span>
@@ -618,11 +618,11 @@
               </div>
               <div class="building-3d-spec-box">
                 <span class="spec-label">User</span>
-                <strong id="tenant3DUnitCap" class="spec-val">1 User</strong>
+                <strong id="tenant3DUnitCap" class="spec-val">1 Slot</strong>
               </div>
               <div class="building-3d-spec-box">
                 <span class="spec-label">Monthly Rate</span>
-                <strong id="tenant3DUnitPrice" class="spec-val">₱5,000/mo</strong>
+                <strong id="tenant3DUnitPrice" class="spec-val">₱10,000/mo</strong>
               </div>
             </div>
 
@@ -733,10 +733,10 @@
                 "
                 id="tenantCardUidDisplay"
               >
-                NFC-101
+                PENDING ISSUANCE
               </div>
               <div style="font-size: 12px; color: #94a3b8" id="tenantCardRoomDisplay">
-                Room: Loading...
+                Room: Pending Assignment
               </div>
             </div>
 
@@ -762,14 +762,14 @@
                     border-radius: 9999px;
                     font-size: 12px;
                     font-weight: 700;
-                    background: #d1fae5;
-                    color: #065f46;
+                    background: #fef3c7;
+                    color: #92400e;
                   "
                 >
                   <span
-                    style="width: 8px; height: 8px; border-radius: 50%; background: #059669"
+                    style="width: 8px; height: 8px; border-radius: 50%; background: #d97706"
                   ></span>
-                  Currently Inside Building
+                  PENDING ISSUANCE
                 </span>
               </div>
               <div style="font-size: 12px; color: #64748b">
@@ -1065,7 +1065,7 @@
             <div class="receipt-row">
               <span class="receipt-row-label">Residence / Room</span>
               <span class="receipt-row-value" id="receiptResidence"
-                >Triple Occupancy Room (Room 201)</span
+                >Triple Occupancy Room (Pending Assignment)</span
               >
             </div>
             <div class="receipt-row">

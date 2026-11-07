@@ -403,19 +403,29 @@ export function resolveBuildingUnit(roomName, dormType = '') {
   const dormNorm = String(dormType || '')
     .trim()
     .toLowerCase();
-  if (norm) {
-    const exact = BUILDING_UNITS.find(
-      (u) =>
-        u.id.toLowerCase() === norm || u.name.toLowerCase() === norm || u.aliases.includes(norm)
-    );
-    if (exact) return exact;
-    const partial = BUILDING_UNITS.find((u) =>
-      u.aliases.some((a) => norm.includes(a) || a.includes(norm))
-    );
-    if (partial) return partial;
+
+  if (
+    !norm ||
+    norm.includes('unassigned') ||
+    norm.includes('pending') ||
+    norm.includes('needs unit') ||
+    norm === 'none'
+  ) {
+    return null;
   }
+
+  const exact = BUILDING_UNITS.find(
+    (u) =>
+      u.id.toLowerCase() === norm || u.name.toLowerCase() === norm || u.aliases.includes(norm)
+  );
+  if (exact) return exact;
+  const partial = BUILDING_UNITS.find((u) =>
+    u.aliases.some((a) => norm.includes(a) || a.includes(norm))
+  );
+  if (partial) return partial;
+
   if (dormNorm.includes('commercial')) return BUILDING_UNITS[0];
-  return BUILDING_UNITS[4]; // Default Room 201
+  return null;
 }
 
 /**
@@ -449,7 +459,7 @@ export function initBuilding3DViewer(container, options = {}) {
     state.mode === 'tenant'
       ? resolveBuildingUnit(state.highlightRoom, state.highlightDorm)
       : BUILDING_UNITS[4];
-  state.selectedUnitId = initialUnit ? initialUnit.id : BUILDING_UNITS[0].id;
+  state.selectedUnitId = initialUnit ? initialUnit.id : null;
 
   let internalApi = null;
 
@@ -2025,7 +2035,11 @@ export function initBuilding3DViewer(container, options = {}) {
         state.highlightRoom = roomName || '';
         state.highlightDorm = dormType || '';
         const unit = resolveBuildingUnit(state.highlightRoom, state.highlightDorm);
-        if (unit) state.selectedUnitId = unit.id;
+        if (unit) {
+          state.selectedUnitId = unit.id;
+        } else if (state.mode === 'tenant' && !state.highlightRoom) {
+          state.selectedUnitId = null;
+        }
         computeUnitStates();
       },
       setTenants(newTenants) {
