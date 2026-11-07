@@ -23,6 +23,19 @@ function isCurfewViolation(date = new Date()) {
   return hour >= CURFEW_HOUR_START || hour < CURFEW_HOUR_END;
 }
 
+function isUnassignedTenant(data: Record<string, unknown> = {}) {
+  const room = String(data.room || data.dormName || '').toLowerCase();
+  const status = String(data.status || '').toLowerCase();
+  return (
+    !room ||
+    room.includes('unassigned') ||
+    room.includes('pending') ||
+    room.includes('needs unit') ||
+    status === 'pending assignment' ||
+    Boolean(data.needsAssignment)
+  );
+}
+
 function formatGateTimestamp(isoString: string) {
   if (!isoString) return 'Never';
   const d = new Date(isoString);
@@ -75,7 +88,7 @@ Deno.serve(async (request) => {
           .in('id', gateMsgIds);
       }
 
-      // Reset all tenants to INSIDE and clear tap timestamps
+      // Reset all tenants to INSIDE and clear tap timestamps (or PENDING if unassigned)
       const { data: tenantDocs, error: tErr } = await admin
         .from('app_documents')
         .select('id, data')
@@ -85,9 +98,11 @@ Deno.serve(async (request) => {
 
       for (const t of tenantDocs || []) {
         if (t.data?.status !== 'Archived') {
+          const unassigned = isUnassignedTenant(t.data);
           const updated = {
             ...t.data,
-            gateStatus: 'INSIDE',
+            gateStatus: unassigned ? 'PENDING' : 'INSIDE',
+            cardUid: unassigned ? 'PENDING' : t.data.cardUid,
             lastGateTapAt: null,
             lastGateTapType: null
           };
@@ -117,21 +132,26 @@ Deno.serve(async (request) => {
       if (error) throw error;
 
       const activeTenants = (tenantDocs || [])
-        .map((d: { id: string; data: Record<string, unknown> }) => ({
-          id: d.id,
-          name: String(d.data.name || 'Tenant').trim(),
-          room: String(d.data.room || d.data.dormName || 'Room').trim(),
-          cardUid: String(
-            d.data.cardUid ||
-              d.data.nfcCardId ||
-              `NFC-${String(d.data.room || '101').replace(/\D+/g, '')}`
+        .filter((d: { id: string; data: Record<string, unknown> }) => {
+          const data = d.data || {};
+          return data.status !== 'Archived' && !isUnassignedTenant(data);
+        })
+        .map((d: { id: string; data: Record<string, unknown> }) => {
+          const roomDigits = String(d.data.room || '').replace(/\D+/g, '');
+          const cardUid = String(
+            d.data.cardUid || d.data.nfcCardId || (roomDigits ? `NFC-${roomDigits}` : 'PENDING')
           )
             .trim()
-            .toUpperCase(),
-          gateStatus: String(d.data.gateStatus || 'INSIDE').toUpperCase(),
-          status: String(d.data.status || 'Active')
-        }))
-        .filter((t) => t.status !== 'Archived');
+            .toUpperCase();
+          return {
+            id: d.id,
+            name: String(d.data.name || 'Tenant').trim(),
+            room: String(d.data.room || d.data.dormName || 'Room').trim(),
+            cardUid,
+            gateStatus: String(d.data.gateStatus || 'INSIDE').toUpperCase(),
+            status: String(d.data.status || 'Active')
+          };
+        });
 
       return jsonResponse(request, { success: true, tenants: activeTenants });
     } catch (err: unknown) {
@@ -169,8 +189,8 @@ Deno.serve(async (request) => {
 
       const tenantDoc = (tenantRows || []).find(
         (row: { id: string; data: Record<string, unknown> }) => {
-          const d = row.data;
-          if (d.status === 'Archived') return false;
+          const d = (row.data || {}) as Record<string, unknown>;
+          if (d.status === 'Archived' || isUnassignedTenant(d)) return false;
           if (tenantId && row.id === tenantId) return true;
           if (cardUid) {
             const existingUid = String(d.cardUid || d.nfcCardId || '')
@@ -178,13 +198,35 @@ Deno.serve(async (request) => {
               .toUpperCase();
             if (existingUid === cardUid) return true;
             const roomDigits = String(d.room || '').replace(/\D+/g, '');
-            if (cardUid === `NFC-${roomDigits}` || cardUid === roomDigits) return true;
+            if (roomDigits && (cardUid === `NFC-${roomDigits}` || cardUid === roomDigits))
+              return true;
           }
           return false;
         }
       );
 
       if (!tenantDoc) {
+        const isPendingTenant = (tenantRows || []).some(
+          (row: { id: string; data: Record<string, unknown> }) => {
+            const d = (row.data || {}) as Record<string, unknown>;
+            if (d.status === 'Archived') return false;
+            if (tenantId && row.id === tenantId) return isUnassignedTenant(d);
+            const existingUid = String(d.cardUid || d.nfcCardId || '')
+              .trim()
+              .toUpperCase();
+            return existingUid === cardUid && isUnassignedTenant(d);
+          }
+        );
+        if (isPendingTenant) {
+          return jsonResponse(
+            request,
+            {
+              error:
+                'Keycard pending issuance: tenant room assignment is pending administrator approval.'
+            },
+            400
+          );
+        }
         return jsonResponse(
           request,
           {
@@ -201,9 +243,14 @@ Deno.serve(async (request) => {
       const now = new Date();
       const nowIso = now.toISOString();
       const isLate = resolvedDirection === 'IN' && isCurfewViolation(now);
+      const roomDigits = String(tenantData.room || '').replace(/\D+/g, '');
       const finalCardUid =
         cardUid ||
-        String(tenantData.cardUid || `NFC-${String(tenantData.room || '101').replace(/\D+/g, '')}`);
+        String(
+          tenantData.cardUid ||
+            tenantData.nfcCardId ||
+            (roomDigits ? `NFC-${roomDigits}` : 'NFC-101')
+        );
 
       // 1. Insert gate log in messages collection
       const gateLogId = `gate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;

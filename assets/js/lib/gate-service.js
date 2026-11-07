@@ -117,8 +117,21 @@ export async function recordGateTap({ cardUid, tenantId, direction, source = 'NF
   const snap = await supabaseData.getDocs(tenantsRef);
   const tenantDocs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
+  const isUnassignedTenant = (t = {}) => {
+    const room = String(t.room || t.dormName || '').toLowerCase();
+    const status = String(t.status || '').toLowerCase();
+    return (
+      !room ||
+      room.includes('unassigned') ||
+      room.includes('pending') ||
+      room.includes('needs unit') ||
+      status === 'pending assignment' ||
+      Boolean(t.needsAssignment)
+    );
+  };
+
   const tenant = tenantDocs.find((t) => {
-    if (t.status === 'Archived') return false;
+    if (t.status === 'Archived' || isUnassignedTenant(t)) return false;
     if (cleanId && t.id === cleanId) return true;
     if (cleanUid) {
       const existingUid = String(t.cardUid || t.nfcCardId || '')
@@ -126,12 +139,25 @@ export async function recordGateTap({ cardUid, tenantId, direction, source = 'NF
         .toUpperCase();
       if (existingUid === cleanUid) return true;
       const roomDigits = String(t.room || '').replace(/\D+/g, '');
-      if (cleanUid === `NFC-${roomDigits}` || cleanUid === roomDigits) return true;
+      if (roomDigits && (cleanUid === `NFC-${roomDigits}` || cleanUid === roomDigits)) return true;
     }
     return false;
   });
 
   if (!tenant) {
+    const isPending = tenantDocs.some((t) => {
+      if (t.status === 'Archived') return false;
+      if (cleanId && t.id === cleanId) return isUnassignedTenant(t);
+      const existingUid = String(t.cardUid || t.nfcCardId || '')
+        .trim()
+        .toUpperCase();
+      return existingUid === cleanUid && isUnassignedTenant(t);
+    });
+    if (isPending) {
+      throw new Error(
+        'Keycard pending issuance: tenant room assignment is pending administrator approval.'
+      );
+    }
     throw new Error(
       `Unrecognized or inactive keycard: "${cleanUid || cleanId}". Please register this card to an active tenant in Admin Dashboard.`
     );
@@ -146,8 +172,12 @@ export async function recordGateTap({ cardUid, tenantId, direction, source = 'NF
   const now = new Date();
   const nowIso = now.toISOString();
   const isLate = resolvedDirection === 'IN' && isCurfewViolation(now);
+  const roomDigits = String(tenant.room || '').replace(/\D+/g, '');
   const finalCardUid =
-    cleanUid || tenant.cardUid || `NFC-${String(tenant.room || '101').replace(/\D+/g, '')}`;
+    cleanUid ||
+    tenant.cardUid ||
+    tenant.nfcCardId ||
+    (roomDigits ? `NFC-${roomDigits}` : 'NFC-101');
 
   const gateLogId = `gate-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   await supabaseData.setDoc(supabaseData.doc(supabase, 'messages', gateLogId), {
