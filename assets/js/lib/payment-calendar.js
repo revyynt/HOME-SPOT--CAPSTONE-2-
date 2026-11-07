@@ -134,13 +134,43 @@ function isFirstDueAfterMoveIn(dueDateObj, moveInDateStr, dueDay) {
   const m = new Date(moveInDateStr);
   if (Number.isNaN(m.getTime())) return false;
   let firstDue = new Date(m.getFullYear(), m.getMonth(), dueDay);
-  if (firstDue.getTime() <= m.getTime()) {
+  if (firstDue.getTime() < new Date(m.getFullYear(), m.getMonth(), m.getDate()).getTime()) {
     firstDue = new Date(m.getFullYear(), m.getMonth() + 1, dueDay);
   }
   return (
     dueDateObj.getFullYear() === firstDue.getFullYear() &&
     dueDateObj.getMonth() === firstDue.getMonth() &&
     dueDateObj.getDate() === firstDue.getDate()
+  );
+}
+
+export function getTenantAdvanceCredit(tenant, defaultRent = 0) {
+  const explicitAdv = Number(tenant?.advanceDeposit ?? tenant?.advanceRent);
+  if (Number.isFinite(explicitAdv) && explicitAdv > 0) return explicitAdv;
+  if (tenant?.paymentVerified === false) return 0;
+  return Number(tenant?.monthlyRent) || defaultRent || 0;
+}
+
+export function isDueCoveredByAdvance(dueDateObj, moveInDateStr, dueDay, tenant) {
+  const credit = getTenantAdvanceCredit(tenant);
+  if (credit <= 0) return false;
+  return isFirstDueAfterMoveIn(dueDateObj, moveInDateStr, dueDay);
+}
+
+export function isTenantRoomUnassigned(tenant) {
+  const room = String(tenant?.room || '')
+    .trim()
+    .toLowerCase();
+  const status = String(tenant?.status || '')
+    .trim()
+    .toLowerCase();
+  return (
+    !room ||
+    room.includes('unassigned') ||
+    room.includes('pending') ||
+    room.includes('needs unit') ||
+    status === 'pending assignment' ||
+    Boolean(tenant?.needsAssignment)
   );
 }
 
@@ -175,6 +205,7 @@ export function buildPaymentCalendar({
     .toLowerCase();
   const activeTenants = tenants.filter((t) => {
     if ((t.status || 'Active') === 'Archived') return false;
+    if (isTenantRoomUnassigned(t)) return false;
     if (!filterKey) return true;
     return (
       String(t.id || '').toLowerCase() === filterKey ||
@@ -297,14 +328,15 @@ export function buildPaymentCalendar({
 
     let paidSum = monthPaidPayments.reduce((s, p) => s + (Number(p.amount) || 0), 0);
 
-    // If an advance security deposit was paid/recorded and no separate payment transaction was logged,
+    // If 1 month advance rent was paid/recorded and no separate payment transaction was logged,
     // automatically deduct it against the first scheduled rent due following move-in
+    const advanceCredit = getTenantAdvanceCredit(tenant, rent);
     if (
       paidSum === 0 &&
-      Number(tenant.advanceDeposit) > 0 &&
+      advanceCredit > 0 &&
       isFirstDueAfterMoveIn(dueDateObj, tenant.moveInDate, dueDay)
     ) {
-      paidSum = Number(tenant.advanceDeposit);
+      paidSum = advanceCredit;
     }
     const explicitSettled =
       isCurrentMonth &&
@@ -424,10 +456,18 @@ export function buildPaymentCalendar({
       const dueDateObj = new Date(uYear, uMonth, dueDay);
       if (isDueDateBeforeMoveIn(dueDateObj, tenant.moveInDate)) continue;
 
-      const paidInTargetMonth = getPaymentsForMonth(filteredPayments, tenant, uYear, uMonth).reduce(
+      let paidInTargetMonth = getPaymentsForMonth(filteredPayments, tenant, uYear, uMonth).reduce(
         (s, p) => s + (Number(p.amount) || 0),
         0
       );
+      const advanceCredit = getTenantAdvanceCredit(tenant, rent);
+      if (
+        paidInTargetMonth === 0 &&
+        advanceCredit > 0 &&
+        isFirstDueAfterMoveIn(dueDateObj, tenant.moveInDate, dueDay)
+      ) {
+        paidInTargetMonth = advanceCredit;
+      }
 
       const isSettledByAmountDue =
         Boolean(tenant.settledDueDate && tenant.settledDueDate.includes(MONTH_NAMES[uMonth])) &&
@@ -510,7 +550,9 @@ export function buildPaymentCalendar({
  * @returns {Object}
  */
 export function buildSalesForecast({ tenants = [], monthsAhead = 6, today = new Date() }) {
-  const activeTenants = tenants.filter((t) => (t.status || 'Active') !== 'Archived');
+  const activeTenants = tenants.filter(
+    (t) => (t.status || 'Active') !== 'Archived' && !isTenantRoomUnassigned(t)
+  );
   const todayYear = today.getFullYear();
   const todayMonth = today.getMonth();
 

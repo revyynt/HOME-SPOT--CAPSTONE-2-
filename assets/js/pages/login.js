@@ -106,6 +106,9 @@ function seedSession({ data, docId }, email) {
   } else {
     sessionStorage.removeItem('tenantAmountDue');
   }
+  if (data.advanceRent) sessionStorage.setItem('tenantAdvanceRent', String(data.advanceRent));
+  if (data.securityDeposit)
+    sessionStorage.setItem('tenantSecurityDeposit', String(data.securityDeposit));
   if (data.dueDay) sessionStorage.setItem('tenantDueDay', String(data.dueDay));
   if (docId) sessionStorage.setItem('tenantDocId', docId);
 }
@@ -427,6 +430,9 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
     needsAssignment: isUnassigned,
     dormName: isCommercial ? 'Commercial Space' : 'Triple Occupancy Room',
     monthlyRent,
+    advanceRent: monthlyRent,
+    securityDeposit: monthlyRent * 2,
+    advanceDeposit: monthlyRent,
     moveInDate,
     gateStatus: isUnassigned ? 'PENDING' : 'OUTSIDE',
     cardUid: isUnassigned

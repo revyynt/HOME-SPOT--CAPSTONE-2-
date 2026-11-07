@@ -22,7 +22,11 @@ import {
   normalizePhilippinePhone,
   isRentPurpose
 } from '../lib/format.js';
-import { buildPaymentCalendar } from '../lib/payment-calendar.js';
+import {
+  buildPaymentCalendar,
+  isDueCoveredByAdvance,
+  isTenantRoomUnassigned
+} from '../lib/payment-calendar.js';
 import { DEFAULT_ROOMS, mergeRoomData } from '../lib/rooms.js';
 import {
   initBuilding3DViewer,
@@ -74,8 +78,10 @@ let tenantName = sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
 let tenantPhone = sessionStorage.getItem('tenantPhone') || '+63 912 345 6789';
 let tenantRoom = sessionStorage.getItem('tenantRoom') || '';
 let tenantDorm = sessionStorage.getItem('tenantDorm') || 'Triple Occupancy Room';
-let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 2026';
-let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
+let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || '';
+let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 10000;
+let tenantAdvanceDeposit = parseFloat(sessionStorage.getItem('tenantAdvanceRent')) || tenantRent;
+let tenantPaymentVerified = sessionStorage.getItem('tenantPaymentVerified') !== 'false';
 let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
 let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
 let tenantMovedIn = sessionStorage.getItem('tenantMovedIn') === 'true';
@@ -102,6 +108,28 @@ let currentRemainingDue =
   initialDue !== null && !isNaN(parseFloat(initialDue)) ? parseFloat(initialDue) : tenantRent;
 if (initialDue !== null && !isNaN(parseFloat(initialDue))) {
   tenantExplicitAmountDueSet = true;
+}
+
+function isCurrentCycleCoveredByAdvance() {
+  if (!tenantMoveIn) return false;
+  const now = new Date();
+  const dueDay = tenantDueDay || 5;
+  const daysInM = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const thisMonthDue = new Date(now.getFullYear(), now.getMonth(), Math.min(dueDay, daysInM));
+  const moveInDate = new Date(tenantMoveIn);
+  if (!Number.isNaN(moveInDate.getTime())) {
+    const moveInStart = new Date(
+      moveInDate.getFullYear(),
+      moveInDate.getMonth(),
+      moveInDate.getDate()
+    ).getTime();
+    if (thisMonthDue.getTime() < moveInStart) return true;
+  }
+  return isDueCoveredByAdvance(thisMonthDue, tenantMoveIn, dueDay, {
+    monthlyRent: tenantRent,
+    advanceDeposit: tenantAdvanceDeposit,
+    paymentVerified: tenantPaymentVerified
+  });
 }
 
 function getMoveInInfo() {
@@ -164,7 +192,12 @@ function getTenantDefaultDueDate() {
 
   if (
     (moveInInfo.moveInStart && candidate.getTime() < moveInInfo.moveInStart) ||
-    currentRemainingDue <= 0
+    currentRemainingDue <= 0 ||
+    isDueCoveredByAdvance(candidate, tenantMoveIn, dueDay, {
+      monthlyRent: tenantRent,
+      advanceDeposit: tenantAdvanceDeposit,
+      paymentVerified: tenantPaymentVerified
+    })
   ) {
     checkMonth++;
     if (checkMonth > 11) {
@@ -182,44 +215,58 @@ function getTenantDefaultDueDate() {
 
 function updateAmountDueUI() {
   const moveInInfo = getMoveInInfo();
+  const isUnassigned = isTenantRoomUnassigned({ room: tenantRoom });
+  const isCoveredByAdvance = !isUnassigned && isCurrentCycleCoveredByAdvance();
+  const effectiveDue = isUnassigned || isCoveredByAdvance ? 0 : currentRemainingDue;
+
   const summaryAmountDue = document.getElementById('summaryAmountDue');
   if (summaryAmountDue) {
     if (selectedUpcomingDueDate && selectedUpcomingAmount > 0) {
       summaryAmountDue.textContent =
         '₱' + selectedUpcomingAmount.toLocaleString(undefined, { minimumFractionDigits: 2 });
       summaryAmountDue.style.color = '#059669';
+    } else if (isUnassigned) {
+      summaryAmountDue.textContent = '₱0.00 (Pending Assignment)';
+      summaryAmountDue.style.color = '#d97706';
     } else if (moveInInfo.isPending) {
       summaryAmountDue.textContent =
         '₱' + tenantRent.toLocaleString(undefined, { minimumFractionDigits: 2 }) + ' (Scheduled)';
       summaryAmountDue.style.color = '#0284c7';
-    } else if (currentRemainingDue <= 0) {
-      summaryAmountDue.textContent = '₱0.00 (Settled)';
+    } else if (effectiveDue <= 0) {
+      summaryAmountDue.textContent = isCoveredByAdvance
+        ? '₱0.00 (Covered by 1-Mo Advance)'
+        : '₱0.00 (Settled)';
       summaryAmountDue.style.color = '#15803d';
     } else {
       summaryAmountDue.textContent =
-        '₱' + currentRemainingDue.toLocaleString(undefined, { minimumFractionDigits: 2 });
+        '₱' + effectiveDue.toLocaleString(undefined, { minimumFractionDigits: 2 });
       summaryAmountDue.style.color = '#059669';
     }
   }
 
   const summaryDueDate = document.getElementById('summaryDueDate');
   if (summaryDueDate) {
-    summaryDueDate.textContent = selectedUpcomingDueDate || getTenantDefaultDueDate();
+    summaryDueDate.textContent = isUnassigned
+      ? 'Pending Room Assignment'
+      : selectedUpcomingDueDate || getTenantDefaultDueDate();
   }
 
   const paymentAmountInput = document.getElementById('paymentAmount');
   if (paymentAmountInput) {
-    if (currentRemainingDue <= 0) {
+    if (effectiveDue <= 0) {
       if (!selectedUpcomingDueDate) {
         paymentAmountInput.value = '0';
-        paymentAmountInput.placeholder = '0.00 (Rent Settled)';
+        paymentAmountInput.placeholder = isUnassigned
+          ? '0.00 (Pending Room Assignment)'
+          : '0.00 (Rent Settled)';
       }
     } else if (
       !paymentAmountInput.value ||
       paymentAmountInput.value === '5000' ||
-      parseFloat(paymentAmountInput.value) > currentRemainingDue
+      paymentAmountInput.value === '10000' ||
+      parseFloat(paymentAmountInput.value) > effectiveDue
     ) {
-      paymentAmountInput.value = currentRemainingDue.toString();
+      paymentAmountInput.value = effectiveDue.toString();
     }
     if (typeof updateSubmitButton === 'function') {
       updateSubmitButton();
@@ -424,8 +471,14 @@ function renderDueDateAlert() {
   const day = now.getDate();
   const dueDay = tenantDueDay || 5;
   const moveInInfo = getMoveInInfo();
+  const isUnassigned = isTenantRoomUnassigned({ room: tenantRoom });
 
-  if (moveInInfo.isPending || currentRemainingDue <= 0) {
+  if (
+    isUnassigned ||
+    moveInInfo.isPending ||
+    currentRemainingDue <= 0 ||
+    isCurrentCycleCoveredByAdvance()
+  ) {
     banner.style.display = 'none';
     return;
   }
@@ -698,6 +751,8 @@ function renderTenantPaymentCalendar() {
   if (!gridEl || !monthLabelEl) return;
 
   const defaultDueDateText = getTenantDefaultDueDate();
+  const isCovered = isCurrentCycleCoveredByAdvance();
+  const effectiveDue = isCovered ? 0 : currentRemainingDue;
   const tenantRecord = {
     id: currentTenantDocId || userEmail || 'tenant',
     name: tenantName,
@@ -705,11 +760,13 @@ function renderTenantPaymentCalendar() {
     room: tenantRoom,
     dormName: tenantDorm,
     monthlyRent: tenantRent,
+    advanceDeposit: tenantAdvanceDeposit,
+    paymentVerified: tenantPaymentVerified,
     dueDay: tenantDueDay,
     moveInDate: tenantMoveIn,
     movedIn: tenantMovedIn,
-    amountDue: currentRemainingDue,
-    settledDueDate: currentRemainingDue <= 0 ? defaultDueDateText : ''
+    amountDue: effectiveDue,
+    settledDueDate: effectiveDue <= 0 ? defaultDueDateText : ''
   };
 
   const cal = buildPaymentCalendar({
@@ -999,11 +1056,18 @@ async function fetchTenantSupabaseProfile() {
           tenantRent = parseFloat(docData.monthlyRent);
           sessionStorage.setItem('tenantMonthlyRent', tenantRent);
         }
+        tenantAdvanceDeposit =
+          parseFloat(docData.advanceDeposit ?? docData.advanceRent) || tenantRent;
+        tenantPaymentVerified = docData.paymentVerified !== false;
+        sessionStorage.setItem('tenantAdvanceRent', String(tenantAdvanceDeposit));
+        sessionStorage.setItem('tenantPaymentVerified', tenantPaymentVerified ? 'true' : 'false');
         if (docData.amountDue !== undefined && docData.amountDue !== null) {
           currentRemainingDue = parseFloat(docData.amountDue);
           tenantExplicitAmountDueSet = true;
           sessionStorage.setItem('tenantAmountDue', currentRemainingDue);
           localStorage.setItem('tenant_amount_due_' + normalizedEmail, currentRemainingDue);
+        } else if (!tenantExplicitAmountDueSet) {
+          currentRemainingDue = isCurrentCycleCoveredByAdvance() ? 0 : tenantRent;
         }
         if (resolvedEmergency) {
           tenantEmergency = resolvedEmergency;

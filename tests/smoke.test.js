@@ -414,3 +414,40 @@ test('buildPaymentCalendar allocates advance notes and cycle payments to upcomin
     'December remaining amount lowers by paid sum (2212 remaining)'
   );
 });
+
+test('buildPaymentCalendar excludes unassigned tenants and applies 1-month advance to first due date', async () => {
+  const { buildPaymentCalendar } = await import('../assets/js/lib/payment-calendar.js');
+  const today = new Date(2026, 10, 7); // Nov 7, 2026
+  const tenants = [
+    {
+      id: 'google-user',
+      name: 'Jomari Laus',
+      email: 'jomari@example.com',
+      room: 'Unassigned (Pending Admin Assignment)',
+      status: 'Pending Assignment',
+      monthlyRent: 10000,
+      dueDay: 5,
+      moveInDate: '2026-11-07'
+    },
+    {
+      id: 'assigned-user',
+      name: 'Ana Reyes',
+      email: 'ana@example.com',
+      room: 'Room 201',
+      status: 'Active',
+      monthlyRent: 10000,
+      dueDay: 5,
+      moveInDate: '2026-11-01'
+    }
+  ];
+
+  const novCal = buildPaymentCalendar({ tenants, payments: [], year: 2026, month: 10, today });
+  assert.equal(novCal.monthSummary.rows.length, 1, 'unassigned Google tenant is excluded');
+  assert.equal(novCal.monthSummary.rows[0].tenantName, 'Ana Reyes');
+  assert.equal(
+    novCal.monthSummary.rows[0].status,
+    'Paid',
+    'first due date after move-in is settled by 1-month advance'
+  );
+  assert.equal(novCal.monthSummary.totalOverdue, 0);
+});

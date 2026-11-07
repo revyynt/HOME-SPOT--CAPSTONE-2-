@@ -697,6 +697,7 @@ export function initTenantTable() {
           monthlyRent: rent,
           advanceRent: rent,
           securityDeposit: rent * 2,
+          advanceDeposit: rent,
           needsAssignment: false,
           status: 'Active',
           cardUid,
