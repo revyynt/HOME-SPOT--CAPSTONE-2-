@@ -2,7 +2,6 @@ import { supabase, supabaseData } from '../../supabase-service.js';
 import {
   fetchGateLogs,
   fetchTenantsPresence,
-  clearGateLogs,
   confirmAbandonmentAndReleaseRoom,
   formatGateTimestamp,
   isCurfewViolation
@@ -213,31 +212,6 @@ export function initGateMonitor() {
     refreshBtn.addEventListener('click', async () => {
       await refreshGateMonitor();
       Toast.info('Gate presence logs refreshed.');
-    });
-  }
-
-  // Clear Logs button
-  const clearBtn = document.getElementById('btnClearGateLogs');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', async () => {
-      const confirmed = window.confirm(
-        'Are you sure you want to clear all gate logs?\n\nThis will purge test logs and reset active tenants to Inside status.'
-      );
-      if (!confirmed) return;
-
-      clearBtn.disabled = true;
-      clearBtn.textContent = 'Clearing...';
-
-      try {
-        await clearGateLogs();
-        await refreshGateMonitor();
-        Toast.success('Gate activity logs have been reset.');
-      } catch (err) {
-        Toast.error(err.message || 'Failed to clear logs.');
-      } finally {
-        clearBtn.disabled = false;
-        clearBtn.textContent = 'Clear Logs';
-      }
     });
   }
 
