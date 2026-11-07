@@ -1362,7 +1362,7 @@ function initAdminPaymentCalendar() {
     const currentOrigin =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
-        : 'https://homespot-mjp.web.app';
+        : 'https://home-spot.online';
 
     for (const row of currCal.monthSummary.rows) {
       if (row.status !== 'Overdue' || !row.tenantEmail) continue;
@@ -1715,7 +1715,7 @@ function initAdminPaymentCalendar() {
       const currentOrigin =
         typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
-          : 'https://homespot-mjp.web.app';
+          : 'https://home-spot.online';
       const isOverdue = String(tenant.status || '').toLowerCase() === 'overdue';
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
@@ -1758,7 +1758,7 @@ function initAdminPaymentCalendar() {
     const currentOrigin =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
-        : 'https://homespot-mjp.web.app';
+        : 'https://home-spot.online';
     for (const t of pendingRows) {
       try {
         await supabase.functions.invoke('send-email', {

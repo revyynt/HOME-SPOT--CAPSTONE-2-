@@ -656,7 +656,7 @@ export function initCreateTenant() {
         const currentOrigin =
           typeof window !== 'undefined' && window.location?.origin
             ? window.location.origin
-            : 'https://homespot-mjp.web.app';
+            : 'https://home-spot.online';
         await supabase.functions.invoke('send-email', {
           body: {
             type: 'welcome_credentials',
