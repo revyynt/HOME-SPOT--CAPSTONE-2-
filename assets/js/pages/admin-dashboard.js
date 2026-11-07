@@ -1739,6 +1739,17 @@ function initAdminPaymentCalendar() {
   };
 
   const sendAllDueAlerts = async () => {
+    if (!calTenants.length) {
+      try {
+        const snap = await supabaseData.getDocs(supabaseData.collection(supabase, 'tenants'));
+        calTenants = snap.docs
+          .map((d) => ({ ...d.data(), id: d.id }))
+          .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
+      } catch (fetchErr) {
+        console.warn('Could not fetch tenants for due alerts:', fetchErr);
+      }
+    }
+
     const isUnassigned = (t) => {
       const room = String(t.room || '').toLowerCase();
       const status = String(t.status || '').toLowerCase();
@@ -1807,6 +1818,12 @@ function initAdminPaymentCalendar() {
     }
   };
 
+  const sendAllBtn = document.getElementById('btnSendAllDueAlerts');
+  sendAllBtn?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await sendAllDueAlerts();
+  });
+
   // Delegated modal button actions (inside or outside section)
   document.addEventListener('click', async (event) => {
     const target = event.target instanceof Element ? event.target : null;
@@ -1814,6 +1831,9 @@ function initAdminPaymentCalendar() {
     if (!btn) return;
 
     switch (btn.dataset.action) {
+      case 'send-all-due-alerts':
+        await sendAllDueAlerts();
+        break;
       case 'close-payment-modal':
         closePaymentModal();
         break;
