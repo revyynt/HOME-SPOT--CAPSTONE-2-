@@ -473,7 +473,7 @@ export function openGCompose({ email, name, subject, message, id, room }) {
   }
   const formattedName = formatRecipientName(name);
   const cleanSubject = subject || (room ? `Inquiry regarding ${room}` : 'Public Inquiry');
-  const su = encodeURIComponent(`Re: [HomeSpot] ${cleanSubject}`);
+  const su = encodeURIComponent(`Re: [Home-Spot] ${cleanSubject}`);
   const bodyText =
     `Hi ${formattedName},\n\n` +
     'Thank you for reaching out to MJP Residences.\n\n' +

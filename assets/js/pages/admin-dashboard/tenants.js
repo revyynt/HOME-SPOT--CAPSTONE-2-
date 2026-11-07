@@ -359,7 +359,7 @@ function renderViewTenantContract(tenant) {
   }
 
   if (fileNameEl) {
-    fileNameEl.textContent = isPdf ? `📄 ${fileName}` : `🖼️ ${fileName}`;
+    fileNameEl.textContent = fileName;
   }
   if (openLinkEl) {
     openLinkEl.href = fileUrl;

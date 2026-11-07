@@ -278,12 +278,12 @@ export function sendReservationNotificationEmail({
   const isApproved = status === 'Approved';
 
   const subject = isApproved
-    ? `[HomeSpot] Reservation Approved - ${cleanRoom}`
-    : `[HomeSpot] Reservation Update - ${cleanRoom}`;
+    ? `[Home-Spot] Reservation Approved - ${cleanRoom}`
+    : `[Home-Spot] Reservation Update - ${cleanRoom}`;
 
   const bodyText = isApproved
     ? `Hi ${cleanName},\n\n` +
-      `Great news! Your reservation request for ${cleanRoom} at MJP Residences (HomeSpot) has been APPROVED.\n\n` +
+      `Great news! Your reservation request for ${cleanRoom} at MJP Residences (Home-Spot) has been APPROVED.\n\n` +
       (moveInDate ? `Target Move-in Date: ${moveInDate}\n\n` : '') +
       `Move-in Financial Requirements (6 Months Contract):\n` +
       `1. 1 Month Advance Rent: ₱10,000\n` +
@@ -301,16 +301,16 @@ export function sendReservationNotificationEmail({
       `4. Tenant Portal credentials will be activated upon contract signing.\n\n` +
       `If you have any questions or schedule adjustments, please reply directly to this email.\n\n` +
       `Best regards,\n` +
-      `HomeSpot Management Team\n` +
+      `Home-Spot Management Team\n` +
       `MJP Residences\n` +
       `Contact: ${OFFICIAL_SUPPORT_GMAIL}`
     : `Hi ${cleanName},\n\n` +
-      `Thank you for your interest in MJP Residences (HomeSpot).\n\n` +
+      `Thank you for your interest in MJP Residences (Home-Spot).\n\n` +
       `We regret to inform you that we are currently unable to approve your reservation request for ${cleanRoom}.` +
       (reason ? `\n\nReason: ${reason}` : '') +
       `\n\nIf you would like to explore other available rooms or adjust your dates, please reply to this email or visit our website.\n\n` +
       `Best regards,\n` +
-      `HomeSpot Management Team\n` +
+      `Home-Spot Management Team\n` +
       `MJP Residences\n` +
       `Contact: ${OFFICIAL_SUPPORT_GMAIL}`;
 
@@ -510,7 +510,7 @@ export async function submitApproveReservation(event) {
       const currentOrigin =
         typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
-          : 'https://homespot-mjp.web.app';
+          : 'https://home-spot.online';
       await supabase.functions.invoke('send-email', {
         body: {
           type: 'reservation_approved',
@@ -600,7 +600,7 @@ async function directApproveReservation(reservationId) {
       const currentOrigin =
         typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
-          : 'https://homespot-mjp.web.app';
+          : 'https://home-spot.online';
       await supabase.functions.invoke('send-email', {
         body: {
           type: 'reservation_approved',

@@ -428,7 +428,7 @@ async function claimOrProvisionTenant(user, email, optionalInfo = {}) {
     dormName: isCommercial ? 'Commercial Space' : 'Triple Occupancy Room',
     monthlyRent,
     moveInDate,
-    gateStatus: isUnassigned ? 'PENDING' : 'INSIDE',
+    gateStatus: isUnassigned ? 'PENDING' : 'OUTSIDE',
     cardUid: isUnassigned
       ? 'PENDING'
       : `NFC-${String(assignedRoom || '101').replace(/\D+/g, '') || '101'}`,
@@ -765,7 +765,7 @@ confirmGoogleTermsBtn?.addEventListener('click', async () => {
     const currentOrigin =
       typeof window !== 'undefined' && window.location?.origin
         ? window.location.origin
-        : 'https://homespot-mjp.web.app';
+        : 'https://home-spot.online';
 
     try {
       localStorage.setItem('oauth_login_pending', '1');

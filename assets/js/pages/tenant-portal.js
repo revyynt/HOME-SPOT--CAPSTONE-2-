@@ -405,7 +405,7 @@ function renderTenantContractCard() {
   }
 
   if (fileNameEl) {
-    fileNameEl.textContent = isPdf ? `📄 ${name}` : `🖼️ ${name}`;
+    fileNameEl.textContent = name;
   }
   if (viewBtn) {
     viewBtn.href = url;
@@ -909,7 +909,7 @@ function renderTenantPaymentCalendar() {
         const currentOrigin =
           typeof window !== 'undefined' && window.location?.origin
             ? window.location.origin
-            : 'https://homespot-mjp.web.app';
+            : 'https://home-spot.online';
         supabase.functions
           .invoke('send-email', {
             body: {
