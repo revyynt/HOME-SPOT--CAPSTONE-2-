@@ -26,7 +26,14 @@ import { db, supabase, supabaseData } from '../../supabase-service.js';
 import { avatarGradient, escapeHtml, formatPHP, initials } from '../../lib/format.js';
 import { attr } from '../../lib/dom.js';
 import { refreshTenantMessenger } from '../../render/messages.js';
-import { refreshTenantRoomOptions, openCreateTenantModalFromData } from './create-tenant.js';
+import {
+  refreshTenantRoomOptions,
+  openCreateTenantModalFromData,
+  uploadContractProofFile,
+  getUnitOccupants,
+  UNIT_SHORT_LABELS
+} from './create-tenant.js';
+import { BUILDING_UNITS } from '../../lib/building-3d.js';
 import { Toast } from '../../render/toast.js';
 
 /** @type {Array<Object & {id: string}>} */
@@ -63,6 +70,13 @@ export function listenToTenants() {
     if (statusEl) {
       statusEl.textContent = `Synced with Supabase (${loadedTenants.length} active)`;
       statusEl.className = 'text-xs text-emerald-600 hidden sm:inline-block';
+    }
+    if (currentViewingTenant?.id) {
+      const updatedViewing = allTenants.find((t) => t.id === currentViewingTenant.id);
+      if (updatedViewing) {
+        currentViewingTenant = updatedViewing;
+        renderViewTenantContract(currentViewingTenant);
+      }
     }
     renderFiltered();
     updateTenantStats();
@@ -192,10 +206,15 @@ function renderTenantsTable(tenants, isArchived = false) {
                 String(t.status || '').toLowerCase() === 'archived'
                   ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">Archived</span>
                      ${t.previousRoom ? `<div class="text-[11px] text-gray-400 mt-0.5">Prev: ${escapeHtml(t.previousRoom)}</div>` : ''}`
-                  : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
-                      ${escapeHtml(t.room || 'Unassigned')}
-                    </span>
-                    <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
+                  : !t.room || t.room.toLowerCase().includes('pending') || t.needsAssignment
+                    ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 whitespace-nowrap">
+                        Needs Unit Assignment
+                      </span>
+                      <div class="text-[11px] text-blue-700 font-medium mt-0.5">Inquired: ${escapeHtml(t.inquiredRoom || t.dormName || 'Standard')}</div>`
+                    : `<span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 whitespace-nowrap">
+                        ${escapeHtml(t.room || 'Unassigned')}
+                      </span>
+                      <div class="text-xs text-gray-500 mt-0.5">${escapeHtml(t.dormName || '')}</div>`
               }
             </div>
           </td>
@@ -280,6 +299,80 @@ function updateTenantStats(source = allTenants) {
   set('badgeArchivedTenantsCount', archivedTenants.length);
 }
 
+function isPdfContract(url = '', type = '', name = '') {
+  const lowerType = String(type || '').toLowerCase();
+  const lowerName = String(name || '').toLowerCase();
+  const lowerUrl = String(url || '').toLowerCase();
+  return (
+    lowerType.includes('pdf') ||
+    lowerName.endsWith('.pdf') ||
+    lowerUrl.startsWith('data:application/pdf') ||
+    lowerUrl.split('?')[0].endsWith('.pdf')
+  );
+}
+
+function renderViewTenantContract(tenant) {
+  const badgeEl = document.getElementById('viewTenantContractBadge');
+  const previewBox = document.getElementById('viewTenantContractPreviewBox');
+  const imgWrap = document.getElementById('viewTenantContractImgWrap');
+  const imgEl = document.getElementById('viewTenantContractImg');
+  const fileNameEl = document.getElementById('viewTenantContractFileName');
+  const openLinkEl = document.getElementById('viewTenantContractOpenLink');
+  const uploadBtn = document.getElementById('btnUploadTenantContract');
+  const removeBtn = document.getElementById('btnRemoveTenantContract');
+  const fileInput = document.getElementById('viewTenantContractInput');
+
+  if (fileInput) fileInput.value = '';
+
+  const fileUrl = String(tenant?.contractFileUrl || '').trim();
+  const fileName = String(tenant?.contractFileName || '').trim() || 'Signed Lease Contract';
+  const fileType = String(tenant?.contractFileType || '').trim();
+
+  if (!fileUrl) {
+    if (badgeEl) {
+      badgeEl.textContent = 'No File Uploaded';
+      badgeEl.className =
+        'text-[11px] px-2 py-0.5 rounded-full font-semibold bg-amber-100 text-amber-800';
+    }
+    previewBox?.classList.add('hidden');
+    imgWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+    if (uploadBtn) uploadBtn.textContent = 'Upload Contract Proof (Image / PDF)';
+    removeBtn?.classList.add('hidden');
+    return;
+  }
+
+  if (badgeEl) {
+    badgeEl.textContent = '✓ Uploaded & Shared with Tenant';
+    badgeEl.className =
+      'text-[11px] px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800';
+  }
+  previewBox?.classList.remove('hidden');
+
+  const isPdf = isPdfContract(fileUrl, fileType, fileName);
+  if (!isPdf) {
+    if (imgEl) imgEl.src = fileUrl;
+    imgWrap?.classList.remove('hidden');
+  } else {
+    imgWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+  }
+
+  if (fileNameEl) {
+    fileNameEl.textContent = isPdf ? `📄 ${fileName}` : `🖼️ ${fileName}`;
+  }
+  if (openLinkEl) {
+    openLinkEl.href = fileUrl;
+    if (fileUrl.startsWith('data:')) {
+      openLinkEl.setAttribute('download', fileName);
+    } else {
+      openLinkEl.removeAttribute('download');
+    }
+  }
+  if (uploadBtn) uploadBtn.textContent = 'Replace Contract File';
+  removeBtn?.classList.remove('hidden');
+}
+
 /** Populates and reveals the read-only tenant profile modal. */
 export function viewTenantDetails(tenantId) {
   const tenant = (allTenants.length ? allTenants : loadedTenants).find((t) => t.id === tenantId);
@@ -336,7 +429,58 @@ export function viewTenantDetails(tenantId) {
     notesSection?.classList.add('hidden');
   }
 
+  // Populate Inquired Unit badge if present
+  const inquiredBadge = document.getElementById('viewTenantInquiredBadge');
+  if (inquiredBadge) {
+    if (tenant.inquiredRoom && tenant.inquiredRoom !== tenant.room) {
+      inquiredBadge.textContent = `Inquired: ${tenant.inquiredRoom}`;
+      inquiredBadge.classList.remove('hidden');
+    } else {
+      inquiredBadge.classList.add('hidden');
+    }
+  }
+
+  // Setup unit assignment dropdown
+  const assignBox = document.getElementById('viewTenantAssignBox');
+  assignBox?.classList.add('hidden');
+  const toggleBtn = document.getElementById('btnToggleAssignRoom');
+  if (toggleBtn) {
+    const isUnassigned =
+      !tenant.room || tenant.room.toLowerCase().includes('pending') || tenant.needsAssignment;
+    toggleBtn.textContent = isUnassigned ? 'Assign Unit Now' : 'Change Unit';
+    toggleBtn.className = isUnassigned
+      ? 'px-3 py-1 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg shadow-sm transition-colors cursor-pointer'
+      : 'px-2.5 py-1 text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg shadow-2xs transition-colors cursor-pointer';
+  }
+
+  populateViewTenantRoomSelect(tenant.room || tenant.inquiredRoom || '');
+  renderViewTenantContract(tenant);
   document.getElementById('viewTenantModal')?.classList.remove('hidden');
+}
+
+function populateViewTenantRoomSelect(currentRoom = '') {
+  const select = document.getElementById('viewTenantRoomSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="" disabled selected>Select Room / Unit</option>';
+
+  BUILDING_UNITS.forEach((unit) => {
+    const occList = getUnitOccupants(unit.id);
+    const occ = occList.filter((t) => t.id !== currentViewingTenant?.id).length;
+    const cap = 1;
+    const isFull = occ >= cap;
+    const label = UNIT_SHORT_LABELS[unit.id] || `${unit.floor}F • ${unit.name}`;
+
+    const opt = document.createElement('option');
+    opt.value = unit.id;
+    opt.textContent = `${label} — ${isFull ? 'FULL' : 'Available (0/1)'}`;
+    opt.disabled = isFull;
+    select.appendChild(opt);
+  });
+
+  if (currentRoom) {
+    const exact = Array.from(select.options).find((o) => o.value === currentRoom && !o.disabled);
+    if (exact) select.value = currentRoom;
+  }
 }
 
 export function closeViewTenantModal() {
@@ -525,6 +669,87 @@ export function initTenantTable() {
       return;
     }
 
+    if (target?.closest('[data-action="toggle-assign-room"]')) {
+      const box = document.getElementById('viewTenantAssignBox');
+      box?.classList.toggle('hidden');
+      return;
+    }
+
+    if (target?.closest('[data-action="save-assigned-room"]')) {
+      if (!currentViewingTenant?.id) return;
+      const select = document.getElementById('viewTenantRoomSelect');
+      const selectedUnit = select?.value;
+      if (!selectedUnit) {
+        Toast.error('Please choose a unit to assign.');
+        return;
+      }
+
+      const isComm = selectedUnit.toLowerCase().includes('commercial');
+      const dormName = isComm ? 'Commercial Space' : 'Triple Occupancy Room';
+      const rent = isComm ? 12000 : 10000;
+      const roomDigits = selectedUnit.replace(/\D+/g, '') || '101';
+      const cardUid = `NFC-${roomDigits}`;
+
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          room: selectedUnit,
+          dormName,
+          monthlyRent: rent,
+          advanceRent: rent,
+          securityDeposit: rent * 2,
+          needsAssignment: false,
+          status: 'Active',
+          cardUid,
+          updatedAt: new Date().toISOString()
+        });
+
+        // Also sync user profile record if available
+        if (currentViewingTenant.uid) {
+          try {
+            await supabaseData.updateDoc(supabaseData.doc(db, 'users', currentViewingTenant.uid), {
+              room: selectedUnit,
+              dormName,
+              updatedAt: new Date().toISOString()
+            });
+          } catch {}
+        }
+
+        currentViewingTenant.room = selectedUnit;
+        currentViewingTenant.dormName = dormName;
+        currentViewingTenant.monthlyRent = rent;
+        currentViewingTenant.needsAssignment = false;
+        currentViewingTenant.status = 'Active';
+
+        const roomEl = document.getElementById('viewTenantRoom');
+        if (roomEl) roomEl.textContent = selectedUnit;
+        const resEl = document.getElementById('viewTenantResidenceType');
+        if (resEl) resEl.textContent = dormName;
+        const rentEl = document.getElementById('viewTenantRent');
+        if (rentEl) rentEl.textContent = formatPHP(rent);
+        const statusEl = document.getElementById('viewTenantStatus');
+        if (statusEl) {
+          statusEl.textContent = 'Active Tenant';
+          statusEl.className =
+            'inline-flex mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-green-100 text-green-800';
+        }
+
+        document.getElementById('viewTenantAssignBox')?.classList.add('hidden');
+        const toggleBtn = document.getElementById('btnToggleAssignRoom');
+        if (toggleBtn) {
+          toggleBtn.textContent = 'Change Unit';
+          toggleBtn.className =
+            'px-2.5 py-1 text-xs font-semibold bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded-lg shadow-2xs transition-colors cursor-pointer';
+        }
+
+        renderFiltered();
+        Toast.success(`Assigned ${selectedUnit} to ${currentViewingTenant.name}.`);
+      } catch (err) {
+        console.error('Failed to assign unit:', err);
+        Toast.error(err.message || 'Could not assign unit.');
+      }
+      return;
+    }
+
     if (target?.closest('[data-action="profile-extend-move-in"]')) {
       if (!currentViewingTenant?.id) return;
       const currentMoveIn = currentViewingTenant.moveInDate
@@ -572,7 +797,96 @@ export function initTenantTable() {
       }
       return;
     }
+
+    if (target?.closest('[data-action="trigger-upload-contract"]')) {
+      if (!currentViewingTenant?.id) return;
+      document.getElementById('viewTenantContractInput')?.click();
+      return;
+    }
+
+    if (target?.closest('[data-action="remove-tenant-contract"]')) {
+      if (!currentViewingTenant?.id) return;
+      const confirmed = await Toast.confirm({
+        title: 'Remove Contract Proof',
+        message: `Remove the uploaded lease contract proof for ${currentViewingTenant.name}?`,
+        confirmText: 'Remove File',
+        cancelText: 'Cancel',
+        danger: true
+      });
+      if (!confirmed) return;
+      try {
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          contractFileUrl: '',
+          contractFileName: '',
+          contractFileType: '',
+          contractUploadedAt: '',
+          updatedAt: new Date().toISOString()
+        });
+        currentViewingTenant.contractFileUrl = '';
+        currentViewingTenant.contractFileName = '';
+        currentViewingTenant.contractFileType = '';
+        currentViewingTenant.contractUploadedAt = '';
+        renderViewTenantContract(currentViewingTenant);
+        Toast.success('Removed contract proof file.');
+      } catch (err) {
+        console.error('Failed to remove contract proof:', err);
+        Toast.error('Could not remove contract proof: ' + (err.message || 'Unknown error'));
+      }
+      return;
+    }
   });
+
+  document
+    .getElementById('viewTenantContractInput')
+    ?.addEventListener('change', async (changeEvt) => {
+      const inputEl = changeEvt.target;
+      const file = inputEl?.files?.[0];
+      if (!file || !currentViewingTenant?.id) return;
+
+      const uploadBtn = document.getElementById('btnUploadTenantContract');
+      const prevText = uploadBtn ? uploadBtn.textContent : 'Upload Contract Proof (Image / PDF)';
+      if (uploadBtn) {
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploading...';
+      }
+
+      try {
+        const uploaded = await uploadContractProofFile(
+          file,
+          currentViewingTenant.room || currentViewingTenant.id
+        );
+        if (!uploaded) return;
+
+        await supabaseData.updateDoc(supabaseData.doc(db, 'tenants', currentViewingTenant.id), {
+          contractFileUrl: uploaded.contractFileUrl,
+          contractFileName: uploaded.contractFileName,
+          contractFileType: uploaded.contractFileType,
+          contractUploadedAt: uploaded.contractUploadedAt,
+          contractSigned: true,
+          updatedAt: new Date().toISOString()
+        });
+
+        currentViewingTenant.contractFileUrl = uploaded.contractFileUrl;
+        currentViewingTenant.contractFileName = uploaded.contractFileName;
+        currentViewingTenant.contractFileType = uploaded.contractFileType;
+        currentViewingTenant.contractUploadedAt = uploaded.contractUploadedAt;
+        currentViewingTenant.contractSigned = true;
+
+        const adminVerEl = document.getElementById('viewTenantAdminVerified');
+        if (adminVerEl) adminVerEl.textContent = '✓ Contract & Fees Verified';
+
+        renderViewTenantContract(currentViewingTenant);
+        Toast.success(
+          `Uploaded signed contract proof for ${currentViewingTenant.name}. Visible in Tenant Portal.`
+        );
+      } catch (err) {
+        console.error('Failed to upload contract proof:', err);
+        Toast.error(err.message || 'Could not upload contract proof.');
+        if (uploadBtn) uploadBtn.textContent = prevText;
+      } finally {
+        if (uploadBtn) uploadBtn.disabled = false;
+      }
+    });
 }
 
 // Password reset via Supabase email

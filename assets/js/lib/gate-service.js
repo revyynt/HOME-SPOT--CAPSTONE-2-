@@ -246,7 +246,25 @@ export async function fetchTenantsPresence() {
   const snap = await supabaseData.getDocs(tenantsRef);
   const tenants = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  const activeTenants = tenants.filter((t) => t.status !== 'Archived');
+  const activeTenants = tenants.filter((t) => {
+    if (
+      t.status === 'Archived' ||
+      t.status === 'Pending Assignment' ||
+      t.needsAssignment === true
+    ) {
+      return false;
+    }
+    const room = String(t.room || '').toLowerCase();
+    if (
+      !room ||
+      room.includes('unassigned') ||
+      room.includes('pending') ||
+      room.includes('needs unit')
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   return activeTenants.map((t) => {
     const gateStatus = t.gateStatus || 'INSIDE';

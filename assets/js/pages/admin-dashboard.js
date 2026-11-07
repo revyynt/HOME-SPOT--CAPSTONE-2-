@@ -1341,14 +1341,79 @@ function initAdminPaymentCalendar() {
     filterSelect.value = prev;
   };
 
+  let tenantsLoaded = false;
+  let paymentsLoaded = false;
+  const autoDispatchedOverdue = new Set();
+
+  const checkAutoOverdueAlerts = async () => {
+    if (!tenantsLoaded || !paymentsLoaded || !calTenants.length) return;
+    const now = new Date();
+    const currYear = now.getFullYear();
+    const currMonth = now.getMonth();
+    const cycleKey = `${currYear}-${String(currMonth + 1).padStart(2, '0')}-Overdue`;
+
+    const currCal = buildPaymentCalendar({
+      tenants: calTenants,
+      payments: calPayments,
+      year: currYear,
+      month: currMonth
+    });
+
+    const currentOrigin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://homespot-mjp.web.app';
+
+    for (const row of currCal.monthSummary.rows) {
+      if (row.status !== 'Overdue' || !row.tenantEmail) continue;
+      const emailKey = `${row.tenantEmail.toLowerCase()}:${cycleKey}`;
+      if (autoDispatchedOverdue.has(emailKey)) continue;
+
+      const tenantObj = calTenants.find(
+        (t) =>
+          t.id === row.tenantId ||
+          (t.email && t.email.toLowerCase() === row.tenantEmail.toLowerCase())
+      );
+      if (tenantObj && tenantObj.lastAutoAlertKey === cycleKey) {
+        autoDispatchedOverdue.add(emailKey);
+        continue;
+      }
+
+      autoDispatchedOverdue.add(emailKey);
+      try {
+        const { data: resData, error } = await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'overdue_alert',
+            status: 'Overdue',
+            autoCycleKey: cycleKey,
+            to: row.tenantEmail,
+            name: row.tenantName,
+            room: row.room,
+            amount: row.amount,
+            dueDate: row.dueDate,
+            dueDay: row.dueDay || 5,
+            portalUrl: `${currentOrigin}/login.html`
+          }
+        });
+        if (!error && !resData?.skippedDuplicate) {
+          Toast.success(`Auto-sent overdue rent email to ${row.tenantName} (${row.room}).`);
+        }
+      } catch (err) {
+        console.warn('Auto overdue alert dispatch error:', err);
+      }
+    }
+  };
+
   supabaseData.onSnapshot(
     supabaseData.collection(supabase, 'tenants'),
     (snap) => {
       calTenants = snap.docs
         .map((d) => ({ ...d.data(), id: d.id }))
         .filter((t) => String(t.status || 'Active').toLowerCase() !== 'archived');
+      tenantsLoaded = true;
       syncTenantDropdown();
       renderCalendar();
+      void checkAutoOverdueAlerts();
     },
     (err) => console.error('Calendar tenants listener failed:', err)
   );
@@ -1379,7 +1444,9 @@ function initAdminPaymentCalendar() {
       }
     } catch {}
     calPayments = deduplicatePayments([...appDocPayments, ...relPayments]);
+    paymentsLoaded = true;
     renderCalendar();
+    void checkAutoOverdueAlerts();
   };
 
   supabaseData.onSnapshot(
@@ -1649,9 +1716,11 @@ function initAdminPaymentCalendar() {
         typeof window !== 'undefined' && window.location?.origin
           ? window.location.origin
           : 'https://homespot-mjp.web.app';
+      const isOverdue = String(tenant.status || '').toLowerCase() === 'overdue';
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          type: 'due_date_alert',
+          type: isOverdue ? 'overdue_alert' : 'due_date_alert',
+          status: tenant.status || 'Pending',
           to: tenant.email,
           name: tenant.name,
           room: tenant.room,

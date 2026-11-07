@@ -72,13 +72,19 @@ document.addEventListener('tenant-access-granted', () => {
 let userEmail = sessionStorage.getItem('tenantEmail') || '';
 let tenantName = sessionStorage.getItem('tenantName') || 'Juan Dela Cruz';
 let tenantPhone = sessionStorage.getItem('tenantPhone') || '+63 912 345 6789';
-let tenantRoom = sessionStorage.getItem('tenantRoom') || 'Room 201';
+let tenantRoom = sessionStorage.getItem('tenantRoom') || '';
 let tenantDorm = sessionStorage.getItem('tenantDorm') || 'Triple Occupancy Room';
 let tenantMoveIn = sessionStorage.getItem('tenantMoveInDate') || 'January 10, 2026';
 let tenantRent = parseFloat(sessionStorage.getItem('tenantMonthlyRent')) || 5000;
 let tenantEmergency = sessionStorage.getItem('tenantEmergencyContact') || '+63 923 456 7890';
 let tenantDueDay = parseInt(sessionStorage.getItem('tenantDueDay')) || 5;
 let tenantMovedIn = sessionStorage.getItem('tenantMovedIn') === 'true';
+let tenantLeaseTerm = sessionStorage.getItem('tenantLeaseTerm') || '6 Months';
+let tenantContractFileUrl = sessionStorage.getItem('tenantContractFileUrl') || '';
+let tenantContractFileName = sessionStorage.getItem('tenantContractFileName') || '';
+let tenantContractFileType = sessionStorage.getItem('tenantContractFileType') || '';
+let tenantContractUploadedAt = sessionStorage.getItem('tenantContractUploadedAt') || '';
+let tenantContractSigned = sessionStorage.getItem('tenantContractSigned') !== 'false';
 let currentTenantDocId = sessionStorage.getItem('tenantDocId') || null;
 
 // Global State
@@ -246,8 +252,17 @@ function populateTenantUI() {
   const moveInInput = document.getElementById('tenantProfileMoveIn');
   if (moveInInput) moveInInput.value = tenantMoveIn;
 
+  const isRoomUnassigned =
+    !tenantRoom ||
+    tenantRoom.toLowerCase().includes('pending') ||
+    tenantRoom.toLowerCase().includes('unassigned');
+
   const summaryResidence = document.getElementById('summaryResidence');
-  if (summaryResidence) summaryResidence.textContent = `${tenantDorm} (${tenantRoom})`;
+  if (summaryResidence) {
+    summaryResidence.textContent = isRoomUnassigned
+      ? `${tenantDorm || 'Living Space'} (Pending Assignment)`
+      : `${tenantDorm} (${tenantRoom})`;
+  }
 
   const summaryRent = document.getElementById('summaryRent');
   if (summaryRent) summaryRent.textContent = '₱' + tenantRent.toLocaleString() + '.00';
@@ -256,7 +271,11 @@ function populateTenantUI() {
   if (welcomeTenantName) welcomeTenantName.textContent = `Welcome back, ${tenantName}!`;
 
   const welcomeTenantSub = document.getElementById('welcomeTenantSub');
-  if (welcomeTenantSub) welcomeTenantSub.textContent = `${tenantRoom} • ${tenantDorm}`;
+  if (welcomeTenantSub) {
+    welcomeTenantSub.textContent = isRoomUnassigned
+      ? `Room Assignment Pending • ${tenantDorm || 'Living Space'}`
+      : `${tenantRoom} • ${tenantDorm}`;
+  }
 
   const welcomeAvatar = document.getElementById('welcomeAvatar');
   if (welcomeAvatar) {
@@ -273,7 +292,12 @@ function populateTenantUI() {
   const statusPill = document.querySelector('.tenant-status-pill');
   const moveInInfo = getMoveInInfo();
   if (statusPill) {
-    if (moveInInfo.isPending) {
+    if (isRoomUnassigned) {
+      statusPill.textContent = '● Room Assignment Pending';
+      statusPill.style.background = '#fef3c7';
+      statusPill.style.color = '#92400e';
+      statusPill.style.border = '1px solid #fde68a';
+    } else if (moveInInfo.isPending) {
       statusPill.textContent = '● Pending Move-In';
       statusPill.style.background = '#fef3c7';
       statusPill.style.color = '#92400e';
@@ -290,9 +314,106 @@ function populateTenantUI() {
   renderTenantPaymentCalendar();
   syncTenant3DBuildingState();
   renderDueDateAlert();
+  renderTenantContractCard();
 
   const receiptTenantName = document.getElementById('receiptTenantName');
   if (receiptTenantName) receiptTenantName.textContent = tenantName;
+}
+
+function renderTenantContractCard() {
+  const roomEl = document.getElementById('tenantContractRoom');
+  if (roomEl) roomEl.textContent = tenantRoom || 'Unassigned';
+
+  const termEl = document.getElementById('tenantContractTerm');
+  if (termEl) termEl.textContent = tenantLeaseTerm || '6 Months';
+
+  const moveInEl = document.getElementById('tenantContractMoveIn');
+  if (moveInEl) moveInEl.textContent = tenantMoveIn || '—';
+
+  const badgeEl = document.getElementById('tenantContractStatusBadge');
+  const uploadedAtEl = document.getElementById('tenantContractUploadedAt');
+  const emptyState = document.getElementById('tenantContractEmptyState');
+  const previewState = document.getElementById('tenantContractPreviewState');
+  const imgWrap = document.getElementById('tenantContractImgWrap');
+  const imgEl = document.getElementById('tenantContractImg');
+  const pdfWrap = document.getElementById('tenantContractPdfWrap');
+  const pdfFrame = document.getElementById('tenantContractPdfFrame');
+  const fileNameEl = document.getElementById('tenantContractFileName');
+  const viewBtn = document.getElementById('tenantContractViewBtn');
+  const downloadBtn = document.getElementById('tenantContractDownloadBtn');
+
+  const url = String(tenantContractFileUrl || '').trim();
+  const name = String(tenantContractFileName || '').trim() || 'Signed-Lease-Contract';
+  const type = String(tenantContractFileType || '').toLowerCase();
+
+  if (!url) {
+    if (badgeEl) {
+      badgeEl.textContent = tenantContractSigned ? 'Verified • Pending Copy' : 'Pending Upload';
+      badgeEl.className = 'profile-contract-badge pending';
+    }
+    if (uploadedAtEl) {
+      uploadedAtEl.textContent = tenantContractSigned
+        ? 'Verified by Admin'
+        : 'Awaiting Admin Upload';
+    }
+    emptyState?.classList.remove('hidden');
+    previewState?.classList.add('hidden');
+    imgWrap?.classList.add('hidden');
+    pdfWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+    if (pdfFrame) pdfFrame.removeAttribute('src');
+    return;
+  }
+
+  if (badgeEl) {
+    badgeEl.textContent = '✓ Signed Lease on File';
+    badgeEl.className = 'profile-contract-badge verified';
+  }
+
+  if (uploadedAtEl) {
+    if (tenantContractUploadedAt) {
+      const parsed = new Date(tenantContractUploadedAt);
+      uploadedAtEl.textContent = !Number.isNaN(parsed.getTime())
+        ? `Uploaded ${parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+        : 'Uploaded by Admin';
+    } else {
+      uploadedAtEl.textContent = 'Uploaded by Admin';
+    }
+  }
+
+  emptyState?.classList.add('hidden');
+  previewState?.classList.remove('hidden');
+
+  const isPdf =
+    type.includes('pdf') ||
+    name.toLowerCase().endsWith('.pdf') ||
+    url.toLowerCase().startsWith('data:application/pdf') ||
+    url.toLowerCase().split('?')[0].endsWith('.pdf');
+
+  if (isPdf) {
+    imgWrap?.classList.add('hidden');
+    if (imgEl) imgEl.removeAttribute('src');
+    pdfWrap?.classList.remove('hidden');
+    if (pdfFrame && pdfFrame.getAttribute('src') !== url) {
+      pdfFrame.src = url;
+    }
+  } else {
+    pdfWrap?.classList.add('hidden');
+    if (pdfFrame) pdfFrame.removeAttribute('src');
+    imgWrap?.classList.remove('hidden');
+    if (imgEl) imgEl.src = url;
+  }
+
+  if (fileNameEl) {
+    fileNameEl.textContent = isPdf ? `📄 ${name}` : `🖼️ ${name}`;
+  }
+  if (viewBtn) {
+    viewBtn.href = url;
+  }
+  if (downloadBtn) {
+    downloadBtn.href = url;
+    downloadBtn.setAttribute('download', name);
+  }
 }
 
 function renderDueDateAlert() {
@@ -348,13 +469,18 @@ let tenant3DFireEnabled = true;
 let tenant3DSpinEnabled = true;
 
 function renderTenant3DUnitInspector(unit) {
-  const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm);
-  const isOwnUnit = Boolean(ownUnit && unit && ownUnit.id === unit.id);
+  const isRoomUnassigned =
+    !tenantRoom ||
+    tenantRoom.toLowerCase().includes('pending') ||
+    tenantRoom.toLowerCase().includes('unassigned') ||
+    tenantRoom.toLowerCase().includes('needs unit');
+  const ownUnit = isRoomUnassigned ? null : resolveBuildingUnit(tenantRoom, tenantDorm);
+  const isOwnUnit = Boolean(!isRoomUnassigned && ownUnit && unit && ownUnit.id === unit.id);
 
   const listEl = document.getElementById('tenant3DUnitList');
   if (listEl) {
     listEl.innerHTML = BUILDING_UNITS.map((u) => {
-      const isMine = ownUnit && ownUnit.id === u.id;
+      const isMine = Boolean(!isRoomUnassigned && ownUnit && ownUnit.id === u.id);
       const isSelected = Boolean(unit && u.id === unit.id);
       return `
         <button type="button" class="building-3d-dir-item ${isSelected ? 'active' : ''}" data-action="tenant-3d-select-unit" data-unit-id="${escapeHtml(u.id)}">
@@ -370,30 +496,45 @@ function renderTenant3DUnitInspector(unit) {
   }
 
   if (!unit) {
+    const isUnassigned = isRoomUnassigned;
+
     const badgeEl = document.getElementById('tenant3DUnitBadge');
     if (badgeEl) {
-      badgeEl.textContent = 'NO ROOM SELECTED';
-      badgeEl.style.background = '#f1f5f9';
-      badgeEl.style.color = '#64748b';
+      badgeEl.textContent = isUnassigned ? '● ASSIGNMENT PENDING' : 'NO ROOM SELECTED';
+      badgeEl.style.background = isUnassigned ? '#fef3c7' : '#f1f5f9';
+      badgeEl.style.color = isUnassigned ? '#92400e' : '#64748b';
     }
     const titleEl = document.getElementById('tenant3DUnitTitle');
-    if (titleEl) titleEl.textContent = 'MJP Residences';
+    if (titleEl) {
+      titleEl.textContent = isUnassigned ? 'Room Assignment Pending' : 'MJP Residences';
+    }
     const subEl = document.getElementById('tenant3DUnitSubtitle');
-    if (subEl) subEl.textContent = 'Click any room or directory item to view details';
+    if (subEl) {
+      subEl.textContent = isUnassigned
+        ? `${tenantDorm || 'Triple Occupancy Room'} • Unit awaiting administrator assignment`
+        : 'Click any room or directory item to view details';
+    }
     const floorEl = document.getElementById('tenant3DUnitFloor');
-    if (floorEl) floorEl.textContent = '—';
+    if (floorEl) floorEl.textContent = isUnassigned ? 'Pending' : '—';
     const sizeEl = document.getElementById('tenant3DUnitSize');
-    if (sizeEl) sizeEl.textContent = '—';
+    if (sizeEl) sizeEl.textContent = isUnassigned ? '30 sqm' : '—';
     const capEl = document.getElementById('tenant3DUnitCap');
-    if (capEl) capEl.textContent = '—';
+    if (capEl) capEl.textContent = isUnassigned ? '1 Slot' : '—';
     const priceEl = document.getElementById('tenant3DUnitPrice');
-    if (priceEl) priceEl.textContent = '—';
+    if (priceEl)
+      priceEl.textContent = isUnassigned ? '₱' + tenantRent.toLocaleString() + '/mo' : '—';
     const descEl = document.getElementById('tenant3DUnitDesc');
-    if (descEl)
-      descEl.textContent =
-        'Click any unit on the 3D model or in the directory below to view room specs, safety features, and pricing.';
+    if (descEl) {
+      descEl.textContent = isUnassigned
+        ? 'Your reservation is currently pending administrator room assignment. Once approved, your assigned unit will be highlighted here.'
+        : 'Click any unit on the 3D model or in the directory below to view room specs, safety features, and pricing.';
+    }
     const featsEl = document.getElementById('tenant3DUnitFeatures');
-    if (featsEl) featsEl.innerHTML = '';
+    if (featsEl) {
+      featsEl.innerHTML = isUnassigned
+        ? '<span class="building-3d-chip">Awaiting Admin Approval</span><span class="building-3d-chip">Standard Move-In Requirements</span>'
+        : '';
+    }
     return;
   }
 
@@ -463,17 +604,23 @@ function renderTenant3DUnitInspector(unit) {
 
 function syncTenant3DBuildingState() {
   subscribeTenant3DRooms();
-  const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
+  const isRoomUnassigned =
+    !tenantRoom ||
+    tenantRoom.toLowerCase().includes('pending') ||
+    tenantRoom.toLowerCase().includes('unassigned') ||
+    tenantRoom.toLowerCase().includes('needs unit');
+  const ownUnit = isRoomUnassigned ? null : resolveBuildingUnit(tenantRoom, tenantDorm);
   if (!tenantSelected3DUnitId && ownUnit) {
     tenantSelected3DUnitId = ownUnit.id;
   }
-  const activeUnit =
-    BUILDING_UNITS.find((u) => u.id === tenantSelected3DUnitId) || ownUnit || BUILDING_UNITS[0];
+  const activeUnit = BUILDING_UNITS.find((u) => u.id === tenantSelected3DUnitId) || ownUnit || null;
   renderTenant3DUnitInspector(activeUnit);
 
   if (tenantBuilding3D) {
-    tenantBuilding3D.setTenantUnit(tenantRoom, tenantDorm);
-    tenantBuilding3D.selectUnit(activeUnit.id);
+    tenantBuilding3D.setTenantUnit(isRoomUnassigned ? '' : tenantRoom, tenantDorm);
+    if (activeUnit) {
+      tenantBuilding3D.selectUnit(activeUnit.id);
+    }
   }
 }
 
@@ -513,15 +660,20 @@ function ensureTenantBuilding3DInitialized() {
   }
   const viewport = document.getElementById('tenantBuilding3DViewport');
   if (!viewport) return;
+  const isRoomUnassigned =
+    !tenantRoom ||
+    tenantRoom.toLowerCase().includes('pending') ||
+    tenantRoom.toLowerCase().includes('unassigned') ||
+    tenantRoom.toLowerCase().includes('needs unit');
   if (!tenantBuilding3D) {
-    const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
-    tenantSelected3DUnitId = ownUnit.id;
+    const ownUnit = isRoomUnassigned ? null : resolveBuildingUnit(tenantRoom, tenantDorm);
+    tenantSelected3DUnitId = ownUnit ? ownUnit.id : null;
     tenantBuilding3D = initBuilding3DViewer(viewport, {
       mode: 'tenant',
-      tenantRoom,
+      tenantRoom: isRoomUnassigned ? '' : tenantRoom,
       tenantDorm,
       onSelectUnit: (unit) => {
-        tenantSelected3DUnitId = unit.id;
+        tenantSelected3DUnitId = unit ? unit.id : null;
         renderTenant3DUnitInspector(unit);
       }
     });
@@ -733,6 +885,50 @@ function renderTenantPaymentCalendar() {
         .join('');
     }
   }
+
+  // Automatically dispatch overdue rent email once per billing cycle if current month is Overdue
+  const now = new Date();
+  if (
+    userEmail &&
+    tenantCalYear === now.getFullYear() &&
+    tenantCalMonth === now.getMonth() &&
+    Array.isArray(cal.monthSummary?.rows)
+  ) {
+    const overdueRow = cal.monthSummary.rows.find((r) => r.status === 'Overdue');
+    if (overdueRow) {
+      const cycleKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-Overdue`;
+      const storageKey = `auto_overdue_alert_${userEmail.toLowerCase()}_${cycleKey}`;
+      let alreadyTriggered = false;
+      try {
+        alreadyTriggered = sessionStorage.getItem(storageKey) === '1';
+      } catch {}
+      if (!alreadyTriggered) {
+        try {
+          sessionStorage.setItem(storageKey, '1');
+        } catch {}
+        const currentOrigin =
+          typeof window !== 'undefined' && window.location?.origin
+            ? window.location.origin
+            : 'https://homespot-mjp.web.app';
+        supabase.functions
+          .invoke('send-email', {
+            body: {
+              type: 'overdue_alert',
+              status: 'Overdue',
+              autoCycleKey: cycleKey,
+              to: userEmail,
+              name: tenantName,
+              room: tenantRoom,
+              amount: overdueRow.amount || tenantRent,
+              dueDate: overdueRow.dueDate,
+              dueDay: tenantDueDay || 5,
+              portalUrl: `${currentOrigin}/login.html`
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }
 }
 
 // Apply immediately from session storage
@@ -813,11 +1009,32 @@ async function fetchTenantSupabaseProfile() {
           tenantEmergency = resolvedEmergency;
           sessionStorage.setItem('tenantEmergencyContact', resolvedEmergency);
         }
+        if (docData.leaseTerm) {
+          tenantLeaseTerm = String(docData.leaseTerm);
+          sessionStorage.setItem('tenantLeaseTerm', tenantLeaseTerm);
+        }
+        tenantContractFileUrl = String(docData.contractFileUrl || '');
+        tenantContractFileName = String(docData.contractFileName || '');
+        tenantContractFileType = String(docData.contractFileType || '');
+        tenantContractUploadedAt = String(docData.contractUploadedAt || '');
+        tenantContractSigned = docData.contractSigned !== false;
+        sessionStorage.setItem('tenantContractFileUrl', tenantContractFileUrl);
+        sessionStorage.setItem('tenantContractFileName', tenantContractFileName);
+        sessionStorage.setItem('tenantContractFileType', tenantContractFileType);
+        sessionStorage.setItem('tenantContractUploadedAt', tenantContractUploadedAt);
+        sessionStorage.setItem('tenantContractSigned', tenantContractSigned ? 'true' : 'false');
         populateTenantUI();
 
         // Render Keycard & Presence data
-        const cardUid = docData.cardUid || `NFC-${String(tenantRoom || '101').replace(/\D+/g, '')}`;
-        const gateStatus = docData.gateStatus || 'INSIDE';
+        const isUnassignedCard =
+          !tenantRoom ||
+          tenantRoom.toLowerCase().includes('pending') ||
+          tenantRoom.toLowerCase().includes('unassigned') ||
+          tenantRoom.toLowerCase().includes('needs unit');
+        const cardUid = isUnassignedCard
+          ? 'PENDING ISSUANCE'
+          : docData.cardUid || `NFC-${String(tenantRoom || '101').replace(/\D+/g, '')}`;
+        const gateStatus = isUnassignedCard ? 'PENDING' : docData.gateStatus || 'INSIDE';
         const lastGateTapAt = docData.lastGateTapAt;
 
         const cardUidEl = document.getElementById('tenantCardUidDisplay');
@@ -826,20 +1043,30 @@ async function fetchTenantSupabaseProfile() {
         const lastTapEl = document.getElementById('tenantLastGateTapDisplay');
 
         if (cardUidEl) cardUidEl.textContent = cardUid;
-        if (cardRoomEl) cardRoomEl.textContent = `Room: ${tenantRoom || 'Assigned Room'}`;
-        if (lastTapEl) lastTapEl.textContent = formatGateTimestamp(lastGateTapAt);
+        if (cardRoomEl) {
+          cardRoomEl.textContent = `Room: ${isUnassignedCard ? 'Pending Assignment' : tenantRoom || 'Assigned Room'}`;
+        }
+        if (lastTapEl)
+          lastTapEl.textContent = isUnassignedCard
+            ? 'Awaiting Move-In'
+            : formatGateTimestamp(lastGateTapAt);
 
         if (presenceBadge) {
-          if (gateStatus === 'OUTSIDE') {
+          if (isUnassignedCard) {
             presenceBadge.style.background = '#fef3c7';
             presenceBadge.style.color = '#92400e';
             presenceBadge.innerHTML =
-              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> Currently Away / Checked Out';
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #d97706;"></span> PENDING ISSUANCE';
+          } else if (gateStatus === 'OUTSIDE') {
+            presenceBadge.style.background = '#f1f5f9';
+            presenceBadge.style.color = '#334155';
+            presenceBadge.innerHTML =
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #64748b;"></span> OUT';
           } else {
             presenceBadge.style.background = '#d1fae5';
             presenceBadge.style.color = '#065f46';
             presenceBadge.innerHTML =
-              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> Currently Inside Building';
+              '<span style="width: 8px; height: 8px; border-radius: 50%; background: #059669;"></span> IN';
           }
         }
 
@@ -1762,8 +1989,13 @@ function showReceiptModal(record) {
 
   document.getElementById('receiptTenantName').textContent = record.tenantName || 'Juan Dela Cruz';
   const residenceEl = document.getElementById('receiptResidence');
-  if (residenceEl)
-    residenceEl.textContent = `${tenantDorm || 'Triple Occupancy Room'} (${tenantRoom || 'Room 201'})`;
+  if (residenceEl) {
+    const isUnassignedReceipt =
+      !tenantRoom ||
+      tenantRoom.toLowerCase().includes('pending') ||
+      tenantRoom.toLowerCase().includes('unassigned');
+    residenceEl.textContent = `${tenantDorm || 'Living Space'} (${isUnassignedReceipt ? 'Pending Assignment' : tenantRoom})`;
+  }
   document.getElementById('receiptPurpose').textContent = record.purpose || 'Monthly Rent';
   const notesRow = document.getElementById('receiptNotesRow');
   const notesEl = document.getElementById('receiptNotes');
@@ -3003,7 +3235,11 @@ document.addEventListener('click', async function (event) {
     case 'tenant-3d-my-unit': {
       window.getSelection?.()?.removeAllRanges?.();
       ensureTenantBuilding3DInitialized();
-      const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm) || BUILDING_UNITS[4];
+      const ownUnit = resolveBuildingUnit(tenantRoom, tenantDorm);
+      if (!ownUnit) {
+        Toast.info('Your room assignment is currently pending administrator approval.');
+        break;
+      }
       tenantSelected3DUnitId = ownUnit.id;
       const floorStr = String(ownUnit.floor);
       if (tenantBuilding3D) {
