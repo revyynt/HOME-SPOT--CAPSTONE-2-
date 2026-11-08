@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Home-Spot NFC Keycard System - User Guide & Integration Manual</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 15mm 18mm 15mm;
+      @bottom-right {
+        content: counter(page);
+      }
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1e293b;
+      line-height: 1.55;
+      font-size: 10pt;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+    }
+    .header-banner {
+      border-bottom: 2px solid #059669;
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 18pt;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.3px;
+    }
+    .subtitle {
+      font-size: 10.5pt;
+      color: #475569;
+      margin: 0 0 10px 0;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 8.5pt;
+      margin-top: 10px;
+    }
+    .meta-item strong {
+      display: block;
+      color: #64748b;
+      font-size: 7.5pt;
+      text-transform: uppercase;
+    }
+    h2 {
+      font-size: 12.5pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      page-break-after: avoid;
+    }
+    p {
+      margin: 0 0 8px 0;
+      text-align: justify;
+    }
+    ul, ol {
+      margin: 0 0 10px 0;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .callout {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 10px 14px;
+      border-radius: 0 6px 6px 0;
+      margin: 10px 0;
+      font-size: 9pt;
+    }
+    .callout-title {
+      font-weight: 700;
+      color: #1e40af;
+      margin-bottom: 2px;
+    }
+    .callout-amber {
+      background: #fffbeb;
+      border-left: 4px solid #d97706;
+      color: #92400e;
+    }
+    .callout-amber .callout-title {
+      color: #b45309;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0 14px 0;
+      font-size: 8.5pt;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    tr:nth-child(even) td {
+      background: #f8fafc;
+    }
+    code, pre {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 8.5pt;
+    }
+    code {
+      background: #f1f5f9;
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 10px 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 8px 0;
+      line-height: 1.4;
+      page-break-inside: avoid;
+    }
+    .pinout-diagram {
+      background: #f8fafc;
+      border: 1px dashed #94a3b8;
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 8pt;
+      line-height: 1.35;
+      margin: 8px 0;
+      page-break-inside: avoid;
+    }
+    .footer {
+      font-size: 7.5pt;
+      color: #94a3b8;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 6px;
+      margin-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER / TITLE -->
+  <div class="header-banner">
+    <span class="badge">Research Paper Appendix / Operations Manual</span>
+    <h1>NFC Keycard Access Control System</h1>
+    <div class="subtitle">Operational User Guide for Smartphone &amp; Dedicated IoT Hardware Terminals</div>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <strong>System Target</strong>
+        Home-Spot MJP Residences
+      </div>
+      <div class="meta-item">
+        <strong>Backend Architecture</strong>
+        Supabase Cloud Serverless API
+      </div>
+      <div class="meta-item">
+        <strong>Frequency Band</strong>
+        13.56 MHz (ISO 14443 Type A)
+      </div>
+      <div class="meta-item">
+        <strong>Document Status</strong>
+        Published / Capstone Verified
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1 -->
+  <h2>1. System Architecture &amp; Core Flow</h2>
+  <p>
+    The Home-Spot Contactless Gate Access Control System provides physical premise security and attendance tracking across MJP Residences. The platform features an automated dual-modality architecture that processes contactless scans from both mobile devices and microcontrollers using a centralized cloud endpoint.
+  </p>
+
+  <div class="callout">
+    <div class="callout-title">Centralized Gate REST API</div>
+    <strong>Endpoint:</strong> <code>POST https://jfeosjevabaadudestcf.supabase.co/functions/v1/gate-tap</code><br>
+    <strong>Headers:</strong> <code>Content-Type: application/json</code> &bull; <code>apikey: &lt;SUPABASE_PUBLIC_KEY&gt;</code><br>
+    <strong>Request Payload:</strong> <code>{ "cardUid": "NFC-101", "source": "NFC_KIOSK" }</code>
+  </div>
+
+  <h3>State Transition &amp; Automatic Direction Resolution</h3>
+  <p>
+    The system resolves scan direction dynamically through server-side state evaluation:
+  </p>
+  <ul>
+    <li><strong>Initial Registration Tap:</strong> When a tenant taps for the very first time without prior tap records, the direction is guaranteed to resolve to <strong><code>IN</code></strong> (Entry).</li>
+    <li><strong>Subsequent Scans:</strong> If currently recorded <code>INSIDE</code>, next tap resolves to <strong><code>OUT</code></strong> (Exit). If recorded <code>OUTSIDE</code>, next tap resolves to <strong><code>IN</code></strong>.</li>
+    <li><strong>Curfew Detection:</strong> Any <code>IN</code> tap recorded between <strong>10:00 PM and 5:00 AM (Asia/Manila)</strong> is permanently tagged with <code>Remarks: Curfew Violation</code> and triggers an automated notification.</li>
+  </ul>
+
+  <!-- SECTION 2: SMARTPHONE TERMINAL -->
+  <h2>2. Modality A: Smartphone-Based NFC Terminal (Soft Kiosk)</h2>
+  <p>
+    The Smartphone Terminal leverages modern commercial mobile devices equipped with Near Field Communication (NFC) chips. It serves as a lightweight, portable scanning station suitable for security guards on patrol or an unassisted tablet kiosk at the front lobby.
+  </p>
+
+  <h3>2.1 Hardware &amp; OS Prerequisites</h3>
+  <ul>
+    <li><strong>Supported OS:</strong> Android 8.0+ (with Google Play Services) or Apple iOS 14.0+ (iPhone 7 and newer).</li>
+    <li><strong>Connectivity:</strong> Active Internet connection via building Wi-Fi or 4G/5G mobile broadband.</li>
+    <li><strong>Software Environment:</strong> Modern Chromium browser (supporting Web NFC API) or third-party NFC automation utility (e.g., NFC Tools Pro, Apple Shortcuts).</li>
+  </ul>
+
+  <h3>2.2 Step-by-Step Operator Instructions</h3>
+  <ol>
+    <li><strong>Enable NFC Subsystem:</strong> On the smartphone, navigate to <em>Settings &rarr; Connected Devices &rarr; Connection Preferences</em> and toggle <strong>NFC</strong> to <em>ON</em>.</li>
+    <li><strong>Mount or Position Terminal:</strong> Place the device securely in the lobby kiosk stand with the back antenna clear of metallic obstructions.</li>
+    <li><strong>Tenant Keycard Presentation:</strong>
+      <ul>
+        <li>Instruct the tenant to hold their issued keycard flat against the phone's NFC detection zone (upper-rear quadrant for iOS, center-rear for Android).</li>
+        <li>Maintain contact for a minimum dwell time of <strong>400 milliseconds</strong>.</li>
+      </ul>
+    </li>
+    <li><strong>Observe Real-Time Acoustic &amp; Visual Feedback:</strong>
+      <ul>
+        <li><strong>Entry (IN):</strong> Terminal produces a dual high-frequency harmonic chime (880 Hz &rarr; 1174 Hz) and displays a green entry confirmation badge.</li>
+        <li><strong>Exit (OUT):</strong> Terminal sounds a distinct descending chord (659 Hz &rarr; 523 Hz) and displays an exit acknowledgment.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <!-- PAGE BREAK FOR CLEAN SECTION B -->
+  <div class="page-break"></div>
+
+  <!-- SECTION 3: DEDICATED HARDWARE TERMINAL -->
+  <h2>3. Modality B: Dedicated IoT Hardware Terminal (Automated Gate Turnstile)</h2>
+  <p>
+    The dedicated hardware terminal is an embedded IoT appliance designed for permanent installation on turnstiles, perimeter gates, and magnetic strike door locks. It functions autonomously without human supervision.
+  </p>
+
+  <h3>3.1 Bill of Materials (BOM) &amp; Technical Specifications</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Component</th>
+        <th style="width: 35%;">Model / Parameter</th>
+        <th style="width: 40%;">Functional Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Microcontroller</strong></td>
+        <td>ESP32-WROOM-32 (38-pin DevKit)</td>
+        <td>Embedded execution, Wi-Fi 802.11 b/g/n, TLS 1.3 HTTP client</td>
+      </tr>
+      <tr>
+        <td><strong>Contactless Reader</strong></td>
+        <td>MFRC522 / PN532 (13.56 MHz)</td>
+        <td>Contactless ISO/IEC 14443 Type A UID interrogation</td>
+      </tr>
+      <tr>
+        <td><strong>Actuator Interface</strong></td>
+        <td>5V Single-Channel Relay (Optocoupled)</td>
+        <td>Switches 12V DC power to solenoid strike lock (500mA rating)</td>
+      </tr>
+      <tr>
+        <td><strong>Visual Indicators</strong></td>
+        <td>Bi-Color 5mm Common-Cathode LED</td>
+        <td>Green: Authorized Entry; Red: Access Denied / Unassigned Card</td>
+      </tr>
+      <tr>
+        <td><strong>Acoustic Transducer</strong></td>
+        <td>5V Active Piezo Buzzer (2.3 kHz)</td>
+        <td>Auditory transaction feedback for blind accessibility</td>
+      </tr>
+      <tr>
+        <td><strong>Power Subsystem</strong></td>
+        <td>12V 2A DC PSU + LM2596 Step-Down</td>
+        <td>Provides 12V to lock solenoid and stepped-down 5V to ESP32</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3.2 Wiring Topology &amp; Microcontroller Pinout (SPI Bus)</h3>
+  <div class="pinout-diagram">
++----------------------+                       +-----------------------+
+|  MFRC522 RFID MODULE |                       |  ESP32 MICROCONTROLLER|
+|                      |                       |                       |
+|  3.3V (VCC) ---------+---------------------> |  3V3 (NEVER CONNECT 5V)
+|  RST ----------------+---------------------> |  GPIO 22              |
+|  GND ----------------+---------------------> |  GND                  |
+|  MISO ---------------+---------------------> |  GPIO 19 (VSPI MISO)  |
+|  MOSI ---------------+---------------------> |  GPIO 23 (VSPI MOSI)  |
+|  SCK ----------------+---------------------> |  GPIO 18 (VSPI SCK)   |
+|  SDA (CS) -----------+---------------------> |  GPIO 5  (VSPI SS)    |
++----------------------+                       +-----------------------+
+                                               |  GPIO 26 -> Relay IN  |
+                                               |  GPIO 27 -> Green LED |
+                                               |  GPIO 14 -> Red LED   |
+                                               |  GPIO 12 -> Buzzer (+) |
+                                               +-----------------------+
+  </div>
+
+  <h3>3.3 Firmware Embedded Operation Cycle</h3>
+  <ol>
+    <li><strong>Standby State:</strong> ESP32 continuously polls the RF field at 10 Hz. Status LED pulses amber/standby.</li>
+    <li><strong>Card Induction:</strong> When an NFC transponder enters the 0–40mm induction field, the microcontroller extracts the raw Hexadecimal Unique Identifier (UID).</li>
+    <li><strong>Secure API Dispatch:</strong> The firmware dispatches an HTTPS POST payload to the cloud edge function with a 2000ms watchdog timeout.</li>
+    <li><strong>Access Decision &amp; Actuation:</strong>
+      <ul>
+        <li><strong>HTTP 200 (Granted):</strong> Energizes GPIO 26 (Relay) for exactly <strong>5.0 seconds</strong> allowing physical passage; pulses Green LED and double-beeps the buzzer.</li>
+        <li><strong>HTTP 400/404 (Denied/Pending):</strong> Latches relay shut; flashes Red LED 3 times and sounds a continuous 1.5-second error buzz.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <!-- SECTION 4: ERROR MATRIX & COMPARISON -->
+  <h2>4. Diagnostic Matrix &amp; Comparative Analysis</h2>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 25%;">Observed Symptom</th>
+        <th style="width: 35%;">System Root Cause</th>
+        <th style="width: 40%;">Remediation Procedure</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>HTTP 400: Keycard Pending Issuance</strong></td>
+        <td>Tenant record exists but room assignment is still pending admin approval.</td>
+        <td>Admin must open <em>Admin Dashboard &rarr; Tenants</em> and assign an unoccupied unit before the card can unlock the gate.</td>
+      </tr>
+      <tr>
+        <td><strong>HTTP 404: Unrecognized Card</strong></td>
+        <td>Card UID not enrolled in <code>tenants</code> collection.</td>
+        <td>Verify tenant's card UID in the database or register the physical transponder via Admin Dashboard.</td>
+      </tr>
+      <tr>
+        <td><strong>Hardware Timeout / Fail-Safe</strong></td>
+        <td>Wi-Fi disconnect or gateway failure.</td>
+        <td>ESP32 firmware fails closed (locked); auto-reconnects to the network every 10 seconds.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Comparative Evaluation for Capstone Defense</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Evaluation Metric</th>
+        <th>Smartphone Terminal (Modality A)</th>
+        <th>Dedicated Hardware Terminal (Modality B)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Target Deployment</strong></td>
+        <td>Guard patrol, front reception, mobile checkpoint</td>
+        <td>Unattended perimeter turnstile, automated security gate</td>
+      </tr>
+      <tr>
+        <td><strong>Physical Actuation</strong></td>
+        <td>Manual release by guard upon audible chime</td>
+        <td>Autonomous 12V solenoid lock actuation via relay</td>
+      </tr>
+      <tr>
+        <td><strong>Cost Overhead</strong></td>
+        <td>₱0.00 (utilizes existing staff smartphone)</td>
+        <td>Low component cost (~₱850–₱1,100 total BOM)</td>
+      </tr>
+      <tr>
+        <td><strong>Mean Response Latency</strong></td>
+        <td>~320 milliseconds (TLS over 4G/Wi-Fi)</td>
+        <td>~380 milliseconds (TLS over 2.4 GHz Wi-Fi)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Home-Spot Smart Dormitory Management System &bull; Capstone Technical Documentation &bull; MJP Residences Access Control Manual
+  </div>
+
+</body>
+</html>
